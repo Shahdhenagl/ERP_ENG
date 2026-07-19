@@ -22,4 +22,33 @@
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
+
+    # Force HTTPS — the Push API and geolocation refuse to run over http.
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # The service worker must never be cached: a stale copy pins users to an
+    # old build until it expires. This block has to come BEFORE the long-cache
+    # rule below, or the immutable header wins and updates stop reaching them.
+    <FilesMatch "sw\.js$">
+        Header set Service-Worker-Allowed "/"
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+    </FilesMatch>
+
+    # Build output carries a content hash in its filename — safe to keep.
+    <FilesMatch "\.(css|woff2|png|svg|ico)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+
+    # Hashed JS lives under /build/assets; sw.js sits at the root and is
+    # already excluded above.
+    <FilesMatch "^main-.*\.js$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
 </IfModule>
