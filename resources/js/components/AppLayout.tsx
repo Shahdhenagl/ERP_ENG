@@ -12,11 +12,12 @@ import {
     X,
     type LucideIcon,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/lib/auth'
 import { useArea } from '@/lib/nav'
 import { useNotifications } from '@/lib/queries'
+import { syncPushSubscription } from '@/lib/push'
 import { NotificationPanel } from '@/components/NotificationPanel'
 
 interface NavItem {
@@ -46,6 +47,12 @@ export function AppLayout() {
     const location = useLocation()
     const [menuOpen, setMenuOpen] = useState(false)
     const [notificationsOpen, setNotificationsOpen] = useState(false)
+
+    // Re-register the device on every session so a subscription the server
+    // lost is restored without the user having to notice anything went wrong.
+    useEffect(() => {
+        void syncPushSubscription()
+    }, [])
     const { data: notifications } = useNotifications()
 
     const unread = notifications?.meta.unread_count ?? 0

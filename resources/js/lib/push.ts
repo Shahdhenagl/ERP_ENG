@@ -83,6 +83,27 @@ export async function enablePush(): Promise<{ ok: boolean; reason?: string }> {
     return { ok: true }
 }
 
+/**
+ * A granted permission does not mean the server can still reach this device.
+ * Restoring the database, or any failure between subscribing and storing the
+ * result, leaves the browser holding a subscription the server never saw —
+ * and since the opt-in prompt hides itself once permission is granted, there
+ * would be no way left to repair it from the UI.
+ *
+ * Re-registering is cheap and idempotent: the existing browser subscription
+ * is reused, and the server simply upserts the same endpoint.
+ */
+export async function syncPushSubscription(): Promise<void> {
+    if (!pushSupported() || Notification.permission !== 'granted') return
+
+    try {
+        await enablePush()
+    } catch {
+        // Nothing to tell the user: they did not ask for this, and the opt-in
+        // prompt still covers the case where they never subscribed at all.
+    }
+}
+
 export async function disablePush(): Promise<void> {
     if (!pushSupported()) return
 
