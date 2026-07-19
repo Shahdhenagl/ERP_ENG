@@ -5,8 +5,11 @@ import { formatSmart } from '@/lib/format'
 import type { Task } from '@/types'
 
 /**
- * Vertical progress rail showing where the job stands and when each step
- * happened. Cancelled jobs bail out of the happy path entirely.
+ * Horizontal icon stepper — the shape people expect from a delivery or
+ * service app, not a web timeline. Flows right-to-left with the document.
+ *
+ * Steps that have happened collapse to a check; the live step keeps its own
+ * icon so you can tell at a glance what is actually going on right now.
  */
 export function StatusRail({ task }: { task: Task }) {
     if (task.status === 'cancelled') {
@@ -35,63 +38,67 @@ export function StatusRail({ task }: { task: Task }) {
     }
 
     const currentIndex = STATUS_FLOW.indexOf(task.status)
+    const currentStamp = timestamps[task.status]
 
     return (
-        <ol className="relative space-y-0">
-            {STATUS_FLOW.map((status, index) => {
-                const meta = STATUS[status]
-                const Icon = meta.icon
-                const done = index < currentIndex
-                const current = index === currentIndex
-                const timestamp = timestamps[status]
-                const isLast = index === STATUS_FLOW.length - 1
+        <div>
+            {/* Equal-width columns with the connector drawn from one circle's
+                centre to the next. Grid rather than flex so the label can never
+                widen its own column and push the row past the viewport. */}
+            <ol
+                className="grid"
+                style={{ gridTemplateColumns: `repeat(${STATUS_FLOW.length}, minmax(0, 1fr))` }}
+            >
+                {STATUS_FLOW.map((status, index) => {
+                    const meta = STATUS[status]
+                    const Icon = meta.icon
+                    const done = index < currentIndex
+                    const current = index === currentIndex
+                    const reached = done || current
+                    const isLast = index === STATUS_FLOW.length - 1
 
-                return (
-                    <li key={status} className="relative flex gap-3 pb-6 last:pb-0">
-                        {/* Connector */}
-                        {!isLast && (
+                    return (
+                        <li key={status} className="relative flex min-w-0 flex-col items-center">
+                            {!isLast && (
+                                <span
+                                    className={clsx(
+                                        'absolute top-[17px] start-1/2 h-0.5 w-full',
+                                        done ? 'bg-brand-600' : 'bg-navy-100',
+                                    )}
+                                    aria-hidden
+                                />
+                            )}
+
                             <span
                                 className={clsx(
-                                    'absolute top-8 right-[15px] h-full w-0.5',
-                                    done ? meta.solid : 'bg-navy-100',
+                                    'relative z-10 grid size-9 shrink-0 place-items-center rounded-full transition',
+                                    reached ? 'bg-brand-600 text-white' : 'bg-navy-100 text-navy-400',
+                                    // A ring, not a pulse: it marks the live step
+                                    // without turning the card into an animation.
+                                    current && 'ring-4 ring-brand-100',
                                 )}
-                                aria-hidden
-                            />
-                        )}
+                            >
+                                {done ? <Check className="size-4.5" /> : <Icon className="size-4.5" />}
+                            </span>
 
-                        <span
-                            className={clsx(
-                                'relative z-10 grid size-8 shrink-0 place-items-center rounded-full transition',
-                                done && `${meta.solid} text-white`,
-                                current && `${meta.solid} text-white ring-4 ring-brand-100`,
-                                !done && !current && 'bg-navy-100 text-navy-300',
-                            )}
-                        >
-                            {done ? <Check className="size-4" /> : <Icon className="size-4" />}
-                        </span>
-
-                        <div className="min-w-0 flex-1 pt-1">
-                            <p
+                            <span
                                 className={clsx(
-                                    'text-sm font-bold',
-                                    current ? 'text-navy-900' : done ? 'text-navy-700' : 'text-navy-300',
+                                    'mt-2 w-full px-0.5 text-center text-[10px] leading-tight font-bold sm:text-[11px]',
+                                    current ? 'text-navy-900' : reached ? 'text-navy-600' : 'text-navy-300',
                                 )}
                             >
                                 {meta.label}
-                                {current && (
-                                    <span className="mr-2 inline-flex items-center gap-1 text-[10px] font-bold text-brand-600">
-                                        <span className="size-1.5 animate-pulse rounded-full bg-brand-500" />
-                                        الحالية
-                                    </span>
-                                )}
-                            </p>
-                            {timestamp && (done || current) && (
-                                <p className="mt-0.5 text-xs text-navy-400">{formatSmart(timestamp)}</p>
-                            )}
-                        </div>
-                    </li>
-                )
-            })}
-        </ol>
+                            </span>
+                        </li>
+                    )
+                })}
+            </ol>
+
+            {currentStamp && (
+                <p className="mt-4 border-t border-navy-100 pt-3 text-center text-xs text-navy-400">
+                    {STATUS[task.status].label} · {formatSmart(currentStamp)}
+                </p>
+            )}
+        </div>
     )
 }

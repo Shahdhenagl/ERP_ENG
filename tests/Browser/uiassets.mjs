@@ -51,10 +51,17 @@ async function settled(page) {
     check('shows an expired warranty', body.includes('منتهي'))
     check('shows an unknown warranty distinctly', body.includes('غير محدد'))
 
-    // Warranty filter must actually narrow the list.
+    // Warranty filter must actually narrow the list. The query keeps the previous
+    // page rendered while refetching (placeholderData), so there is no spinner to
+    // wait on — wait for the filtered response itself.
     const before = await page.locator('a[href^="/manager/assets/"]').count()
+    const filtered = page.waitForResponse(
+        (r) => r.url().includes('/api/assets') && r.url().includes('under_warranty=1'),
+        { timeout: 15000 },
+    )
     await page.getByText('داخل الضمان فقط').click()
-    await settled(page)
+    await filtered
+    await page.waitForTimeout(600)
     const after = await page.locator('a[href^="/manager/assets/"]').count()
     check(`warranty filter narrows ${before} → ${after}`, after > 0 && after < before)
 
@@ -62,6 +69,8 @@ async function settled(page) {
     await page.goto(`${BASE}/manager/assets`, { waitUntil: 'domcontentloaded' })
     await settled(page)
     await page.locator('a[href^="/manager/assets/"]').first().click()
+    await page.waitForURL(/\/manager\/assets\/\d+/, { timeout: 15000 })
+    await page.waitForSelector('text=سجل الصيانة', { timeout: 15000 }).catch(() => {})
     await settled(page)
 
     const detail = await page.locator('body').innerText()
@@ -88,15 +97,28 @@ async function settled(page) {
         new URL(page.url()).pathname.startsWith('/tech'),
     )
 
-    // Reach a device through a job they own — the supported path.
+    // Reach a device through a job they own — the supported path. Not every job
+    // has a device (a site survey happens before one exists), so walk the feed
+    // until one does rather than assuming the first card.
     await page.goto(`${BASE}/tech/tasks`, { waitUntil: 'domcontentloaded' })
     await settled(page)
-    await page.locator('a[href^="/tech/tasks/"]').first().click()
-    await settled(page)
 
-    const link = page.getByText('سجل الجهاز')
+    const hrefs = await page.locator('a[href^="/tech/tasks/"]').evaluateAll((links) =>
+        links.map((a) => a.getAttribute('href')),
+    )
+
+    let link = page.getByText('سجل الجهاز')
+    for (const href of hrefs) {
+        await page.goto(`${BASE}${href}`, { waitUntil: 'domcontentloaded' })
+        await settled(page)
+        link = page.getByText('سجل الجهاز')
+        if (await link.count()) break
+    }
+
     if (await link.count()) {
         await link.first().click()
+        await page.waitForURL(/\/assets\/\d+/, { timeout: 15000 })
+        await page.waitForSelector('text=سجل الصيانة', { timeout: 15000 }).catch(() => {})
         await settled(page)
         check(
             `technician opens their own device → ${new URL(page.url()).pathname}`,

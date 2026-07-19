@@ -2,7 +2,10 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5">
+    {{-- Pinch-zoom and double-tap-zoom are off on purpose: this ships as an
+         installed app, and a field technician tapping status buttons with
+         gloves on kept zooming the page by accident. --}}
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
     <title>{{ config('app.name') }} — نظام إدارة التركيب والصيانة</title>
 
     <meta name="description" content="نظام إدارة مهام التركيب والصيانة لأجهزة UPS — City Engineering">

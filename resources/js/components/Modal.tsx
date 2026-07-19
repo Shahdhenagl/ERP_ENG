@@ -44,7 +44,7 @@ export function Modal({ open, onClose, title, description, size = 'md', footer, 
     return createPortal(
         <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
             <div
-                className="absolute inset-0 bg-navy-950/50 backdrop-blur-sm"
+                className="absolute inset-0 bg-navy-950/60"
                 onClick={onClose}
                 aria-hidden
             />

@@ -6,7 +6,6 @@ import {
     HardDrive,
     LayoutDashboard,
     LogOut,
-    Menu,
     Plus,
     UserCog,
     Users,
@@ -62,15 +61,15 @@ export function AppLayout() {
         <div className="min-h-dvh bg-navy-50" dir="rtl">
             {/* ══ Desktop sidebar ══════════════════════════════ */}
             <aside className="surface-brand fixed inset-y-0 right-0 z-30 hidden w-72 flex-col lg:flex">
-                <div className="flex items-center gap-3 px-6 py-6">
-                    <img
-                        src="/brand/logo.png"
-                        alt="City Engineering"
-                        className="size-11 rounded-xl bg-white/95 object-contain p-1"
-                    />
+                <div className="flex items-center gap-3 px-6 py-7">
+                    {/* The mark alone — the full lockup bakes in a white plate
+                        that reads as a sticker on a dark sidebar. */}
+                    <img src="/brand/logo-mark.png" alt="" className="size-10 object-contain" />
                     <div className="min-w-0">
-                        <p className="truncate text-sm font-extrabold text-white">City Engineering</p>
-                        <p className="truncate text-[11px] text-brand-200">Expertise in Standby Energy</p>
+                        <p className="truncate text-[15px] leading-tight font-extrabold text-white">
+                            City Engineering
+                        </p>
+                        <p className="truncate text-[10px] text-brand-200">Expertise in Standby Energy</p>
                     </div>
                 </div>
 
@@ -84,7 +83,7 @@ export function AppLayout() {
                     <div className="px-4 pb-3">
                         <Link
                             to={path('/tasks/new')}
-                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-white/10 px-4 py-3 text-sm font-bold text-white ring-1 ring-white/20 backdrop-blur transition hover:bg-white/20"
+                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-brand-500"
                         >
                             <Plus className="size-4" />
                             مهمة جديدة
@@ -98,7 +97,7 @@ export function AppLayout() {
                             to={path('/profile')}
                             className="flex min-w-0 flex-1 items-center gap-3 rounded-xl p-1 transition hover:bg-white/10"
                         >
-                            <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-500/20 text-sm font-bold text-brand-200 ring-1 ring-white/10">
+                            <div className="grid size-10 shrink-0 place-items-center rounded-full bg-brand-600 text-sm font-bold text-white">
                                 {user?.name.charAt(0)}
                             </div>
                             <div className="min-w-0 flex-1">
@@ -121,22 +120,33 @@ export function AppLayout() {
             {menuOpen && (
                 <div className="fixed inset-0 z-50 lg:hidden">
                     <div
-                        className="absolute inset-0 bg-navy-950/50 backdrop-blur-sm"
+                        className="absolute inset-0 bg-navy-950/60"
                         onClick={() => setMenuOpen(false)}
                     />
                     <aside className="surface-brand animate-in absolute inset-y-0 right-0 flex w-72 flex-col">
-                        <div className="flex items-center justify-between px-5 py-5">
-                            <div className="flex items-center gap-3">
-                                <img
-                                    src="/brand/logo.png"
-                                    alt=""
-                                    className="size-10 rounded-xl bg-white/95 object-contain p-1"
-                                />
-                                <p className="text-sm font-extrabold text-white">City Engineering</p>
-                            </div>
+                        <div className="safe-top flex items-start justify-between px-5 pt-5 pb-4">
+                            {/* Opened from the avatar, so it leads with who you are
+                                rather than repeating the brand mark. */}
+                            <Link
+                                to={path('/profile')}
+                                onClick={() => setMenuOpen(false)}
+                                className="flex min-w-0 items-center gap-3"
+                            >
+                                <span className="grid size-11 shrink-0 place-items-center rounded-full bg-white/15 text-base font-bold text-white">
+                                    {user?.name.charAt(0)}
+                                </span>
+                                <span className="min-w-0">
+                                    <span className="block truncate text-sm font-bold text-white">
+                                        {user?.name}
+                                    </span>
+                                    <span className="block truncate text-[11px] text-brand-200">
+                                        {user?.role_label}
+                                    </span>
+                                </span>
+                            </Link>
                             <button
                                 onClick={() => setMenuOpen(false)}
-                                className="tap grid place-items-center rounded-lg p-2 text-white/60"
+                                className="tap -mt-1 grid place-items-center rounded-lg p-2 text-white/60"
                                 aria-label="إغلاق"
                             >
                                 <X className="size-5" />
@@ -164,21 +174,24 @@ export function AppLayout() {
 
             {/* ══ Main column ══════════════════════════════════ */}
             <div className="lg:mr-72">
-                <header className="safe-top sticky top-0 z-20 border-b border-navy-100 bg-white/85 backdrop-blur-lg">
-                    <div className="flex items-center gap-3 px-4 py-3 sm:px-6">
+                <header className="safe-top sticky top-0 z-20 border-b border-navy-100 bg-white">
+                    <div className="flex items-center gap-3 px-4 py-2.5 sm:px-6">
+                        {/* The avatar is the menu. A hamburger is a web convention;
+                            a phone app puts your own face in that corner. */}
                         <button
                             onClick={() => setMenuOpen(true)}
-                            className="tap grid place-items-center rounded-xl p-2 text-navy-600 transition hover:bg-navy-100 lg:hidden"
-                            aria-label="القائمة"
+                            className="tap grid size-10 shrink-0 place-items-center rounded-full bg-brand-600 text-sm font-bold text-white transition active:scale-95 lg:hidden"
+                            aria-label="الحساب والقائمة"
                         >
-                            <Menu className="size-5" />
+                            {user?.name.charAt(0)}
                         </button>
 
-                        <img
-                            src="/brand/logo.png"
-                            alt=""
-                            className="size-9 rounded-lg object-contain lg:hidden"
-                        />
+                        <div className="flex min-w-0 items-center gap-2 lg:hidden">
+                            <img src="/brand/logo-mark.png" alt="" className="size-8 object-contain" />
+                            <span className="truncate text-sm font-extrabold text-navy-900">
+                                City Engineering
+                            </span>
+                        </div>
 
                         <div className="flex-1" />
 
@@ -206,7 +219,7 @@ export function AppLayout() {
             </div>
 
             {/* ══ Mobile bottom bar ════════════════════════════ */}
-            <nav className="safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-navy-100 bg-white/95 backdrop-blur-lg lg:hidden">
+            <nav className="safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-navy-100 bg-white lg:hidden">
                 <div className="mx-auto flex max-w-md items-stretch justify-around px-2">
                     {mobileNav.map((item) => (
                         <BottomLink key={item.to} item={item} href={path(item.to)} />
@@ -217,7 +230,7 @@ export function AppLayout() {
                             to={path('/tasks/new')}
                             className="flex flex-1 flex-col items-center gap-1 py-2.5 text-navy-400"
                         >
-                            <span className="grid size-8 place-items-center rounded-xl bg-gradient-to-l from-brand-600 to-brand-500 text-white shadow-lg shadow-brand-500/30">
+                            <span className="grid size-8 place-items-center rounded-xl bg-brand-600 text-white">
                                 <Plus className="size-4.5" />
                             </span>
                             <span className="text-[10px] font-bold">جديدة</span>

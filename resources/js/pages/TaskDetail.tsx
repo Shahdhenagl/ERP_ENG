@@ -141,10 +141,8 @@ export function TaskDetail() {
             </div>
 
             {/* ── Hero ───────────────────────────────────────── */}
-            <div className="surface-brand relative mb-5 overflow-hidden rounded-3xl p-5 sm:p-6">
-                <div className="pointer-events-none absolute -top-16 -left-10 size-56 rounded-full bg-brand-400/20 blur-3xl" />
-
-                <div className="relative">
+            <div className="surface-brand mb-5 rounded-3xl p-5 sm:p-6">
+                <div>
                     <div className="flex flex-wrap items-center gap-2">
                         <span className="tabular rounded-lg bg-white/15 px-2.5 py-1 text-xs font-bold text-white ring-1 ring-white/20">
                             {task.code}

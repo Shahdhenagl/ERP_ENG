@@ -34,26 +34,19 @@ export function Login() {
     }
 
     return (
-        <div className="surface-brand relative flex min-h-dvh items-center justify-center overflow-hidden p-4" dir="rtl">
-            {/* Soft brand orbs — depth without heaviness */}
-            <div className="pointer-events-none absolute -top-32 -right-24 size-96 rounded-full bg-brand-400/20 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-40 -left-32 size-[28rem] rounded-full bg-brand-500/15 blur-3xl" />
-
-            <div className="animate-in relative w-full max-w-md">
+        <div className="surface-brand flex min-h-dvh items-center justify-center p-4" dir="rtl">
+            <div className="animate-in w-full max-w-md">
                 <div className="mb-8 flex flex-col items-center text-center">
                     <img
-                        src="/brand/logo.png"
+                        src="/brand/logo-mark.png"
                         alt="City Engineering"
-                        className="mb-5 size-24 rounded-3xl bg-white object-contain p-3 shadow-2xl shadow-navy-950/40"
+                        className="mb-5 size-24 object-contain"
                     />
                     <h1 className="text-2xl font-extrabold tracking-tight text-white">City Engineering</h1>
                     <p className="mt-1 text-sm text-brand-200">نظام إدارة التركيب والصيانة</p>
                 </div>
 
-                <form
-                    onSubmit={handleSubmit}
-                    className="rounded-3xl bg-white/95 p-6 shadow-2xl shadow-navy-950/30 backdrop-blur sm:p-8"
-                >
+                <form onSubmit={handleSubmit} className="rounded-3xl bg-white p-6 sm:p-8">
                     <h2 className="mb-6 text-lg font-bold text-navy-900">تسجيل الدخول</h2>
 
                     {error && (
