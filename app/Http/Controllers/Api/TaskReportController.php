@@ -2,17 +2,21 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\TaskStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\TaskReportResource;
 use App\Models\ActivityLog;
 use App\Models\Task;
 use App\Models\TaskReport;
+use App\Services\TaskWorkflow;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class TaskReportController extends Controller
 {
+    public function __construct(protected TaskWorkflow $workflow) {}
+
     /**
      * File (or refile) the diagnosis / completion report. One report of each
      * type per job — resubmitting updates the existing one rather than piling
@@ -75,6 +79,18 @@ class TaskReportController extends Controller
             $task,
             "{$task->code}: تم رفع تقرير ".($data['type'] === 'diagnosis' ? 'التشخيص' : 'الإنهاء'),
         );
+
+        // Filing the completion report *is* finishing the job. Making the
+        // technician then press a separate button left work sitting open,
+        // because from where they stand the job is already done.
+        if (
+            $data['type'] === 'completion'
+            && $task->status === TaskStatus::InProgress
+            && $user->isTechnician()
+            && $task->assigned_to === $user->id
+        ) {
+            $this->workflow->transition($task, TaskStatus::Completed, $user);
+        }
 
         return response()->json(
             new TaskReportResource($report->load('author', 'attachments')),

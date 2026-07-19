@@ -71,7 +71,15 @@ export function ReportForm({ open, onClose, task, type, existing, onSaved }: Rep
                 signature,
             })
 
-            toast.success(isCompletion ? 'تم حفظ تقرير الإنهاء.' : 'تم حفظ تقرير التشخيص.')
+            // Filing the completion report closes the job server-side, so say so
+            // rather than leaving the technician looking for another button.
+            toast.success(
+                isCompletion && task.status === 'in_progress'
+                    ? 'تم حفظ تقرير الإنهاء وإغلاق المهمة.'
+                    : isCompletion
+                      ? 'تم حفظ تقرير الإنهاء.'
+                      : 'تم حفظ تقرير التشخيص.',
+            )
             onSaved?.()
             onClose()
         } catch (caught) {

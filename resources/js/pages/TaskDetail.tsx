@@ -68,7 +68,17 @@ export function TaskDetail() {
     const TypeIcon = type.icon
 
     const isMine = task.technician?.id === user?.id
-    const canDrive = canDispatch || (isTechnician && isMine)
+
+    /**
+     * Progress is a field record, so only the assigned technician may move a
+     * job forward. Cancelling is a dispatch decision and stays with managers.
+     * Mirrors the same split enforced in TaskStatusController.
+     */
+    const driveable = task.allowed_next.filter((next) =>
+        next.value === 'cancelled' ? canDispatch : isTechnician && isMine,
+    )
+
+    const canDrive = isTechnician && isMine
     const completionReport = task.reports?.find((report) => report.type === 'completion')
     const diagnosisReport = task.reports?.find((report) => report.type === 'diagnosis')
 
@@ -179,12 +189,12 @@ export function TaskDetail() {
             </div>
 
             {/* ── Primary actions ────────────────────────────── */}
-            {canDrive && !task.is_terminal && (
+            {driveable.length > 0 && !task.is_terminal && (
                 <section className="card mb-5 p-4">
                     <h2 className="mb-3 text-sm font-bold text-navy-800">الإجراء التالي</h2>
 
                     <div className="flex flex-wrap gap-2">
-                        {task.allowed_next.map((next) => {
+                        {driveable.map((next) => {
                             const meta = STATUS[next.value]
                             const Icon = meta.icon
                             const isCancel = next.value === 'cancelled'
@@ -203,6 +213,12 @@ export function TaskDetail() {
                             )
                         })}
                     </div>
+
+                    {canDispatch && !isMine && !task.is_terminal && (
+                        <p className="mt-3 text-xs text-navy-400">
+                            تقدّم المهمة يسجّله الفني المسند إليها من تطبيقه.
+                        </p>
+                    )}
                 </section>
             )}
 
