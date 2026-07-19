@@ -13,7 +13,6 @@
 /.zed
 /auth.json
 /node_modules
-/public/build
 /public/hot
 /public/storage
 /storage/*.key
@@ -23,10 +22,10 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 
-# Build artefacts copied out of public/build by scripts/publish-sw.mjs
-/public/sw.js
-/public/sw.js.map
-/public/manifest.webmanifest
+# NOTE: public/build, public/sw.js and public/manifest.webmanifest ARE committed
+# on purpose. Hostinger shared hosting has no Node, so the frontend is built
+# locally and shipped in the repo — `git pull` on the server must land working
+# assets. Run `npm run build` before every deploy commit.
 
 # Screenshots produced by tests/Browser/uicheck.mjs
 /storage/app/screenshots
