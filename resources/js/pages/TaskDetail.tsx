@@ -188,6 +188,15 @@ export function TaskDetail() {
                 </div>
             </div>
 
+            {/* ── Progress ───────────────────────────────────── */}
+            {/* Where the job stands is the first question anyone opening this
+                page has, so it leads — and full width suits the stepper far
+                better than the sidebar column it used to sit in. */}
+            <section className="card mb-5 p-5">
+                <h2 className="mb-4 text-sm font-bold text-navy-800">مسار المهمة</h2>
+                <StatusRail task={task} />
+            </section>
+
             {/* ── Primary actions ────────────────────────────── */}
             {driveable.length > 0 && !task.is_terminal && (
                 <section className="card mb-5 p-4">
@@ -364,11 +373,6 @@ export function TaskDetail() {
 
                 {/* ── Sidebar ────────────────────────────────── */}
                 <div className="space-y-5">
-                    <section className="card p-5">
-                        <h2 className="mb-4 text-sm font-bold text-navy-800">مسار المهمة</h2>
-                        <StatusRail task={task} />
-                    </section>
-
                     {/* WhatsApp shortcuts */}
                     <section className="card p-5">
                         <h2 className="mb-3 text-sm font-bold text-navy-800">إرسال عبر واتساب</h2>
