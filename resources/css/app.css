@@ -1,0 +1,273 @@
+@import 'tailwindcss';
+
+@source '../js/**/*.{ts,tsx}';
+@source '../views/**/*.blade.php';
+
+/* ══════════════════════════════════════════════════════════════
+   City Engineering — design tokens
+   Palette sampled directly from the logo: the cyan→navy arrow
+   gradient and the deep navy wordmark.
+   ══════════════════════════════════════════════════════════════ */
+
+@theme {
+    /* Brand blue — the arrow ring */
+    --color-brand-50: #eef8fe;
+    --color-brand-100: #d6eefc;
+    --color-brand-200: #b0e0fa;
+    --color-brand-300: #79ccf6;
+    --color-brand-400: #33b4ee;
+    --color-brand-500: #1b9be0;
+    --color-brand-600: #0f7cbe;
+    --color-brand-700: #10639a;
+    --color-brand-800: #13537f;
+    --color-brand-900: #14466a;
+
+    /* Navy — the wordmark and the deep end of the gradient */
+    --color-navy-50: #f2f5fb;
+    --color-navy-100: #e3eaf6;
+    --color-navy-200: #c9d7ee;
+    --color-navy-300: #9fb8e0;
+    --color-navy-400: #6e93ce;
+    --color-navy-500: #4c73bb;
+    --color-navy-600: #3a5a9d;
+    --color-navy-700: #31497f;
+    --color-navy-800: #2c3f6a;
+    --color-navy-900: #16295c;
+    --color-navy-950: #0b1b3a;
+
+    --font-sans: 'Cairo', 'Tajawal', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+    --radius-xl: 1rem;
+    --radius-2xl: 1.25rem;
+    --radius-3xl: 1.75rem;
+
+    /* Layered, low-opacity shadows read as "premium" far better than one
+       heavy drop shadow. */
+    --shadow-card: 0 1px 2px rgb(11 27 58 / 0.04), 0 4px 16px rgb(11 27 58 / 0.06);
+    --shadow-card-hover: 0 2px 4px rgb(11 27 58 / 0.06), 0 12px 32px rgb(11 27 58 / 0.12);
+    --shadow-panel: 0 1px 3px rgb(11 27 58 / 0.05), 0 20px 48px rgb(11 27 58 / 0.1);
+}
+
+/* ── Cairo, self-hosted so the app works without outbound internet ── */
+@font-face {
+    font-family: 'Cairo';
+    font-style: normal;
+    font-weight: 200 1000;
+    font-display: swap;
+    src: url('/fonts/cairo-arabic.woff2') format('woff2');
+    unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+200C-200E, U+2010-2011, U+FB50-FDFF,
+        U+FE70-FEFF;
+}
+
+@font-face {
+    font-family: 'Cairo';
+    font-style: normal;
+    font-weight: 200 1000;
+    font-display: swap;
+    src: url('/fonts/cairo-latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+2000-206F, U+2122;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Base
+   ══════════════════════════════════════════════════════════════ */
+
+@layer base {
+    :root {
+        color-scheme: light;
+    }
+
+    html {
+        -webkit-text-size-adjust: 100%;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        @apply bg-navy-50 text-navy-900 font-sans antialiased;
+    }
+
+    /* Numerals stay latin even in Arabic copy — readings and phone numbers
+       are far easier to scan that way. */
+    input,
+    textarea,
+    select,
+    table,
+    .tabular {
+        font-variant-numeric: tabular-nums;
+    }
+
+    ::selection {
+        @apply bg-brand-200 text-navy-900;
+    }
+
+    /* Slim, unobtrusive scrollbars */
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-navy-200) transparent;
+    }
+
+    *::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    *::-webkit-scrollbar-thumb {
+        @apply bg-navy-200 rounded-full;
+    }
+
+    *::-webkit-scrollbar-thumb:hover {
+        @apply bg-navy-300;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Components
+   ══════════════════════════════════════════════════════════════ */
+
+/* Tailwind v4 note: `@apply` resolves real utilities only — a component class
+   cannot @apply another component class, so shared rules are spelled out. */
+@layer components {
+    .card {
+        @apply rounded-2xl border border-navy-100 bg-white shadow-[var(--shadow-card)];
+    }
+
+    .card-interactive {
+        @apply rounded-2xl border border-navy-100 bg-white shadow-[var(--shadow-card)]
+               transition-all duration-200 hover:-translate-y-0.5
+               hover:shadow-[var(--shadow-card-hover)] active:translate-y-0;
+    }
+
+    /* The signature brand surface — used for the sidebar and hero panels. */
+    .surface-brand {
+        background:
+            radial-gradient(120% 120% at 100% 0%, rgb(51 180 238 / 0.28) 0%, transparent 55%),
+            radial-gradient(100% 100% at 0% 100%, rgb(27 155 224 / 0.18) 0%, transparent 50%),
+            linear-gradient(160deg, var(--color-navy-900) 0%, var(--color-navy-950) 100%);
+    }
+
+    .input {
+        @apply w-full rounded-xl border border-navy-200 bg-white px-4 py-2.5 text-sm shadow-sm transition
+               placeholder:text-navy-300
+               focus:border-brand-400 focus:ring-4 focus:ring-brand-100 focus:outline-none
+               disabled:bg-navy-50 disabled:text-navy-400;
+    }
+
+    .label {
+        @apply mb-1.5 block text-sm font-semibold text-navy-700;
+    }
+
+    .btn,
+    .btn-primary,
+    .btn-secondary,
+    .btn-ghost,
+    .btn-danger,
+    .btn-whatsapp {
+        @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5
+               text-sm font-semibold transition-all duration-150
+               focus-visible:ring-4 focus-visible:outline-none
+               active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
+    }
+
+    .btn-primary {
+        @apply bg-gradient-to-l from-brand-600 to-brand-500 text-white
+               shadow-lg shadow-brand-500/25 hover:brightness-105 hover:shadow-brand-500/40
+               focus-visible:ring-brand-200;
+    }
+
+    .btn-secondary {
+        @apply border border-navy-200 bg-white text-navy-700
+               hover:border-navy-300 hover:bg-navy-50 focus-visible:ring-navy-100;
+    }
+
+    .btn-ghost {
+        @apply text-navy-600 hover:bg-navy-100 focus-visible:ring-navy-100;
+    }
+
+    .btn-danger {
+        @apply bg-red-600 text-white shadow-lg shadow-red-600/25
+               hover:bg-red-700 focus-visible:ring-red-200;
+    }
+
+    .btn-whatsapp {
+        @apply bg-[#25D366] text-white shadow-lg shadow-[#25D366]/25
+               hover:bg-[#1eb855] focus-visible:ring-green-200;
+    }
+
+    .badge {
+        @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1
+               text-xs font-bold whitespace-nowrap;
+    }
+
+    /* Touch targets on the technician's phone must clear 44px. */
+    .tap {
+        @apply min-h-11 min-w-11;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Utilities & motion
+   ══════════════════════════════════════════════════════════════ */
+
+@layer utilities {
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .safe-top {
+        padding-top: env(safe-area-inset-top);
+    }
+
+    .safe-bottom {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .animate-in {
+        animation: fade-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .shimmer {
+        background: linear-gradient(
+            90deg,
+            var(--color-navy-100) 0%,
+            var(--color-navy-50) 50%,
+            var(--color-navy-100) 100%
+        );
+        background-size: 200% 100%;
+        animation: shimmer 1.4s ease-in-out infinite;
+    }
+}
+
+@keyframes fade-up {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes shimmer {
+    from {
+        background-position: 200% 0;
+    }
+    to {
+        background-position: -200% 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
