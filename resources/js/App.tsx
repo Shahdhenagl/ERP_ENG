@@ -8,6 +8,7 @@ import { areaFor } from '@/lib/nav'
 import { CustomerList } from '@/pages/CustomerList'
 import { Dashboard } from '@/pages/Dashboard'
 import { Login } from '@/pages/Login'
+import { Profile } from '@/pages/Profile'
 import { TaskDetail } from '@/pages/TaskDetail'
 import { TaskForm } from '@/pages/TaskForm'
 import { TaskList } from '@/pages/TaskList'
@@ -40,6 +41,7 @@ export function App() {
                                         <Route index element={<Dashboard />} />
                                         <Route path="tasks" element={<TaskList />} />
                                         <Route path="tasks/:id" element={<TaskDetail />} />
+                                        <Route path="profile" element={<Profile />} />
                                     </Route>
 
                                     {/* ── Dispatcher area ──────────────── */}
@@ -50,6 +52,7 @@ export function App() {
                                         <Route path="tasks/:id" element={<TaskDetail />} />
                                         <Route path="tasks/:id/edit" element={<TaskForm />} />
                                         <Route path="customers" element={<CustomerList />} />
+                                        <Route path="profile" element={<Profile />} />
 
                                         <Route element={<RequireRole roles={['admin']} />}>
                                             <Route path="users" element={<UserList />} />

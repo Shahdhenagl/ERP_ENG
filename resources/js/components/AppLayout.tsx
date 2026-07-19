@@ -7,6 +7,7 @@ import {
     LogOut,
     Menu,
     Plus,
+    UserCog,
     Users,
     X,
     type LucideIcon,
@@ -34,6 +35,7 @@ const NAV: NavItem[] = [
     { to: '/tasks', label: 'المهام', icon: ClipboardList, mobile: true },
     { to: '/customers', label: 'العملاء', icon: Building2, roles: ['admin', 'manager'], mobile: true },
     { to: '/users', label: 'المستخدمون', icon: Users, roles: ['admin'] },
+    { to: '/profile', label: 'حسابي', icon: UserCog },
 ]
 
 export function AppLayout() {
@@ -90,13 +92,18 @@ export function AppLayout() {
 
                 <div className="border-t border-white/10 p-4">
                     <div className="flex items-center gap-3">
-                        <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-500/20 text-sm font-bold text-brand-200 ring-1 ring-white/10">
-                            {user?.name.charAt(0)}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-bold text-white">{user?.name}</p>
-                            <p className="truncate text-[11px] text-brand-200">{user?.role_label}</p>
-                        </div>
+                        <Link
+                            to={path('/profile')}
+                            className="flex min-w-0 flex-1 items-center gap-3 rounded-xl p-1 transition hover:bg-white/10"
+                        >
+                            <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-500/20 text-sm font-bold text-brand-200 ring-1 ring-white/10">
+                                {user?.name.charAt(0)}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-bold text-white">{user?.name}</p>
+                                <p className="truncate text-[11px] text-brand-200">{user?.role_label}</p>
+                            </div>
+                        </Link>
                         <button
                             onClick={handleLogout}
                             className="tap grid place-items-center rounded-lg p-2 text-white/50 transition hover:bg-white/10 hover:text-white"

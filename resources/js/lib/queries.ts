@@ -268,6 +268,31 @@ export function useDeleteUser() {
     })
 }
 
+/* ── Own profile ─────────────────────────────────────────── */
+
+export function useUpdateProfile() {
+    const client = useQueryClient()
+    const { refresh } = useAuth()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (await api.put<{ data: User }>('/profile', payload)).data.data,
+        onSuccess: async () => {
+            // The header and sidebar read the name off the auth context, so it
+            // has to be re-fetched — invalidating queries alone would not move it.
+            await refresh()
+            void client.invalidateQueries({ queryKey: ['users'] })
+        },
+    })
+}
+
+export function useUpdatePassword() {
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (await api.put<{ message: string }>('/profile/password', payload)).data,
+    })
+}
+
 /* ── Notifications ───────────────────────────────────────── */
 
 export function useNotifications() {
