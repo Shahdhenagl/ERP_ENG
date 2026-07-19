@@ -8,6 +8,7 @@ use App\Enums\TaskType;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\TaskResource;
 use App\Models\ActivityLog;
+use App\Models\Asset;
 use App\Models\Customer;
 use App\Models\Task;
 use App\Models\User;
@@ -27,7 +28,7 @@ class TaskController extends Controller
         $user = $request->user();
 
         $tasks = Task::query()
-            ->with(['customer', 'technician', 'creator'])
+            ->with(['customer', 'technician', 'creator', 'asset'])
             // Technicians only ever see their own work.
             ->when($user->isTechnician(), fn ($q) => $q->forTechnician($user->id))
             ->when($request->string('status')->toString(), fn ($q, $s) => $q->where('status', $s))
@@ -58,12 +59,11 @@ class TaskController extends Controller
             'site_lat' => ['nullable', 'numeric', 'between:-90,90'],
             'site_lng' => ['nullable', 'numeric', 'between:-180,180'],
             'site_map_url' => ['nullable', 'string', 'max:1000'],
-            'device_brand' => ['nullable', 'string', 'max:120'],
-            'device_model' => ['nullable', 'string', 'max:120'],
-            'device_serial' => ['nullable', 'string', 'max:120'],
-            'device_capacity' => ['nullable', 'string', 'max:64'],
+            'asset_id' => ['nullable', 'exists:assets,id'],
             'scheduled_at' => ['nullable', 'date'],
         ]);
+
+        $this->assertAssetBelongsToCustomer($data);
 
         $data['created_by'] = $request->user()->id;
         $data['status'] = TaskStatus::Pending;
@@ -91,7 +91,7 @@ class TaskController extends Controller
         }
 
         return response()->json(
-            new TaskResource($task->load(['customer', 'technician', 'creator'])),
+            new TaskResource($task->load(['customer', 'technician', 'creator', 'asset'])),
             201,
         );
     }
@@ -104,6 +104,7 @@ class TaskController extends Controller
             'customer',
             'technician',
             'creator',
+            'asset',
             'statusLogs.user',
             'reports.author',
             'reports.attachments',
@@ -123,18 +124,39 @@ class TaskController extends Controller
             'site_lat' => ['nullable', 'numeric', 'between:-90,90'],
             'site_lng' => ['nullable', 'numeric', 'between:-180,180'],
             'site_map_url' => ['nullable', 'string', 'max:1000'],
-            'device_brand' => ['nullable', 'string', 'max:120'],
-            'device_model' => ['nullable', 'string', 'max:120'],
-            'device_serial' => ['nullable', 'string', 'max:120'],
-            'device_capacity' => ['nullable', 'string', 'max:64'],
+            'asset_id' => ['nullable', 'exists:assets,id'],
             'scheduled_at' => ['nullable', 'date'],
         ]);
+
+        $this->assertAssetBelongsToCustomer($data);
 
         $task->update($data);
 
         ActivityLog::record('task.updated', $task, "تم تعديل المهمة {$task->code}");
 
-        return new TaskResource($task->fresh(['customer', 'technician', 'creator']));
+        return new TaskResource($task->fresh(['customer', 'technician', 'creator', 'asset']));
+    }
+
+    /**
+     * A job may only point at a device the same customer owns. Without this,
+     * picking an id by hand would attach one customer's unit to another's job
+     * and quietly corrupt that device's service history.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    protected function assertAssetBelongsToCustomer(array $data): void
+    {
+        if (empty($data['asset_id'])) {
+            return;
+        }
+
+        $owner = Asset::whereKey($data['asset_id'])->value('customer_id');
+
+        if ((int) $owner !== (int) $data['customer_id']) {
+            throw ValidationException::withMessages([
+                'asset_id' => 'الجهاز المحدد لا يخص هذا العميل.',
+            ]);
+        }
     }
 
     /** Assign or reassign the job to a technician. */

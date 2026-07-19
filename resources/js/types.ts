@@ -52,6 +52,43 @@ export interface Customer {
     created_at: string | null
 }
 
+export type AssetStatus = 'active' | 'under_repair' | 'retired'
+
+export interface Asset {
+    id: number
+    code: string
+    serial: string | null
+
+    brand: string | null
+    model: string | null
+    capacity: string | null
+    /** Best available human label — brand+model, else serial, else code. */
+    label: string
+
+    customer_id: number
+    customer?: Customer
+
+    site_address: string | null
+    site_lat: number | null
+    site_lng: number | null
+
+    sold_at: string | null
+    installed_at: string | null
+    warranty_months: number | null
+    warranty_ends_at: string | null
+    /** null means unknown — no sale date on file, which is not the same as expired. */
+    under_warranty: boolean | null
+    warranty_label: string
+
+    status: AssetStatus
+    status_label: string
+    notes: string | null
+
+    tasks_count?: number
+    tasks?: Task[]
+    created_at: string | null
+}
+
 export interface TaskStatusLog {
     id: number
     from_status: TaskStatus | null
@@ -128,12 +165,16 @@ export interface Task {
     effective_address: string | null
     navigation_url: string | null
 
+    asset_id: number | null
+    asset?: Asset
+
+    /** Flat summary of the linked device; null when the job has no device. */
     device: {
         brand: string | null
         model: string | null
         serial: string | null
         capacity: string | null
-    }
+    } | null
 
     scheduled_at: string | null
     accepted_at: string | null

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AssetController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\DashboardController;
@@ -57,6 +58,10 @@ Route::middleware(['auth:sanctum', 'role'])->group(function () {
 
     // A technician needs the customer card for the job they are standing at.
     Route::get('customers/{customer}', [CustomerController::class, 'show']);
+
+    // Device history for the unit in front of them — the controller refuses
+    // assets they have never been dispatched to.
+    Route::get('assets/{asset}', [AssetController::class, 'show']);
 });
 
 /*
@@ -74,6 +79,11 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::post('customers', [CustomerController::class, 'store']);
     Route::put('customers/{customer}', [CustomerController::class, 'update']);
     Route::delete('customers/{customer}', [CustomerController::class, 'destroy']);
+
+    Route::get('assets', [AssetController::class, 'index']);
+    Route::post('assets', [AssetController::class, 'store']);
+    Route::put('assets/{asset}', [AssetController::class, 'update']);
+    Route::delete('assets/{asset}', [AssetController::class, 'destroy']);
 
     Route::get('technicians', [UserController::class, 'technicians']);
 });

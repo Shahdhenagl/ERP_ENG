@@ -20,6 +20,7 @@ class Task extends Model
     protected $fillable = [
         'code',
         'customer_id',
+        'asset_id',
         'assigned_to',
         'created_by',
         'title',
@@ -31,10 +32,6 @@ class Task extends Model
         'site_lat',
         'site_lng',
         'site_map_url',
-        'device_brand',
-        'device_model',
-        'device_serial',
-        'device_capacity',
         'scheduled_at',
         'accepted_at',
         'on_the_way_at',
@@ -87,6 +84,11 @@ class Task extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function asset(): BelongsTo
+    {
+        return $this->belongsTo(Asset::class);
     }
 
     public function technician(): BelongsTo
@@ -195,7 +197,7 @@ class Task extends Model
         return $query->where(function (Builder $q) use ($term) {
             $q->where('title', 'like', "%{$term}%")
                 ->orWhere('code', 'like', "%{$term}%")
-                ->orWhere('device_serial', 'like', "%{$term}%")
+                ->orWhereHas('asset', fn (Builder $a) => $a->where('serial', 'like', "%{$term}%"))
                 ->orWhereHas('customer', fn (Builder $c) => $c->where('name', 'like', "%{$term}%"));
         });
     }

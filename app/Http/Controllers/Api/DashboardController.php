@@ -88,7 +88,7 @@ class DashboardController extends Controller
 
         // What needs attention right now.
         $upcoming = $scoped()
-            ->with(['customer', 'technician'])
+            ->with(['customer', 'technician', 'asset'])
             ->open()
             ->orderByRaw("FIELD(priority, 'urgent','high','normal','low')")
             ->orderByRaw('scheduled_at IS NULL, scheduled_at ASC')

@@ -5,6 +5,8 @@ import { ToastProvider } from '@/components/Toast'
 import { PageLoader } from '@/components/ui'
 import { AuthProvider, useAuth } from '@/lib/auth'
 import { areaFor } from '@/lib/nav'
+import { AssetDetail } from '@/pages/AssetDetail'
+import { AssetList } from '@/pages/AssetList'
 import { CustomerList } from '@/pages/CustomerList'
 import { Dashboard } from '@/pages/Dashboard'
 import { Login } from '@/pages/Login'
@@ -41,6 +43,9 @@ export function App() {
                                         <Route index element={<Dashboard />} />
                                         <Route path="tasks" element={<TaskList />} />
                                         <Route path="tasks/:id" element={<TaskDetail />} />
+                                        {/* Read-only, and scoped by the API to
+                                            devices they were dispatched to. */}
+                                        <Route path="assets/:id" element={<AssetDetail />} />
                                         <Route path="profile" element={<Profile />} />
                                     </Route>
 
@@ -52,6 +57,8 @@ export function App() {
                                         <Route path="tasks/:id" element={<TaskDetail />} />
                                         <Route path="tasks/:id/edit" element={<TaskForm />} />
                                         <Route path="customers" element={<CustomerList />} />
+                                        <Route path="assets" element={<AssetList />} />
+                                        <Route path="assets/:id" element={<AssetDetail />} />
                                         <Route path="profile" element={<Profile />} />
 
                                         <Route element={<RequireRole roles={['admin']} />}>

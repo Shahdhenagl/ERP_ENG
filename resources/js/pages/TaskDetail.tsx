@@ -25,7 +25,7 @@ import { useToast } from '@/components/Toast'
 import { Badge, Button, ErrorState, Field, PageLoader, Select, Textarea } from '@/components/ui'
 import { errorMessage } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
-import { DEVICE_CONDITION, PRIORITY, STATUS, TASK_TYPE } from '@/lib/domain'
+import { DEVICE_CONDITION, PRIORITY, STATUS, TASK_TYPE, warrantyChip } from '@/lib/domain'
 import { formatBytes, formatDateTime, formatSmart, telLink } from '@/lib/format'
 import { useArea } from '@/lib/nav'
 import {
@@ -271,18 +271,31 @@ export function TaskDetail() {
                     )}
 
                     {/* ── Device ─────────────────────────────── */}
-                    {(task.device.brand || task.device.model || task.device.serial) && (
+                    {task.asset && (
                         <section className="card p-5">
-                            <h2 className="mb-4 flex items-center gap-2 text-sm font-bold text-navy-800">
-                                <Cpu className="size-4 text-navy-300" />
-                                بيانات الجهاز
-                            </h2>
+                            <div className="mb-4 flex flex-wrap items-center gap-2">
+                                <h2 className="flex items-center gap-2 text-sm font-bold text-navy-800">
+                                    <Cpu className="size-4 text-navy-300" />
+                                    الجهاز
+                                </h2>
+                                {/* Whether this visit is billable hangs on the warranty,
+                                    so it sits next to the device, not buried a page away. */}
+                                <span className={clsx('badge', warrantyChip(task.asset.under_warranty))}>
+                                    ضمان: {task.asset.warranty_label}
+                                </span>
+                                <Link
+                                    to={path(`/assets/${task.asset.id}`)}
+                                    className="mr-auto text-xs font-bold text-brand-600 hover:underline"
+                                >
+                                    سجل الجهاز
+                                </Link>
+                            </div>
 
                             <dl className="grid grid-cols-2 gap-4 text-sm">
-                                <Detail label="الماركة" value={task.device.brand} />
-                                <Detail label="الموديل" value={task.device.model} />
-                                <Detail label="القدرة" value={task.device.capacity} />
-                                <Detail label="الرقم التسلسلي" value={task.device.serial} mono />
+                                <Detail label="الماركة" value={task.asset.brand} />
+                                <Detail label="الموديل" value={task.asset.model} />
+                                <Detail label="القدرة" value={task.asset.capacity} />
+                                <Detail label="الرقم التسلسلي" value={task.asset.serial} mono />
                             </dl>
                         </section>
                     )}

@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
 use App\Enums\TaskType;
+use App\Models\Asset;
 use App\Models\Customer;
 use App\Models\Task;
 use App\Models\User;
@@ -26,10 +27,19 @@ class TaskFactory extends Factory
             'type' => fake()->randomElement(TaskType::cases()),
             'priority' => TaskPriority::Normal,
             'status' => TaskStatus::Pending,
-            'device_brand' => fake()->randomElement(['APC', 'Eaton', 'Vertiv']),
-            'device_serial' => strtoupper(fake()->bothify('???-#####')),
+            'asset_id' => null,
             'scheduled_at' => fake()->optional()->dateTimeBetween('now', '+2 weeks'),
         ];
+    }
+
+    /** Attaches a device owned by the same customer the job is for. */
+    public function withAsset(): static
+    {
+        return $this->afterCreating(function (Task $task) {
+            $task->update([
+                'asset_id' => Asset::factory()->create(['customer_id' => $task->customer_id])->id,
+            ]);
+        });
     }
 
     public function assignedTo(User $technician): static

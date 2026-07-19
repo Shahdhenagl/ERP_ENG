@@ -1,15 +1,17 @@
+import clsx from 'clsx'
 import { ArrowRight, MessageCircle, Plus, Save } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { AssetForm } from '@/components/AssetForm'
 import { CustomerForm } from '@/components/CustomerForm'
 import { useToast } from '@/components/Toast'
 import { Button, ErrorState, Field, Input, PageHeader, PageLoader, Select, Textarea } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
-import { PRIORITY, TASK_TYPE } from '@/lib/domain'
+import { PRIORITY, TASK_TYPE, warrantyChip } from '@/lib/domain'
 import { toDateTimeLocal } from '@/lib/format'
 import { useArea } from '@/lib/nav'
-import { useCreateTask, useCustomers, useTask, useTechnicians, useUpdateTask } from '@/lib/queries'
-import type { Customer, Task, TaskPriority, TaskType } from '@/types'
+import { useAssets, useCreateTask, useCustomers, useTask, useTechnicians, useUpdateTask } from '@/lib/queries'
+import type { Asset, Customer, Task, TaskPriority, TaskType } from '@/types'
 
 export function TaskForm() {
     const { id } = useParams<{ id: string }>()
@@ -28,6 +30,7 @@ export function TaskForm() {
     const [customerFormOpen, setCustomerFormOpen] = useState(false)
     const [errors, setErrors] = useState<Record<string, string>>({})
     const [saved, setSaved] = useState<Task | null>(null)
+    const [assetFormOpen, setAssetFormOpen] = useState(false)
 
     const [form, setForm] = useState({
         customer_id: '',
@@ -38,10 +41,7 @@ export function TaskForm() {
         priority: 'normal' as TaskPriority,
         scheduled_at: '',
         site_address: '',
-        device_brand: '',
-        device_model: '',
-        device_serial: '',
-        device_capacity: '',
+        asset_id: '',
     })
 
     // Hydrate the form once the record arrives in edit mode.
@@ -57,15 +57,20 @@ export function TaskForm() {
             priority: existing.priority,
             scheduled_at: toDateTimeLocal(existing.scheduled_at),
             site_address: existing.site_address ?? '',
-            device_brand: existing.device.brand ?? '',
-            device_model: existing.device.model ?? '',
-            device_serial: existing.device.serial ?? '',
-            device_capacity: existing.device.capacity ?? '',
+            asset_id: String(existing.asset_id ?? ''),
         })
     }, [existing])
 
     const set = (key: keyof typeof form) => (value: string) =>
         setForm((current) => ({ ...current, [key]: value }))
+
+    // Only the chosen customer's devices may be attached — the API rejects
+    // anything else, so the picker should never offer it.
+    const { data: assetPage } = useAssets(
+        form.customer_id ? { customer_id: Number(form.customer_id), per_page: 200 } : {},
+    )
+    const customerAssets = form.customer_id ? (assetPage?.data ?? []) : []
+    const selectedAsset = customerAssets.find((asset) => String(asset.id) === form.asset_id)
 
     if (isEdit && loadingTask) return <PageLoader />
     if (isEdit && isError) return <ErrorState message="تعذّر تحميل المهمة." />
@@ -80,10 +85,7 @@ export function TaskForm() {
             description: form.description || null,
             scheduled_at: form.scheduled_at || null,
             site_address: form.site_address || null,
-            device_brand: form.device_brand || null,
-            device_model: form.device_model || null,
-            device_serial: form.device_serial || null,
-            device_capacity: form.device_capacity || null,
+            asset_id: form.asset_id ? Number(form.asset_id) : null,
         }
 
         try {
@@ -150,7 +152,7 @@ export function TaskForm() {
                                     ...current,
                                     title: '',
                                     description: '',
-                                    device_serial: '',
+                                    asset_id: '',
                                 }))
                             }}
                         >
@@ -185,7 +187,15 @@ export function TaskForm() {
                             <div className="flex gap-2">
                                 <Select
                                     value={form.customer_id}
-                                    onChange={(event) => set('customer_id')(event.target.value)}
+                                    onChange={(event) =>
+                                        // Drop the device too: it belongs to the
+                                        // previous customer and the API would reject it.
+                                        setForm((current) => ({
+                                            ...current,
+                                            customer_id: event.target.value,
+                                            asset_id: '',
+                                        }))
+                                    }
                                     className="flex-1"
                                 >
                                     <option value="">— اختر العميل —</option>
@@ -285,41 +295,61 @@ export function TaskForm() {
 
                 {/* ── Device ─────────────────────────────────── */}
                 <section className="card p-5">
-                    <h2 className="mb-4 text-sm font-bold text-navy-800">بيانات الجهاز (اختياري)</h2>
-
-                    <div className="grid gap-4 sm:grid-cols-2">
-                        <Field label="الماركة" error={errors.device_brand}>
-                            <Input
-                                value={form.device_brand}
-                                onChange={(event) => set('device_brand')(event.target.value)}
-                                placeholder="APC / Eaton / Vertiv…"
-                            />
-                        </Field>
-
-                        <Field label="الموديل" error={errors.device_model}>
-                            <Input
-                                value={form.device_model}
-                                onChange={(event) => set('device_model')(event.target.value)}
-                            />
-                        </Field>
-
-                        <Field label="القدرة" error={errors.device_capacity}>
-                            <Input
-                                value={form.device_capacity}
-                                onChange={(event) => set('device_capacity')(event.target.value)}
-                                placeholder="20 kVA"
-                            />
-                        </Field>
-
-                        <Field label="الرقم التسلسلي" error={errors.device_serial}>
-                            <Input
-                                value={form.device_serial}
-                                onChange={(event) => set('device_serial')(event.target.value)}
-                                dir="ltr"
-                                className="text-left"
-                            />
-                        </Field>
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                        <h2 className="text-sm font-bold text-navy-800">الجهاز (اختياري)</h2>
+                        {form.customer_id && (
+                            <button
+                                type="button"
+                                onClick={() => setAssetFormOpen(true)}
+                                className="text-xs font-bold text-brand-600 hover:underline"
+                            >
+                                + تسجيل جهاز جديد
+                            </button>
+                        )}
                     </div>
+
+                    {!form.customer_id ? (
+                        <p className="text-sm text-navy-400">اختر العميل أولًا لعرض أجهزته.</p>
+                    ) : (
+                        <>
+                            <Field label="اختر الجهاز" error={errors.asset_id}>
+                                <Select
+                                    value={form.asset_id}
+                                    onChange={(event) => set('asset_id')(event.target.value)}
+                                >
+                                    <option value="">— بدون جهاز محدد —</option>
+                                    {customerAssets.map((asset) => (
+                                        <option key={asset.id} value={asset.id}>
+                                            {asset.label}
+                                            {asset.serial ? ` — ${asset.serial}` : ''}
+                                        </option>
+                                    ))}
+                                </Select>
+                            </Field>
+
+                            {customerAssets.length === 0 && (
+                                <p className="mt-2 text-xs text-navy-400">
+                                    لا توجد أجهزة مسجّلة لهذا العميل بعد.
+                                </p>
+                            )}
+
+                            {selectedAsset && (
+                                <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl bg-navy-50 p-3">
+                                    <span className="tabular text-[11px] font-bold text-brand-600">
+                                        {selectedAsset.code}
+                                    </span>
+                                    {/* Warranty decides whether the visit is billable, so
+                                        surface it before the job is even created. */}
+                                    <span className={clsx('badge', warrantyChip(selectedAsset.under_warranty))}>
+                                        ضمان: {selectedAsset.warranty_label}
+                                    </span>
+                                    {selectedAsset.capacity && (
+                                        <span className="text-xs text-navy-500">{selectedAsset.capacity}</span>
+                                    )}
+                                </div>
+                            )}
+                        </>
+                    )}
                 </section>
 
                 {/* ── Assignment ─────────────────────────────── */}
@@ -360,6 +390,17 @@ export function TaskForm() {
                 onClose={() => setCustomerFormOpen(false)}
                 onSaved={(customer: Customer) => set('customer_id')(String(customer.id))}
             />
+
+            {assetFormOpen && (
+                <AssetForm
+                    open={assetFormOpen}
+                    onClose={() => setAssetFormOpen(false)}
+                    customerId={Number(form.customer_id)}
+                    // Select it straight away — the manager opened this dialog
+                    // because it is the device the job is about.
+                    onSaved={(asset: Asset) => set('asset_id')(String(asset.id))}
+                />
+            )}
         </>
     )
 }

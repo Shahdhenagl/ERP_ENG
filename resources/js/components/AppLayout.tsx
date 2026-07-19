@@ -3,6 +3,7 @@ import {
     Bell,
     Building2,
     ClipboardList,
+    HardDrive,
     LayoutDashboard,
     LogOut,
     Menu,
@@ -34,6 +35,7 @@ const NAV: NavItem[] = [
     { to: '/', label: 'الرئيسية', icon: LayoutDashboard, mobile: true },
     { to: '/tasks', label: 'المهام', icon: ClipboardList, mobile: true },
     { to: '/customers', label: 'العملاء', icon: Building2, roles: ['admin', 'manager'], mobile: true },
+    { to: '/assets', label: 'الأجهزة', icon: HardDrive, roles: ['admin', 'manager'] },
     { to: '/users', label: 'المستخدمون', icon: Users, roles: ['admin'] },
     { to: '/profile', label: 'حسابي', icon: UserCog },
 ]

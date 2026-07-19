@@ -3,6 +3,7 @@ import { api } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import type {
     AppNotification,
+    Asset,
     Customer,
     DashboardData,
     Paginated,
@@ -18,6 +19,8 @@ export const keys = {
     dashboard: ['dashboard'] as const,
     tasks: (filters?: Record<string, unknown>) => ['tasks', filters ?? {}] as const,
     task: (id: number | string) => ['task', Number(id)] as const,
+    assets: (filters?: Record<string, unknown>) => ['assets', filters ?? {}] as const,
+    asset: (id: number | string) => ['asset', Number(id)] as const,
     customers: (filters?: Record<string, unknown>) => ['customers', filters ?? {}] as const,
     customer: (id: number | string) => ['customer', Number(id)] as const,
     users: (filters?: Record<string, unknown>) => ['users', filters ?? {}] as const,
@@ -264,6 +267,54 @@ export function useDeleteUser() {
         onSuccess: () => {
             void client.invalidateQueries({ queryKey: ['users'] })
             void client.invalidateQueries({ queryKey: keys.technicians })
+        },
+    })
+}
+
+/* ── Assets (the device registry) ────────────────────────── */
+
+export function useAssets(filters: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: keys.assets(filters),
+        queryFn: async () => (await api.get<Paginated<Asset>>('/assets', { params: filters })).data,
+        // The list endpoint is dispatcher-only; asking as a technician just 403s.
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useAsset(id: number | string | undefined) {
+    return useQuery({
+        queryKey: keys.asset(id ?? 0),
+        queryFn: async () => (await api.get<{ data: Asset }>(`/assets/${id}`)).data.data,
+        enabled: Boolean(id),
+    })
+}
+
+export function useSaveAsset(id?: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            id
+                ? (await api.put<{ data: Asset }>(`/assets/${id}`, payload)).data.data
+                : (await api.post<Asset>('/assets', payload)).data,
+        onSuccess: (asset) => {
+            void client.invalidateQueries({ queryKey: ['assets'] })
+            void client.invalidateQueries({ queryKey: keys.asset(asset.id) })
+        },
+    })
+}
+
+export function useDeleteAsset() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id: number) => (await api.delete(`/assets/${id}`)).data,
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: ['assets'] })
         },
     })
 }

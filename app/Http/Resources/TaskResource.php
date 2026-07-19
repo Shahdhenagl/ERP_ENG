@@ -42,12 +42,19 @@ class TaskResource extends JsonResource
             'effective_address' => $this->effectiveAddress(),
             'navigation_url' => $this->navigationUrl(),
 
-            'device' => [
-                'brand' => $this->device_brand,
-                'model' => $this->device_model,
-                'serial' => $this->device_serial,
-                'capacity' => $this->device_capacity,
-            ],
+            'asset_id' => $this->asset_id,
+            'asset' => new AssetResource($this->whenLoaded('asset')),
+
+            // Kept as a flat summary so a task row can show the device without
+            // eager-loading the asset — the registry is the source of truth.
+            'device' => $this->relationLoaded('asset') && $this->asset
+                ? [
+                    'brand' => $this->asset->brand,
+                    'model' => $this->asset->model,
+                    'serial' => $this->asset->serial,
+                    'capacity' => $this->asset->capacity,
+                ]
+                : null,
 
             'scheduled_at' => $this->scheduled_at?->toIso8601String(),
             'accepted_at' => $this->accepted_at?->toIso8601String(),

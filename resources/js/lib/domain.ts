@@ -12,7 +12,7 @@ import {
     XCircle,
     type LucideIcon,
 } from 'lucide-react'
-import type { DeviceCondition, TaskPriority, TaskStatus, TaskType } from '@/types'
+import type { AssetStatus, DeviceCondition, TaskPriority, TaskStatus, TaskType } from '@/types'
 
 /**
  * One place that decides how every status/priority/type is worded and
@@ -126,6 +126,24 @@ export const TASK_TYPE: Record<TaskType, { label: string; icon: LucideIcon }> = 
     repair: { label: 'إصلاح عطل', icon: AlertTriangle },
     inspection: { label: 'معاينة', icon: Search },
     delivery: { label: 'تسليم', icon: Truck },
+}
+
+export const ASSET_STATUS: Record<AssetStatus, { label: string; chip: string }> = {
+    active: { label: 'في الخدمة', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
+    under_repair: { label: 'تحت الإصلاح', chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' },
+    retired: { label: 'خارج الخدمة', chip: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200' },
+}
+
+/**
+ * Three warranty states, not two. `null` means no sale date is on file — and
+ * showing that as "expired" would bill a customer for a covered repair.
+ */
+export function warrantyChip(underWarranty: boolean | null): string {
+    if (underWarranty === null) return 'bg-slate-100 text-slate-600 ring-1 ring-slate-200'
+
+    return underWarranty
+        ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
+        : 'bg-red-50 text-red-700 ring-1 ring-red-200'
 }
 
 export const DEVICE_CONDITION: Record<DeviceCondition, { label: string; chip: string }> = {

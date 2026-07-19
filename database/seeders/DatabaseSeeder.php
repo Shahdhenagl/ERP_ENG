@@ -2,10 +2,12 @@
 
 namespace Database\Seeders;
 
+use App\Enums\AssetStatus;
 use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
 use App\Enums\TaskType;
 use App\Enums\UserRole;
+use App\Models\Asset;
 use App\Models\Customer;
 use App\Models\Task;
 use App\Models\User;
@@ -95,6 +97,42 @@ class DatabaseSeeder extends Seeder
             'created_by' => $manager->id,
         ]));
 
+        // ── The serialized devices those customers own ───────
+        // Warranty deliberately varies: in force, expired, and unknown — the
+        // three states the UI has to tell apart.
+        $assets = collect([
+            [
+                'serial' => 'APC-SLX-88213',
+                'brand' => 'APC', 'model' => 'Symmetra LX', 'capacity' => '20 kVA',
+                'sold_at' => now()->subMonths(8), 'warranty_months' => 24,
+                'installed_at' => now()->subMonths(7),
+            ],
+            [
+                'serial' => 'ETN-9PX-40912',
+                'brand' => 'Eaton', 'model' => '9PX', 'capacity' => '11 kVA',
+                'sold_at' => now()->subMonths(38), 'warranty_months' => 24,
+                'installed_at' => now()->subMonths(37),
+            ],
+            [
+                'serial' => 'VRT-GXT5-11077',
+                'brand' => 'Vertiv', 'model' => 'Liebert GXT5', 'capacity' => '60 kVA',
+                'sold_at' => now()->subDays(20), 'warranty_months' => 36,
+            ],
+            [
+                'serial' => 'APC-SRT-55621',
+                'brand' => 'APC', 'model' => 'Smart-UPS SRT', 'capacity' => '10 kVA',
+                // Bought before the system existed — nobody knows the date.
+                'sold_at' => null, 'warranty_months' => null,
+                'installed_at' => now()->subYears(4),
+            ],
+        ])->map(fn ($a, $index) => Asset::create([
+            ...$a,
+            'customer_id' => $customers[$index % $customers->count()]->id,
+            'site_address' => $customers[$index % $customers->count()]->address,
+            'status' => AssetStatus::Active,
+            'created_by' => $manager->id,
+        ]));
+
         // ── Jobs spread across the whole lifecycle ───────────
         $blueprints = [
             [
@@ -102,8 +140,7 @@ class DatabaseSeeder extends Seeder
                 'type' => TaskType::Maintenance,
                 'priority' => TaskPriority::Normal,
                 'status' => TaskStatus::Pending,
-                'device_brand' => 'APC', 'device_model' => 'Symmetra LX', 'device_capacity' => '20 kVA',
-                'device_serial' => 'APC-SLX-88213',
+                'asset_id' => $assets[0]->id,
                 'scheduled_at' => now()->addDay()->setTime(10, 0),
             ],
             [
@@ -111,8 +148,7 @@ class DatabaseSeeder extends Seeder
                 'type' => TaskType::Repair,
                 'priority' => TaskPriority::Urgent,
                 'status' => TaskStatus::InProgress,
-                'device_brand' => 'Eaton', 'device_model' => '9PX', 'device_capacity' => '11 kVA',
-                'device_serial' => 'ETN-9PX-40912',
+                'asset_id' => $assets[1]->id,
                 'scheduled_at' => now()->subHours(3),
             ],
             [
@@ -120,8 +156,7 @@ class DatabaseSeeder extends Seeder
                 'type' => TaskType::Installation,
                 'priority' => TaskPriority::High,
                 'status' => TaskStatus::Accepted,
-                'device_brand' => 'Vertiv', 'device_model' => 'Liebert GXT5', 'device_capacity' => '60 kVA',
-                'device_serial' => 'VRT-GXT5-11077',
+                'asset_id' => $assets[2]->id,
                 'scheduled_at' => now()->addDays(2)->setTime(9, 30),
             ],
             [
@@ -129,6 +164,7 @@ class DatabaseSeeder extends Seeder
                 'type' => TaskType::Inspection,
                 'priority' => TaskPriority::Low,
                 'status' => TaskStatus::Completed,
+                // No device yet — that is the point of a site survey.
                 'scheduled_at' => now()->subDays(3),
             ],
             [
@@ -136,14 +172,18 @@ class DatabaseSeeder extends Seeder
                 'type' => TaskType::Maintenance,
                 'priority' => TaskPriority::High,
                 'status' => TaskStatus::OnTheWay,
-                'device_brand' => 'APC', 'device_model' => 'Smart-UPS SRT', 'device_capacity' => '10 kVA',
-                'device_serial' => 'APC-SRT-55621',
+                'asset_id' => $assets[3]->id,
                 'scheduled_at' => now()->addHours(4),
             ],
         ];
 
         foreach ($blueprints as $index => $blueprint) {
-            $customer = $customers[$index % $customers->count()];
+            // A job about a device belongs to whoever owns that device — the
+            // API enforces this, so the seed data has to honour it too.
+            $customer = isset($blueprint['asset_id'])
+                ? $assets->firstWhere('id', $blueprint['asset_id'])->customer
+                : $customers[$index % $customers->count()];
+
             $technician = $technicians[$index % $technicians->count()];
             $status = $blueprint['status'];
 

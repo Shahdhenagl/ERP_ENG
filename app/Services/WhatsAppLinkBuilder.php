@@ -91,21 +91,25 @@ class WhatsAppLinkBuilder
             $lines[] = "العنوان: {$address}";
         }
 
-        if ($task->device_brand || $task->device_model || $task->device_serial) {
+        if ($asset = $task->asset) {
             $lines[] = '';
             $lines[] = '*الجهاز*';
 
-            if ($task->device_brand || $task->device_model) {
-                $lines[] = 'الموديل: '.trim("{$task->device_brand} {$task->device_model}");
+            if ($asset->brand || $asset->model) {
+                $lines[] = 'الموديل: '.trim("{$asset->brand} {$asset->model}");
             }
 
-            if ($task->device_capacity) {
-                $lines[] = "القدرة: {$task->device_capacity}";
+            if ($asset->capacity) {
+                $lines[] = "القدرة: {$asset->capacity}";
             }
 
-            if ($task->device_serial) {
-                $lines[] = "الرقم التسلسلي: {$task->device_serial}";
+            if ($asset->serial) {
+                $lines[] = "الرقم التسلسلي: {$asset->serial}";
             }
+
+            // Whether the visit is billable hinges on this, so the technician
+            // should not have to look it up separately.
+            $lines[] = "الضمان: {$asset->warrantyLabel()}";
         }
 
         if ($task->scheduled_at) {
