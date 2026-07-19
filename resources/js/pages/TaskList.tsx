@@ -6,6 +6,7 @@ import { TaskCard } from '@/components/TaskCard'
 import { Button, EmptyState, ErrorState, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
 import { useAuth } from '@/lib/auth'
 import { PRIORITY, STATUS, STATUS_FLOW, TASK_TYPE } from '@/lib/domain'
+import { useArea } from '@/lib/nav'
 import { useTasks, useTechnicians } from '@/lib/queries'
 import type { TaskStatus } from '@/types'
 
@@ -22,6 +23,7 @@ const QUICK_FILTERS: Array<{ key: string; label: string; params: Record<string, 
 
 export function TaskList() {
     const { canDispatch } = useAuth()
+    const { path } = useArea()
     const [searchParams, setSearchParams] = useSearchParams()
     const [showFilters, setShowFilters] = useState(false)
 
@@ -88,7 +90,7 @@ export function TaskList() {
                 subtitle={data ? `${data.meta.total} مهمة` : undefined}
                 actions={
                     canDispatch && (
-                        <Link to="/tasks/new" className="btn-primary">
+                        <Link to={path('/tasks/new')} className="btn-primary">
                             <Plus className="size-4" />
                             مهمة جديدة
                         </Link>
@@ -209,7 +211,7 @@ export function TaskList() {
                     description="جرّب تغيير الفلاتر أو البحث بكلمة أخرى."
                     action={
                         canDispatch && (
-                            <Link to="/tasks/new" className="btn-primary">
+                            <Link to={path('/tasks/new')} className="btn-primary">
                                 <Plus className="size-4" />
                                 إنشاء مهمة
                             </Link>

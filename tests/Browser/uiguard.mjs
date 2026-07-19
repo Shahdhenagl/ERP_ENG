@@ -25,7 +25,7 @@ const check = (label, pass) => {
 {
     const { context, page } = await session('tech1@cityeng.local')
 
-    for (const path of ['/users', '/customers', '/tasks/new']) {
+    for (const path of ['/manager/users', '/manager/customers', '/manager/tasks/new']) {
         await page.goto(`${BASE}${path}`, { waitUntil: 'domcontentloaded' })
         // Wait for the auth check to settle before judging.
         await page.waitForFunction(() => !document.querySelector('.animate-spin'), { timeout: 15000 }).catch(() => {})
@@ -34,8 +34,8 @@ const check = (label, pass) => {
         const landed = new URL(page.url()).pathname
         const body = await page.locator('body').innerText()
         check(
-            `technician ${path.padEnd(12)} → ${landed}`,
-            landed !== path && !body.includes('مستخدم جديد') && !body.includes('عميل جديد'),
+            `technician ${path.padEnd(20)} → ${landed}`,
+            landed.startsWith('/tech') && !body.includes('مستخدم جديد') && !body.includes('عميل جديد'),
         )
     }
 
@@ -66,10 +66,13 @@ const check = (label, pass) => {
 {
     const { context, page } = await session('manager@cityeng.local', { width: 1440, height: 900 })
 
-    await page.goto(`${BASE}/users`, { waitUntil: 'domcontentloaded' })
+    await page.goto(`${BASE}/manager/users`, { waitUntil: 'domcontentloaded' })
     await page.waitForFunction(() => !document.querySelector('.animate-spin'), { timeout: 15000 }).catch(() => {})
     await page.waitForTimeout(800)
-    check(`manager /users → ${new URL(page.url()).pathname}`, new URL(page.url()).pathname !== '/users')
+    check(
+        `manager /manager/users → ${new URL(page.url()).pathname}`,
+        new URL(page.url()).pathname !== '/manager/users',
+    )
 
     const status = await page.evaluate(async () => {
         const token = localStorage.getItem('ce.token')

@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useParams } from 'react-router-dom'
 import { AppLayout } from '@/components/AppLayout'
 import { ToastProvider } from '@/components/Toast'
 import { PageLoader } from '@/components/ui'
 import { AuthProvider, useAuth } from '@/lib/auth'
+import { areaFor } from '@/lib/nav'
 import { CustomerList } from '@/pages/CustomerList'
 import { Dashboard } from '@/pages/Dashboard'
 import { Login } from '@/pages/Login'
@@ -34,23 +35,36 @@ export function App() {
 
                             <Route element={<RequireAuth />}>
                                 <Route element={<AppLayout />}>
-                                    <Route index element={<Dashboard />} />
-                                    <Route path="tasks" element={<TaskList />} />
-                                    <Route path="tasks/:id" element={<TaskDetail />} />
+                                    {/* ── Technician area ──────────────── */}
+                                    <Route path="tech" element={<RequireRole roles={['technician']} />}>
+                                        <Route index element={<Dashboard />} />
+                                        <Route path="tasks" element={<TaskList />} />
+                                        <Route path="tasks/:id" element={<TaskDetail />} />
+                                    </Route>
 
-                                    <Route element={<RequireRole roles={['admin', 'manager']} />}>
+                                    {/* ── Dispatcher area ──────────────── */}
+                                    <Route path="manager" element={<RequireRole roles={['admin', 'manager']} />}>
+                                        <Route index element={<Dashboard />} />
+                                        <Route path="tasks" element={<TaskList />} />
                                         <Route path="tasks/new" element={<TaskForm />} />
+                                        <Route path="tasks/:id" element={<TaskDetail />} />
                                         <Route path="tasks/:id/edit" element={<TaskForm />} />
                                         <Route path="customers" element={<CustomerList />} />
+
+                                        <Route element={<RequireRole roles={['admin']} />}>
+                                            <Route path="users" element={<UserList />} />
+                                        </Route>
                                     </Route>
 
-                                    <Route element={<RequireRole roles={['admin']} />}>
-                                        <Route path="users" element={<UserList />} />
-                                    </Route>
+                                    {/* Notifications and old bookmarks still point at the
+                                        unprefixed paths — they cannot know the recipient's
+                                        area, so resolve it here at click time. */}
+                                    <Route path="tasks/:id" element={<AreaRedirect to="/tasks/:id" />} />
+                                    <Route path="tasks" element={<AreaRedirect to="/tasks" />} />
                                 </Route>
                             </Route>
 
-                            <Route path="*" element={<Navigate to="/" replace />} />
+                            <Route path="*" element={<AreaRedirect to="/" />} />
                         </Routes>
                     </AuthProvider>
                 </ToastProvider>
@@ -73,8 +87,25 @@ function RequireAuth() {
 function RequireRole({ roles }: { roles: Role[] }) {
     const { user } = useAuth()
 
-    // Silently send the user home rather than showing a dead-end error page.
-    if (!user || !roles.includes(user.role)) return <Navigate to="/" replace />
+    // Silently send the user to their own area rather than showing a dead-end
+    // error page — a technician who opens /manager just lands on /tech.
+    if (!user || !roles.includes(user.role)) return <AreaRedirect to="/" />
 
     return <Outlet />
+}
+
+/**
+ * Resolves an unprefixed path against the signed-in user's area. `:id` is
+ * filled from the current match so a notification link survives the redirect.
+ */
+function AreaRedirect({ to }: { to: string }) {
+    const { user, loading } = useAuth()
+    const { id } = useParams()
+
+    if (loading) return <PageLoader />
+    if (!user) return <Navigate to="/login" replace />
+
+    const suffix = id ? to.replace(':id', id) : to
+
+    return <Navigate to={areaFor(user.role) + (suffix === '/' ? '' : suffix)} replace />
 }

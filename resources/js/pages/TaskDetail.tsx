@@ -27,6 +27,7 @@ import { errorMessage } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import { DEVICE_CONDITION, PRIORITY, STATUS, TASK_TYPE } from '@/lib/domain'
 import { formatBytes, formatDateTime, formatSmart, telLink } from '@/lib/format'
+import { useArea } from '@/lib/nav'
 import {
     useAssignTask,
     useChangeStatus,
@@ -43,6 +44,7 @@ export function TaskDetail() {
     const navigate = useNavigate()
     const toast = useToast()
     const { canDispatch, isTechnician, user } = useAuth()
+    const { path } = useArea()
 
     const { data: task, isLoading, isError, refetch } = useTask(id)
     const changeStatus = useChangeStatus(Number(id))
@@ -124,7 +126,7 @@ export function TaskDetail() {
 
                 {canDispatch && (
                     <div className="flex gap-1">
-                        <Link to={`/tasks/${task.id}/edit`} className="btn-ghost tap px-3" aria-label="تعديل">
+                        <Link to={path(`/tasks/${task.id}/edit`)} className="btn-ghost tap px-3" aria-label="تعديل">
                             <Pencil className="size-4" />
                         </Link>
                         <button
@@ -499,7 +501,7 @@ export function TaskDetail() {
                     try {
                         await deleteTask.mutateAsync(task.id)
                         toast.success('تم حذف المهمة.')
-                        navigate('/tasks')
+                        navigate(path('/tasks'))
                     } catch (caught) {
                         toast.error(errorMessage(caught))
                     }

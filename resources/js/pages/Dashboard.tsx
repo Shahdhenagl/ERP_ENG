@@ -15,10 +15,12 @@ import { TaskCard } from '@/components/TaskCard'
 import { EmptyState, ErrorState, PageHeader, SkeletonCard } from '@/components/ui'
 import { useAuth } from '@/lib/auth'
 import { STATUS, STATUS_FLOW } from '@/lib/domain'
+import { useArea } from '@/lib/nav'
 import { useDashboard } from '@/lib/queries'
 
 export function Dashboard() {
     const { user, canDispatch } = useAuth()
+    const { path } = useArea()
     const { data, isLoading, isError, refetch } = useDashboard()
 
     if (isError) {
@@ -46,7 +48,7 @@ export function Dashboard() {
                     value={stats?.open_total}
                     loading={isLoading}
                     tone="brand"
-                    to="/tasks?open_only=1"
+                    to={path('/tasks?open_only=1')}
                 />
                 <StatTile
                     icon={CalendarCheck}
@@ -98,7 +100,7 @@ export function Dashboard() {
                 <section className="mt-6">
                     <div className="mb-3 flex items-center justify-between">
                         <h2 className="text-sm font-bold text-navy-700">حِمل العمل على الفنيين</h2>
-                        <Link to="/users" className="text-xs font-bold text-brand-600 hover:underline">
+                        <Link to={path('/users')} className="text-xs font-bold text-brand-600 hover:underline">
                             كل المستخدمين
                         </Link>
                     </div>
@@ -153,7 +155,7 @@ export function Dashboard() {
                         value={stats?.customers_total}
                         loading={isLoading}
                         tone="navy"
-                        to="/customers"
+                        to={path('/customers')}
                     />
                     <StatTile
                         icon={Users}
@@ -171,7 +173,7 @@ export function Dashboard() {
                     <h2 className="text-sm font-bold text-navy-700">
                         {canDispatch ? 'الأقرب تنفيذًا' : 'مهامك القادمة'}
                     </h2>
-                    <Link to="/tasks" className="text-xs font-bold text-brand-600 hover:underline">
+                    <Link to={path('/tasks')} className="text-xs font-bold text-brand-600 hover:underline">
                         عرض الكل
                     </Link>
                 </div>

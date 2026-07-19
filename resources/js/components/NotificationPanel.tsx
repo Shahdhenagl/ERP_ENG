@@ -6,6 +6,7 @@ import { Modal } from '@/components/Modal'
 import { Button, EmptyState, Spinner } from '@/components/ui'
 import { useToast } from '@/components/Toast'
 import { formatRelative } from '@/lib/format'
+import { useArea } from '@/lib/nav'
 import { enablePush, isIos, isStandalone, pushPermission } from '@/lib/push'
 import { useMarkAllRead, useNotifications } from '@/lib/queries'
 
@@ -14,6 +15,7 @@ export function NotificationPanel({ open, onClose }: { open: boolean; onClose: (
     const markAllRead = useMarkAllRead()
     const navigate = useNavigate()
     const toast = useToast()
+    const { path } = useArea()
 
     const [permission, setPermission] = useState(pushPermission())
     const [enabling, setEnabling] = useState(false)
@@ -112,7 +114,7 @@ export function NotificationPanel({ open, onClose }: { open: boolean; onClose: (
                             <button
                                 onClick={() => {
                                     if (notification.data.task_id) {
-                                        navigate(`/tasks/${notification.data.task_id}`)
+                                        navigate(path(`/tasks/${notification.data.task_id}`))
                                         onClose()
                                     }
                                 }}

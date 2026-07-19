@@ -7,6 +7,7 @@ import { Button, ErrorState, Field, Input, PageHeader, PageLoader, Select, Texta
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { PRIORITY, TASK_TYPE } from '@/lib/domain'
 import { toDateTimeLocal } from '@/lib/format'
+import { useArea } from '@/lib/nav'
 import { useCreateTask, useCustomers, useTask, useTechnicians, useUpdateTask } from '@/lib/queries'
 import type { Customer, Task, TaskPriority, TaskType } from '@/types'
 
@@ -15,6 +16,7 @@ export function TaskForm() {
     const isEdit = Boolean(id)
     const navigate = useNavigate()
     const toast = useToast()
+    const { path } = useArea()
 
     const { data: existing, isLoading: loadingTask, isError } = useTask(isEdit ? id : undefined)
     const { data: customers } = useCustomers({ per_page: 200, active_only: 1 })
@@ -88,7 +90,7 @@ export function TaskForm() {
             if (isEdit) {
                 await update.mutateAsync(payload)
                 toast.success('تم حفظ التعديلات.')
-                navigate(`/tasks/${id}`)
+                navigate(path(`/tasks/${id}`))
             } else {
                 const task = await create.mutateAsync(payload)
                 toast.success(`تم إنشاء المهمة ${task.code}.`)
@@ -135,7 +137,7 @@ export function TaskForm() {
                             </a>
                         )}
 
-                        <Button variant="secondary" block onClick={() => navigate(`/tasks/${saved.id}`)}>
+                        <Button variant="secondary" block onClick={() => navigate(path(`/tasks/${saved.id}`))}>
                             فتح المهمة
                         </Button>
 

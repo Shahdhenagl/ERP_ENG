@@ -3,6 +3,7 @@ import { Building2, CalendarClock, ChevronLeft, MapPin, User2 } from 'lucide-rea
 import { Link } from 'react-router-dom'
 import { PRIORITY, STATUS, TASK_TYPE } from '@/lib/domain'
 import { formatSmart, isOverdue } from '@/lib/format'
+import { useArea } from '@/lib/nav'
 import type { Task } from '@/types'
 
 interface TaskCardProps {
@@ -12,6 +13,7 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, showTechnician = true }: TaskCardProps) {
+    const { path } = useArea()
     const status = STATUS[task.status]
     const priority = PRIORITY[task.priority]
     const type = TASK_TYPE[task.type]
@@ -22,7 +24,7 @@ export function TaskCard({ task, showTechnician = true }: TaskCardProps) {
 
     return (
         <Link
-            to={`/tasks/${task.id}`}
+            to={path(`/tasks/${task.id}`)}
             className={clsx(
                 'card-interactive group relative flex gap-0 overflow-hidden',
                 task.priority === 'urgent' && !task.is_terminal && priority.ring,

@@ -55,25 +55,25 @@ async function login(page, email) {
     await page.screenshot({ path: `${OUT}/02-dashboard.png`, fullPage: true })
     console.log('âœ“ manager dashboard â€”', await page.locator('h1').first().innerText())
 
-    await page.goto(`${BASE}/tasks`, { waitUntil: 'domcontentloaded' })
+    await page.goto(`${BASE}/manager/tasks`, { waitUntil: 'domcontentloaded' })
     await settled(page)
     await page.screenshot({ path: `${OUT}/03-tasks.png`, fullPage: true })
-    const cards = await page.locator('a[href^="/tasks/"]:not([href$="/new"])').count()
+    const cards = await page.locator('a[href^="/manager/tasks/"]:not([href$="/new"])').count()
     console.log('âœ“ task list â€” cards:', cards)
 
-    const first = page.locator('a[href^="/tasks/"]:not([href$="/new"])').first()
+    const first = page.locator('a[href^="/manager/tasks/"]:not([href$="/new"])').first()
     await first.click()
     await page.waitForTimeout(300)
     await settled(page)
     await page.screenshot({ path: `${OUT}/04-task-detail.png`, fullPage: true })
     console.log('âœ“ task detail â€”', await page.locator('h1').first().innerText())
 
-    await page.goto(`${BASE}/customers`, { waitUntil: 'domcontentloaded' })
+    await page.goto(`${BASE}/manager/customers`, { waitUntil: 'domcontentloaded' })
     await settled(page)
     await page.screenshot({ path: `${OUT}/05-customers.png`, fullPage: true })
     console.log('âœ“ customers')
 
-    await page.goto(`${BASE}/tasks/new`, { waitUntil: 'domcontentloaded' })
+    await page.goto(`${BASE}/manager/tasks/new`, { waitUntil: 'domcontentloaded' })
     await settled(page)
     await page.screenshot({ path: `${OUT}/06-task-new.png`, fullPage: true })
     console.log('âœ“ new task form')
@@ -89,12 +89,12 @@ async function login(page, email) {
     await page.screenshot({ path: `${OUT}/07-mobile-dashboard.png`, fullPage: true })
     console.log('âœ“ technician mobile dashboard')
 
-    await page.goto(`${BASE}/tasks`, { waitUntil: 'domcontentloaded' })
+    await page.goto(`${BASE}/tech/tasks`, { waitUntil: 'domcontentloaded' })
     await settled(page)
     await page.screenshot({ path: `${OUT}/08-mobile-tasks.png`, fullPage: true })
-    console.log('âœ“ technician task feed â€” cards:', await page.locator('a[href^="/tasks/"]:not([href$="/new"])').count())
+    console.log('âœ“ technician task feed â€” cards:', await page.locator('a[href^="/tech/tasks/"]').count())
 
-    const first = page.locator('a[href^="/tasks/"]:not([href$="/new"])').first()
+    const first = page.locator('a[href^="/tech/tasks/"]').first()
     if (await first.count()) {
         await first.click()
         await page.waitForTimeout(300)
@@ -104,9 +104,13 @@ async function login(page, email) {
     }
 
     // Technician must NOT be able to reach the admin screens.
-    await page.goto(`${BASE}/users`, { waitUntil: 'domcontentloaded' })
-    await page.waitForTimeout(500)
-    console.log('âœ“ /users as technician redirected to:', new URL(page.url()).pathname)
+    // The redirect only fires once the auth check settles, so wait it out
+    // rather than reading the URL mid-flight.
+    await page.goto(`${BASE}/manager/users`, { waitUntil: 'domcontentloaded' })
+    await page
+        .waitForFunction(() => location.pathname.startsWith('/tech'), { timeout: 15000 })
+        .catch(() => {})
+    console.log('âœ“ /manager/users as technician redirected to:', new URL(page.url()).pathname)
 
     await context.close()
 }
@@ -115,7 +119,7 @@ async function login(page, email) {
 {
     const { context, page } = await makePage({ width: 1440, height: 900 })
     await login(page, 'admin@cityeng.local')
-    await page.goto(`${BASE}/users`, { waitUntil: 'domcontentloaded' })
+    await page.goto(`${BASE}/manager/users`, { waitUntil: 'domcontentloaded' })
     await settled(page)
     await page.screenshot({ path: `${OUT}/10-users.png`, fullPage: true })
     console.log('âœ“ admin users page')

@@ -14,10 +14,12 @@ import {
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/lib/auth'
+import { useArea } from '@/lib/nav'
 import { useNotifications } from '@/lib/queries'
 import { NotificationPanel } from '@/components/NotificationPanel'
 
 interface NavItem {
+    /** Path within the user's area — prefixed with /tech or /manager at render. */
     to: string
     label: string
     icon: LucideIcon
@@ -36,6 +38,7 @@ const NAV: NavItem[] = [
 
 export function AppLayout() {
     const { user, logout, canDispatch } = useAuth()
+    const { path } = useArea()
     const navigate = useNavigate()
     const location = useLocation()
     const [menuOpen, setMenuOpen] = useState(false)
@@ -69,14 +72,14 @@ export function AppLayout() {
 
                 <nav className="flex-1 space-y-1 px-4">
                     {visibleNav.map((item) => (
-                        <SidebarLink key={item.to} item={item} />
+                        <SidebarLink key={item.to} item={item} href={path(item.to)} />
                     ))}
                 </nav>
 
                 {canDispatch && (
                     <div className="px-4 pb-3">
                         <Link
-                            to="/tasks/new"
+                            to={path('/tasks/new')}
                             className="flex w-full items-center justify-center gap-2 rounded-xl bg-white/10 px-4 py-3 text-sm font-bold text-white ring-1 ring-white/20 backdrop-blur transition hover:bg-white/20"
                         >
                             <Plus className="size-4" />
@@ -133,7 +136,7 @@ export function AppLayout() {
 
                         <nav className="flex-1 space-y-1 px-4" onClick={() => setMenuOpen(false)}>
                             {visibleNav.map((item) => (
-                                <SidebarLink key={item.to} item={item} />
+                                <SidebarLink key={item.to} item={item} href={path(item.to)} />
                             ))}
                         </nav>
 
@@ -197,12 +200,12 @@ export function AppLayout() {
             <nav className="safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-navy-100 bg-white/95 backdrop-blur-lg lg:hidden">
                 <div className="mx-auto flex max-w-md items-stretch justify-around px-2">
                     {mobileNav.map((item) => (
-                        <BottomLink key={item.to} item={item} />
+                        <BottomLink key={item.to} item={item} href={path(item.to)} />
                     ))}
 
                     {canDispatch && (
                         <NavLink
-                            to="/tasks/new"
+                            to={path('/tasks/new')}
                             className="flex flex-1 flex-col items-center gap-1 py-2.5 text-navy-400"
                         >
                             <span className="grid size-8 place-items-center rounded-xl bg-gradient-to-l from-brand-600 to-brand-500 text-white shadow-lg shadow-brand-500/30">
@@ -219,12 +222,12 @@ export function AppLayout() {
     )
 }
 
-function SidebarLink({ item }: { item: NavItem }) {
+function SidebarLink({ item, href }: { item: NavItem; href: string }) {
     const Icon = item.icon
 
     return (
         <NavLink
-            to={item.to}
+            to={href}
             end={item.to === '/'}
             className={({ isActive }) =>
                 clsx(
@@ -241,12 +244,12 @@ function SidebarLink({ item }: { item: NavItem }) {
     )
 }
 
-function BottomLink({ item }: { item: NavItem }) {
+function BottomLink({ item, href }: { item: NavItem; href: string }) {
     const Icon = item.icon
 
     return (
         <NavLink
-            to={item.to}
+            to={href}
             end={item.to === '/'}
             className={({ isActive }) =>
                 clsx(
