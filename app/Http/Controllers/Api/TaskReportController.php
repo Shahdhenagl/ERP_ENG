@@ -8,6 +8,7 @@ use App\Http\Resources\TaskReportResource;
 use App\Models\ActivityLog;
 use App\Models\Task;
 use App\Models\TaskReport;
+use App\Services\StockLedger;
 use App\Services\TaskWorkflow;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,7 +16,10 @@ use Illuminate\Support\Facades\Storage;
 
 class TaskReportController extends Controller
 {
-    public function __construct(protected TaskWorkflow $workflow) {}
+    public function __construct(
+        protected TaskWorkflow $workflow,
+        protected StockLedger $ledger,
+    ) {}
 
     /**
      * File (or refile) the diagnosis / completion report. One report of each
@@ -54,6 +58,9 @@ class TaskReportController extends Controller
             'parts_used.*.name' => ['required_with:parts_used', 'string', 'max:160'],
             'parts_used.*.qty' => ['nullable', 'numeric', 'min:0'],
             'parts_used.*.note' => ['nullable', 'string', 'max:500'],
+            // Present when the part came off the van; absent for something
+            // bought on the way, which stock knows nothing about.
+            'parts_used.*.item_id' => ['nullable', 'exists:items,id'],
 
             'signed_by_name' => ['nullable', 'string', 'max:160'],
             // Base64 data URL captured from the on-screen signature pad.
@@ -73,6 +80,13 @@ class TaskReportController extends Controller
             ['task_id' => $task->id, 'type' => $data['type']],
             $data,
         );
+
+        // Deduct what the technician says they fitted, from their own custody.
+        // Reconciled rather than deducted, so editing the report corrects the
+        // balance instead of consuming the parts a second time.
+        if ($user->isTechnician() && $task->assigned_to === $user->id) {
+            $this->ledger->syncTaskConsumption($task, $data['parts_used'] ?? [], $user);
+        }
 
         ActivityLog::record(
             'task.report_filed',

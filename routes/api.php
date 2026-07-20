@@ -4,7 +4,9 @@ use App\Http\Controllers\Api\AssetController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\ItemController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\StockController;
 use App\Http\Controllers\Api\PushSubscriptionController;
 use App\Http\Controllers\Api\TaskAttachmentController;
 use App\Http\Controllers\Api\TaskController;
@@ -62,6 +64,11 @@ Route::middleware(['auth:sanctum', 'role'])->group(function () {
     // Device history for the unit in front of them — the controller refuses
     // assets they have never been dispatched to.
     Route::get('assets/{asset}', [AssetController::class, 'show']);
+
+    // A technician needs to see what is in their own van to report parts used.
+    Route::get('stock/mine', [StockController::class, 'myStock']);
+    Route::get('stock/warehouses', [StockController::class, 'warehouses']);
+    Route::get('stock/movements', [StockController::class, 'movements']);
 });
 
 /*
@@ -86,6 +93,14 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::delete('assets/{asset}', [AssetController::class, 'destroy']);
 
     Route::get('technicians', [UserController::class, 'technicians']);
+
+    // ── Inventory ────────────────────────────────────────────
+    Route::apiResource('items', ItemController::class);
+
+    Route::get('stock/summary', [StockController::class, 'summary']);
+    Route::post('stock/receive', [StockController::class, 'receive']);
+    Route::post('stock/transfer', [StockController::class, 'transfer']);
+    Route::post('stock/adjust', [StockController::class, 'adjust']);
 });
 
 /*

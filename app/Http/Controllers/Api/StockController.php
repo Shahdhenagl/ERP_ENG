@@ -1,0 +1,201 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Enums\WarehouseType;
+use App\Http\Controllers\Controller;
+use App\Http\Resources\StockMovementResource;
+use App\Models\Item;
+use App\Models\StockMovement;
+use App\Models\User;
+use App\Models\Warehouse;
+use App\Services\StockLedger;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+
+class StockController extends Controller
+{
+    public function __construct(protected StockLedger $ledger) {}
+
+    /** Every stock location, with what each is holding. */
+    public function warehouses(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $warehouses = Warehouse::query()
+            ->with('holder')
+            // A technician has no business reading another technician's custody.
+            ->when($user->isTechnician(), fn ($q) => $q->where('user_id', $user->id))
+            ->withSum('levels as total_qty', 'qty')
+            ->orderBy('type')
+            ->get()
+            ->map(fn (Warehouse $w) => [
+                'id' => $w->id,
+                'name' => $w->name,
+                'type' => $w->type->value,
+                'type_label' => $w->type->label(),
+                'holder' => $w->holder?->name,
+                'total_qty' => (float) ($w->total_qty ?? 0),
+            ]);
+
+        return response()->json(['data' => $warehouses]);
+    }
+
+    /** What the signed-in technician is carrying — the report's part picker. */
+    public function myStock(Request $request): JsonResponse
+    {
+        $warehouse = Warehouse::forTechnician($request->user());
+
+        $rows = $warehouse->levels()
+            ->with('item')
+            ->where('qty', '>', 0)
+            ->get()
+            ->map(fn ($level) => [
+                'item_id' => $level->item_id,
+                'name' => $level->item->name,
+                'unit' => $level->item->unit,
+                'category' => $level->item->category->value,
+                'qty' => (float) $level->qty,
+            ])
+            ->values();
+
+        return response()->json([
+            'data' => $rows,
+            'meta' => ['warehouse_id' => $warehouse->id, 'warehouse' => $warehouse->name],
+        ]);
+    }
+
+    public function movements(Request $request): AnonymousResourceCollection
+    {
+        $user = $request->user();
+
+        $movements = StockMovement::query()
+            ->with(['item', 'from', 'to', 'task', 'actor'])
+            ->when($request->integer('item_id'), fn ($q, $id) => $q->where('item_id', $id))
+            ->when($request->integer('warehouse_id'), fn ($q, $id) => $q->where(
+                fn ($w) => $w->where('from_warehouse_id', $id)->orWhere('to_warehouse_id', $id),
+            ))
+            ->when($request->string('type')->toString(), fn ($q, $t) => $q->where('type', $t))
+            ->when($user->isTechnician(), function ($q) use ($user) {
+                $van = Warehouse::where('user_id', $user->id)->value('id');
+
+                $q->where(fn ($w) => $w->where('from_warehouse_id', $van)->orWhere('to_warehouse_id', $van));
+            })
+            ->orderByDesc('id')
+            ->paginate($request->integer('per_page', 30));
+
+        return StockMovementResource::collection($movements);
+    }
+
+    /** Goods in from a supplier. The only thing that moves an item's cost. */
+    public function receive(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'item_id' => ['required', 'exists:items,id'],
+            'qty' => ['required', 'numeric', 'gt:0'],
+            'unit_cost' => ['required', 'numeric', 'min:0'],
+            'supplier' => ['nullable', 'string', 'max:160'],
+            'reference' => ['nullable', 'string', 'max:64'],
+            'note' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $movement = $this->ledger->receive(
+            Item::findOrFail($data['item_id']),
+            Warehouse::main(),
+            (float) $data['qty'],
+            (float) $data['unit_cost'],
+            $request->user(),
+            $data,
+        );
+
+        return response()->json(
+            new StockMovementResource($movement->load(['item', 'to', 'actor'])),
+            201,
+        );
+    }
+
+    /** Hand stock to a technician, or take it back. */
+    public function transfer(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'item_id' => ['required', 'exists:items,id'],
+            'qty' => ['required', 'numeric', 'gt:0'],
+            'to_user_id' => ['required_without:to_main', 'nullable', 'exists:users,id'],
+            'to_main' => ['boolean'],
+            'note' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $item = Item::findOrFail($data['item_id']);
+        $main = Warehouse::main();
+
+        if ($request->boolean('to_main')) {
+            // Coming back off a van: the technician is named as the source.
+            $technician = User::findOrFail($data['to_user_id']);
+            $from = Warehouse::forTechnician($technician);
+            $to = $main;
+        } else {
+            $technician = User::findOrFail($data['to_user_id']);
+
+            abort_unless($technician->isTechnician(), 422, 'العهدة تُسلَّم لفني فقط.');
+
+            $from = $main;
+            $to = Warehouse::forTechnician($technician);
+        }
+
+        $movement = $this->ledger->transfer(
+            $item,
+            $from,
+            $to,
+            (float) $data['qty'],
+            $request->user(),
+            $data['note'] ?? null,
+        );
+
+        return response()->json(
+            new StockMovementResource($movement->load(['item', 'from', 'to', 'actor'])),
+            201,
+        );
+    }
+
+    /** Stocktake: the counted figure replaces the book figure. */
+    public function adjust(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'item_id' => ['required', 'exists:items,id'],
+            'warehouse_id' => ['required', 'exists:warehouses,id'],
+            'counted_qty' => ['required', 'numeric', 'min:0'],
+            'note' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $movement = $this->ledger->adjust(
+            Item::findOrFail($data['item_id']),
+            Warehouse::findOrFail($data['warehouse_id']),
+            (float) $data['counted_qty'],
+            $request->user(),
+            $data['note'] ?? null,
+        );
+
+        if (! $movement) {
+            return response()->json(['message' => 'الجرد مطابق للرصيد — لم تُسجَّل أي حركة.']);
+        }
+
+        return response()->json(
+            new StockMovementResource($movement->load(['item', 'from', 'to', 'actor'])),
+            201,
+        );
+    }
+
+    /** Headline numbers for the inventory dashboard card. */
+    public function summary(): JsonResponse
+    {
+        $items = Item::query()->active()->with('levels')->get();
+
+        return response()->json([
+            'items_count' => $items->count(),
+            'stock_value' => round($items->sum(fn (Item $i) => $i->stockValue()), 2),
+            'below_reorder' => Item::query()->active()->belowReorderLevel()->count(),
+            'vans' => Warehouse::where('type', WarehouseType::Van)->count(),
+        ]);
+    }
+}
