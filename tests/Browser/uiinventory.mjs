@@ -45,8 +45,9 @@ async function settled(page) {
     const body = await page.locator('body').innerText()
     check('inventory page lists the seeded items', body.includes('بطارية 12V 100Ah'))
 
-    // 20 @ 950 then 10 @ 1010 → (19000 + 10100) / 30 = 970.00
-    check('weighted average is shown, not an invoice price', body.includes('970.00'))
+    // 20 @ 950, 10 @ 1010, then 10 @ 980 off the purchase order:
+    // (19000 + 10100 + 9800) / 40 = 972.50 — none of the three invoice prices.
+    check('weighted average is shown, not an invoice price', body.includes('972.50'))
     check('stock value is shown', body.includes('قيمة المخزون'))
 
     // The fuse sits below its reorder level of 20 (15 received).

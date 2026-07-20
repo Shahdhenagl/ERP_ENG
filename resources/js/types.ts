@@ -179,6 +179,81 @@ export interface Contract {
     created_at: string | null
 }
 
+export interface Supplier {
+    id: number
+    code: string
+    name: string
+    company: string | null
+    phone: string | null
+    whatsapp: string | null
+    email: string | null
+    address: string | null
+    tax_id: string | null
+    notes: string | null
+    is_active: boolean
+
+    /** Derived: value received, less what has been paid. */
+    purchased_total: number
+    paid_total: number
+    balance: number
+
+    orders?: Array<{
+        id: number
+        code: string
+        order_date: string | null
+        total: number
+        fulfilment: PurchaseFulfilment
+        fulfilment_label: string
+    }>
+    payments?: Array<{
+        id: number
+        code: string
+        amount: number
+        method_label: string
+        paid_at: string | null
+        cash_box: string | null
+    }>
+}
+
+export type PurchaseOrderStatus = 'draft' | 'sent' | 'cancelled'
+/** Includes the two states derived from what has actually arrived. */
+export type PurchaseFulfilment =
+    | PurchaseOrderStatus
+    | 'awaiting'
+    | 'partly_received'
+    | 'received'
+
+export interface PurchaseOrderLine {
+    id?: number
+    item_id: number
+    item?: string | null
+    unit?: string | null
+    qty: number
+    unit_price: number
+    line_total?: number
+    received?: number
+    outstanding?: number
+}
+
+export interface PurchaseOrder {
+    id: number
+    code: string
+    supplier_id: number
+    supplier: string | null
+    order_date: string | null
+    expected_date: string | null
+    status: PurchaseOrderStatus
+    fulfilment: PurchaseFulfilment
+    fulfilment_label: string
+    tax_rate: number
+    subtotal: number
+    total: number
+    currency: string
+    notes: string | null
+    cancel_reason: string | null
+    lines?: PurchaseOrderLine[]
+}
+
 export type InvoiceStatus = 'draft' | 'issued' | 'void'
 /** Derived from the receipts against the invoice, never stored. */
 export type PaymentState = 'draft' | 'void' | 'unpaid' | 'partly_paid' | 'paid' | 'overdue'

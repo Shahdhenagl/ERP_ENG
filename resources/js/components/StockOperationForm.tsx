@@ -5,7 +5,13 @@ import { useToast } from '@/components/Toast'
 import { Button, Field, Input, Select, Textarea } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { formatQty } from '@/lib/domain'
-import { useItems, useStockOperation, useTechnicians, useWarehouses } from '@/lib/queries'
+import {
+    useItems,
+    useStockOperation,
+    useSuppliers,
+    useTechnicians,
+    useWarehouses,
+} from '@/lib/queries'
 
 type Operation = 'receive' | 'transfer' | 'adjust'
 
@@ -29,6 +35,7 @@ export function StockOperationForm({ open, onClose, operation, itemId }: StockOp
     const { data: itemPage } = useItems({ active_only: 1, per_page: 200 })
     const { data: technicians } = useTechnicians()
     const { data: warehouses } = useWarehouses()
+    const { data: suppliers } = useSuppliers({ active_only: 1 })
     const [errors, setErrors] = useState<Record<string, string>>({})
 
     const [form, setForm] = useState({
@@ -38,7 +45,7 @@ export function StockOperationForm({ open, onClose, operation, itemId }: StockOp
         to_user_id: '',
         direction: 'out' as 'out' | 'in',
         warehouse_id: '',
-        supplier: '',
+        supplier_id: '',
         reference: '',
         note: '',
     })
@@ -61,7 +68,7 @@ export function StockOperationForm({ open, onClose, operation, itemId }: StockOp
             Object.assign(payload, {
                 qty: Number(form.qty),
                 unit_cost: Number(form.unit_cost),
-                supplier: form.supplier || null,
+                supplier_id: Number(form.supplier_id),
                 reference: form.reference || null,
             })
         } else if (operation === 'transfer') {
@@ -157,11 +164,21 @@ export function StockOperationForm({ open, onClose, operation, itemId }: StockOp
                         )}
 
                         <div className="grid gap-4 sm:grid-cols-2">
-                            <Field label="المورّد" error={errors.supplier}>
-                                <Input
-                                    value={form.supplier}
-                                    onChange={(event) => set('supplier')(event.target.value)}
-                                />
+                            {/* A record, not typed text — otherwise the same
+                                company gets spelled three ways and nothing
+                                totals against them. */}
+                            <Field label="المورّد" required error={errors.supplier_id}>
+                                <Select
+                                    value={form.supplier_id}
+                                    onChange={(event) => set('supplier_id')(event.target.value)}
+                                >
+                                    <option value="">— اختر المورّد —</option>
+                                    {suppliers?.map((supplier) => (
+                                        <option key={supplier.id} value={supplier.id}>
+                                            {supplier.name}
+                                        </option>
+                                    ))}
+                                </Select>
                             </Field>
 
                             <Field label="رقم الفاتورة" error={errors.reference}>

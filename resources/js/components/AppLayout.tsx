@@ -10,6 +10,7 @@ import {
     Plus,
     Receipt,
     ScrollText,
+    Truck,
     Users,
     type LucideIcon,
 } from 'lucide-react'
@@ -43,6 +44,7 @@ const NAV: NavItem[] = [
     { to: '/assets', label: 'الأجهزة', icon: HardDrive, roles: ['admin', 'manager'] },
     { to: '/contracts', label: 'عقود الصيانة', icon: ScrollText, roles: ['admin', 'manager'], short: 'العقود' },
     { to: '/inventory', label: 'المخزون', icon: Package, roles: ['admin', 'manager'] },
+    { to: '/purchasing', label: 'المشتريات', icon: Truck, roles: ['admin', 'manager'], short: 'شراء' },
     { to: '/invoices', label: 'الفواتير', icon: Receipt, roles: ['admin', 'manager'] },
     { to: '/stock', label: 'عهدتي', icon: Package, roles: ['technician'] },
     { to: '/users', label: 'المستخدمون', icon: Users, roles: ['admin'], short: 'الفريق' },

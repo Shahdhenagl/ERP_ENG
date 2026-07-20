@@ -13,7 +13,10 @@ use App\Models\Asset;
 use App\Models\Contract;
 use App\Models\Customer;
 use App\Models\Item;
+use App\Models\PurchaseOrder;
+use App\Models\Supplier;
 use App\Models\Warehouse;
+use App\Services\PurchasingService;
 use App\Services\MaintenancePlanner;
 use App\Services\StockLedger;
 use App\Models\Task;
@@ -301,10 +304,48 @@ class DatabaseSeeder extends Seeder
             'created_by' => $manager->id,
         ]);
 
-        $ledger->receive($battery, $main, 20, 950, $manager, ['supplier' => 'النور للبطاريات']);
-        $ledger->receive($battery, $main, 10, 1010, $manager, ['supplier' => 'النور للبطاريات']);
-        $ledger->receive($fan, $main, 12, 180, $manager, ['supplier' => 'الحرة للقطع']);
-        $ledger->receive($fuse, $main, 15, 25, $manager, ['supplier' => 'الحرة للقطع']);
+        // ── Suppliers and buying ─────────────────────────────
+        $purchasing = app(PurchasingService::class);
+
+        $batterySupplier = Supplier::create([
+            'name' => 'النور للبطاريات',
+            'company' => 'النور تريدنج',
+            'phone' => '01555555555',
+            'created_by' => $manager->id,
+        ]);
+
+        $partsSupplier = Supplier::create([
+            'name' => 'الحرة للقطع',
+            'phone' => '01666666666',
+            'created_by' => $manager->id,
+        ]);
+
+        // Two prices on purpose, so the weighted average is visibly neither.
+        $purchasing->receiveDirect($batterySupplier, $battery, 20, 950, $manager);
+        $purchasing->receiveDirect($batterySupplier, $battery, 10, 1010, $manager);
+        $purchasing->receiveDirect($partsSupplier, $fan, 12, 180, $manager);
+        $purchasing->receiveDirect($partsSupplier, $fuse, 15, 25, $manager);
+
+        // An order still waiting on part of its delivery — the state the
+        // purchasing screen exists to show.
+        $order = PurchaseOrder::create([
+            'supplier_id' => $batterySupplier->id,
+            'expected_date' => now()->addWeek()->toDateString(),
+            'tax_rate' => 14,
+            'notes' => 'دفعة البطاريات الربع سنوية.',
+            'created_by' => $manager->id,
+        ]);
+
+        $order->lines()->create(['item_id' => $battery->id, 'qty' => 24, 'unit_price' => 980, 'sort' => 0]);
+        $order->lines()->create(['item_id' => $fuse->id, 'qty' => 50, 'unit_price' => 24, 'sort' => 1]);
+
+        $purchasing->send($order);
+        $purchasing->receiveAgainstOrder(
+            $order,
+            [['item_id' => $battery->id, 'qty' => 10, 'unit_cost' => 980]],
+            $manager,
+            ['reference' => 'INV-NOOR-4471'],
+        );
 
         // Two technicians are carrying stock; the third is empty, which is a
         // state the UI has to handle too.

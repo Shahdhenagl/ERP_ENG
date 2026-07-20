@@ -13,6 +13,8 @@ import type {
     Item,
     Paginated,
     Payment,
+    PurchaseOrder,
+    Supplier,
     StockMovement,
     VanStockLine,
     WarehouseSummary,
@@ -50,6 +52,11 @@ export const keys = {
     cashBoxes: ['cash-boxes'] as const,
     cashMovements: (filters?: Record<string, unknown>) => ['cash-movements', filters ?? {}] as const,
     treasurySummary: ['treasury-summary'] as const,
+
+    suppliers: (filters?: Record<string, unknown>) => ['suppliers', filters ?? {}] as const,
+    supplier: (id: number | string) => ['supplier', Number(id)] as const,
+    purchaseOrders: (filters?: Record<string, unknown>) => ['purchase-orders', filters ?? {}] as const,
+    purchaseOrder: (id: number | string) => ['purchase-order', Number(id)] as const,
 }
 
 /* ── Dashboard ───────────────────────────────────────────── */
@@ -508,6 +515,126 @@ export function useStockOperation(operation: 'receive' | 'transfer' | 'adjust') 
 
 function invalidateStock(client: ReturnType<typeof useQueryClient>): void {
     for (const key of ['items', 'warehouses', 'movements', 'stock-summary', 'my-stock']) {
+        void client.invalidateQueries({ queryKey: [key] })
+    }
+}
+
+/* ── Suppliers & purchasing ──────────────────────────────── */
+
+export function useSuppliers(filters: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: keys.suppliers(filters),
+        queryFn: async () =>
+            (await api.get<{ data: Supplier[] }>('/suppliers', { params: filters })).data.data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useSupplier(id: number | string | undefined) {
+    return useQuery({
+        queryKey: keys.supplier(id ?? 0),
+        queryFn: async () => (await api.get<{ data: Supplier }>(`/suppliers/${id}`)).data.data,
+        enabled: Boolean(id),
+    })
+}
+
+export function useSaveSupplier(id?: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (
+                await (id
+                    ? api.put<{ data: Supplier }>(`/suppliers/${id}`, payload)
+                    : api.post<{ data: Supplier }>('/suppliers', payload))
+            ).data.data,
+        onSuccess: () => invalidatePurchasing(client),
+    })
+}
+
+export function usePurchaseOrders(filters: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: keys.purchaseOrders(filters),
+        queryFn: async () =>
+            (await api.get<{ data: PurchaseOrder[] }>('/purchase-orders', { params: filters })).data.data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function usePurchaseOrder(id: number | string | undefined) {
+    return useQuery({
+        queryKey: keys.purchaseOrder(id ?? 0),
+        queryFn: async () =>
+            (await api.get<{ data: PurchaseOrder }>(`/purchase-orders/${id}`)).data.data,
+        enabled: Boolean(id),
+    })
+}
+
+export function useSavePurchaseOrder(id?: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (
+                await (id
+                    ? api.put<{ data: PurchaseOrder }>(`/purchase-orders/${id}`, payload)
+                    : api.post<{ data: PurchaseOrder }>('/purchase-orders', payload))
+            ).data.data,
+        onSuccess: () => invalidatePurchasing(client),
+    })
+}
+
+/** send · cancel · receive — all shift stock, orders and supplier balances. */
+export function usePurchaseOrderAction() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({
+            id,
+            action,
+            payload,
+        }: {
+            id: number
+            action: 'send' | 'cancel' | 'receive'
+            payload?: Record<string, unknown>
+        }) =>
+            (await api.post<{ data: PurchaseOrder }>(`/purchase-orders/${id}/${action}`, payload ?? {}))
+                .data.data,
+        onSuccess: () => invalidatePurchasing(client),
+    })
+}
+
+export function usePaySupplier() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (await api.post('/supplier-payments', payload)).data,
+        onSuccess: () => invalidatePurchasing(client),
+    })
+}
+
+/** Buying touches stock, cash and what is owed, so all of it refreshes. */
+function invalidatePurchasing(client: ReturnType<typeof useQueryClient>): void {
+    for (const key of [
+        'suppliers',
+        'supplier',
+        'purchase-orders',
+        'purchase-order',
+        'items',
+        'warehouses',
+        'movements',
+        'stock-summary',
+        'cash-boxes',
+        'cash-movements',
+        'treasury-summary',
+    ]) {
         void client.invalidateQueries({ queryKey: [key] })
     }
 }
