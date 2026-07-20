@@ -12,6 +12,7 @@ import {
     Navigation,
     Pencil,
     Phone,
+    Receipt,
     Trash2,
     UserCog,
     X,
@@ -25,7 +26,14 @@ import { useToast } from '@/components/Toast'
 import { Badge, Button, ErrorState, Field, PageLoader, Select, Textarea } from '@/components/ui'
 import { errorMessage } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
-import { DEVICE_CONDITION, PRIORITY, STATUS, TASK_TYPE, warrantyChip } from '@/lib/domain'
+import {
+    DEFAULT_TAX_RATE,
+    DEVICE_CONDITION,
+    PRIORITY,
+    STATUS,
+    TASK_TYPE,
+    warrantyChip,
+} from '@/lib/domain'
 import { formatBytes, formatDateTime, formatSmart, telLink } from '@/lib/format'
 import { useArea } from '@/lib/nav'
 import {
@@ -33,6 +41,7 @@ import {
     useChangeStatus,
     useDeleteAttachment,
     useDeleteTask,
+    useInvoiceAction,
     useTask,
     useTechnicians,
     useUploadAttachments,
@@ -45,6 +54,7 @@ export function TaskDetail() {
     const toast = useToast()
     const { canDispatch, isTechnician, user } = useAuth()
     const { path } = useArea()
+    const billing = useInvoiceAction()
 
     const { data: task, isLoading, isError, refetch } = useTask(id)
     const changeStatus = useChangeStatus(Number(id))
@@ -373,6 +383,40 @@ export function TaskDetail() {
 
                 {/* ── Sidebar ────────────────────────────────── */}
                 <div className="space-y-5">
+                    {/* Billing — the parts the technician fitted are already
+                        costed on the stock ledger, so the draft writes itself. */}
+                    {canDispatch && task.status === 'completed' && (
+                        <section className="card p-5">
+                            <h2 className="mb-3 text-sm font-bold text-navy-800">الفوترة</h2>
+
+                            <Button
+                                icon={Receipt}
+                                block
+                                loading={billing.isPending}
+                                onClick={async () => {
+                                    try {
+                                        const invoice = await billing.mutateAsync({
+                                            action: 'from-task',
+                                            taskId: task.id,
+                                            payload: { tax_rate: DEFAULT_TAX_RATE },
+                                        })
+
+                                        toast.success('تم إنشاء مسودة الفاتورة.')
+                                        navigate(path(`/invoices/${(invoice as { id: number }).id}`))
+                                    } catch (caught) {
+                                        toast.error(errorMessage(caught, 'تعذّر إنشاء الفاتورة.'))
+                                    }
+                                }}
+                            >
+                                إصدار فاتورة
+                            </Button>
+
+                            <p className="mt-2 text-[11px] text-navy-400">
+                                تُنشأ مسودة بقطع الغيار المستخدمة وبند أجر الزيارة، تراجعها قبل الإصدار.
+                            </p>
+                        </section>
+                    )}
+
                     {/* WhatsApp shortcuts */}
                     <section className="card p-5">
                         <h2 className="mb-3 text-sm font-bold text-navy-800">إرسال عبر واتساب</h2>

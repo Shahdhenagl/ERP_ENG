@@ -104,19 +104,29 @@ for (const [role, { email, paths }] of Object.entries(PAGES)) {
     await context.close()
 }
 
-/* ── The avatar replaced the hamburger ───────────────────── */
+/* ── The avatar stands in for the hamburger ──────────────── */
 {
+    // No drawer any more: the avatar goes straight to your own account, and
+    // navigation lives in the bottom bar.
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'ar-EG' })
     const page = await context.newPage()
     await login(page, 'tech1@cityeng.local')
     await settled(page)
 
-    const avatar = page.getByLabel('الحساب والقائمة')
-    check('avatar button is the menu trigger', (await avatar.count()) === 1)
+    check(
+        'no hamburger menu button',
+        (await page.getByRole('button', { name: 'القائمة' }).count()) === 0,
+    )
+
+    const avatar = page.locator('header a[href$="/profile"]').first()
+    check('avatar sits in the header', (await avatar.count()) === 1)
 
     await avatar.click()
-    await page.waitForTimeout(600)
-    check('avatar opens the drawer', (await page.locator('body').innerText()).includes('تسجيل الخروج'))
+    await page.waitForURL(/\/profile$/, { timeout: 15000 }).catch(() => {})
+    check(
+        `avatar opens the account → ${new URL(page.url()).pathname}`,
+        new URL(page.url()).pathname.endsWith('/profile'),
+    )
 
     await context.close()
 }
