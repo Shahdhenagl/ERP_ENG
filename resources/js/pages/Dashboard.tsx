@@ -3,6 +3,7 @@ import {
     AlertTriangle,
     Building2,
     CalendarCheck,
+    CalendarClock,
     ClipboardList,
     Inbox,
     TrendingUp,
@@ -165,6 +166,32 @@ export function Dashboard() {
                         tone="navy"
                     />
                 </div>
+            )}
+
+            {/* ── Contract visits waiting for a technician ───── */}
+            {/* The reason contracts exist: a signed schedule is worthless if
+                nobody is told the date has come round. */}
+            {canDispatch && Boolean(data?.maintenance_due?.length) && (
+                <section className="mt-8">
+                    <div className="mb-3 flex items-center justify-between">
+                        <h2 className="flex items-center gap-2 text-sm font-bold text-navy-700">
+                            <CalendarClock className="size-4 text-brand-600" />
+                            زيارات صيانة تنتظر الإسناد
+                        </h2>
+                        <Link
+                            to={path('/contracts')}
+                            className="text-xs font-bold text-brand-600 hover:underline"
+                        >
+                            العقود
+                        </Link>
+                    </div>
+
+                    <div className="space-y-3">
+                        {data?.maintenance_due?.map((task) => (
+                            <TaskCard key={task.id} task={task} showTechnician={false} />
+                        ))}
+                    </div>
+                </section>
             )}
 
             {/* ── What needs attention now ───────────────────── */}

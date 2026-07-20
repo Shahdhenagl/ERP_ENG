@@ -7,7 +7,14 @@ import { AuthProvider, useAuth } from '@/lib/auth'
 import { areaFor } from '@/lib/nav'
 import { AssetDetail } from '@/pages/AssetDetail'
 import { AssetList } from '@/pages/AssetList'
+import { ContractDetail } from '@/pages/ContractDetail'
+import { ContractList } from '@/pages/ContractList'
 import { CustomerList } from '@/pages/CustomerList'
+import { Inventory } from '@/pages/Inventory'
+import { InvoiceDetail } from '@/pages/InvoiceDetail'
+import { InvoiceList } from '@/pages/InvoiceList'
+import { Treasury } from '@/pages/Treasury'
+import { MyStock } from '@/pages/MyStock'
 import { Dashboard } from '@/pages/Dashboard'
 import { Login } from '@/pages/Login'
 import { Profile } from '@/pages/Profile'
@@ -46,6 +53,8 @@ export function App() {
                                         {/* Read-only, and scoped by the API to
                                             devices they were dispatched to. */}
                                         <Route path="assets/:id" element={<AssetDetail />} />
+                                        {/* Read-only view of what they are carrying. */}
+                                        <Route path="stock" element={<MyStock />} />
                                         <Route path="profile" element={<Profile />} />
                                     </Route>
 
@@ -59,6 +68,12 @@ export function App() {
                                         <Route path="customers" element={<CustomerList />} />
                                         <Route path="assets" element={<AssetList />} />
                                         <Route path="assets/:id" element={<AssetDetail />} />
+                                        <Route path="contracts" element={<ContractList />} />
+                                        <Route path="contracts/:id" element={<ContractDetail />} />
+                                        <Route path="inventory" element={<Inventory />} />
+                                        <Route path="invoices" element={<InvoiceList />} />
+                                        <Route path="invoices/:id" element={<InvoiceDetail />} />
+                                        <Route path="treasury" element={<Treasury />} />
                                         <Route path="profile" element={<Profile />} />
 
                                         <Route element={<RequireRole roles={['admin']} />}>

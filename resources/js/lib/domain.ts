@@ -12,7 +12,19 @@ import {
     XCircle,
     type LucideIcon,
 } from 'lucide-react'
-import type { AssetStatus, DeviceCondition, TaskPriority, TaskStatus, TaskType } from '@/types'
+import type {
+    AssetStatus,
+    ContractEffectiveStatus,
+    DeviceCondition,
+    ItemCategory,
+    MovementType,
+    PaymentMethod,
+    PaymentState,
+    TaskPriority,
+    TaskStatus,
+    TaskType,
+    VisitStatus,
+} from '@/types'
 
 /**
  * One place that decides how every status/priority/type is worded and
@@ -128,6 +140,34 @@ export const TASK_TYPE: Record<TaskType, { label: string; icon: LucideIcon }> = 
     delivery: { label: 'تسليم', icon: Truck },
 }
 
+/**
+ * Contracts are shown by their effective status, which folds in two states the
+ * server derives from today's date rather than storing.
+ */
+export const CONTRACT_STATUS: Record<ContractEffectiveStatus, { label: string; chip: string }> = {
+    draft: { label: 'مسودة', chip: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200' },
+    scheduled: { label: 'لم يبدأ', chip: 'bg-sky-50 text-sky-700 ring-1 ring-sky-200' },
+    active: { label: 'ساري', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
+    expired: { label: 'منتهي', chip: 'bg-red-50 text-red-700 ring-1 ring-red-200' },
+    cancelled: { label: 'ملغي', chip: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200' },
+}
+
+export const VISIT_STATUS: Record<VisitStatus, { label: string; chip: string }> = {
+    planned: { label: 'مخططة', chip: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200' },
+    scheduled: { label: 'صدر أمر شغل', chip: 'bg-brand-50 text-brand-700 ring-1 ring-brand-200' },
+    done: { label: 'تمت', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
+    skipped: { label: 'تخطّيت', chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' },
+    cancelled: { label: 'ملغاة', chip: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200' },
+}
+
+/** Amber while the term is running out, red once it has. */
+export function expiryChip(daysRemaining: number): string {
+    if (daysRemaining < 0) return 'bg-red-50 text-red-700 ring-1 ring-red-200'
+    if (daysRemaining <= 60) return 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
+
+    return 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
+}
+
 export const ASSET_STATUS: Record<AssetStatus, { label: string; chip: string }> = {
     active: { label: 'في الخدمة', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
     under_repair: { label: 'تحت الإصلاح', chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' },
@@ -144,6 +184,52 @@ export function warrantyChip(underWarranty: boolean | null): string {
     return underWarranty
         ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
         : 'bg-red-50 text-red-700 ring-1 ring-red-200'
+}
+
+export const ITEM_CATEGORY: Record<ItemCategory, { label: string; chip: string }> = {
+    battery: { label: 'بطاريات', chip: 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200' },
+    spare_part: { label: 'قطع غيار', chip: 'bg-sky-50 text-sky-700 ring-1 ring-sky-200' },
+    consumable: { label: 'مستهلكات', chip: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200' },
+}
+
+export const MOVEMENT_TYPE: Record<MovementType, { label: string; chip: string; sign: '+' | '−' | '±' }> = {
+    receipt: { label: 'وارد', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200', sign: '+' },
+    transfer: { label: 'تحويل', chip: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200', sign: '±' },
+    issue: { label: 'صرف على مهمة', chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200', sign: '−' },
+    return: { label: 'مرتجع من مهمة', chip: 'bg-teal-50 text-teal-700 ring-1 ring-teal-200', sign: '+' },
+    adjustment: { label: 'تسوية جرد', chip: 'bg-purple-50 text-purple-700 ring-1 ring-purple-200', sign: '±' },
+}
+
+/**
+ * Egyptian VAT. Sits here rather than in a settings table because there is one
+ * company and one rate; when that stops being true it becomes a setting.
+ */
+export const DEFAULT_TAX_RATE = 14
+
+export const PAYMENT_STATE: Record<PaymentState, { label: string; chip: string }> = {
+    draft: { label: 'مسودة', chip: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200' },
+    void: { label: 'ملغاة', chip: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200' },
+    unpaid: { label: 'غير مدفوعة', chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' },
+    partly_paid: { label: 'مدفوعة جزئيًا', chip: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200' },
+    paid: { label: 'مدفوعة', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
+    overdue: { label: 'متأخرة', chip: 'bg-red-50 text-red-700 ring-1 ring-red-200' },
+}
+
+export const PAYMENT_METHOD: Record<PaymentMethod, string> = {
+    cash: 'نقدًا',
+    bank_transfer: 'تحويل بنكي',
+    cheque: 'شيك',
+    wallet: 'محفظة إلكترونية',
+}
+
+/** Money is shown in whole piastres — technicians read these on a phone. */
+export function formatMoney(value: number): string {
+    return `${value.toLocaleString('en-EG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ج`
+}
+
+/** Trims trailing zeros so "3.000" reads as "3" but "1.500" survives. */
+export function formatQty(value: number): string {
+    return String(Number(value.toFixed(3)))
 }
 
 export const DEVICE_CONDITION: Record<DeviceCondition, { label: string; chip: string }> = {

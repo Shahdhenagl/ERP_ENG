@@ -2,9 +2,12 @@
 
 use App\Http\Controllers\Api\AssetController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ContractController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\ItemController;
+use App\Http\Controllers\Api\TreasuryController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\StockController;
 use App\Http\Controllers\Api\PushSubscriptionController;
@@ -94,6 +97,19 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
 
     Route::get('technicians', [UserController::class, 'technicians']);
 
+    // ── Maintenance contracts ────────────────────────────────
+    Route::get('contracts', [ContractController::class, 'index']);
+    Route::post('contracts', [ContractController::class, 'store']);
+    Route::get('contracts/{contract}', [ContractController::class, 'show']);
+    Route::put('contracts/{contract}', [ContractController::class, 'update']);
+    Route::delete('contracts/{contract}', [ContractController::class, 'destroy']);
+
+    // Lifecycle is explicit rather than a status field anyone can PUT: each of
+    // these rebuilds or tears down the visit plan behind it.
+    Route::post('contracts/{contract}/activate', [ContractController::class, 'activate']);
+    Route::post('contracts/{contract}/cancel', [ContractController::class, 'cancel']);
+    Route::post('contracts/{contract}/materialise', [ContractController::class, 'materialise']);
+
     // ── Inventory ────────────────────────────────────────────
     Route::apiResource('items', ItemController::class);
 
@@ -101,6 +117,29 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::post('stock/receive', [StockController::class, 'receive']);
     Route::post('stock/transfer', [StockController::class, 'transfer']);
     Route::post('stock/adjust', [StockController::class, 'adjust']);
+
+    // ── Receivables & treasury ───────────────────────────────
+    // Kept with the dispatchers: in a company this size the office manager
+    // raises the invoice and takes the money.
+    Route::get('invoices', [InvoiceController::class, 'index']);
+    Route::post('invoices', [InvoiceController::class, 'store']);
+    Route::get('invoices/{invoice}', [InvoiceController::class, 'show']);
+    Route::put('invoices/{invoice}', [InvoiceController::class, 'update']);
+    Route::delete('invoices/{invoice}', [InvoiceController::class, 'destroy']);
+    Route::post('invoices/{invoice}/issue', [InvoiceController::class, 'issue']);
+    Route::post('invoices/{invoice}/void', [InvoiceController::class, 'void']);
+    Route::post('tasks/{task}/invoice', [InvoiceController::class, 'fromTask']);
+
+    Route::get('treasury/summary', [TreasuryController::class, 'summary']);
+    Route::get('treasury/boxes', [TreasuryController::class, 'boxes']);
+    Route::post('treasury/boxes', [TreasuryController::class, 'storeBox']);
+    Route::get('treasury/movements', [TreasuryController::class, 'movements']);
+    Route::post('treasury/expense', [TreasuryController::class, 'expense']);
+    Route::post('treasury/transfer', [TreasuryController::class, 'transfer']);
+
+    Route::get('payments', [TreasuryController::class, 'payments']);
+    Route::post('payments', [TreasuryController::class, 'receive']);
+    Route::delete('payments/{payment}', [TreasuryController::class, 'reverse']);
 });
 
 /*

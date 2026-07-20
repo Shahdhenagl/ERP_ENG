@@ -52,6 +52,229 @@ export interface Customer {
     created_at: string | null
 }
 
+export type ItemCategory = 'battery' | 'spare_part' | 'consumable'
+export type MovementType = 'receipt' | 'transfer' | 'issue' | 'return' | 'adjustment'
+export type WarehouseType = 'main' | 'van'
+
+export interface Item {
+    id: number
+    code: string
+    sku: string | null
+    name: string
+
+    category: ItemCategory
+    category_label: string
+    unit: string
+
+    /** Weighted moving average — set by receipts, never typed in. */
+    avg_cost: number
+    reorder_level: number
+
+    total_qty: number
+    stock_value: number
+    below_reorder_level: boolean
+
+    levels?: Array<{
+        warehouse_id: number
+        warehouse: string | null
+        type: WarehouseType | null
+        qty: number
+    }>
+
+    notes: string | null
+    is_active: boolean
+    created_at: string | null
+}
+
+export interface StockMovement {
+    id: number
+    type: MovementType
+    type_label: string
+
+    item_id: number
+    item?: { id: number; name: string; unit: string }
+
+    qty: number
+    unit_cost: number
+    value: number
+
+    from?: string | null
+    to?: string | null
+
+    task_id: number | null
+    task_code?: string | null
+
+    supplier: string | null
+    reference: string | null
+    note: string | null
+
+    actor?: string | null
+    created_at: string | null
+}
+
+export interface WarehouseSummary {
+    id: number
+    name: string
+    type: WarehouseType
+    type_label: string
+    holder: string | null
+    total_qty: number
+}
+
+/** A line in the technician's van, offered by the report's part picker. */
+export interface VanStockLine {
+    item_id: number
+    name: string
+    unit: string
+    category: ItemCategory
+    qty: number
+}
+
+/** What an operator set. `effective_status` is what you show. */
+export type ContractStatus = 'draft' | 'active' | 'cancelled'
+
+/** Includes the two states derived from today's date. */
+export type ContractEffectiveStatus = ContractStatus | 'expired' | 'scheduled'
+
+export type VisitStatus = 'planned' | 'scheduled' | 'done' | 'skipped' | 'cancelled'
+
+export interface ContractVisit {
+    id: number
+    sequence: number
+    planned_for: string | null
+    status: VisitStatus
+    status_label: string
+    /** Someone has committed to this date — replanning will not move it. */
+    is_locked: boolean
+    task_id: number | null
+    task?: Task
+}
+
+export interface Contract {
+    id: number
+    code: string
+    title: string | null
+    label: string
+    customer_id: number
+    customer?: Customer
+    starts_on: string | null
+    ends_on: string | null
+    visits_per_year: number
+    /** Negative once the term has elapsed. */
+    days_remaining: number
+    status: ContractStatus
+    status_label: string
+    /** Derived on every read — nothing on the server flips it on a timer. */
+    effective_status: ContractEffectiveStatus
+    effective_status_label: string
+    value: string | null
+    currency: string
+    sla_response_hours: number | null
+    sla_resolution_hours: number | null
+    notes: string | null
+    assets_count?: number
+    assets?: Asset[]
+    visits_count?: number
+    visits?: ContractVisit[]
+    created_at: string | null
+}
+
+export type InvoiceStatus = 'draft' | 'issued' | 'void'
+/** Derived from the receipts against the invoice, never stored. */
+export type PaymentState = 'draft' | 'void' | 'unpaid' | 'partly_paid' | 'paid' | 'overdue'
+export type PaymentMethod = 'cash' | 'bank_transfer' | 'cheque' | 'wallet'
+export type CashBoxType = 'cash' | 'bank'
+
+export interface InvoiceLine {
+    id?: number
+    item_id: number | null
+    item_code?: string | null
+    description: string
+    qty: number
+    unit_price: number
+    line_total: number
+}
+
+export interface Invoice {
+    id: number
+    code: string
+
+    customer_id: number
+    customer?: Customer
+    task_id: number | null
+    task_code?: string | null
+
+    issue_date: string | null
+    due_date: string | null
+
+    status: InvoiceStatus
+    status_label: string
+    payment_state: PaymentState
+    payment_state_label: string
+    is_overdue: boolean
+
+    subtotal: number
+    discount: number
+    tax_rate: number
+    tax_amount: number
+    total: number
+    paid_total: number
+    balance: number
+    currency: string
+
+    lines?: InvoiceLine[]
+    payments?: Payment[]
+
+    customer_tax_id: string | null
+    notes: string | null
+    void_reason: string | null
+    created_at: string | null
+}
+
+export interface Payment {
+    id: number
+    code: string
+    customer_id: number
+    customer?: string | null
+    invoice_id: number | null
+    invoice_code?: string | null
+    cash_box_id: number
+    cash_box?: string | null
+    amount: number
+    method: PaymentMethod
+    method_label: string
+    paid_at: string | null
+    reference: string | null
+    note: string | null
+    actor?: string | null
+    created_at: string | null
+}
+
+export interface CashBoxSummary {
+    id: number
+    name: string
+    type: CashBoxType
+    type_label: string
+    account_number: string | null
+    currency: string
+    is_active: boolean
+    balance: number
+}
+
+export interface CashMovementRow {
+    id: number
+    direction: 'in' | 'out'
+    amount: number
+    source: 'payment' | 'expense' | 'transfer' | 'opening'
+    source_label: string
+    box: string | null
+    category: string | null
+    note: string | null
+    customer: string | null
+    actor: string | null
+    created_at: string | null
+}
+
 export type AssetStatus = 'active' | 'under_repair' | 'retired'
 
 export interface Asset {
@@ -119,7 +342,8 @@ export interface TaskReport {
     findings: string | null
     actions_taken: string | null
     recommendations: string | null
-    parts_used: Array<{ name: string; qty?: number; note?: string }>
+    /** `item_id` present when the part came off the van; absent for free text. */
+    parts_used: Array<{ item_id?: number | null; name: string; qty?: number; note?: string }>
     signature_url: string | null
     signed_by_name: string | null
     signed_at: string | null
@@ -168,6 +392,22 @@ export interface Task {
     asset_id: number | null
     asset?: Asset
 
+    contract_id: number | null
+    /** Flat summary, so a task row can name its contract without loading it. */
+    contract: { id: number; code: string; label: string } | null
+
+    /**
+     * Deadlines the governing contract implies. Null when the customer has no
+     * contract, or the contract sets no times. The breach flags are computed
+     * server-side on every read rather than stored.
+     */
+    sla: {
+        response_due_at: string | null
+        resolution_due_at: string | null
+        response_breached: boolean | null
+        resolution_breached: boolean | null
+    } | null
+
     /** Flat summary of the linked device; null when the job has no device. */
     device: {
         brand: string | null
@@ -208,6 +448,10 @@ export interface DashboardData {
         unassigned: number
         customers_total?: number
         technicians_total?: number
+        /** Contract visits waiting for a technician within the next month. */
+        maintenance_due?: number
+        contracts_active?: number
+        contracts_expiring?: number
         technician_load?: Array<{
             id: number
             name: string
@@ -217,6 +461,9 @@ export interface DashboardData {
         }>
     }
     upcoming: Task[]
+    /** Dispatcher-only: the visits that need someone put on them. */
+    maintenance_due?: Task[]
+    contracts_expiring?: Contract[]
 }
 
 export interface AppNotification {

@@ -6,7 +6,10 @@ import {
     HardDrive,
     LayoutDashboard,
     LogOut,
+    Package,
     Plus,
+    Receipt,
+    ScrollText,
     Users,
     type LucideIcon,
 } from 'lucide-react'
@@ -38,6 +41,10 @@ const NAV: NavItem[] = [
     { to: '/tasks', label: 'المهام', icon: ClipboardList },
     { to: '/customers', label: 'العملاء', icon: Building2, roles: ['admin', 'manager'] },
     { to: '/assets', label: 'الأجهزة', icon: HardDrive, roles: ['admin', 'manager'] },
+    { to: '/contracts', label: 'عقود الصيانة', icon: ScrollText, roles: ['admin', 'manager'], short: 'العقود' },
+    { to: '/inventory', label: 'المخزون', icon: Package, roles: ['admin', 'manager'] },
+    { to: '/invoices', label: 'الفواتير', icon: Receipt, roles: ['admin', 'manager'] },
+    { to: '/stock', label: 'عهدتي', icon: Package, roles: ['technician'] },
     { to: '/users', label: 'المستخدمون', icon: Users, roles: ['admin'], short: 'الفريق' },
 ]
 
@@ -135,9 +142,23 @@ export function AppLayout() {
                         </span>
                     </Link>
 
-                    <div className="flex flex-1 items-center justify-center gap-2">
-                        <img src="/brand/logo-mark.png" alt="" className="size-8 object-contain" />
-                        <span className="hidden text-sm font-extrabold text-navy-900 sm:block">
+                    {/* The wordmark stays on phones too. Hiding it left the header
+                        as a bare circle with no indication of whose app this is,
+                        which is the one thing a brand mark is there to do. */}
+                    {/* The wordmark stays on phones too. Hiding it left the header
+                        as a bare circle with no indication of whose app this is,
+                        which is the one thing a brand mark is there to do.
+                        Sized down at 320px so the name survives whole rather
+                        than truncating to "...gineering". */}
+                    <div className="flex min-w-0 flex-1 items-center justify-center gap-1.5 sm:gap-2">
+                        {/* Below 360px the mark yields to the name — between an
+                            icon and the words, the words identify the app. */}
+                        <img
+                            src="/brand/logo-mark.png"
+                            alt=""
+                            className="hidden size-7 shrink-0 object-contain min-[360px]:block sm:size-8"
+                        />
+                        <span className="truncate text-[11px] font-extrabold text-navy-900 min-[360px]:text-[13px] sm:text-sm">
                             City Engineering
                         </span>
                     </div>
@@ -183,7 +204,10 @@ export function AppLayout() {
                     hasSidebar && 'lg:hidden',
                 )}
             >
-                <div className="pointer-events-auto mx-auto flex max-w-lg items-stretch gap-0.5 rounded-3xl border border-navy-100 bg-white/95 p-1.5 shadow-[0_8px_30px_rgba(11,27,58,0.16)] backdrop-blur">
+                {/* Scrolls rather than squeezes. An admin carries enough
+                    destinations to overflow a phone, and a label clipped to
+                    "المستخدـ…" is worse than one the thumb has to reach. */}
+                <div className="no-scrollbar pointer-events-auto mx-auto flex max-w-lg items-stretch gap-0.5 overflow-x-auto rounded-3xl border border-navy-100 bg-white/95 p-1.5 shadow-[0_8px_30px_rgba(11,27,58,0.16)] backdrop-blur">
                     {barStart.map((item) => (
                         <BottomLink key={item.to} item={item} href={path(item.to)} />
                     ))}
@@ -248,7 +272,9 @@ function BottomLink({ item, href }: { item: NavItem; href: string }) {
             end={item.to === '/'}
             className={({ isActive }) =>
                 clsx(
-                    'tap flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 transition active:scale-95',
+                    // The floor is what keeps a label whole; below it the bar
+                    // scrolls instead of clipping the text.
+                    'tap flex min-w-[4.25rem] flex-1 flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 transition active:scale-95',
                     isActive ? 'bg-brand-50 text-brand-700' : 'text-navy-400 hover:bg-navy-50',
                 )
             }

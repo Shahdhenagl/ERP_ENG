@@ -3,12 +3,19 @@
 namespace Database\Seeders;
 
 use App\Enums\AssetStatus;
+use App\Enums\ContractStatus;
+use App\Enums\ItemCategory;
 use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
 use App\Enums\TaskType;
 use App\Enums\UserRole;
 use App\Models\Asset;
+use App\Models\Contract;
 use App\Models\Customer;
+use App\Models\Item;
+use App\Models\Warehouse;
+use App\Services\MaintenancePlanner;
+use App\Services\StockLedger;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -133,6 +140,43 @@ class DatabaseSeeder extends Seeder
             'created_by' => $manager->id,
         ]));
 
+        // ── A live maintenance contract ──────────────────────
+        // Started two months ago so part of the plan is already behind us and
+        // the next visit is close enough to have a work order — the state the
+        // dashboard is actually meant to show.
+        $contract = Contract::create([
+            'customer_id' => $customers[0]->id,
+            'title' => 'عقد صيانة سنوي — أربع زيارات',
+            'starts_on' => now()->subMonths(2)->toDateString(),
+            'ends_on' => now()->addMonths(10)->toDateString(),
+            'visits_per_year' => 4,
+            'status' => ContractStatus::Active,
+            'value' => 48000,
+            'sla_response_hours' => 4,
+            'sla_resolution_hours' => 24,
+            'notes' => 'يشمل قطع الغيار الاستهلاكية عدا البطاريات.',
+            'created_by' => $manager->id,
+        ]);
+
+        $contract->assets()->attach([$assets[0]->id, $assets[3]->id]);
+
+        $planner = app(MaintenancePlanner::class);
+        $planner->plan($contract);
+        $planner->materialiseDueVisits();
+
+        // A draft too — the state a manager sees before signing anything off.
+        Contract::create([
+            'customer_id' => $customers[1]->id,
+            'title' => 'عقد صيانة نصف سنوي',
+            'starts_on' => now()->addWeeks(2)->toDateString(),
+            'ends_on' => now()->addWeeks(2)->addYear()->toDateString(),
+            'visits_per_year' => 2,
+            'value' => 22000,
+            'sla_response_hours' => 8,
+            'sla_resolution_hours' => 48,
+            'created_by' => $manager->id,
+        ]);
+
         // ── Jobs spread across the whole lifecycle ───────────
         $blueprints = [
             [
@@ -226,6 +270,47 @@ class DatabaseSeeder extends Seeder
                 ]);
             }
         }
+
+        // ── Inventory ────────────────────────────────────────
+        // Received at two prices on purpose, so the weighted average is
+        // visibly something other than either invoice price.
+        $ledger = app(StockLedger::class);
+        $main = Warehouse::main();
+
+        $battery = Item::create([
+            'name' => 'بطارية 12V 100Ah',
+            'category' => ItemCategory::Battery,
+            'unit' => 'قطعة',
+            'reorder_level' => 8,
+            'created_by' => $manager->id,
+        ]);
+
+        $fan = Item::create([
+            'name' => 'مروحة تبريد 120mm',
+            'category' => ItemCategory::SparePart,
+            'unit' => 'قطعة',
+            'reorder_level' => 4,
+            'created_by' => $manager->id,
+        ]);
+
+        $fuse = Item::create([
+            'name' => 'فيوز 32A',
+            'category' => ItemCategory::Consumable,
+            'unit' => 'قطعة',
+            'reorder_level' => 20,
+            'created_by' => $manager->id,
+        ]);
+
+        $ledger->receive($battery, $main, 20, 950, $manager, ['supplier' => 'النور للبطاريات']);
+        $ledger->receive($battery, $main, 10, 1010, $manager, ['supplier' => 'النور للبطاريات']);
+        $ledger->receive($fan, $main, 12, 180, $manager, ['supplier' => 'الحرة للقطع']);
+        $ledger->receive($fuse, $main, 15, 25, $manager, ['supplier' => 'الحرة للقطع']);
+
+        // Two technicians are carrying stock; the third is empty, which is a
+        // state the UI has to handle too.
+        $ledger->transfer($battery, $main, Warehouse::forTechnician($technicians[0]), 4, $manager);
+        $ledger->transfer($fan, $main, Warehouse::forTechnician($technicians[0]), 2, $manager);
+        $ledger->transfer($battery, $main, Warehouse::forTechnician($technicians[1]), 2, $manager);
 
         $this->command->info('تم إنشاء البيانات التجريبية.');
         $this->command->table(
