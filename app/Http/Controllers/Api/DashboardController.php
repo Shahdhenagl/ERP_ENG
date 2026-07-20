@@ -5,18 +5,28 @@ namespace App\Http\Controllers\Api;
 use App\Enums\TaskStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\TaskResource;
+use App\Http\Resources\ContractResource;
+use App\Models\Contract;
 use App\Models\Customer;
 use App\Models\Task;
 use App\Models\User;
+use App\Services\MaintenancePlanner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
+    public function __construct(protected MaintenancePlanner $planner) {}
+
     public function __invoke(Request $request): JsonResponse
     {
         $user = $request->user();
+
+        // No cron on this host, so due maintenance visits are turned into work
+        // orders off the back of traffic. Throttled to once every 15 minutes,
+        // so most requests pay nothing for this.
+        $this->planner->tick();
         $scoped = fn () => Task::query()->when(
             $user->isTechnician(),
             fn ($q) => $q->forTechnician($user->id),
@@ -57,8 +67,12 @@ class DashboardController extends Controller
                 ->whereNotNull('scheduled_at')
                 ->where('scheduled_at', '<', now())
                 ->count(),
+            // Contract visits are cut ahead of their date, so both of these are
+            // held to what a dispatcher could act on this fortnight. Counting
+            // every future visit would turn a signed contract into a badge full
+            // of work nobody is meant to touch yet.
             'unassigned' => $user->canDispatch()
-                ? Task::query()->open()->whereNull('assigned_to')->count()
+                ? Task::query()->open()->actionable()->whereNull('assigned_to')->count()
                 : 0,
         ];
 
@@ -90,14 +104,45 @@ class DashboardController extends Controller
         $upcoming = $scoped()
             ->with(['customer', 'technician', 'asset'])
             ->open()
+            ->actionable()
             ->orderByRaw("FIELD(priority, 'urgent','high','normal','low')")
             ->orderByRaw('scheduled_at IS NULL, scheduled_at ASC')
             ->limit(8)
             ->get();
 
-        return response()->json([
+        $payload = [
             'stats' => $stats,
             'upcoming' => TaskResource::collection($upcoming)->resolve(),
-        ]);
+        ];
+
+        if ($user->canDispatch()) {
+            // The answer to "which contract visits need a technician putting on
+            // them" — the reason the whole contract feature exists.
+            //
+            // No horizon here on purpose: a work order only exists once the
+            // planner decided the visit was near enough, so filtering again
+            // would hide jobs that are already cut and waiting.
+            $visitsDue = Task::query()
+                ->whereNotNull('contract_id')
+                ->open()
+                ->whereNull('assigned_to')
+                ->with(['customer', 'contract'])
+                ->orderByRaw('scheduled_at IS NULL, scheduled_at ASC')
+                ->limit(10)
+                ->get();
+
+            $payload['maintenance_due'] = TaskResource::collection($visitsDue)->resolve();
+            $stats['maintenance_due'] = $visitsDue->count();
+            $stats['contracts_active'] = Contract::query()->activeOn(now()->toDateString())->count();
+            $stats['contracts_expiring'] = Contract::query()->expiringWithin(60)->count();
+
+            $payload['contracts_expiring'] = ContractResource::collection(
+                Contract::query()->expiringWithin(60)->with('customer')->orderBy('ends_on')->limit(5)->get(),
+            )->resolve();
+
+            $payload['stats'] = $stats;
+        }
+
+        return response()->json($payload);
     }
 }

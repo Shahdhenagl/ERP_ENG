@@ -21,6 +21,7 @@ class Task extends Model
         'code',
         'customer_id',
         'asset_id',
+        'contract_id',
         'assigned_to',
         'created_by',
         'title',
@@ -39,6 +40,8 @@ class Task extends Model
         'completed_at',
         'cancelled_at',
         'cancel_reason',
+        'response_due_at',
+        'resolution_due_at',
     ];
 
     protected function casts(): array
@@ -55,6 +58,8 @@ class Task extends Model
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
             'cancelled_at' => 'datetime',
+            'response_due_at' => 'datetime',
+            'resolution_due_at' => 'datetime',
         ];
     }
 
@@ -89,6 +94,11 @@ class Task extends Model
     public function asset(): BelongsTo
     {
         return $this->belongsTo(Asset::class);
+    }
+
+    public function contract(): BelongsTo
+    {
+        return $this->belongsTo(Contract::class);
     }
 
     public function technician(): BelongsTo
@@ -186,6 +196,58 @@ class Task extends Model
     public function scopeForTechnician(Builder $query, int $userId): Builder
     {
         return $query->where('assigned_to', $userId);
+    }
+
+    /**
+     * Jobs worth a dispatcher's attention right now.
+     *
+     * Contract visits are cut ahead of their date, so without this the
+     * "unassigned" and "overdue" counters would fill with visits nobody is
+     * meant to touch yet, and stop being numbers anyone trusts.
+     */
+    public function scopeActionable(Builder $query, int $horizonDays = 14): Builder
+    {
+        return $query->where(function (Builder $q) use ($horizonDays) {
+            $q->whereNull('scheduled_at')
+                ->orWhere('scheduled_at', '<=', now()->addDays($horizonDays));
+        });
+    }
+
+    /**
+     * Missed a contract deadline. Derived rather than stored: a stored flag
+     * would drift the moment a due date or a timestamp changed, and there is
+     * no scheduled job here that could ever reconcile it.
+     */
+    public function scopeSlaBreached(Builder $query): Builder
+    {
+        return $query->where(function (Builder $q) {
+            $q->whereNotNull('response_due_at')
+                ->whereRaw('COALESCE(accepted_at, NOW()) > response_due_at')
+                ->orWhere(function (Builder $r) {
+                    $r->whereNotNull('resolution_due_at')
+                        ->whereRaw('COALESCE(completed_at, NOW()) > resolution_due_at');
+                });
+        });
+    }
+
+    // ── SLA ──────────────────────────────────────────────────
+
+    public function hasBreachedResponse(): ?bool
+    {
+        if (! $this->response_due_at) {
+            return null;
+        }
+
+        return ($this->accepted_at ?? now())->greaterThan($this->response_due_at);
+    }
+
+    public function hasBreachedResolution(): ?bool
+    {
+        if (! $this->resolution_due_at) {
+            return null;
+        }
+
+        return ($this->completed_at ?? now())->greaterThan($this->resolution_due_at);
     }
 
     public function scopeSearch(Builder $query, ?string $term): Builder

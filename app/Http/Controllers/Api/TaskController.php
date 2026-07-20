@@ -37,6 +37,10 @@ class TaskController extends Controller
             ->when($request->string('priority')->toString(), fn ($q, $p) => $q->where('priority', $p))
             ->when($request->integer('assigned_to'), fn ($q, $id) => $q->where('assigned_to', $id))
             ->when($request->integer('customer_id'), fn ($q, $id) => $q->where('customer_id', $id))
+            ->when($request->integer('contract_id'), fn ($q, $id) => $q->where('contract_id', $id))
+            ->when($request->boolean('contract_only'), fn ($q) => $q->whereNotNull('contract_id'))
+            ->when($request->string('scheduled_after')->toString(), fn ($q, $d) => $q->whereDate('scheduled_at', '>=', $d))
+            ->when($request->string('scheduled_before')->toString(), fn ($q, $d) => $q->whereDate('scheduled_at', '<=', $d))
             ->search($request->string('search')->toString())
             ->orderByRaw("FIELD(priority, 'urgent','high','normal','low')")
             ->orderByRaw('scheduled_at IS NULL, scheduled_at ASC')
@@ -105,6 +109,7 @@ class TaskController extends Controller
             'technician',
             'creator',
             'asset',
+            'contract',
             'statusLogs.user',
             'reports.author',
             'reports.attachments',

@@ -56,6 +56,27 @@ class TaskResource extends JsonResource
                 ]
                 : null,
 
+            'contract_id' => $this->contract_id,
+            'contract' => $this->relationLoaded('contract') && $this->contract
+                ? [
+                    'id' => $this->contract->id,
+                    'code' => $this->contract->code,
+                    'label' => $this->contract->title ?: "عقد صيانة {$this->contract->code}",
+                ]
+                : null,
+
+            // Deadlines are stored; whether they were missed is worked out on
+            // every read. A stored breach flag would drift the moment a
+            // timestamp changed, and nothing here runs on a timer to fix it.
+            'sla' => $this->response_due_at || $this->resolution_due_at
+                ? [
+                    'response_due_at' => $this->response_due_at?->toIso8601String(),
+                    'resolution_due_at' => $this->resolution_due_at?->toIso8601String(),
+                    'response_breached' => $this->hasBreachedResponse(),
+                    'resolution_breached' => $this->hasBreachedResolution(),
+                ]
+                : null,
+
             'scheduled_at' => $this->scheduled_at?->toIso8601String(),
             'accepted_at' => $this->accepted_at?->toIso8601String(),
             'on_the_way_at' => $this->on_the_way_at?->toIso8601String(),
