@@ -9,8 +9,11 @@ use App\Models\TaskStatusLog;
 use App\Models\User;
 use App\Notifications\TaskAssigned;
 use App\Notifications\TaskStatusChanged;
+use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 /**
  * Single owner of every status change a job can undergo. Controllers never
@@ -46,7 +49,7 @@ class TaskWorkflow
             ]);
         }
 
-        return DB::transaction(function () use ($task, $from, $to, $actor, $context) {
+        DB::transaction(function () use ($task, $from, $to, $actor, $context) {
             $task->status = $to;
 
             if ($column = $to->timestampColumn()) {
@@ -75,11 +78,15 @@ class TaskWorkflow
                 description: "{$task->code}: {$from->label()} ← {$to->label()}",
                 properties: ['from' => $from->value, 'to' => $to->value],
             );
-
-            $this->notifyStatusChange($task, $from, $to, $actor);
-
-            return $task->fresh(['customer', 'technician', 'creator']);
         });
+
+        // Outside the transaction and on purpose. On this deployment the queue
+        // runs `sync`, so a notification is delivered inline — a slow SMTP host
+        // or a dead push subscription would otherwise roll back a status change
+        // the technician already made in the field.
+        $this->notifyStatusChange($task, $from, $to, $actor);
+
+        return $task->fresh(['customer', 'technician', 'creator']);
     }
 
     /**
@@ -102,7 +109,7 @@ class TaskWorkflow
         );
 
         if ($technician && $technician->id !== $previous) {
-            $technician->notify(new TaskAssigned($task));
+            $this->deliver($technician, new TaskAssigned($task));
         }
 
         return $task->fresh(['customer', 'technician', 'creator']);
@@ -124,7 +131,25 @@ class TaskWorkflow
             ->get();
 
         foreach ($recipients as $recipient) {
-            $recipient->notify(new TaskStatusChanged($task, $from, $to, $actor));
+            $this->deliver($recipient, new TaskStatusChanged($task, $from, $to, $actor));
+        }
+    }
+
+    /**
+     * Send a notification without letting a delivery problem become the
+     * caller's problem. The work already happened; failing to announce it is
+     * worth a log line, not a failed request the technician has to retry.
+     */
+    protected function deliver(User $recipient, Notification $notification): void
+    {
+        try {
+            $recipient->notify($notification);
+        } catch (Throwable $e) {
+            Log::warning('Notification delivery failed', [
+                'recipient' => $recipient->id,
+                'notification' => $notification::class,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 }
