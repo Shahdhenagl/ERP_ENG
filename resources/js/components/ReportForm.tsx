@@ -6,7 +6,7 @@ import { Button, Field, Input, Select, Textarea } from '@/components/ui'
 import { useToast } from '@/components/Toast'
 import { errorMessage } from '@/lib/api'
 import { DEVICE_CONDITION, READING_FIELDS } from '@/lib/domain'
-import { useSaveReport } from '@/lib/queries'
+import { useMyStock, useSaveReport } from '@/lib/queries'
 import type { ReportType, Task, TaskReport } from '@/types'
 
 interface ReportFormProps {
@@ -20,6 +20,8 @@ interface ReportFormProps {
 }
 
 interface PartRow {
+    /** Set when picked off the van; null for a part bought outside stock. */
+    item_id?: number | null
     name: string
     qty: string
 }
@@ -42,8 +44,15 @@ export function ReportForm({ open, onClose, task, type, existing, onSaved }: Rep
     const [actions, setActions] = useState(existing?.actions_taken ?? '')
     const [recommendations, setRecommendations] = useState(existing?.recommendations ?? '')
     const [parts, setParts] = useState<PartRow[]>(
-        existing?.parts_used?.map((part) => ({ name: part.name, qty: String(part.qty ?? 1) })) ?? [],
+        existing?.parts_used?.map((part) => ({
+            item_id: part.item_id ?? null,
+            name: part.name,
+            qty: String(part.qty ?? 1),
+        })) ?? [],
     )
+
+    // What this technician is carrying, so parts can be picked rather than typed.
+    const { data: vanStock = [] } = useMyStock()
     const [signedBy, setSignedBy] = useState(existing?.signed_by_name ?? '')
     const [signature, setSignature] = useState<string | null>(null)
 
@@ -66,7 +75,11 @@ export function ReportForm({ open, onClose, task, type, existing, onSaved }: Rep
                 recommendations: recommendations || null,
                 parts_used: parts
                     .filter((part) => part.name.trim())
-                    .map((part) => ({ name: part.name.trim(), qty: Number(part.qty) || 1 })),
+                    .map((part) => ({
+                        item_id: part.item_id ?? null,
+                        name: part.name.trim(),
+                        qty: Number(part.qty) || 1,
+                    })),
                 signed_by_name: signedBy || null,
                 signature,
             })
@@ -193,11 +206,22 @@ export function ReportForm({ open, onClose, task, type, existing, onSaved }: Rep
                             variant="ghost"
                             icon={Plus}
                             className="text-xs"
-                            onClick={() => setParts((current) => [...current, { name: '', qty: '1' }])}
+                            onClick={() =>
+                                setParts((current) => [...current, { item_id: null, name: '', qty: '1' }])
+                            }
                         >
                             إضافة
                         </Button>
                     </div>
+
+                    {/* Picking from the van deducts stock; typing a name does not.
+                        Both are legitimate — a part bought on the way to site was
+                        never in inventory. */}
+                    {vanStock.length > 0 && (
+                        <p className="mb-2 rounded-xl bg-navy-50 px-3 py-2 text-[11px] text-navy-500">
+                            اختيار قطعة من عهدتك يخصمها من رصيدك تلقائيًا.
+                        </p>
+                    )}
 
                     {parts.length === 0 ? (
                         <p className="rounded-xl bg-navy-50 px-4 py-3 text-xs text-navy-400">
@@ -205,8 +229,41 @@ export function ReportForm({ open, onClose, task, type, existing, onSaved }: Rep
                         </p>
                     ) : (
                         <div className="space-y-2">
-                            {parts.map((part, index) => (
-                                <div key={index} className="flex gap-2">
+                            {parts.map((part, index) => {
+                                const onHand = vanStock.find((line) => line.item_id === part.item_id)
+
+                                return (
+                                <div key={index} className="space-y-1">
+                                <div className="flex gap-2">
+                                    {vanStock.length > 0 ? (
+                                        <Select
+                                            value={part.item_id ? String(part.item_id) : '__free'}
+                                            onChange={(event) => {
+                                                const value = event.target.value
+                                                const line = vanStock.find(
+                                                    (row) => String(row.item_id) === value,
+                                                )
+
+                                                setParts((current) =>
+                                                    current.map((row, i) =>
+                                                        i === index
+                                                            ? line
+                                                                ? { ...row, item_id: line.item_id, name: line.name }
+                                                                : { ...row, item_id: null, name: '' }
+                                                            : row,
+                                                    ),
+                                                )
+                                            }}
+                                            className="flex-1"
+                                        >
+                                            <option value="__free">— قطعة من خارج العهدة —</option>
+                                            {vanStock.map((line) => (
+                                                <option key={line.item_id} value={line.item_id}>
+                                                    {line.name} (متاح {line.qty} {line.unit})
+                                                </option>
+                                            ))}
+                                        </Select>
+                                    ) : (
                                     <Input
                                         value={part.name}
                                         onChange={(event) =>
@@ -219,6 +276,7 @@ export function ReportForm({ open, onClose, task, type, existing, onSaved }: Rep
                                         placeholder="اسم القطعة"
                                         className="flex-1"
                                     />
+                                    )}
                                     <Input
                                         type="number"
                                         min="0"
@@ -244,7 +302,17 @@ export function ReportForm({ open, onClose, task, type, existing, onSaved }: Rep
                                         <Trash2 className="size-4" />
                                     </button>
                                 </div>
-                            ))}
+
+                                {/* Catch an over-claim here rather than letting the
+                                    server reject the whole report on save. */}
+                                {onHand && Number(part.qty) > onHand.qty && (
+                                    <p className="px-1 text-[11px] font-medium text-red-600">
+                                        المتاح في عهدتك {onHand.qty} {onHand.unit} فقط.
+                                    </p>
+                                )}
+                                </div>
+                                )
+                            })}
                         </div>
                     )}
                 </section>
