@@ -47,16 +47,32 @@ it('stops a technician adjusting a stocktake', function () {
 });
 
 it('lets a manager run the store', function () {
+    // The supplier is a record now, not typed text — a receipt has to say who
+    // it came from before it will be booked.
+    $supplier = \App\Models\Supplier::create(['name' => 'مورّد البطاريات']);
+
+    actingAs($this->manager)
+        ->postJson('/api/stock/receive', [
+            'item_id' => $this->item->id,
+            'supplier_id' => $supplier->id,
+            'qty' => 5,
+            'unit_cost' => 40,
+        ])
+        ->assertCreated();
+
+    expect((float) $this->item->fresh()->avg_cost)->toBe(40.0)
+        ->and($supplier->fresh()->balance())->toBe(200.0);
+});
+
+it('refuses a receipt that does not say where the goods came from', function () {
     actingAs($this->manager)
         ->postJson('/api/stock/receive', [
             'item_id' => $this->item->id,
             'qty' => 5,
             'unit_cost' => 40,
-            'supplier' => 'مورّد البطاريات',
         ])
-        ->assertCreated();
-
-    expect((float) $this->item->fresh()->avg_cost)->toBe(40.0);
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('supplier_id');
 });
 
 /* ── A technician sees their own van and nothing else ────── */

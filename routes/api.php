@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\ItemController;
+use App\Http\Controllers\Api\PurchaseOrderController;
+use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\TreasuryController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\StockController;
@@ -117,6 +119,25 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::post('stock/receive', [StockController::class, 'receive']);
     Route::post('stock/transfer', [StockController::class, 'transfer']);
     Route::post('stock/adjust', [StockController::class, 'adjust']);
+
+    // ── Purchasing ───────────────────────────────────────────
+    Route::get('suppliers', [SupplierController::class, 'index']);
+    Route::post('suppliers', [SupplierController::class, 'store']);
+    Route::get('suppliers/{supplier}', [SupplierController::class, 'show']);
+    Route::put('suppliers/{supplier}', [SupplierController::class, 'update']);
+    Route::delete('suppliers/{supplier}', [SupplierController::class, 'destroy']);
+
+    Route::post('supplier-payments', [SupplierController::class, 'pay']);
+    Route::delete('supplier-payments/{payment}', [SupplierController::class, 'reversePayment']);
+
+    Route::get('purchase-orders', [PurchaseOrderController::class, 'index']);
+    Route::post('purchase-orders', [PurchaseOrderController::class, 'store']);
+    Route::get('purchase-orders/{order}', [PurchaseOrderController::class, 'show']);
+    Route::put('purchase-orders/{order}', [PurchaseOrderController::class, 'update']);
+    Route::delete('purchase-orders/{order}', [PurchaseOrderController::class, 'destroy']);
+    Route::post('purchase-orders/{order}/send', [PurchaseOrderController::class, 'send']);
+    Route::post('purchase-orders/{order}/cancel', [PurchaseOrderController::class, 'cancel']);
+    Route::post('purchase-orders/{order}/receive', [PurchaseOrderController::class, 'receive']);
 
     // ── Receivables & treasury ───────────────────────────────
     // Kept with the dispatchers: in a company this size the office manager

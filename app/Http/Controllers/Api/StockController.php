@@ -9,6 +9,8 @@ use App\Models\Item;
 use App\Models\StockMovement;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Models\Supplier;
+use App\Services\PurchasingService;
 use App\Services\StockLedger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,7 +18,10 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class StockController extends Controller
 {
-    public function __construct(protected StockLedger $ledger) {}
+    public function __construct(
+        protected StockLedger $ledger,
+        protected PurchasingService $purchasing,
+    ) {}
 
     /** Every stock location, with what each is holding. */
     public function warehouses(Request $request): JsonResponse
@@ -88,21 +93,25 @@ class StockController extends Controller
         return StockMovementResource::collection($movements);
     }
 
-    /** Goods in from a supplier. The only thing that moves an item's cost. */
+    /**
+     * Goods in with no order behind them. The only thing that moves an item's
+     * cost, and the supplier is a record rather than typed text — otherwise the
+     * same company gets spelled three ways and nothing totals against them.
+     */
     public function receive(Request $request): JsonResponse
     {
         $data = $request->validate([
             'item_id' => ['required', 'exists:items,id'],
+            'supplier_id' => ['required', 'exists:suppliers,id'],
             'qty' => ['required', 'numeric', 'gt:0'],
             'unit_cost' => ['required', 'numeric', 'min:0'],
-            'supplier' => ['nullable', 'string', 'max:160'],
             'reference' => ['nullable', 'string', 'max:64'],
             'note' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $movement = $this->ledger->receive(
+        $movement = $this->purchasing->receiveDirect(
+            Supplier::findOrFail($data['supplier_id']),
             Item::findOrFail($data['item_id']),
-            Warehouse::main(),
             (float) $data['qty'],
             (float) $data['unit_cost'],
             $request->user(),
