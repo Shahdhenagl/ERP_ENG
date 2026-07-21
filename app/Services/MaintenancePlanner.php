@@ -271,7 +271,7 @@ class MaintenancePlanner
 
         if ($contract->assets->isNotEmpty()) {
             $devices = $contract->assets
-                ->map(fn ($asset) => trim($asset->label ?? $asset->code))
+                ->map(fn ($asset) => $asset->label())
                 ->implode('، ');
 
             $lines[] = "الأجهزة المغطاة: {$devices}.";

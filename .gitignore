@@ -32,3 +32,4 @@ Thumbs.db
 
 # Leftover empty directory locked by a shell during scaffolding
 /_scaffold
+storage/framework/browser-tests.lock

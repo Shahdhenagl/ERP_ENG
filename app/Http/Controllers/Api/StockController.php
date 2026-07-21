@@ -44,6 +44,9 @@ class StockController extends Controller
                 'type' => $w->type->value,
                 'type_label' => $w->type->label(),
                 'holder' => $w->holder?->name,
+                'is_default' => $w->is_default,
+                'address' => $w->address,
+                'keeper' => $w->keeper,
                 'total_qty' => (float) ($w->total_qty ?? 0),
             ]);
 

@@ -6,6 +6,7 @@ import type {
     Asset,
     Branch,
     Contract,
+    CustodyStatement,
     Customer,
     DashboardData,
     CashBoxSummary,
@@ -45,6 +46,7 @@ export const keys = {
     technicians: ['technicians'] as const,
     notifications: ['notifications'] as const,
 
+    custody: ['custody'] as const,
     branches: (filters?: Record<string, unknown>) => ['branches', filters ?? {}] as const,
     customerBranches: (id: number | string) => ['customer-branches', Number(id)] as const,
 
@@ -532,6 +534,93 @@ export function useStockOperation(operation: 'receive' | 'transfer' | 'adjust') 
 
 function invalidateStock(client: ReturnType<typeof useQueryClient>): void {
     for (const key of ['items', 'warehouses', 'movements', 'stock-summary', 'my-stock']) {
+        void client.invalidateQueries({ queryKey: [key] })
+    }
+}
+
+/* ── Custody: money, stock and devices ───────────────────── */
+
+export function useCustody() {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: keys.custody,
+        queryFn: async () =>
+            (await api.get<{ data: CustodyStatement[] }>('/custody')).data.data,
+        enabled: canDispatch,
+    })
+}
+
+export function useCustodyCash() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (await api.post('/custody/cash', payload)).data,
+        onSuccess: () => invalidateCustody(client),
+    })
+}
+
+/** Handing a device over, and taking it back. */
+export function useCustodyDevice() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({
+            action,
+            id,
+            payload,
+        }: {
+            action: 'take' | 'return'
+            id?: number
+            payload?: Record<string, unknown>
+        }) =>
+            (
+                await api.post(
+                    action === 'take' ? '/custody/devices' : `/custody/devices/${id}/return`,
+                    payload ?? {},
+                )
+            ).data,
+        onSuccess: () => invalidateCustody(client),
+    })
+}
+
+export function useSaveWarehouse(id?: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (
+                await (id
+                    ? api.put(`/warehouses/${id}`, payload)
+                    : api.post('/warehouses', payload))
+            ).data,
+        onSuccess: () => invalidateCustody(client),
+    })
+}
+
+export function useDeleteWarehouse() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id: number) => (await api.delete(`/warehouses/${id}`)).data,
+        onSuccess: () => invalidateCustody(client),
+    })
+}
+
+/** Custody spans stock and cash, so both sets of totals go stale together. */
+function invalidateCustody(client: ReturnType<typeof useQueryClient>): void {
+    for (const key of [
+        'custody',
+        'warehouses',
+        'items',
+        'movements',
+        'stock-summary',
+        'my-stock',
+        'cash-boxes',
+        'cash-movements',
+        'treasury-summary',
+    ]) {
         void client.invalidateQueries({ queryKey: [key] })
     }
 }

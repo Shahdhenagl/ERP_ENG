@@ -10,7 +10,11 @@ import { AssetList } from '@/pages/AssetList'
 import { ContractDetail } from '@/pages/ContractDetail'
 import { ContractList } from '@/pages/ContractList'
 import { CustomerList } from '@/pages/CustomerList'
-import { Inventory } from '@/pages/Inventory'
+import { CustodyPage } from '@/pages/inventory/CustodyPage'
+import { InventoryLayout } from '@/pages/inventory/InventoryLayout'
+import { ItemsPage } from '@/pages/inventory/ItemsPage'
+import { MovementsPage } from '@/pages/inventory/MovementsPage'
+import { WarehousesPage } from '@/pages/inventory/WarehousesPage'
 import { InvoiceDetail } from '@/pages/InvoiceDetail'
 import { InvoiceList } from '@/pages/InvoiceList'
 import { Purchasing } from '@/pages/Purchasing'
@@ -99,7 +103,15 @@ export function App() {
                                         <Route path="assets/:id" element={<AssetDetail />} />
                                         <Route path="contracts" element={<ContractList />} />
                                         <Route path="contracts/:id" element={<ContractDetail />} />
-                                        <Route path="inventory" element={<Inventory />} />
+                                        {/* Sections rather than tabs, so the
+                                            sidebar can link straight into one. */}
+                                        <Route path="inventory" element={<InventoryLayout />}>
+                                            <Route index element={<Navigate to="items" replace />} />
+                                            <Route path="items" element={<ItemsPage />} />
+                                            <Route path="warehouses" element={<WarehousesPage />} />
+                                            <Route path="custody" element={<CustodyPage />} />
+                                            <Route path="movements" element={<MovementsPage />} />
+                                        </Route>
                                         <Route path="sales" element={<Sales />} />
                                         <Route path="purchasing" element={<Purchasing />} />
                                         <Route path="invoices" element={<InvoiceList />} />

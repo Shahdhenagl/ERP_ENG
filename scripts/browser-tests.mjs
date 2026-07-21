@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { existsSync, readdirSync } from 'node:fs'
+import { existsSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs'
 
 /**
  * Runs every browser suite, reseeding between each one.
@@ -23,6 +23,34 @@ function findPhp() {
 
     return 'php'
 }
+
+/**
+ * Two of these running at once wipe and migrate the same database from under
+ * each other, and the failure that follows looks like a broken migration
+ * rather than a broken invocation. A lock file makes the real cause obvious.
+ */
+const LOCK = 'storage/framework/browser-tests.lock'
+
+if (existsSync(LOCK)) {
+    console.error(
+        `\n${LOCK} exists — another browser run is using the database.\n` +
+            'Wait for it to finish, or delete the file if it was left behind by a crash.\n',
+    )
+    process.exit(1)
+}
+
+writeFileSync(LOCK, String(process.pid))
+
+const releaseLock = () => {
+    try {
+        unlinkSync(LOCK)
+    } catch {
+        // Already gone; nothing to do.
+    }
+}
+
+process.on('exit', releaseLock)
+process.on('SIGINT', () => process.exit(130))
 
 const only = process.argv.slice(2)
 const suites = readdirSync('tests/Browser')

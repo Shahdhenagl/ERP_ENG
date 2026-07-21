@@ -54,7 +54,7 @@ export interface Customer {
 
 export type ItemCategory = 'battery' | 'spare_part' | 'consumable'
 export type MovementType = 'receipt' | 'transfer' | 'issue' | 'return' | 'adjustment'
-export type WarehouseType = 'main' | 'van'
+export type WarehouseType = 'store' | 'van'
 
 export interface Item {
     id: number
@@ -119,6 +119,52 @@ export interface WarehouseSummary {
     type_label: string
     holder: string | null
     total_qty: number
+    /** Where receipts land and issues are drawn from unless told otherwise. */
+    is_default?: boolean
+    address?: string | null
+    keeper?: string | null
+}
+
+/** A device in a technician's hands, out of the registry until handed back. */
+export interface CustodyDevice {
+    id: number
+    asset_id: number
+    asset: string | null
+    serial: string | null
+    customer: string | null
+    reason: string
+    reason_label: string
+    taken_from: string | null
+    taken_at: string | null
+    days_held: number
+}
+
+/** Everything one technician is answerable for: money, stock and devices. */
+export interface CustodyStatement {
+    technician: {
+        id: number
+        name: string
+        phone: string | null
+        job_title: string | null
+    }
+    cash: {
+        box_id: number | null
+        balance: number
+    }
+    stock: {
+        warehouse_id: number | null
+        lines: Array<{
+            item_id: number
+            name: string
+            unit: string
+            qty: number
+            value: number
+        }>
+        value: number
+    }
+    devices: CustodyDevice[]
+    /** Cash plus stock — one figure for how exposed the company is. */
+    total_value: number
 }
 
 /** A line in the technician's van, offered by the report's part picker. */
@@ -415,7 +461,8 @@ export type InvoiceStatus = 'draft' | 'issued' | 'void'
 /** Derived from the receipts against the invoice, never stored. */
 export type PaymentState = 'draft' | 'void' | 'unpaid' | 'partly_paid' | 'paid' | 'overdue'
 export type PaymentMethod = 'cash' | 'bank_transfer' | 'cheque' | 'wallet'
-export type CashBoxType = 'cash' | 'bank'
+/** `custody` is a technician's float — a box with their name on it. */
+export type CashBoxType = 'cash' | 'bank' | 'custody'
 
 export interface InvoiceLine {
     id?: number

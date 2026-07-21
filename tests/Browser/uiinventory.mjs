@@ -53,14 +53,14 @@ async function settled(page) {
     // The fuse sits below its reorder level of 20 (15 received).
     check('flags an item below its reorder level', body.includes('تحت حد الطلب'))
 
-    // Custody is visible per technician.
-    await page.getByText('المخازن والعهد').click()
+    // The sections are routes now rather than tabs, so navigate to them.
+    await page.goto(`${BASE}/manager/inventory/warehouses`, { waitUntil: 'domcontentloaded' })
     await settled(page)
     const warehouses = await page.locator('body').innerText()
     check('lists the main store', warehouses.includes('المخزن الرئيسي'))
     check('lists a technician custody', warehouses.includes('عهدة'))
 
-    await page.getByText('سجل الحركة').click()
+    await page.goto(`${BASE}/manager/inventory/movements`, { waitUntil: 'domcontentloaded' })
     await settled(page)
     const movements = await page.locator('body').innerText()
     check('ledger shows receipts', movements.includes('وارد'))

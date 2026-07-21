@@ -11,14 +11,18 @@ use App\Enums\TaskType;
 use App\Enums\UserRole;
 use App\Models\Asset;
 use App\Models\Branch;
+use App\Models\CashBox;
 use App\Models\Contract;
 use App\Models\Customer;
+use App\Models\Invoice;
 use App\Models\Item;
 use App\Models\PurchaseOrder;
 use App\Models\Quotation;
 use App\Models\Setting;
 use App\Models\Supplier;
 use App\Models\Warehouse;
+use App\Services\BillingService;
+use App\Services\CustodyService;
 use App\Services\PurchasingService;
 use App\Services\SalesService;
 use App\Services\MaintenancePlanner;
@@ -471,6 +475,50 @@ class DatabaseSeeder extends Seeder
         $ledger->transfer($battery, $main, Warehouse::forTechnician($technicians[0]), 4, $manager);
         $ledger->transfer($fan, $main, Warehouse::forTechnician($technicians[0]), 2, $manager);
         $ledger->transfer($battery, $main, Warehouse::forTechnician($technicians[1]), 2, $manager);
+
+        // ── Custody in its other two forms ───────────────────
+        // One technician carries money and a customer's device as well as
+        // stock, so the custody screen shows all three at once rather than
+        // looking like it only ever tracks parts.
+        $custody = app(CustodyService::class);
+        $billing = app(BillingService::class);
+
+        // The till has to hold something before a float can come out of it, and
+        // money only enters through a collection — so raise and settle one
+        // rather than writing a balance in by hand.
+        $openingInvoice = Invoice::create([
+            'customer_id' => $customers[0]->id,
+            'issue_date' => now()->subMonth()->toDateString(),
+            'notes' => 'صيانة دورية — الربع الأول',
+            'created_by' => $manager->id,
+        ]);
+
+        $openingInvoice->lines()->create([
+            'description' => 'عقد صيانة — دفعة',
+            'qty' => 1,
+            'unit_price' => 18000,
+            'line_total' => 18000,
+        ]);
+
+        $billing->receivePayment([
+            'invoice_id' => $billing->issue($billing->recalculate($openingInvoice))->id,
+            'cash_box_id' => CashBox::default()->id,
+            'amount' => 18000,
+            'paid_at' => now()->subWeeks(3)->toDateString(),
+        ], $manager);
+
+        $custody->advanceCash($technicians[0], 2000, CashBox::default(), $manager, 'سلفة مصروفات ميدانية');
+        $custody->spendFromCustody($technicians[0], 180, $technicians[0], [
+            'category' => 'مواصلات',
+            'note' => 'انتقال إلى موقع العميل',
+        ]);
+
+        $custody->takeDevice($assets[3], $technicians[0], $manager, [
+            'reason' => 'workshop_repair',
+            'taken_from' => $assets[3]->customer?->name,
+            'taken_at' => now()->subDays(4),
+            'note' => 'عطل في لوحة التحكم — يحتاج فحصًا بالورشة.',
+        ]);
 
         $this->command->info('تم إنشاء البيانات التجريبية.');
         $this->command->table(

@@ -85,7 +85,8 @@ class TreasuryController extends Controller
         $boxes = CashBox::query()->orderBy('type')->get()->map(fn (CashBox $box) => [
             'id' => $box->id,
             'name' => $box->name,
-            'type' => $box->type,
+            'type' => $box->isCustody() ? 'custody' : $box->type,
+            'holder' => $box->holder?->name,
             'type_label' => $box->type === 'bank' ? 'حساب بنكي' : 'خزينة نقدية',
             'account_number' => $box->account_number,
             'currency' => $box->currency,

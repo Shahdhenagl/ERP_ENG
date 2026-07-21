@@ -19,7 +19,9 @@ class AssetResource extends JsonResource
             'brand' => $this->brand,
             'model' => $this->model,
             'capacity' => $this->capacity,
-            'label' => trim("{$this->brand} {$this->model}") ?: ($this->serial ?? $this->code),
+            // One definition, on the model — this used to be spelled out here
+            // and again in MaintenancePlanner, and they had already drifted.
+            'label' => $this->label(),
 
             'customer_id' => $this->customer_id,
             'branch_id' => $this->branch_id,
