@@ -8,6 +8,8 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\ItemController;
 use App\Http\Controllers\Api\PurchaseOrderController;
+use App\Http\Controllers\Api\QuotationController;
+use App\Http\Controllers\Api\SalesOrderController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\TreasuryController;
 use App\Http\Controllers\Api\NotificationController;
@@ -138,6 +140,24 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::post('purchase-orders/{order}/send', [PurchaseOrderController::class, 'send']);
     Route::post('purchase-orders/{order}/cancel', [PurchaseOrderController::class, 'cancel']);
     Route::post('purchase-orders/{order}/receive', [PurchaseOrderController::class, 'receive']);
+
+    // ── Quotations & sales orders ────────────────────────────
+    Route::get('quotations', [QuotationController::class, 'index']);
+    Route::post('quotations', [QuotationController::class, 'store']);
+    Route::get('quotations/{quotation}', [QuotationController::class, 'show']);
+    Route::put('quotations/{quotation}', [QuotationController::class, 'update']);
+    Route::delete('quotations/{quotation}', [QuotationController::class, 'destroy']);
+    Route::post('quotations/{quotation}/send', [QuotationController::class, 'send']);
+    Route::post('quotations/{quotation}/accept', [QuotationController::class, 'accept']);
+    Route::post('quotations/{quotation}/reject', [QuotationController::class, 'reject']);
+    Route::post('quotations/{quotation}/cancel', [QuotationController::class, 'cancel']);
+
+    Route::get('sales-orders', [SalesOrderController::class, 'index']);
+    Route::post('sales-orders', [SalesOrderController::class, 'store']);
+    Route::get('sales-orders/{salesOrder}', [SalesOrderController::class, 'show']);
+    Route::post('sales-orders/{salesOrder}/deliver', [SalesOrderController::class, 'deliver']);
+    Route::post('sales-orders/{salesOrder}/cancel', [SalesOrderController::class, 'cancel']);
+    Route::post('sales-orders/{salesOrder}/invoice', [SalesOrderController::class, 'invoice']);
 
     // ── Receivables & treasury ───────────────────────────────
     // Kept with the dispatchers: in a company this size the office manager

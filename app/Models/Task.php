@@ -101,6 +101,11 @@ class Task extends Model
         return $this->belongsTo(Contract::class);
     }
 
+    public function salesOrder(): BelongsTo
+    {
+        return $this->belongsTo(SalesOrder::class);
+    }
+
     public function technician(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');

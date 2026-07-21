@@ -19,6 +19,7 @@ class Invoice extends Model
         'customer_id',
         'task_id',
         'contract_id',
+        'sales_order_id',
         'issue_date',
         'due_date',
         'status',
@@ -76,6 +77,11 @@ class Invoice extends Model
     public function task(): BelongsTo
     {
         return $this->belongsTo(Task::class);
+    }
+
+    public function salesOrder(): BelongsTo
+    {
+        return $this->belongsTo(SalesOrder::class);
     }
 
     public function lines(): HasMany
