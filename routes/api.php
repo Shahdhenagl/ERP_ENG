@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\ItemController;
 use App\Http\Controllers\Api\PurchaseOrderController;
 use App\Http\Controllers\Api\QuotationController;
 use App\Http\Controllers\Api\SalesOrderController;
+use App\Http\Controllers\Api\SettingController;
+use App\Http\Controllers\Api\StatementController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\TreasuryController;
 use App\Http\Controllers\Api\NotificationController;
@@ -36,6 +38,10 @@ Route::post('login', [AuthController::class, 'login'])->middleware('throttle:10,
 | `role` with no arguments just enforces "logged in and not suspended".
 */
 Route::middleware(['auth:sanctum', 'role'])->group(function () {
+
+    // The letterhead appears on documents a technician prints on site, so
+    // reading it is not gated — only changing it is.
+    Route::get('settings', [SettingController::class, 'index']);
 
     // ── Session & profile ────────────────────────────────────
     Route::get('me', [AuthController::class, 'me']);
@@ -89,6 +95,7 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::delete('tasks/{task}', [TaskController::class, 'destroy']);
     Route::post('tasks/{task}/assign', [TaskController::class, 'assign']);
 
+    Route::get('customers/{customer}/statement', StatementController::class);
     Route::get('customers', [CustomerController::class, 'index']);
     Route::post('customers', [CustomerController::class, 'store']);
     Route::put('customers/{customer}', [CustomerController::class, 'update']);
@@ -189,5 +196,6 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::put('settings', [SettingController::class, 'update']);
     Route::apiResource('users', UserController::class);
 });

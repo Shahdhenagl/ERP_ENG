@@ -11,6 +11,7 @@ import {
     Plus,
     Receipt,
     ScrollText,
+    Settings2,
     Truck,
     Users,
     type LucideIcon,
@@ -50,6 +51,7 @@ const NAV: NavItem[] = [
     { to: '/invoices', label: 'الفواتير', icon: Receipt, roles: ['admin', 'manager'] },
     { to: '/stock', label: 'عهدتي', icon: Package, roles: ['technician'] },
     { to: '/users', label: 'المستخدمون', icon: Users, roles: ['admin'], short: 'الفريق' },
+    { to: '/settings', label: 'بيانات الشركة', icon: Settings2, roles: ['admin'], short: 'إعدادات' },
 ]
 
 export function AppLayout() {

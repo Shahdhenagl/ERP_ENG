@@ -5,6 +5,7 @@ import {
     FileText,
     Pencil,
     Plus,
+    Printer,
     Receipt,
     Search,
     Send,
@@ -29,7 +30,7 @@ import {
     useSalesOrders,
 } from '@/lib/queries'
 import type { Quotation } from '@/types'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 export function Sales() {
     const [tab, setTab] = useState<'quotations' | 'orders'>('quotations')
@@ -219,6 +220,7 @@ function QuotationDetail({
     onEdit: (quotation: Quotation) => void
 }) {
     const toast = useToast()
+    const { path } = useArea()
     const action = useQuotationAction()
     const { data: quotation, isLoading } = useQuotation(id)
     const [reasonFor, setReasonFor] = useState<'reject' | 'cancel' | null>(null)
@@ -308,6 +310,16 @@ function QuotationDetail({
                     )}
 
                     <div className="flex flex-wrap gap-2 border-t border-navy-100 pt-4">
+                        {/* Available from draft onwards — a quote is often
+                            printed to be read over before it is sent. */}
+                        <Link
+                            to={path(`/print/quotations/${quotation.id}`)}
+                            className="btn-secondary text-xs"
+                        >
+                            <Printer className="size-4" />
+                            طباعة
+                        </Link>
+
                         {quotation.status === 'draft' && (
                             <>
                                 <Button

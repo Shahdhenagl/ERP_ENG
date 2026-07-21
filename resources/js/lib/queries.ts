@@ -16,6 +16,8 @@ import type {
     PurchaseOrder,
     Quotation,
     SalesOrder,
+    StatementMeta,
+    StatementRow,
     Supplier,
     StockMovement,
     VanStockLine,
@@ -41,6 +43,10 @@ export const keys = {
     users: (filters?: Record<string, unknown>) => ['users', filters ?? {}] as const,
     technicians: ['technicians'] as const,
     notifications: ['notifications'] as const,
+
+    settings: ['settings'] as const,
+    statement: (id: number | string, range?: Record<string, unknown>) =>
+        ['statement', Number(id), range ?? {}] as const,
 
     quotations: (filters?: Record<string, unknown>) => ['quotations', filters ?? {}] as const,
     quotation: (id: number | string) => ['quotation', Number(id)] as const,
@@ -524,6 +530,48 @@ function invalidateStock(client: ReturnType<typeof useQueryClient>): void {
     for (const key of ['items', 'warehouses', 'movements', 'stock-summary', 'my-stock']) {
         void client.invalidateQueries({ queryKey: [key] })
     }
+}
+
+/* ── Company settings & statements ───────────────────────── */
+
+/**
+ * The letterhead. Read by every printed document and rarely changed, so it is
+ * held for the session rather than re-fetched per document.
+ */
+export function useSettings() {
+    return useQuery({
+        queryKey: keys.settings,
+        queryFn: async () =>
+            (await api.get<{ data: Record<string, string> }>('/settings')).data.data,
+        staleTime: Infinity,
+    })
+}
+
+export function useSaveSettings() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (await api.put<{ data: Record<string, string> }>('/settings', payload)).data.data,
+        onSuccess: (data) => client.setQueryData(keys.settings, data),
+    })
+}
+
+export function useStatement(
+    customerId: number | string | undefined,
+    range: { from?: string; to?: string } = {},
+) {
+    return useQuery({
+        queryKey: keys.statement(customerId ?? 0, range),
+        queryFn: async () =>
+            (
+                await api.get<{ data: StatementRow[]; meta: StatementMeta }>(
+                    `/customers/${customerId}/statement`,
+                    { params: range },
+                )
+            ).data,
+        enabled: Boolean(customerId),
+    })
 }
 
 /* ── Quotations & sales orders ───────────────────────────── */

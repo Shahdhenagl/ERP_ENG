@@ -179,6 +179,35 @@ export interface Contract {
     created_at: string | null
 }
 
+/** One line of a customer account — an invoice raised or money received. */
+export interface StatementRow {
+    date: string | null
+    type: 'invoice' | 'payment'
+    type_label: string
+    code: string
+    note: string | null
+    debit: number
+    credit: number
+    /** Running total after this line. */
+    balance: number
+}
+
+export interface StatementMeta {
+    customer: {
+        id: number
+        code: string
+        name: string
+        company: string | null
+        phone: string | null
+        address: string | null
+    }
+    from: string | null
+    to: string | null
+    total_invoiced: number
+    total_collected: number
+    balance: number
+}
+
 /** What an operator set. `effective_status` is what you show. */
 export type QuotationStatus = 'draft' | 'sent' | 'accepted' | 'rejected' | 'cancelled'
 /** Includes the lapse the server derives from today's date. */

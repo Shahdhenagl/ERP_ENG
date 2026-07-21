@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import { ArrowRight, Ban, Building2, CheckCircle2, Pencil, Printer, Wallet } from 'lucide-react'
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { InvoiceForm } from '@/components/InvoiceForm'
 import { ConfirmDialog, Modal } from '@/components/Modal'
 import { PaymentForm } from '@/components/PaymentForm'
@@ -10,11 +10,13 @@ import { Button, ErrorState, Field, PageLoader, Textarea } from '@/components/ui
 import { errorMessage } from '@/lib/api'
 import { formatMoney, formatQty, PAYMENT_STATE } from '@/lib/domain'
 import { formatDate, formatSmart } from '@/lib/format'
+import { useArea } from '@/lib/nav'
 import { useInvoice, useInvoiceAction, useReversePayment } from '@/lib/queries'
 
 export function InvoiceDetail() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
+    const { path } = useArea()
     const toast = useToast()
 
     const { data: invoice, isLoading, isError, refetch } = useInvoice(id)
@@ -53,9 +55,15 @@ export function InvoiceDetail() {
                     رجوع
                 </button>
 
-                <button onClick={() => window.print()} className="btn-ghost tap px-3" aria-label="طباعة">
+                {/* Opens the document rather than printing this screen — the
+                    customer's copy needs a letterhead, not a nav bar. */}
+                <Link
+                    to={path(`/print/invoices/${invoice.id}`)}
+                    className="btn-secondary tap text-sm"
+                >
                     <Printer className="size-4" />
-                </button>
+                    طباعة
+                </Link>
             </div>
 
             {/* ══ Header ════════════════════════════════════════ */}

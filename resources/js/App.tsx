@@ -15,6 +15,11 @@ import { InvoiceDetail } from '@/pages/InvoiceDetail'
 import { InvoiceList } from '@/pages/InvoiceList'
 import { Purchasing } from '@/pages/Purchasing'
 import { Sales } from '@/pages/Sales'
+import { Settings } from '@/pages/Settings'
+import { InvoicePrint } from '@/pages/print/InvoicePrint'
+import { QuotationPrint } from '@/pages/print/QuotationPrint'
+import { ServiceReportPrint } from '@/pages/print/ServiceReportPrint'
+import { StatementPrint } from '@/pages/print/StatementPrint'
 import { Treasury } from '@/pages/Treasury'
 import { MyStock } from '@/pages/MyStock'
 import { Dashboard } from '@/pages/Dashboard'
@@ -46,6 +51,28 @@ export function App() {
                             <Route path="/login" element={<Login />} />
 
                             <Route element={<RequireAuth />}>
+                                {/* ── Printed documents ────────────────
+                                    Outside AppLayout on purpose: a document is
+                                    a sheet of paper, not a screen with a nav
+                                    bar wrapped round it.
+
+                                    Nested under /manager so the links can be
+                                    built with the same path() helper as every
+                                    other dispatcher route. */}
+                                <Route
+                                    path="manager/print"
+                                    element={<RequireRole roles={['admin', 'manager']} />}
+                                >
+                                    <Route path="invoices/:id" element={<InvoicePrint />} />
+                                    <Route path="quotations/:id" element={<QuotationPrint />} />
+                                    <Route path="statements/:id" element={<StatementPrint />} />
+                                </Route>
+
+                                {/* The service report is unprefixed: a technician
+                                    prints it on site and has the customer sign
+                                    it, so both roles reach the same URL. */}
+                                <Route path="print/tasks/:id" element={<ServiceReportPrint />} />
+
                                 <Route element={<AppLayout />}>
                                     {/* ── Technician area ──────────────── */}
                                     <Route path="tech" element={<RequireRole roles={['technician']} />}>
@@ -82,6 +109,7 @@ export function App() {
 
                                         <Route element={<RequireRole roles={['admin']} />}>
                                             <Route path="users" element={<UserList />} />
+                                            <Route path="settings" element={<Settings />} />
                                         </Route>
                                     </Route>
 

@@ -12,6 +12,7 @@ import {
     Navigation,
     Pencil,
     Phone,
+    Printer,
     Receipt,
     Trash2,
     UserCog,
@@ -144,8 +145,21 @@ export function TaskDetail() {
                     رجوع
                 </button>
 
-                {canDispatch && (
-                    <div className="flex gap-1">
+                <div className="flex gap-1">
+                    {/* The technician prints this on site for the customer to
+                        sign, so it is not gated behind dispatch. */}
+                    {task.reports && task.reports.length > 0 && (
+                        <Link
+                            to={`/print/tasks/${task.id}`}
+                            className="btn-ghost tap px-3"
+                            aria-label="طباعة التقرير"
+                        >
+                            <Printer className="size-4" />
+                        </Link>
+                    )}
+
+                    {canDispatch && (
+                        <>
                         <Link to={path(`/tasks/${task.id}/edit`)} className="btn-ghost tap px-3" aria-label="تعديل">
                             <Pencil className="size-4" />
                         </Link>
@@ -156,8 +170,9 @@ export function TaskDetail() {
                         >
                             <Trash2 className="size-4" />
                         </button>
-                    </div>
-                )}
+                        </>
+                    )}
+                </div>
             </div>
 
             {/* ── Hero ───────────────────────────────────────── */}

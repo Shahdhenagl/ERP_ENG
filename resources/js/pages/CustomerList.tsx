@@ -1,11 +1,23 @@
-import { Building2, MapPin, MessageCircle, Pencil, Phone, Plus, Search, Trash2 } from 'lucide-react'
+import {
+    Building2,
+    FileText,
+    MapPin,
+    MessageCircle,
+    Pencil,
+    Phone,
+    Plus,
+    Search,
+    Trash2,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { CustomerForm } from '@/components/CustomerForm'
 import { ConfirmDialog } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, EmptyState, ErrorState, Input, PageHeader, SkeletonCard } from '@/components/ui'
 import { errorMessage } from '@/lib/api'
 import { telLink } from '@/lib/format'
+import { useArea } from '@/lib/nav'
 import { useCustomers, useDeleteCustomer } from '@/lib/queries'
 import type { Customer } from '@/types'
 
@@ -16,6 +28,7 @@ export function CustomerList() {
     const [editing, setEditing] = useState<Customer | undefined>()
     const [deleting, setDeleting] = useState<Customer | undefined>()
 
+    const { path } = useArea()
     const { data, isLoading, isError, refetch } = useCustomers({ search, per_page: 40 })
     const remove = useDeleteCustomer()
 
@@ -105,6 +118,14 @@ export function CustomerList() {
                                 </div>
 
                                 <div className="flex shrink-0 gap-0.5">
+                                    {/* What you send when chasing money. */}
+                                    <Link
+                                        to={path(`/print/statements/${customer.id}`)}
+                                        className="tap grid place-items-center rounded-lg p-2 text-navy-400 transition hover:bg-navy-50 hover:text-navy-700"
+                                        aria-label="كشف حساب"
+                                    >
+                                        <FileText className="size-4" />
+                                    </Link>
                                     <button
                                         onClick={() => openEdit(customer)}
                                         className="tap grid place-items-center rounded-lg p-2 text-navy-400 transition hover:bg-navy-50 hover:text-navy-700"

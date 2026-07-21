@@ -299,3 +299,88 @@
         transition-duration: 0.01ms !important;
     }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   Printed documents
+
+   No PDF library: dompdf and its peers mangle Arabic — letters break
+   out of their joined forms and the direction flips. The browser that
+   renders the app correctly also prints it correctly, and the user
+   gets a PDF from the print dialog either way.
+   ══════════════════════════════════════════════════════════════ */
+
+/* On screen a document is a sheet of paper on a grey desk. */
+.doc-sheet {
+    width: 100%;
+    max-width: 210mm;
+    margin-inline: auto;
+    background: white;
+    padding: 14mm 12mm;
+}
+
+.doc-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.doc-table th {
+    background: var(--color-navy-50);
+    padding: 8px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-navy-600);
+    text-align: right;
+    border-bottom: 1px solid var(--color-navy-200);
+}
+
+.doc-table td {
+    padding: 9px 10px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--color-navy-100);
+    vertical-align: top;
+}
+
+@media print {
+    @page {
+        size: A4;
+        margin: 12mm;
+    }
+
+    /* Chrome omits backgrounds by default, which would drop every table
+       header and status chip — the parts that make the page readable. */
+    * {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    html,
+    body {
+        background: white;
+    }
+
+    /* Everything that is not the document itself: nav, buttons, toasts. */
+    .no-print {
+        display: none !important;
+    }
+
+    .doc-sheet {
+        max-width: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    /* A row split across a page break is unreadable on paper, and a
+       heading stranded at the foot of a page is worse. */
+    tr,
+    .doc-keep {
+        break-inside: avoid;
+    }
+
+    thead {
+        display: table-header-group;
+    }
+
+    .doc-break-before {
+        break-before: page;
+    }
+}

@@ -15,6 +15,7 @@ use App\Models\Customer;
 use App\Models\Item;
 use App\Models\PurchaseOrder;
 use App\Models\Quotation;
+use App\Models\Setting;
 use App\Models\Supplier;
 use App\Models\Warehouse;
 use App\Services\PurchasingService;
@@ -33,6 +34,19 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // ── The letterhead every document prints with ────────
+        Setting::put([
+            'company_name' => 'City Engineering',
+            'company_tagline' => 'Expertise in Standby Energy',
+            'company_address' => '15 شارع التحرير، الدقي، الجيزة',
+            'company_phone' => '0233456789',
+            'company_email' => 'info@cityeng.local',
+            'company_tax_id' => '512-874-336',
+            'company_commercial_id' => '84719',
+            'invoice_footer' => 'يُرجى السداد خلال 15 يومًا من تاريخ الفاتورة.',
+            'quotation_terms' => "الأسعار شاملة التوريد والتركيب.\nالدفع: 50% مقدم والباقي عند التشغيل.\nالضمان: سنتان على الجهاز، سنة على البطاريات.",
+        ]);
+
         // ── Accounts ─────────────────────────────────────────
         User::create([
             'name' => 'مدير النظام',
