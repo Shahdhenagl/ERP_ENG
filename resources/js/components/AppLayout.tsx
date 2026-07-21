@@ -1,9 +1,12 @@
 import clsx from 'clsx'
 import {
+    ArrowLeftRight,
     Bell,
+    Boxes,
     Building2,
     ClipboardList,
     FileText,
+    HandCoins,
     HardDrive,
     LayoutDashboard,
     LogOut,
@@ -14,6 +17,7 @@ import {
     Settings2,
     Truck,
     Users,
+    Warehouse,
     type LucideIcon,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -33,6 +37,11 @@ interface NavItem {
     roles?: Array<'admin' | 'manager' | 'technician'>
     /** Used in the bottom bar, where a long label truncates on a phone. */
     short?: string
+    /**
+     * Sub-sections. Shown indented under the parent in the sidebar; the bottom
+     * bar shows only the parent, since a phone has no room to nest.
+     */
+    children?: NavItem[]
 }
 
 /**
@@ -45,7 +54,18 @@ const NAV: NavItem[] = [
     { to: '/customers', label: 'العملاء', icon: Building2, roles: ['admin', 'manager'] },
     { to: '/assets', label: 'الأجهزة', icon: HardDrive, roles: ['admin', 'manager'] },
     { to: '/contracts', label: 'عقود الصيانة', icon: ScrollText, roles: ['admin', 'manager'], short: 'العقود' },
-    { to: '/inventory', label: 'المخزون', icon: Package, roles: ['admin', 'manager'] },
+    {
+        to: '/inventory',
+        label: 'المخزون',
+        icon: Package,
+        roles: ['admin', 'manager'],
+        children: [
+            { to: '/inventory/items', label: 'الأصناف', icon: Boxes },
+            { to: '/inventory/warehouses', label: 'المخازن', icon: Warehouse },
+            { to: '/inventory/custody', label: 'العهد', icon: HandCoins },
+            { to: '/inventory/movements', label: 'سجل الحركة', icon: ArrowLeftRight },
+        ],
+    },
     { to: '/sales', label: 'المبيعات', icon: FileText, roles: ['admin', 'manager'], short: 'بيع' },
     { to: '/purchasing', label: 'المشتريات', icon: Truck, roles: ['admin', 'manager'], short: 'شراء' },
     { to: '/invoices', label: 'الفواتير', icon: Receipt, roles: ['admin', 'manager'] },
@@ -107,7 +127,25 @@ export function AppLayout() {
 
                     <nav className="flex-1 space-y-1 px-4">
                         {visibleNav.map((item) => (
-                            <SidebarLink key={item.to} item={item} href={path(item.to)} />
+                            <div key={item.to}>
+                                <SidebarLink item={item} href={path(item.to)} />
+
+                                {/* Children stay visible rather than collapsing:
+                                    the whole point is that the sub-sections are
+                                    reachable in one click, not two. */}
+                                {item.children && (
+                                    <div className="mt-0.5 mr-4 space-y-0.5 border-r border-white/10 pr-2">
+                                        {item.children.map((child) => (
+                                            <SidebarLink
+                                                key={child.to}
+                                                item={child}
+                                                href={path(child.to)}
+                                                nested
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         ))}
                     </nav>
 
@@ -247,23 +285,34 @@ export function AppLayout() {
     )
 }
 
-function SidebarLink({ item, href }: { item: NavItem; href: string }) {
+function SidebarLink({
+    item,
+    href,
+    nested = false,
+}: {
+    item: NavItem
+    href: string
+    nested?: boolean
+}) {
     const Icon = item.icon
 
     return (
         <NavLink
             to={href}
-            end={item.to === '/'}
+            // A parent with children would otherwise light up on every child
+            // route and leave two rows looking selected at once.
+            end={item.to === '/' || Boolean(item.children)}
             className={({ isActive }) =>
                 clsx(
-                    'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all',
+                    'flex items-center gap-3 rounded-xl font-semibold transition-all',
+                    nested ? 'px-3 py-2 text-[13px]' : 'px-4 py-3 text-sm',
                     isActive
                         ? 'bg-white/15 text-white shadow-lg ring-1 ring-white/20'
                         : 'text-brand-100/70 hover:bg-white/10 hover:text-white',
                 )
             }
         >
-            <Icon className="size-4.5 shrink-0" />
+            <Icon className={clsx('shrink-0', nested ? 'size-4' : 'size-4.5')} />
             {item.label}
         </NavLink>
     )

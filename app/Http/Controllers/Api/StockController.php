@@ -10,6 +10,8 @@ use App\Models\StockMovement;
 use App\Models\User;
 use App\Models\Warehouse;
 use App\Models\Supplier;
+use App\Models\ActivityLog;
+use App\Services\CustodyService;
 use App\Services\PurchasingService;
 use App\Services\StockLedger;
 use Illuminate\Http\JsonResponse;
@@ -21,6 +23,7 @@ class StockController extends Controller
     public function __construct(
         protected StockLedger $ledger,
         protected PurchasingService $purchasing,
+        protected CustodyService $custody,
     ) {}
 
     /** Every stock location, with what each is holding. */
@@ -205,6 +208,53 @@ class StockController extends Controller
             'stock_value' => round($items->sum(fn (Item $i) => $i->stockValue()), 2),
             'below_reorder' => Item::query()->active()->belowReorderLevel()->count(),
             'vans' => Warehouse::where('type', WarehouseType::Van)->count(),
+            'stores' => Warehouse::where('type', WarehouseType::Store)->count(),
+        ]);
+    }
+
+    /* ── Stores ──────────────────────────────────────────── */
+    // Kept here rather than in a controller of their own: a store is a place
+    // in the same ledger, and splitting it off would split its guards too.
+
+    public function storeWarehouse(Request $request): JsonResponse
+    {
+        $warehouse = $this->custody->openStore($this->validatedWarehouse($request));
+
+        ActivityLog::record('warehouse.created', $warehouse, "تم فتح مخزن {$warehouse->name}");
+
+        return response()->json(['data' => ['id' => $warehouse->id, 'name' => $warehouse->name]], 201);
+    }
+
+    public function updateWarehouse(Request $request, Warehouse $warehouse): JsonResponse
+    {
+        $warehouse->update([
+            ...$this->validatedWarehouse($request),
+            'is_active' => $request->boolean('is_active', true),
+        ]);
+
+        if ($request->boolean('make_default')) {
+            $warehouse->makeDefault();
+        }
+
+        return response()->json(['data' => ['id' => $warehouse->id]]);
+    }
+
+    public function destroyWarehouse(Warehouse $warehouse): JsonResponse
+    {
+        $this->custody->closeStore($warehouse);
+
+        ActivityLog::record('warehouse.deleted', null, "تم حذف مخزن {$warehouse->name}");
+
+        return response()->json(['message' => 'تم حذف المخزن.']);
+    }
+
+    /** @return array<string, mixed> */
+    protected function validatedWarehouse(Request $request): array
+    {
+        return $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'address' => ['nullable', 'string', 'max:500'],
+            'keeper' => ['nullable', 'string', 'max:160'],
         ]);
     }
 }

@@ -95,6 +95,12 @@ class User extends Authenticatable
         return $query->where('is_active', true);
     }
 
+    /** Reads better than role(UserRole::Technician) at every call site. */
+    public function scopeTechnicians(Builder $query): Builder
+    {
+        return $query->where('role', UserRole::Technician->value);
+    }
+
     public function scopeRole(Builder $query, UserRole $role): Builder
     {
         return $query->where('role', $role->value);

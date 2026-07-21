@@ -12,13 +12,16 @@ class Warehouse extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'type', 'user_id', 'is_active'];
+    protected $fillable = [
+        'name', 'type', 'user_id', 'is_active', 'is_default', 'address', 'keeper',
+    ];
 
     protected function casts(): array
     {
         return [
             'type' => WarehouseType::class,
             'is_active' => 'boolean',
+            'is_default' => 'boolean',
         ];
     }
 
@@ -38,15 +41,46 @@ class Warehouse extends Model
     // ── Lookups ──────────────────────────────────────────────
 
     /**
-     * The company store. Created on first use rather than seeded, so a fresh
+     * The store operations fall back to — where goods are received and where
+     * custody is drawn from.
+     *
+     * A company can have several stores now, so this is the one flagged
+     * default rather than the only one. Created on first use, so a fresh
      * install has one without anyone having to remember to make it.
      */
     public static function main(): self
     {
-        return static::firstOrCreate(
-            ['type' => WarehouseType::Main],
-            ['name' => 'المخزن الرئيسي'],
-        );
+        $default = static::where('type', WarehouseType::Store)
+            ->where('is_default', true)
+            ->first();
+
+        if ($default) {
+            return $default;
+        }
+
+        // No flag set: adopt the oldest store rather than opening a second one
+        // beside it, which would split the balances.
+        $existing = static::where('type', WarehouseType::Store)->orderBy('id')->first();
+
+        if ($existing) {
+            $existing->forceFill(['is_default' => true])->save();
+
+            return $existing;
+        }
+
+        return static::create([
+            'name' => 'المخزن الرئيسي',
+            'type' => WarehouseType::Store,
+            'is_default' => true,
+        ]);
+    }
+
+    /** Make this the store operations fall back to; only one may hold the flag. */
+    public function makeDefault(): void
+    {
+        static::where('is_default', true)->update(['is_default' => false]);
+
+        $this->forceFill(['is_default' => true])->save();
     }
 
     /** A technician's custody, opened the first time anything is sent to them. */

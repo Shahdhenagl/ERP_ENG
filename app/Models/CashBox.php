@@ -11,7 +11,7 @@ class CashBox extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'type', 'account_number', 'currency', 'is_active'];
+    protected $fillable = ['name', 'type', 'user_id', 'account_number', 'currency', 'is_active'];
 
     protected function casts(): array
     {
@@ -49,9 +49,22 @@ class CashBox extends Model
     /** The default box money lands in when nobody picked one. */
     public static function default(): self
     {
+        // A technician's float is also a box, so the company till is the one
+        // with nobody's name on it — not simply the first `cash` row.
         return static::firstOrCreate(
-            ['type' => 'cash'],
+            ['type' => 'cash', 'user_id' => null],
             ['name' => 'الخزينة الرئيسية'],
         );
+    }
+
+    /** The technician this box belongs to; null for a company box. */
+    public function holder(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function isCustody(): bool
+    {
+        return $this->user_id !== null;
     }
 }

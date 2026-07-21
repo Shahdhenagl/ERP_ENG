@@ -109,6 +109,14 @@ class Asset extends Model
         return $end === null ? null : $end->isFuture();
     }
 
+    /** Best available human name: brand+model, else the serial, else the code. */
+    public function label(): string
+    {
+        $model = trim("{$this->brand} {$this->model}");
+
+        return $model !== '' ? $model : ($this->serial ?: $this->code);
+    }
+
     public function warrantyLabel(): string
     {
         return match ($this->isUnderWarranty()) {

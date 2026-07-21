@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AssetController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\ContractController;
+use App\Http\Controllers\Api\CustodyController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\InvoiceController;
@@ -133,6 +134,20 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
 
     // ── Inventory ────────────────────────────────────────────
     Route::apiResource('items', ItemController::class);
+
+    // ── Stores ───────────────────────────────────────────────
+    Route::post('warehouses', [StockController::class, 'storeWarehouse']);
+    Route::put('warehouses/{warehouse}', [StockController::class, 'updateWarehouse']);
+    Route::delete('warehouses/{warehouse}', [StockController::class, 'destroyWarehouse']);
+
+    // ── Custody: stock, money and devices ────────────────────
+    Route::get('custody', [CustodyController::class, 'index']);
+    Route::get('custody/devices', [CustodyController::class, 'devices']);
+    Route::get('custody/{user}', [CustodyController::class, 'show']);
+    Route::post('custody/cash', [CustodyController::class, 'cash']);
+    Route::post('custody/spend', [CustodyController::class, 'spend']);
+    Route::post('custody/devices', [CustodyController::class, 'takeDevice']);
+    Route::post('custody/devices/{custody}/return', [CustodyController::class, 'returnDevice']);
 
     Route::get('stock/summary', [StockController::class, 'summary']);
     Route::post('stock/receive', [StockController::class, 'receive']);
