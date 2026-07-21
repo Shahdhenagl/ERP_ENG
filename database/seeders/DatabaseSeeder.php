@@ -14,9 +14,11 @@ use App\Models\Contract;
 use App\Models\Customer;
 use App\Models\Item;
 use App\Models\PurchaseOrder;
+use App\Models\Quotation;
 use App\Models\Supplier;
 use App\Models\Warehouse;
 use App\Services\PurchasingService;
+use App\Services\SalesService;
 use App\Services\MaintenancePlanner;
 use App\Services\StockLedger;
 use App\Models\Task;
@@ -346,6 +348,56 @@ class DatabaseSeeder extends Seeder
             $manager,
             ['reference' => 'INV-NOOR-4471'],
         );
+
+        // ── The commercial chain ─────────────────────────────
+        // One quote still awaiting an answer, and one carried all the way
+        // through to an order — the two states the sales screen exists to show.
+        $sales = app(SalesService::class);
+
+        $pending = Quotation::create([
+            'customer_id' => $customers[1]->id,
+            'title' => 'توريد وتركيب جهاز UPS 20kVA',
+            'valid_until' => now()->addDays(10)->toDateString(),
+            'tax_rate' => 14,
+            'terms' => 'الدفع: 50% مقدم، والباقي عند التشغيل. التوريد خلال أسبوعين.',
+            'created_by' => $manager->id,
+        ]);
+
+        $pending->lines()->create([
+            'description' => 'جهاز UPS 20kVA — APC Symmetra',
+            'qty' => 1, 'unit_price' => 185000, 'line_total' => 185000, 'sort' => 0,
+        ]);
+        $pending->lines()->create([
+            'item_id' => $battery->id, 'item_code' => $battery->code,
+            'description' => 'بطارية 12V 100Ah',
+            'qty' => 8, 'unit_price' => 1400, 'line_total' => 11200, 'sort' => 1,
+        ]);
+        $pending->lines()->create([
+            'description' => 'أعمال التركيب والتشغيل الأولي',
+            'qty' => 1, 'unit_price' => 12000, 'line_total' => 12000, 'sort' => 2,
+        ]);
+
+        $sales->send($sales->recalculateQuotation($pending));
+
+        $won = Quotation::create([
+            'customer_id' => $customers[2]->id,
+            'title' => 'استبدال بنك بطاريات',
+            'valid_until' => now()->addDays(20)->toDateString(),
+            'tax_rate' => 14,
+            'created_by' => $manager->id,
+        ]);
+
+        $won->lines()->create([
+            'item_id' => $battery->id, 'item_code' => $battery->code,
+            'description' => 'بطارية 12V 100Ah',
+            'qty' => 16, 'unit_price' => 1400, 'line_total' => 22400, 'sort' => 0,
+        ]);
+        $won->lines()->create([
+            'description' => 'أجر تركيب واختبار',
+            'qty' => 1, 'unit_price' => 4500, 'line_total' => 4500, 'sort' => 1,
+        ]);
+
+        $sales->acceptToOrder($sales->send($sales->recalculateQuotation($won)), $manager);
 
         // Two technicians are carrying stock; the third is empty, which is a
         // state the UI has to handle too.

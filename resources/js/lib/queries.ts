@@ -14,6 +14,8 @@ import type {
     Paginated,
     Payment,
     PurchaseOrder,
+    Quotation,
+    SalesOrder,
     Supplier,
     StockMovement,
     VanStockLine,
@@ -39,6 +41,11 @@ export const keys = {
     users: (filters?: Record<string, unknown>) => ['users', filters ?? {}] as const,
     technicians: ['technicians'] as const,
     notifications: ['notifications'] as const,
+
+    quotations: (filters?: Record<string, unknown>) => ['quotations', filters ?? {}] as const,
+    quotation: (id: number | string) => ['quotation', Number(id)] as const,
+    salesOrders: (filters?: Record<string, unknown>) => ['sales-orders', filters ?? {}] as const,
+    salesOrder: (id: number | string) => ['sales-order', Number(id)] as const,
 
     items: (filters?: Record<string, unknown>) => ['items', filters ?? {}] as const,
     warehouses: ['warehouses'] as const,
@@ -515,6 +522,112 @@ export function useStockOperation(operation: 'receive' | 'transfer' | 'adjust') 
 
 function invalidateStock(client: ReturnType<typeof useQueryClient>): void {
     for (const key of ['items', 'warehouses', 'movements', 'stock-summary', 'my-stock']) {
+        void client.invalidateQueries({ queryKey: [key] })
+    }
+}
+
+/* ── Quotations & sales orders ───────────────────────────── */
+
+export function useQuotations(filters: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: keys.quotations(filters),
+        queryFn: async () =>
+            (await api.get<{ data: Quotation[] }>('/quotations', { params: filters })).data.data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useQuotation(id: number | string | undefined) {
+    return useQuery({
+        queryKey: keys.quotation(id ?? 0),
+        queryFn: async () => (await api.get<{ data: Quotation }>(`/quotations/${id}`)).data.data,
+        enabled: Boolean(id),
+    })
+}
+
+export function useSaveQuotation(id?: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (
+                await (id
+                    ? api.put<{ data: Quotation }>(`/quotations/${id}`, payload)
+                    : api.post<{ data: Quotation }>('/quotations', payload))
+            ).data.data,
+        onSuccess: () => invalidateSales(client),
+    })
+}
+
+/** send · accept · reject · cancel — every one shifts what the lists show. */
+export function useQuotationAction() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({
+            id,
+            action,
+            payload,
+        }: {
+            id: number
+            action: 'send' | 'accept' | 'reject' | 'cancel'
+            payload?: Record<string, unknown>
+        }) => (await api.post(`/quotations/${id}/${action}`, payload ?? {})).data,
+        onSuccess: () => invalidateSales(client),
+    })
+}
+
+export function useSalesOrders(filters: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: keys.salesOrders(filters),
+        queryFn: async () =>
+            (await api.get<{ data: SalesOrder[] }>('/sales-orders', { params: filters })).data.data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useSalesOrder(id: number | string | undefined) {
+    return useQuery({
+        queryKey: keys.salesOrder(id ?? 0),
+        queryFn: async () => (await api.get<{ data: SalesOrder }>(`/sales-orders/${id}`)).data.data,
+        enabled: Boolean(id),
+    })
+}
+
+export function useSalesOrderAction() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({
+            id,
+            action,
+            payload,
+        }: {
+            id: number
+            action: 'deliver' | 'cancel' | 'invoice'
+            payload?: Record<string, unknown>
+        }) => (await api.post(`/sales-orders/${id}/${action}`, payload ?? {})).data,
+        onSuccess: () => invalidateSales(client),
+    })
+}
+
+/** Selling touches quotes, orders, invoices and what the customer owes. */
+function invalidateSales(client: ReturnType<typeof useQueryClient>): void {
+    for (const key of [
+        'quotations',
+        'quotation',
+        'sales-orders',
+        'sales-order',
+        'invoices',
+        'invoice',
+        'treasury-summary',
+    ]) {
         void client.invalidateQueries({ queryKey: [key] })
     }
 }

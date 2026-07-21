@@ -1,4 +1,21 @@
+import { execFileSync } from 'node:child_process'
+import { existsSync, readdirSync } from 'node:fs'
 import { chromium } from 'playwright'
+
+/** Laragon keeps php off PATH on Windows; fall back to whatever is there. */
+function phpBinary() {
+    if (process.env.PHP_BIN) return process.env.PHP_BIN
+
+    const laragon = 'C:/laragon/bin/php'
+
+    if (existsSync(laragon)) {
+        const version = readdirSync(laragon).find((dir) => dir.startsWith('php-'))
+
+        if (version) return `${laragon}/${version}/php.exe`
+    }
+
+    return 'php'
+}
 
 const BASE = 'http://127.0.0.1:8000'
 const browser = await chromium.launch()
@@ -101,8 +118,9 @@ for (const status of ['accepted', 'on_the_way', 'in_progress']) {
     check(`status → ${status}`, res.status === 200 && res.body?.data?.status === status)
 }
 
-// Closing without a report must still be possible via API, but the UI blocks
-// it; here we file the report first, as the technician would.
+// Filing the completion report is what closes the job — from the technician's
+// side the work is done once the report is written, so there is no second
+// button to press afterwards.
 const findings = 'المروحة الداخلية متوقفة وحرارة الجهاز مرتفعة.'
 const report = await call(`/api/tasks/${taskId}/reports`, {
     method: 'POST',
@@ -126,11 +144,12 @@ check('completion report filed', report.status === 201)
 check('report Arabic intact', report.body?.findings === findings, report.body?.findings)
 check('battery flag captured', report.body?.batteries_need_replacement === true)
 
-const done = await call(`/api/tasks/${taskId}/status`, {
-    method: 'POST',
-    body: JSON.stringify({ status: 'completed' }),
-})
-check('status → completed', done.status === 200 && done.body?.data?.status === 'completed')
+const done = await call(`/api/tasks/${taskId}`)
+check(
+    'filing the report closed the job',
+    done.body?.data?.status === 'completed',
+    done.body?.data?.status,
+)
 
 // Terminal state must be terminal.
 const reopen = await call(`/api/tasks/${taskId}/status`, {
@@ -150,10 +169,32 @@ check(
 )
 
 /* ── Manager sees the completion notification ───────────── */
+
+// Production runs the queue synchronously. A development .env that queues to
+// the database would leave these unsent, so drain it first — otherwise the
+// check fails for a reason that has nothing to do with the app.
+try {
+    execFileSync(phpBinary(), ['artisan', 'queue:work', '--stop-when-empty', '--quiet'], {
+        stdio: 'ignore',
+    })
+} catch {
+    // Nothing queued, or no queue table — both fine.
+}
+
 await login('manager@cityeng.local')
 const notifications = await call('/api/notifications')
 const relevant = (notifications.body?.data ?? []).filter((n) => n.data?.task_id === taskId)
-check('manager notified of the job', relevant.length > 0, `${relevant.length} notification(s)`)
+
+// Nothing arriving usually means QUEUE_CONNECTION=database with no worker
+// running, not a broken notification — say which, so the next person does not
+// go hunting through TaskWorkflow for a bug that is in their .env.
+check(
+    'manager notified of the job',
+    relevant.length > 0,
+    relevant.length > 0
+        ? `${relevant.length} notification(s)`
+        : 'none — if the queue is on `database`, run `php artisan queue:work --stop-when-empty` or set it to `sync`',
+)
 
 await browser.close()
 console.log(failures === 0 ? '\nend-to-end flow works ✅' : `\n${failures} check(s) failed ❌`)

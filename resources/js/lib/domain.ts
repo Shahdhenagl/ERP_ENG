@@ -20,6 +20,9 @@ import type {
     MovementType,
     PaymentMethod,
     PaymentState,
+    QuotationEffectiveStatus,
+    SalesBillingState,
+    SalesOrderStatus,
     TaskPriority,
     TaskStatus,
     TaskType,
@@ -184,6 +187,29 @@ export function warrantyChip(underWarranty: boolean | null): string {
     return underWarranty
         ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
         : 'bg-red-50 text-red-700 ring-1 ring-red-200'
+}
+
+/** Quotations carry the lapse the server derives from today's date. */
+export const QUOTATION_STATUS: Record<QuotationEffectiveStatus, { label: string; chip: string }> = {
+    draft: { label: 'مسودة', chip: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200' },
+    sent: { label: 'مُرسَل', chip: 'bg-sky-50 text-sky-700 ring-1 ring-sky-200' },
+    expired: { label: 'انتهت صلاحيته', chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' },
+    accepted: { label: 'مقبول', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
+    rejected: { label: 'مرفوض', chip: 'bg-red-50 text-red-700 ring-1 ring-red-200' },
+    cancelled: { label: 'ملغي', chip: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200' },
+}
+
+export const SALES_ORDER_STATUS: Record<SalesOrderStatus, { label: string; chip: string }> = {
+    open: { label: 'قيد التنفيذ', chip: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200' },
+    delivered: { label: 'تم التسليم', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
+    cancelled: { label: 'ملغي', chip: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200' },
+}
+
+export const SALES_BILLING_STATE: Record<SalesBillingState, { label: string; chip: string }> = {
+    not_invoiced: { label: 'لم تتم فوترته', chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' },
+    partly_invoiced: { label: 'فوترة جزئية', chip: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200' },
+    invoiced: { label: 'تمت فوترته', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
+    cancelled: { label: 'ملغي', chip: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200' },
 }
 
 export const ITEM_CATEGORY: Record<ItemCategory, { label: string; chip: string }> = {

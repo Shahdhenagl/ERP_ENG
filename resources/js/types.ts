@@ -179,6 +179,100 @@ export interface Contract {
     created_at: string | null
 }
 
+/** What an operator set. `effective_status` is what you show. */
+export type QuotationStatus = 'draft' | 'sent' | 'accepted' | 'rejected' | 'cancelled'
+/** Includes the lapse the server derives from today's date. */
+export type QuotationEffectiveStatus = QuotationStatus | 'expired'
+
+export interface DocumentLine {
+    id?: number
+    item_id?: number | null
+    item_code?: string | null
+    description: string
+    qty: number
+    unit_price: number
+    line_total: number
+}
+
+export interface Quotation {
+    id: number
+    code: string
+    title: string | null
+
+    customer_id: number
+    customer: string | null
+    asset_id: number | null
+    asset: string | null
+
+    issue_date: string | null
+    valid_until: string | null
+    /** Negative once the offer has lapsed; null when open-ended. */
+    days_remaining: number | null
+
+    status: QuotationStatus
+    status_label: string
+    effective_status: QuotationEffectiveStatus
+    effective_status_label: string
+
+    subtotal: number
+    discount: number
+    tax_rate: number
+    tax_amount: number
+    total: number
+    currency: string
+
+    terms: string | null
+    notes: string | null
+    reject_reason: string | null
+
+    sales_order_id: number | null
+    sales_order_code: string | null
+    lines?: DocumentLine[]
+    created_at: string | null
+}
+
+export type SalesOrderStatus = 'open' | 'delivered' | 'cancelled'
+export type SalesBillingState = 'not_invoiced' | 'partly_invoiced' | 'invoiced' | 'cancelled'
+
+export interface SalesOrder {
+    id: number
+    code: string
+
+    customer_id: number
+    customer: string | null
+    quotation_id: number | null
+    quotation_code: string | null
+
+    order_date: string | null
+    delivery_date: string | null
+
+    status: SalesOrderStatus
+    status_label: string
+    /** Derived from the invoices against it. */
+    billing_state: SalesBillingState
+    billing_state_label: string
+
+    subtotal: number
+    discount: number
+    tax_rate: number
+    tax_amount: number
+    total: number
+    invoiced_total: number
+    currency: string
+
+    notes: string | null
+    cancel_reason: string | null
+    lines?: DocumentLine[]
+    invoices?: Array<{
+        id: number
+        code: string
+        status: InvoiceStatus
+        total: number
+        payment_state_label: string
+    }>
+    created_at: string | null
+}
+
 export interface Supplier {
     id: number
     code: string

@@ -14,6 +14,7 @@ import { Inventory } from '@/pages/Inventory'
 import { InvoiceDetail } from '@/pages/InvoiceDetail'
 import { InvoiceList } from '@/pages/InvoiceList'
 import { Purchasing } from '@/pages/Purchasing'
+import { Sales } from '@/pages/Sales'
 import { Treasury } from '@/pages/Treasury'
 import { MyStock } from '@/pages/MyStock'
 import { Dashboard } from '@/pages/Dashboard'
@@ -72,6 +73,7 @@ export function App() {
                                         <Route path="contracts" element={<ContractList />} />
                                         <Route path="contracts/:id" element={<ContractDetail />} />
                                         <Route path="inventory" element={<Inventory />} />
+                                        <Route path="sales" element={<Sales />} />
                                         <Route path="purchasing" element={<Purchasing />} />
                                         <Route path="invoices" element={<InvoiceList />} />
                                         <Route path="invoices/:id" element={<InvoiceDetail />} />
