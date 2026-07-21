@@ -1,5 +1,7 @@
+import clsx from 'clsx'
 import {
     Building2,
+    ChevronDown,
     FileText,
     MapPin,
     MessageCircle,
@@ -7,10 +9,12 @@ import {
     Phone,
     Plus,
     Search,
+    Store,
     Trash2,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { BranchForm } from '@/components/BranchForm'
 import { CustomerForm } from '@/components/CustomerForm'
 import { ConfirmDialog } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
@@ -18,8 +22,8 @@ import { Button, EmptyState, ErrorState, Input, PageHeader, SkeletonCard } from 
 import { errorMessage } from '@/lib/api'
 import { telLink } from '@/lib/format'
 import { useArea } from '@/lib/nav'
-import { useCustomers, useDeleteCustomer } from '@/lib/queries'
-import type { Customer } from '@/types'
+import { useCustomerBranches, useCustomers, useDeleteBranch, useDeleteCustomer } from '@/lib/queries'
+import type { Branch, Customer } from '@/types'
 
 export function CustomerList() {
     const toast = useToast()
@@ -27,6 +31,8 @@ export function CustomerList() {
     const [formOpen, setFormOpen] = useState(false)
     const [editing, setEditing] = useState<Customer | undefined>()
     const [deleting, setDeleting] = useState<Customer | undefined>()
+    const [branchFor, setBranchFor] = useState<Customer | null>(null)
+    const [editingBranch, setEditingBranch] = useState<Branch | undefined>()
 
     const { path } = useArea()
     const { data, isLoading, isError, refetch } = useCustomers({ search, per_page: 40 })
@@ -176,6 +182,18 @@ export function CustomerList() {
                                     الخريطة
                                 </a>
                             </div>
+
+                            <BranchStrip
+                                customer={customer}
+                                onAdd={() => {
+                                    setEditingBranch(undefined)
+                                    setBranchFor(customer)
+                                }}
+                                onEdit={(branch) => {
+                                    setEditingBranch(branch)
+                                    setBranchFor(customer)
+                                }}
+                            />
                         </div>
                     ))}
                 </div>
@@ -186,6 +204,21 @@ export function CustomerList() {
                     open
                     onClose={() => setFormOpen(false)}
                     customer={editing}
+                />
+            )}
+
+            {/* Rendered once, outside the loop, so opening a branch form does
+                not remount every customer card. */}
+            {branchFor && (
+                <BranchForm
+                    key={editingBranch?.id ?? `new-${branchFor.id}`}
+                    open
+                    onClose={() => {
+                        setBranchFor(null)
+                        setEditingBranch(undefined)
+                    }}
+                    customerId={branchFor.id}
+                    branch={editingBranch}
                 />
             )}
 
@@ -210,5 +243,144 @@ export function CustomerList() {
                 loading={remove.isPending}
             />
         </>
+    )
+}
+
+/**
+ * The customer's sites, folded away until asked for. Most accounts have one
+ * branch and the row would be noise; the ones that have several are exactly
+ * the accounts where knowing which site a device sits at matters.
+ */
+function BranchStrip({
+    customer,
+    onAdd,
+    onEdit,
+}: {
+    customer: Customer
+    onAdd: () => void
+    onEdit: (branch: Branch) => void
+}) {
+    const toast = useToast()
+    const [open, setOpen] = useState(false)
+    const [deleting, setDeleting] = useState<Branch | undefined>()
+
+    const { data: branches, isLoading } = useCustomerBranches(open ? customer.id : undefined)
+    const remove = useDeleteBranch()
+
+    return (
+        <div className="mt-3 border-t border-navy-100 pt-3">
+            <button
+                onClick={() => setOpen((current) => !current)}
+                className="flex w-full items-center justify-between gap-2 text-xs font-bold text-navy-500 transition hover:text-navy-800"
+            >
+                <span className="flex items-center gap-1.5">
+                    <Store className="size-3.5" />
+                    الفروع
+                </span>
+                <ChevronDown
+                    className={clsx('size-4 transition-transform', open && 'rotate-180')}
+                />
+            </button>
+
+            {open && (
+                <div className="mt-2 space-y-1.5">
+                    {isLoading ? (
+                        <p className="text-xs text-navy-400">جارٍ التحميل…</p>
+                    ) : (
+                        branches?.map((branch) => (
+                            <div
+                                key={branch.id}
+                                className="flex items-start justify-between gap-2 rounded-xl bg-navy-50 p-2.5"
+                            >
+                                <div className="min-w-0">
+                                    <p className="truncate text-xs font-bold text-navy-800">
+                                        {branch.name}
+                                        {branch.customer_ref && (
+                                            <span className="tabular mr-1.5 font-normal text-navy-400">
+                                                ({branch.customer_ref})
+                                            </span>
+                                        )}
+                                    </p>
+
+                                    {branch.address && (
+                                        <p className="truncate text-[11px] text-navy-500">
+                                            {branch.address}
+                                        </p>
+                                    )}
+
+                                    <p className="mt-0.5 text-[11px] text-navy-400">
+                                        {branch.contact_name && `${branch.contact_name} · `}
+                                        {branch.assets_count ?? 0} جهاز
+                                        {branch.working_hours && ` · ${branch.working_hours}`}
+                                    </p>
+                                </div>
+
+                                <div className="flex shrink-0 gap-0.5">
+                                    {branch.maps_url && (
+                                        <a
+                                            href={branch.maps_url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="grid place-items-center rounded-lg p-1.5 text-navy-400 transition hover:bg-white hover:text-navy-700"
+                                            aria-label="الخريطة"
+                                        >
+                                            <MapPin className="size-3.5" />
+                                        </a>
+                                    )}
+                                    <button
+                                        onClick={() => {
+                                            onEdit(branch)
+                                        }}
+                                        className="grid place-items-center rounded-lg p-1.5 text-navy-400 transition hover:bg-white hover:text-navy-700"
+                                        aria-label="تعديل الفرع"
+                                    >
+                                        <Pencil className="size-3.5" />
+                                    </button>
+                                    <button
+                                        onClick={() => setDeleting(branch)}
+                                        className="grid place-items-center rounded-lg p-1.5 text-navy-400 transition hover:bg-red-50 hover:text-red-600"
+                                        aria-label="حذف الفرع"
+                                    >
+                                        <Trash2 className="size-3.5" />
+                                    </button>
+                                </div>
+                            </div>
+                        ))
+                    )}
+
+                    <Button
+                        variant="ghost"
+                        icon={Plus}
+                        className="w-full text-xs"
+                        onClick={() => {
+                            onAdd()
+                        }}
+                    >
+                        إضافة فرع
+                    </Button>
+                </div>
+            )}
+
+            <ConfirmDialog
+                open={Boolean(deleting)}
+                onClose={() => setDeleting(undefined)}
+                onConfirm={async () => {
+                    if (!deleting) return
+
+                    try {
+                        await remove.mutateAsync(deleting.id)
+                        toast.success('تم حذف الفرع.')
+                        setDeleting(undefined)
+                    } catch (caught) {
+                        toast.error(errorMessage(caught, 'تعذّر حذف الفرع.'))
+                    }
+                }}
+                title="حذف الفرع"
+                message={`سيتم حذف «${deleting?.name}». الفروع التي بها أجهزة أو مهام لا يمكن حذفها.`}
+                confirmLabel="حذف"
+                danger
+                loading={remove.isPending}
+            />
+        </div>
     )
 }

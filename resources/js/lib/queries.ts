@@ -4,6 +4,7 @@ import { useAuth } from '@/lib/auth'
 import type {
     AppNotification,
     Asset,
+    Branch,
     Contract,
     Customer,
     DashboardData,
@@ -43,6 +44,9 @@ export const keys = {
     users: (filters?: Record<string, unknown>) => ['users', filters ?? {}] as const,
     technicians: ['technicians'] as const,
     notifications: ['notifications'] as const,
+
+    branches: (filters?: Record<string, unknown>) => ['branches', filters ?? {}] as const,
+    customerBranches: (id: number | string) => ['customer-branches', Number(id)] as const,
 
     settings: ['settings'] as const,
     statement: (id: number | string, range?: Record<string, unknown>) =>
@@ -528,6 +532,60 @@ export function useStockOperation(operation: 'receive' | 'transfer' | 'adjust') 
 
 function invalidateStock(client: ReturnType<typeof useQueryClient>): void {
     for (const key of ['items', 'warehouses', 'movements', 'stock-summary', 'my-stock']) {
+        void client.invalidateQueries({ queryKey: [key] })
+    }
+}
+
+/* ── Customer branches ───────────────────────────────────── */
+
+export function useBranches(filters: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: keys.branches(filters),
+        queryFn: async () =>
+            (await api.get<{ data: Branch[] }>('/branches', { params: filters })).data.data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+/** The branches of one customer — what the customer screen expands to show. */
+export function useCustomerBranches(customerId: number | undefined) {
+    return useQuery({
+        queryKey: keys.customerBranches(customerId ?? 0),
+        queryFn: async () =>
+            (await api.get<{ data: Branch[] }>(`/customers/${customerId}/branches`)).data.data,
+        enabled: Boolean(customerId),
+    })
+}
+
+export function useSaveBranch(customerId: number, id?: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (
+                await (id
+                    ? api.put<{ data: Branch }>(`/branches/${id}`, payload)
+                    : api.post<{ data: Branch }>(`/customers/${customerId}/branches`, payload))
+            ).data.data,
+        onSuccess: () => invalidateBranches(client),
+    })
+}
+
+export function useDeleteBranch() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id: number) => (await api.delete(`/branches/${id}`)).data,
+        onSuccess: () => invalidateBranches(client),
+    })
+}
+
+/** A branch change moves where devices and jobs are shown to be. */
+function invalidateBranches(client: ReturnType<typeof useQueryClient>): void {
+    for (const key of ['branches', 'customer-branches', 'customers', 'assets', 'tasks']) {
         void client.invalidateQueries({ queryKey: [key] })
     }
 }

@@ -42,6 +42,18 @@ class TaskResource extends JsonResource
             'effective_address' => $this->effectiveAddress(),
             'navigation_url' => $this->navigationUrl(),
 
+            'branch_id' => $this->branch_id,
+            'branch' => $this->relationLoaded('branch') && $this->branch
+                ? [
+                    'id' => $this->branch->id,
+                    'name' => $this->branch->name,
+                    'address' => $this->branch->address,
+                    'contact_name' => $this->branch->contact_name,
+                    'contact_number' => $this->branch->contactNumber(),
+                    'working_hours' => $this->branch->working_hours,
+                ]
+                : null,
+
             'asset_id' => $this->asset_id,
             'asset' => new AssetResource($this->whenLoaded('asset')),
 

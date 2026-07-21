@@ -10,7 +10,15 @@ import { errorMessage, fieldErrors } from '@/lib/api'
 import { PRIORITY, TASK_TYPE, warrantyChip } from '@/lib/domain'
 import { toDateTimeLocal } from '@/lib/format'
 import { useArea } from '@/lib/nav'
-import { useAssets, useCreateTask, useCustomers, useTask, useTechnicians, useUpdateTask } from '@/lib/queries'
+import {
+    useAssets,
+    useCreateTask,
+    useCustomerBranches,
+    useCustomers,
+    useTask,
+    useTechnicians,
+    useUpdateTask,
+} from '@/lib/queries'
 import type { Asset, Customer, Task, TaskPriority, TaskType } from '@/types'
 
 export function TaskForm() {
@@ -41,6 +49,7 @@ export function TaskForm() {
         priority: 'normal' as TaskPriority,
         scheduled_at: '',
         site_address: '',
+        branch_id: '',
         asset_id: '',
     })
 
@@ -57,6 +66,7 @@ export function TaskForm() {
             priority: existing.priority,
             scheduled_at: toDateTimeLocal(existing.scheduled_at),
             site_address: existing.site_address ?? '',
+            branch_id: String(existing.branch_id ?? ''),
             asset_id: String(existing.asset_id ?? ''),
         })
     }, [existing])
@@ -69,6 +79,11 @@ export function TaskForm() {
     const { data: assetPage } = useAssets(
         form.customer_id ? { customer_id: Number(form.customer_id), per_page: 200 } : {},
     )
+    const { data: branchList } = useCustomerBranches(
+        form.customer_id ? Number(form.customer_id) : undefined,
+    )
+    const branches = branchList ?? []
+
     const customerAssets = form.customer_id ? (assetPage?.data ?? []) : []
     const selectedAsset = customerAssets.find((asset) => String(asset.id) === form.asset_id)
 
@@ -85,6 +100,7 @@ export function TaskForm() {
             description: form.description || null,
             scheduled_at: form.scheduled_at || null,
             site_address: form.site_address || null,
+            branch_id: form.branch_id ? Number(form.branch_id) : null,
             asset_id: form.asset_id ? Number(form.asset_id) : null,
         }
 
@@ -152,7 +168,8 @@ export function TaskForm() {
                                     ...current,
                                     title: '',
                                     description: '',
-                                    asset_id: '',
+                                    branch_id: '',
+        asset_id: '',
                                 }))
                             }}
                         >
@@ -193,7 +210,8 @@ export function TaskForm() {
                                         setForm((current) => ({
                                             ...current,
                                             customer_id: event.target.value,
-                                            asset_id: '',
+                                            branch_id: '',
+        asset_id: '',
                                         }))
                                     }
                                     className="flex-1"
@@ -218,9 +236,32 @@ export function TaskForm() {
                             </div>
                         </Field>
 
+                        {/* Only worth asking when there is a choice to make.
+                            An account with one site has nothing to pick. */}
+                        {branches.length > 1 && (
+                            <Field
+                                label="الفرع"
+                                error={errors.branch_id}
+                                hint="يحدد وجهة الفني ومسئول الموقع"
+                            >
+                                <Select
+                                    value={form.branch_id}
+                                    onChange={(event) => set('branch_id')(event.target.value)}
+                                >
+                                    <option value="">— بدون فرع محدد —</option>
+                                    {branches.map((branch) => (
+                                        <option key={branch.id} value={branch.id}>
+                                            {branch.name}
+                                            {branch.address ? ` — ${branch.address}` : ''}
+                                        </option>
+                                    ))}
+                                </Select>
+                            </Field>
+                        )}
+
                         <Field
                             label="عنوان الموقع"
-                            hint="اتركه فارغًا لاستخدام عنوان العميل المسجل."
+                            hint="اتركه فارغًا لاستخدام عنوان الفرع أو العميل."
                             error={errors.site_address}
                         >
                             <Textarea

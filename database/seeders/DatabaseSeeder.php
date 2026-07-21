@@ -10,6 +10,7 @@ use App\Enums\TaskStatus;
 use App\Enums\TaskType;
 use App\Enums\UserRole;
 use App\Models\Asset;
+use App\Models\Branch;
 use App\Models\Contract;
 use App\Models\Customer;
 use App\Models\Item;
@@ -100,7 +101,9 @@ class DatabaseSeeder extends Seeder
                 'lng' => 31.3450,
             ],
             [
-                'name' => 'بنك القاهرة — فرع المعادي',
+                // One account with branches under it, rather than a customer
+                // per branch — which is what this used to be.
+                'name' => 'بنك القاهرة',
                 'company' => 'بنك القاهرة',
                 'phone' => '01333333333',
                 'address' => '9 شارع 9، المعادي، القاهرة',
@@ -122,6 +125,39 @@ class DatabaseSeeder extends Seeder
             'whatsapp' => $c['phone'],
             'created_by' => $manager->id,
         ]));
+
+        // ── Branches ─────────────────────────────────────────
+        // Every account opens with the site its address describes; the
+        // migration does the same for customers that already existed.
+        $branches = $customers->map(fn (Customer $customer) => Branch::create([
+            'customer_id' => $customer->id,
+            'name' => 'الفرع الرئيسي',
+            'address' => $customer->address,
+            'city' => $customer->city,
+            'lat' => $customer->lat,
+            'lng' => $customer->lng,
+            'contact_phone' => $customer->phone,
+            'contact_whatsapp' => $customer->whatsapp,
+            'working_hours' => '٩ ص - ٥ م، الجمعة مغلق',
+            'created_by' => $manager->id,
+        ]));
+
+        // The bank has a second site — the case branches exist for. Its devices
+        // and its contact are its own, and a job sent here navigates here.
+        $secondBranch = Branch::create([
+            'customer_id' => $customers[2]->id,
+            'name' => 'فرع مدينة نصر',
+            'customer_ref' => 'CIB-114',
+            'address' => '77 شارع عباس العقاد، مدينة نصر، القاهرة',
+            'city' => 'القاهرة',
+            'lat' => 30.0561,
+            'lng' => 31.3300,
+            'contact_name' => 'أ. سامي عبد الحميد',
+            'contact_phone' => '01099887766',
+            'contact_whatsapp' => '01099887766',
+            'working_hours' => '٨:٣٠ ص - ٤ م',
+            'created_by' => $manager->id,
+        ]);
 
         // ── The serialized devices those customers own ───────
         // Warranty deliberately varies: in force, expired, and unknown — the
@@ -151,13 +187,23 @@ class DatabaseSeeder extends Seeder
                 'sold_at' => null, 'warranty_months' => null,
                 'installed_at' => now()->subYears(4),
             ],
-        ])->map(fn ($a, $index) => Asset::create([
-            ...$a,
-            'customer_id' => $customers[$index % $customers->count()]->id,
-            'site_address' => $customers[$index % $customers->count()]->address,
-            'status' => AssetStatus::Active,
-            'created_by' => $manager->id,
-        ]));
+        ])->map(function ($a, $index) use ($customers, $branches, $secondBranch, $manager) {
+            $customer = $customers[$index % $customers->count()];
+
+            // The bank is customer 2, and its device sits at the Nasr City
+            // site rather than the main one — so the registry has a customer
+            // whose units are not all at the address on the account.
+            $branch = $index === 2 ? $secondBranch : $branches[$index % $branches->count()];
+
+            return Asset::create([
+                ...$a,
+                'customer_id' => $customer->id,
+                'branch_id' => $branch->id,
+                'site_address' => $branch->address,
+                'status' => AssetStatus::Active,
+                'created_by' => $manager->id,
+            ]);
+        });
 
         // ── A live maintenance contract ──────────────────────
         // Started two months ago so part of the plan is already behind us and
@@ -252,15 +298,22 @@ class DatabaseSeeder extends Seeder
 
             $advanced = [TaskStatus::OnTheWay, TaskStatus::InProgress, TaskStatus::Completed];
 
+            // A job goes to the site its device sits at, not to the address on
+            // the account — which is the point of having branches at all.
+            $branch = isset($blueprint['asset_id'])
+                ? $assets->firstWhere('id', $blueprint['asset_id'])?->branch
+                : null;
+
             $task = Task::create([
                 ...$blueprint,
                 'customer_id' => $customer->id,
+                'branch_id' => $branch?->id,
                 'assigned_to' => $technician->id,
                 'created_by' => $manager->id,
                 'description' => 'تم فتح البلاغ من خلال الاتصال بمركز خدمة العملاء.',
-                'site_address' => $customer->address,
-                'site_lat' => $customer->lat,
-                'site_lng' => $customer->lng,
+                'site_address' => $branch?->address ?? $customer->address,
+                'site_lat' => $branch?->lat ?? $customer->lat,
+                'site_lng' => $branch?->lng ?? $customer->lng,
                 // Backfill the timestamps the seeded status implies.
                 'accepted_at' => $status !== TaskStatus::Pending ? now()->subHours(5) : null,
                 'on_the_way_at' => in_array($status, $advanced, true) ? now()->subHours(4) : null,

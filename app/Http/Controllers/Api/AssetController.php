@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class AssetController extends Controller
 {
@@ -89,12 +90,13 @@ class AssetController extends Controller
     /** @return array<string, mixed> */
     protected function validated(Request $request, ?Asset $asset = null): array
     {
-        return $request->validate([
+        $data = $request->validate([
             'serial' => [
                 'nullable', 'string', 'max:120',
                 Rule::unique('assets')->ignore($asset?->id)->whereNull('deleted_at'),
             ],
             'customer_id' => ['required', 'exists:customers,id'],
+            'branch_id' => ['nullable', 'exists:branches,id'],
             'brand' => ['nullable', 'string', 'max:120'],
             'model' => ['nullable', 'string', 'max:120'],
             'capacity' => ['nullable', 'string', 'max:64'],
@@ -107,5 +109,20 @@ class AssetController extends Controller
             'status' => ['nullable', Rule::enum(\App\Enums\AssetStatus::class)],
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
+
+        // A device may only sit at a site its own owner has. Otherwise picking
+        // an id by hand would file one customer's unit under another's branch,
+        // and that branch's device list would stop being true.
+        if (! empty($data['branch_id'])) {
+            $owner = \App\Models\Branch::whereKey($data['branch_id'])->value('customer_id');
+
+            if ((int) $owner !== (int) $data['customer_id']) {
+                throw ValidationException::withMessages([
+                    'branch_id' => 'الفرع المحدد لا يخص هذا العميل.',
+                ]);
+            }
+        }
+
+        return $data;
     }
 }

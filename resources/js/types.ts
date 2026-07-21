@@ -179,6 +179,40 @@ export interface Contract {
     created_at: string | null
 }
 
+/** A customer site: where devices sit and where jobs are sent. */
+export interface Branch {
+    id: number
+    code: string
+    customer_id: number
+    customer: string | null
+
+    name: string
+    /** "فرع المعادي — بنك القاهرة", for a picker spanning customers. */
+    label: string
+    /** The customer's own reference for this site. */
+    customer_ref: string | null
+
+    address: string | null
+    city: string | null
+    lat: number | null
+    lng: number | null
+    map_url: string | null
+    maps_url: string | null
+
+    contact_name: string | null
+    contact_phone: string | null
+    contact_whatsapp: string | null
+    /** Branch contact, falling back to head office. */
+    contact_number: string | null
+
+    working_hours: string | null
+    notes: string | null
+    is_active: boolean
+
+    assets_count?: number | null
+    tasks_count?: number | null
+}
+
 /** One line of a customer account — an invoice raised or money received. */
 export interface StatementRow {
     date: string | null
@@ -586,6 +620,17 @@ export interface Task {
     site_lng: number | null
     effective_address: string | null
     navigation_url: string | null
+
+    branch_id: number | null
+    /** The site this job was sent to; null when the account has just one. */
+    branch?: {
+        id: number
+        name: string
+        address: string | null
+        contact_name: string | null
+        contact_number: string | null
+        working_hours: string | null
+    } | null
 
     asset_id: number | null
     asset?: Asset

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AssetController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\ContractController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\DashboardController;
@@ -96,6 +97,15 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::post('tasks/{task}/assign', [TaskController::class, 'assign']);
 
     Route::get('customers/{customer}/statement', StatementController::class);
+
+    // ── Customer branches ────────────────────────────────────
+    Route::get('branches', [BranchController::class, 'index']);
+    Route::get('customers/{customer}/branches', [BranchController::class, 'forCustomer']);
+    Route::post('customers/{customer}/branches', [BranchController::class, 'store']);
+    Route::get('branches/{branch}', [BranchController::class, 'show']);
+    Route::put('branches/{branch}', [BranchController::class, 'update']);
+    Route::delete('branches/{branch}', [BranchController::class, 'destroy']);
+
     Route::get('customers', [CustomerController::class, 'index']);
     Route::post('customers', [CustomerController::class, 'store']);
     Route::put('customers/{customer}', [CustomerController::class, 'update']);

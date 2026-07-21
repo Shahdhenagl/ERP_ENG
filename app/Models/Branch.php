@@ -9,25 +9,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Customer extends Model
+/**
+ * A customer site. Devices sit at one, jobs are dispatched to one, and the
+ * person the technician actually meets works at one.
+ */
+class Branch extends Model
 {
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'code',
-        'name',
-        'company',
-        'phone',
-        'whatsapp',
-        'email',
-        'address',
-        'city',
-        'lat',
-        'lng',
-        'map_url',
-        'notes',
-        'is_active',
-        'created_by',
+        'code', 'customer_id', 'name', 'customer_ref',
+        'address', 'city', 'lat', 'lng', 'map_url',
+        'contact_name', 'contact_phone', 'contact_whatsapp',
+        'working_hours', 'notes', 'is_active', 'created_by',
     ];
 
     protected function casts(): array
@@ -41,46 +35,44 @@ class Customer extends Model
 
     protected static function booted(): void
     {
-        static::creating(function (self $customer) {
-            $customer->code ??= static::nextCode();
-        });
+        static::creating(fn (self $branch) => $branch->code ??= static::nextCode());
     }
 
-    /** Sequential human-readable code: CU-0001. */
     public static function nextCode(): string
     {
         $last = static::withTrashed()->max('id') ?? 0;
 
-        return 'CU-'.str_pad((string) ($last + 1), 4, '0', STR_PAD_LEFT);
+        return 'BR-'.str_pad((string) ($last + 1), 4, '0', STR_PAD_LEFT);
     }
 
     // ── Relations ────────────────────────────────────────────
+
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
+    public function assets(): HasMany
+    {
+        return $this->hasMany(Asset::class);
+    }
 
     public function tasks(): HasMany
     {
         return $this->hasMany(Task::class);
     }
 
-    public function branches(): HasMany
-    {
-        return $this->hasMany(Branch::class);
-    }
-
-    public function creator(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'created_by');
-    }
-
     // ── Helpers ──────────────────────────────────────────────
 
-    public function whatsappNumber(): ?string
+    /** Whoever the technician rings on arrival, falling back to head office. */
+    public function contactNumber(): ?string
     {
-        return $this->whatsapp ?: $this->phone;
+        return $this->contact_whatsapp ?: ($this->contact_phone ?: $this->customer?->whatsappNumber());
     }
 
     /**
-     * Prefer precise coordinates; fall back to whatever share link was pasted,
-     * then to a plain address search.
+     * Turn-by-turn link. Precise coordinates win; a pasted share link is the
+     * next best thing; an address search is the last resort.
      */
     public function mapsUrl(): ?string
     {
@@ -95,6 +87,14 @@ class Customer extends Model
         return $this->address
             ? 'https://www.google.com/maps/search/?api=1&query='.urlencode($this->address)
             : null;
+    }
+
+    /** "فرع المعادي — بنك القاهرة", for a picker that lists every branch. */
+    public function label(): string
+    {
+        return $this->customer
+            ? "{$this->name} — {$this->customer->name}"
+            : $this->name;
     }
 
     // ── Scopes ───────────────────────────────────────────────
@@ -112,9 +112,9 @@ class Customer extends Model
 
         return $query->where(function (Builder $q) use ($term) {
             $q->where('name', 'like', "%{$term}%")
-                ->orWhere('company', 'like', "%{$term}%")
-                ->orWhere('phone', 'like', "%{$term}%")
-                ->orWhere('code', 'like', "%{$term}%");
+                ->orWhere('code', 'like', "%{$term}%")
+                ->orWhere('customer_ref', 'like', "%{$term}%")
+                ->orWhere('address', 'like', "%{$term}%");
         });
     }
 }

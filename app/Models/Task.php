@@ -20,6 +20,7 @@ class Task extends Model
     protected $fillable = [
         'code',
         'customer_id',
+        'branch_id',
         'asset_id',
         'contract_id',
         'assigned_to',
@@ -106,6 +107,11 @@ class Task extends Model
         return $this->belongsTo(SalesOrder::class);
     }
 
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
     public function technician(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');
@@ -148,19 +154,25 @@ class Task extends Model
      * manager who does not re-enter the address still sends the technician
      * somewhere real.
      */
+    /**
+     * Three steps down, in order of how specific they are: what the dispatcher
+     * typed on this job, then the branch it was sent to, then the customer's
+     * head-office address. A job at a branch inherits that branch's location
+     * rather than the address on the account.
+     */
     public function effectiveLat(): ?float
     {
-        return $this->site_lat ?? $this->customer?->lat;
+        return $this->site_lat ?? $this->branch?->lat ?? $this->customer?->lat;
     }
 
     public function effectiveLng(): ?float
     {
-        return $this->site_lng ?? $this->customer?->lng;
+        return $this->site_lng ?? $this->branch?->lng ?? $this->customer?->lng;
     }
 
     public function effectiveAddress(): ?string
     {
-        return $this->site_address ?: $this->customer?->address;
+        return $this->site_address ?: ($this->branch?->address ?: $this->customer?->address);
     }
 
     /** Turn-by-turn navigation link for the technician's phone. */

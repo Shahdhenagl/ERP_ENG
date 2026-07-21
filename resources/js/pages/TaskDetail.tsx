@@ -13,6 +13,7 @@ import {
     Pencil,
     Phone,
     Printer,
+    Store,
     Receipt,
     Trash2,
     UserCog,
@@ -270,6 +271,39 @@ export function TaskDetail() {
                                         <p className="text-xs text-navy-400">{task.customer.company}</p>
                                     )}
                                 </div>
+
+                                {/* Who the technician actually meets, and when
+                                    the site is open — more use on arrival than
+                                    the head-office number. */}
+                                {task.branch && (
+                                    <div className="rounded-xl bg-navy-50 p-3">
+                                        <p className="flex items-center gap-1.5 text-sm font-bold text-navy-800">
+                                            <Store className="size-4 text-navy-400" />
+                                            {task.branch.name}
+                                        </p>
+
+                                        {task.branch.contact_name && (
+                                            <p className="mt-1 text-xs text-navy-600">
+                                                المسئول: {task.branch.contact_name}
+                                                {task.branch.contact_number && (
+                                                    <a
+                                                        href={telLink(task.branch.contact_number)}
+                                                        className="mr-2 font-bold text-brand-600"
+                                                        dir="ltr"
+                                                    >
+                                                        {task.branch.contact_number}
+                                                    </a>
+                                                )}
+                                            </p>
+                                        )}
+
+                                        {task.branch.working_hours && (
+                                            <p className="mt-0.5 text-xs text-navy-400">
+                                                مواعيد العمل: {task.branch.working_hours}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
 
                                 {task.effective_address && (
                                     <p className="flex items-start gap-2 text-sm text-navy-600">

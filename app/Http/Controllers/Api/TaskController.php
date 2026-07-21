@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\TaskResource;
 use App\Models\ActivityLog;
 use App\Models\Asset;
+use App\Models\Branch;
 use App\Models\Customer;
 use App\Models\Task;
 use App\Models\User;
@@ -28,7 +29,7 @@ class TaskController extends Controller
         $user = $request->user();
 
         $tasks = Task::query()
-            ->with(['customer', 'technician', 'creator', 'asset'])
+            ->with(['customer', 'branch', 'technician', 'creator', 'asset'])
             // Technicians only ever see their own work.
             ->when($user->isTechnician(), fn ($q) => $q->forTechnician($user->id))
             ->when($request->string('status')->toString(), fn ($q, $s) => $q->where('status', $s))
@@ -64,22 +65,28 @@ class TaskController extends Controller
             'site_lng' => ['nullable', 'numeric', 'between:-180,180'],
             'site_map_url' => ['nullable', 'string', 'max:1000'],
             'asset_id' => ['nullable', 'exists:assets,id'],
+            'branch_id' => ['nullable', 'exists:branches,id'],
             'scheduled_at' => ['nullable', 'date'],
         ]);
 
-        $this->assertAssetBelongsToCustomer($data);
+        $this->assertBelongsToCustomer($data);
 
         $data['created_by'] = $request->user()->id;
         $data['status'] = TaskStatus::Pending;
 
-        // Inherit the customer's location when the manager did not override it,
-        // so the technician always gets a usable destination.
+        // Inherit a location when the manager did not type one, so the
+        // technician always gets a usable destination. The branch wins over the
+        // account address: a job sent to Maadi should not navigate to head
+        // office just because nobody re-typed the street.
         if (blank($data['site_address'] ?? null) && blank($data['site_lat'] ?? null)) {
-            $customer = Customer::find($data['customer_id']);
-            $data['site_address'] = $customer?->address;
-            $data['site_lat'] = $customer?->lat;
-            $data['site_lng'] = $customer?->lng;
-            $data['site_map_url'] = $customer?->map_url;
+            $source = ! empty($data['branch_id'])
+                ? Branch::find($data['branch_id'])
+                : Customer::find($data['customer_id']);
+
+            $data['site_address'] = $source?->address;
+            $data['site_lat'] = $source?->lat;
+            $data['site_lng'] = $source?->lng;
+            $data['site_map_url'] = $source?->map_url;
         }
 
         $assignee = $data['assigned_to'] ?? null;
@@ -95,7 +102,7 @@ class TaskController extends Controller
         }
 
         return response()->json(
-            new TaskResource($task->load(['customer', 'technician', 'creator', 'asset'])),
+            new TaskResource($task->load(['customer', 'branch', 'technician', 'creator', 'asset'])),
             201,
         );
     }
@@ -106,6 +113,7 @@ class TaskController extends Controller
 
         return new TaskResource($task->load([
             'customer',
+            'branch',
             'technician',
             'creator',
             'asset',
@@ -130,37 +138,49 @@ class TaskController extends Controller
             'site_lng' => ['nullable', 'numeric', 'between:-180,180'],
             'site_map_url' => ['nullable', 'string', 'max:1000'],
             'asset_id' => ['nullable', 'exists:assets,id'],
+            'branch_id' => ['nullable', 'exists:branches,id'],
             'scheduled_at' => ['nullable', 'date'],
         ]);
 
-        $this->assertAssetBelongsToCustomer($data);
+        $this->assertBelongsToCustomer($data);
 
         $task->update($data);
 
         ActivityLog::record('task.updated', $task, "تم تعديل المهمة {$task->code}");
 
-        return new TaskResource($task->fresh(['customer', 'technician', 'creator', 'asset']));
+        return new TaskResource($task->fresh(['customer', 'branch', 'technician', 'creator', 'asset']));
     }
 
     /**
-     * A job may only point at a device the same customer owns. Without this,
-     * picking an id by hand would attach one customer's unit to another's job
-     * and quietly corrupt that device's service history.
+     * A job may only point at a device or a site the same customer owns.
+     * Without this, picking an id by hand would attach one customer's unit to
+     * another's job, and that device or branch would quietly gain a visit that
+     * never happened.
      *
      * @param  array<string, mixed>  $data
      */
-    protected function assertAssetBelongsToCustomer(array $data): void
+    protected function assertBelongsToCustomer(array $data): void
     {
-        if (empty($data['asset_id'])) {
-            return;
+        $customerId = (int) $data['customer_id'];
+
+        if (! empty($data['asset_id'])) {
+            $owner = Asset::whereKey($data['asset_id'])->value('customer_id');
+
+            if ((int) $owner !== $customerId) {
+                throw ValidationException::withMessages([
+                    'asset_id' => 'الجهاز المحدد لا يخص هذا العميل.',
+                ]);
+            }
         }
 
-        $owner = Asset::whereKey($data['asset_id'])->value('customer_id');
+        if (! empty($data['branch_id'])) {
+            $owner = Branch::whereKey($data['branch_id'])->value('customer_id');
 
-        if ((int) $owner !== (int) $data['customer_id']) {
-            throw ValidationException::withMessages([
-                'asset_id' => 'الجهاز المحدد لا يخص هذا العميل.',
-            ]);
+            if ((int) $owner !== $customerId) {
+                throw ValidationException::withMessages([
+                    'branch_id' => 'الفرع المحدد لا يخص هذا العميل.',
+                ]);
+            }
         }
     }
 

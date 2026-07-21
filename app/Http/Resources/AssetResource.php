@@ -22,6 +22,8 @@ class AssetResource extends JsonResource
             'label' => trim("{$this->brand} {$this->model}") ?: ($this->serial ?? $this->code),
 
             'customer_id' => $this->customer_id,
+            'branch_id' => $this->branch_id,
+            'branch' => $this->whenLoaded('branch', fn () => $this->branch?->name),
             'customer' => new CustomerResource($this->whenLoaded('customer')),
 
             'site_address' => $this->site_address,
