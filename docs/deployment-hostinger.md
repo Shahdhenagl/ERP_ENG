@@ -311,13 +311,38 @@ git push
 **على الخادم:**
 
 ```bash
-cd ~/cityeng
+cd ~/domains/erp.pixelmindeg.com/cityeng
+
+# نسخة احتياطية أولًا. لاحظي القوسين: umask معزول داخلهما
+# عمدًا — راجعي التحذير أسفله.
+( umask 077
+  sed -n 's/^DB_\(HOST\|DATABASE\|USERNAME\|PASSWORD\)=//p' .env | {
+    read H; read D; read U; read P
+    printf '[client]\nhost=%s\nuser=%s\npassword=%s\n' "$H" "$U" "$P" > ~/.dbauth.cnf
+    mysqldump --defaults-extra-file=~/.dbauth.cnf "$D" > ~/backup-$(date +%F).sql
+  }
+  rm -f ~/.dbauth.cnf )
+
 git pull
-bash deploy.sh
+php artisan migrate --force
+php artisan config:clear && php artisan route:clear
 ```
 
-> `deploy.sh` يتولّى: تنصيب اعتماديات PHP، تنفيذ الـ migrations، إعادة بناء
-> الكاش، وضبط الصلاحيات.
+> ⚠️ **`umask` يجب أن يبقى داخل القوسين.**
+>
+> نستخدمه ليُنشأ ملف بيانات القاعدة المؤقت بصلاحية `600` فلا يقرأه مستخدم
+> آخر على الخادم المشترك. لكنه يسري على **بقية الجلسة** إن لم يُعزل: عندها
+> يكتب `git pull` كل ملف بصلاحية `600` والمجلدات `700`، فيعجز خادم الويب عن
+> قراءة `public/build/assets` ويعيد `404` على ملفات JS و CSS — والنتيجة
+> صفحة بيضاء تمامًا رغم أن الملفات موجودة على القرص.
+>
+> إذا حدث ذلك، العلاج:
+> ```bash
+> chmod -R u=rwX,go=rX public
+> ```
+> حرف `X` الكبير مقصود: يمنح صلاحية التنفيذ للمجلدات دون الملفات. و`public`
+> وحدها — لا المشروع كله: `.env` يجب أن يبقى `600`، ولـ `storage` صلاحيات
+> أخرى.
 
 ---
 
@@ -328,6 +353,7 @@ bash deploy.sh
 | صفحة بيضاء | خطأ PHP و `APP_DEBUG=false` | `tail -50 storage/logs/laravel.log` |
 | `500` بعد النشر | كاش قديم | `php artisan optimize:clear` ثم أعيدي `deploy.sh` |
 | الأصول لا تُحمَّل | `public/build` غير مرفوع في Git | ابني محليًا وارفعي المجلد |
+| **صفحة بيضاء والملفات موجودة** | `git pull` نُفِّذ بعد `umask 077` فصارت الصلاحيات `600` | `chmod -R u=rwX,go=rX public` |
 | **الإشعارات لا تصل** | الطابور لا يعمل | راجعي Cron وجدول `failed_jobs` |
 | الإشعارات لا تصل رغم عمل الطابور | مفاتيح VAPID غير متطابقة | أعيدي البناء محليًا بعد نسخ المفتاح العام (قسم ٦) |
 | «موقعي الحالي» لا يعمل | الموقع على HTTP | فعّلي SSL |
