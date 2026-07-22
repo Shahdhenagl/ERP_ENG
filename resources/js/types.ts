@@ -28,6 +28,8 @@ export interface User {
     last_seen_at: string | null
     created_at: string | null
     open_tasks_count?: number
+    /** Everything this user may do — role defaults with their overrides applied. */
+    permissions?: string[]
 }
 
 export interface Customer {
@@ -1684,4 +1686,24 @@ export interface Reconciliation {
     statement_balance: number | null
     difference: number | null
     rows: ReconciliationRow[]
+}
+
+/* ── Permissions ─────────────────────────────────────────── */
+
+export interface PermissionCatalogue {
+    groups: Array<{
+        group: string
+        permissions: Array<{ key: string; label: string }>
+    }>
+    defaults: Record<Role, string[]>
+}
+
+export interface UserPermissions {
+    user: { id: number; name: string; role: Role }
+    /** What the role gives without anyone being told. */
+    defaults: string[]
+    /** Only the departures from that, in either direction. */
+    overrides: Record<string, boolean>
+    /** The two folded together — what this user may actually do. */
+    effective: string[]
 }

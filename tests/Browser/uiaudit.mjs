@@ -141,7 +141,12 @@ await login(page, 'manager@cityeng.local')
 await page.waitForFunction(() => !location.pathname.startsWith('/login'), { timeout: 20000 })
 
 await page.goto(`${BASE}/manager/audit`, { waitUntil: 'domcontentloaded' })
-await page.waitForTimeout(2500)
+
+// Waited for rather than slept through: the redirect happens once the session
+// has loaded, and under a full sweep that takes longer than any fixed pause.
+await page
+    .waitForFunction(() => !location.pathname.includes('/audit'), null, { timeout: 25000 })
+    .catch(() => {})
 
 // The route is admin-only, so a manager is sent back to their own area.
 check(

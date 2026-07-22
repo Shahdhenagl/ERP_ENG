@@ -7,6 +7,8 @@ import type {
     AccountingSummary,
     ActivityEntry,
     ActivityFilters,
+    PermissionCatalogue,
+    UserPermissions,
     AppNotification,
     Asset,
     BalanceSheet,
@@ -76,6 +78,8 @@ export const keys = {
     contracts: (filters?: Record<string, unknown>) => ['contracts', filters ?? {}] as const,
     contract: (id: number | string) => ['contract', Number(id)] as const,
     users: (filters?: Record<string, unknown>) => ['users', filters ?? {}] as const,
+    permissionCatalogue: ['permission-catalogue'] as const,
+    userPermissions: (id: number | string) => ['user-permissions', Number(id)] as const,
     technicians: ['technicians'] as const,
     notifications: ['notifications'] as const,
 
@@ -2115,4 +2119,41 @@ function invalidateCheques(client: ReturnType<typeof useQueryClient>): void {
     ]) {
         void client.invalidateQueries({ queryKey: [key] })
     }
+}
+
+/* ── Permissions ─────────────────────────────────────────── */
+
+export function usePermissionCatalogue() {
+    const { isAdmin } = useAuth()
+
+    return useQuery({
+        queryKey: keys.permissionCatalogue,
+        queryFn: async () => (await api.get<PermissionCatalogue>('/permissions')).data,
+        enabled: isAdmin,
+        // The catalogue lives in code, so it cannot change while a session is
+        // open. Refetching it on every user opened is wasted traffic.
+        staleTime: Infinity,
+    })
+}
+
+export function useUserPermissions(userId: number | null | undefined) {
+    return useQuery({
+        queryKey: keys.userPermissions(userId ?? 0),
+        queryFn: async () =>
+            (await api.get<UserPermissions>(`/users/${userId}/permissions`)).data,
+        enabled: Boolean(userId),
+    })
+}
+
+export function useSavePermissions(userId: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: { permissions: Record<string, boolean> }) =>
+            (await api.put<UserPermissions>(`/users/${userId}/permissions`, payload)).data,
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: keys.userPermissions(userId) })
+            void client.invalidateQueries({ queryKey: ['users'] })
+        },
+    })
 }

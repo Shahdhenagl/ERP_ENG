@@ -12,6 +12,13 @@ interface AuthValue {
     canDispatch: boolean
     isAdmin: boolean
     isTechnician: boolean
+    /**
+     * Whether the signed-in user may do something.
+     *
+     * The server decides for real — this only keeps the interface honest, so a
+     * screen nobody may open is never offered rather than offered and refused.
+     */
+    can: (permission: string) => boolean
 }
 
 const AuthContext = createContext<AuthValue | null>(null)
@@ -79,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             canDispatch: user?.role === 'admin' || user?.role === 'manager',
             isAdmin: user?.role === 'admin',
             isTechnician: user?.role === 'technician',
+            can: (permission: string) => user?.permissions?.includes(permission) ?? false,
         }),
         [user, loading, login, logout, refresh],
     )

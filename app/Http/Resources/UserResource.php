@@ -16,6 +16,9 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'role' => $this->role->value,
+            // What this user may actually do. The nav is built from it, so a
+            // screen nobody may open is never offered in the first place.
+            'permissions' => $this->permissions(),
             'role_label' => $this->role->label(),
             'phone' => $this->phone,
             'whatsapp' => $this->whatsapp,

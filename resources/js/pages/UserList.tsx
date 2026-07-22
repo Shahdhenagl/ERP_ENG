@@ -1,8 +1,9 @@
 import clsx from 'clsx'
-import { Pencil, Plus, Save, Search, Trash2, UserCircle2, Users } from 'lucide-react'
+import { KeyRound, Pencil, Plus, Save, Search, Trash2, UserCircle2, Users } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { ConfirmDialog, Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
+import { PermissionMatrix } from '@/components/PermissionMatrix'
 import { SectionTabs } from '@/components/SectionTabs'
 import { Button, EmptyState, ErrorState, Field, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
 import { ADMIN_SECTIONS } from '@/lib/sections'
@@ -25,6 +26,7 @@ export function UserList() {
     const [formOpen, setFormOpen] = useState(false)
     const [editing, setEditing] = useState<User | undefined>()
     const [deleting, setDeleting] = useState<User | undefined>()
+    const [permissionsFor, setPermissionsFor] = useState<User | null>(null)
 
     const { data, isLoading, isError, refetch } = useUsers({ search, role, per_page: 50 })
     const remove = useDeleteUser()
@@ -128,6 +130,14 @@ export function UserList() {
 
                             <div className="flex shrink-0 gap-0.5">
                                 <button
+                                    onClick={() => setPermissionsFor(user)}
+                                    className="tap grid place-items-center rounded-lg p-2 text-navy-400 transition hover:bg-navy-50 hover:text-navy-700"
+                                    aria-label="الصلاحيات"
+                                >
+                                    <KeyRound className="size-4" />
+                                </button>
+
+                                <button
                                     onClick={() => {
                                         setEditing(user)
                                         setFormOpen(true)
@@ -181,6 +191,13 @@ export function UserList() {
                 danger
                 loading={remove.isPending}
             />
+
+            {permissionsFor && (
+                <PermissionMatrix
+                    user={permissionsFor}
+                    onClose={() => setPermissionsFor(null)}
+                />
+            )}
         </>
     )
 }

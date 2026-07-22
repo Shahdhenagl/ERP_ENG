@@ -43,6 +43,11 @@ interface NavItem {
     icon: LucideIcon
     /** Roles allowed to see this entry; undefined means everyone. */
     roles?: Array<'admin' | 'manager' | 'technician'>
+    /**
+     * The permission that opens it. Undefined means the entry is not gated —
+     * the dashboard and a technician's own screens.
+     */
+    permission?: string
     /** Used in the bottom bar, where a long label truncates on a phone. */
     short?: string
     /**
@@ -59,9 +64,10 @@ interface NavItem {
 const NAV: NavItem[] = [
     { to: '/', label: 'الرئيسية', icon: LayoutDashboard },
     { to: '/tasks', label: 'المهام', icon: ClipboardList },
-    { to: '/customers', label: 'العملاء', icon: Building2, roles: ['admin', 'manager'] },
+    { to: '/customers', permission: 'customers.manage', label: 'العملاء', icon: Building2, roles: ['admin', 'manager'] },
     {
         to: '/assets',
+        permission: 'assets.manage',
         label: 'الأجهزة',
         icon: HardDrive,
         roles: ['admin', 'manager'],
@@ -69,26 +75,28 @@ const NAV: NavItem[] = [
         // contract and a warranty are both promises about a specific unit, and
         // that is how anyone looking for one thinks of it.
         children: [
-            { to: '/contracts', label: 'عقود الصيانة', icon: ScrollText },
-            { to: '/warranties', label: 'الضمانات', icon: ShieldCheck },
+            { to: '/contracts', permission: 'contracts.manage', label: 'عقود الصيانة', icon: ScrollText },
+            { to: '/warranties', permission: 'warranties.manage', label: 'الضمانات', icon: ShieldCheck },
         ],
     },
     {
         to: '/inventory',
+        permission: 'inventory.view',
         label: 'المخزون',
         icon: Package,
         roles: ['admin', 'manager'],
         children: [
-            { to: '/inventory/items', label: 'الأصناف', icon: Boxes },
-            { to: '/inventory/warehouses', label: 'المخازن', icon: Warehouse },
-            { to: '/inventory/custody', label: 'العهد', icon: HandCoins },
-            { to: '/inventory/movements', label: 'سجل الحركة', icon: ArrowLeftRight },
+            { to: '/inventory/items', permission: 'inventory.view', label: 'الأصناف', icon: Boxes },
+            { to: '/inventory/warehouses', permission: 'inventory.view', label: 'المخازن', icon: Warehouse },
+            { to: '/inventory/custody', permission: 'inventory.manage', label: 'العهد', icon: HandCoins },
+            { to: '/inventory/movements', permission: 'inventory.view', label: 'سجل الحركة', icon: ArrowLeftRight },
         ],
     },
-    { to: '/sales', label: 'المبيعات', icon: FileText, roles: ['admin', 'manager'], short: 'بيع' },
-    { to: '/purchasing', label: 'المشتريات', icon: Truck, roles: ['admin', 'manager'], short: 'شراء' },
+    { to: '/sales', permission: 'sales.manage', label: 'المبيعات', icon: FileText, roles: ['admin', 'manager'], short: 'بيع' },
+    { to: '/purchasing', permission: 'purchasing.manage', label: 'المشتريات', icon: Truck, roles: ['admin', 'manager'], short: 'شراء' },
     {
         to: '/invoices',
+        permission: 'invoices.manage',
         label: 'الفواتير',
         icon: Receipt,
         roles: ['admin', 'manager'],
@@ -97,41 +105,43 @@ const NAV: NavItem[] = [
         // repeated as a child — two rows pointing at one route would both
         // light up. Accounting keeps its own seven-section strip inside.
         children: [
-            { to: '/treasury', label: 'الخزينة', icon: Wallet },
-            { to: '/cheques', label: 'الشيكات', icon: Banknote },
-            { to: '/accounting', label: 'المحاسبة المالية', icon: Calculator },
+            { to: '/treasury', permission: 'treasury.manage', label: 'الخزينة', icon: Wallet },
+            { to: '/cheques', permission: 'cheques.manage', label: 'الشيكات', icon: Banknote },
+            { to: '/accounting', permission: 'accounting.view', label: 'المحاسبة المالية', icon: Calculator },
         ],
     },
     {
         to: '/reports',
+        permission: 'reports.view',
         label: 'التقارير',
         icon: BarChart3,
         roles: ['admin', 'manager'],
         // Six sections is more than the sidebar should carry flat, and the
         // parent redirects to the first, so it is not repeated as a child.
         children: [
-            { to: '/reports/sales', label: 'المبيعات', icon: TrendingUp },
-            { to: '/reports/profit', label: 'الأرباح', icon: Scale },
-            { to: '/reports/stock', label: 'المخزون', icon: BoxesIcon },
-            { to: '/reports/custody', label: 'العهد', icon: HandCoins },
+            { to: '/reports/sales', permission: 'reports.view', label: 'المبيعات', icon: TrendingUp },
+            { to: '/reports/profit', permission: 'reports.view', label: 'الأرباح', icon: Scale },
+            { to: '/reports/stock', permission: 'reports.view', label: 'المخزون', icon: BoxesIcon },
+            { to: '/reports/custody', permission: 'reports.view', label: 'العهد', icon: HandCoins },
         ],
     },
     { to: '/stock', label: 'عهدتي', icon: Package, roles: ['technician'] },
     {
         to: '/users',
+        permission: 'users.manage',
         label: 'الإدارة',
         icon: Users,
         roles: ['admin'],
         short: 'إدارة',
         children: [
-            { to: '/audit', label: 'سجل العمليات', icon: ScrollText },
-            { to: '/settings', label: 'بيانات الشركة', icon: Settings2 },
+            { to: '/audit', permission: 'audit.view', label: 'سجل العمليات', icon: ScrollText },
+            { to: '/settings', permission: 'settings.manage', label: 'بيانات الشركة', icon: Settings2 },
         ],
     },
 ]
 
 export function AppLayout() {
-    const { user, logout, canDispatch } = useAuth()
+    const { user, logout, canDispatch, can } = useAuth()
     const { path } = useArea()
     const navigate = useNavigate()
     const location = useLocation()
@@ -146,7 +156,16 @@ export function AppLayout() {
     const { data: notifications } = useNotifications()
 
     const unread = notifications?.meta.unread_count ?? 0
-    const visibleNav = NAV.filter((item) => !item.roles || (user && item.roles.includes(user.role)))
+    // Role decides which application you get; the permission decides whether
+    // an entry inside it is yours. Children are filtered too, or a parent
+    // would open onto a list of things that all refuse you.
+    const allowed = (item: NavItem) =>
+        (! item.roles || (user && item.roles.includes(user.role))) &&
+        (! item.permission || can(item.permission))
+
+    const visibleNav = NAV.filter(allowed).map((item) =>
+        item.children ? { ...item, children: item.children.filter(allowed) } : item,
+    )
 
     // Admins carry the whole system in their nav, which is more than a bar can
     // hold without shrinking the labels past reading. They get the sidebar back

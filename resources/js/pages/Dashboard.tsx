@@ -20,7 +20,7 @@ import { useArea } from '@/lib/nav'
 import { useDashboard } from '@/lib/queries'
 
 export function Dashboard() {
-    const { user, canDispatch } = useAuth()
+    const { user, canDispatch, can } = useAuth()
     const { path } = useArea()
     const { data, isLoading, isError, refetch } = useDashboard()
 
@@ -156,7 +156,7 @@ export function Dashboard() {
                         value={stats?.customers_total}
                         loading={isLoading}
                         tone="navy"
-                        to={path('/customers')}
+                        to={can('customers.manage') ? path('/customers') : undefined}
                     />
                     <StatTile
                         icon={Users}
