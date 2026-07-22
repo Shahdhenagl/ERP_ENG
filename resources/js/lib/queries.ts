@@ -5,6 +5,8 @@ import type {
     Account,
     AccountLedger,
     AccountingSummary,
+    ActivityEntry,
+    ActivityFilters,
     AppNotification,
     Asset,
     BalanceSheet,
@@ -33,6 +35,11 @@ import type {
     SupplierStatement,
     PurchaseReturn,
     UninvoicedReceipt,
+    SupplierPaymentVoucher,
+    PurchaseRequest,
+    ItemSerial,
+    SalesReturn,
+    ReturnableInvoice,
     SalesReport,
     ProfitReport,
     StockReport,
@@ -74,6 +81,8 @@ export const keys = {
     customerBranches: (id: number | string) => ['customer-branches', Number(id)] as const,
 
     settings: ['settings'] as const,
+    activity: (f?: Record<string, unknown>) => ['activity', f ?? {}] as const,
+    activityFilters: ['activity-filters'] as const,
     statement: (id: number | string, range?: Record<string, unknown>) =>
         ['statement', Number(id), range ?? {}] as const,
 
@@ -109,6 +118,12 @@ export const keys = {
     supplierStatement: (id: number | string, range?: Record<string, unknown>) =>
         ['supplier-statement', Number(id), range ?? {}] as const,
     purchaseReturns: (f?: Record<string, unknown>) => ['purchase-returns', f ?? {}] as const,
+    purchaseRequests: (f?: Record<string, unknown>) => ['purchase-requests', f ?? {}] as const,
+    supplierPayment: (id: number | string) => ['supplier-payment', Number(id)] as const,
+    itemSerials: (id: number | string, f?: Record<string, unknown>) =>
+        ['item-serials', Number(id), f ?? {}] as const,
+    salesReturns: (f?: Record<string, unknown>) => ['sales-returns', f ?? {}] as const,
+    returnable: (id: number | string) => ['returnable', Number(id)] as const,
     report: (name: string, params?: Record<string, unknown>) =>
         ['report', name, params ?? {}] as const,
 
@@ -477,6 +492,21 @@ export function useContractAction(id: number) {
             void client.invalidateQueries({ queryKey: keys.contract(id) })
             void client.invalidateQueries({ queryKey: keys.dashboard })
             void client.invalidateQueries({ queryKey: ['tasks'] })
+        },
+    })
+}
+
+/** Renew a contract. Creates a new one; the old term is left as it was. */
+export function useRenewContract(id: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (await api.post<{ data: Contract }>(`/contracts/${id}/renew`, payload)).data.data,
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: ['contracts'] })
+            void client.invalidateQueries({ queryKey: keys.contract(id) })
+            void client.invalidateQueries({ queryKey: ['report'] })
         },
     })
 }
@@ -1789,4 +1819,204 @@ export async function downloadReport(
     link.click()
 
     URL.revokeObjectURL(url)
+}
+
+/* ── Sales returns (credit notes) ────────────────────────── */
+
+export function useSalesReturns(filters: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: keys.salesReturns(filters),
+        queryFn: async () =>
+            (await api.get<{ data: SalesReturn[]; meta: { total: number } }>('/sales-returns', {
+                params: filters,
+            })).data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+/** What an invoice can still take back — the same numbers the guard enforces. */
+export function useReturnableInvoice(invoiceId: number | null | undefined) {
+    return useQuery({
+        queryKey: keys.returnable(invoiceId ?? 0),
+        queryFn: async () =>
+            (await api.get<ReturnableInvoice>(`/invoices/${invoiceId}/returnable`)).data,
+        enabled: Boolean(invoiceId),
+    })
+}
+
+export function useSaveSalesReturn() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (await api.post<{ data: SalesReturn }>('/sales-returns', payload)).data.data,
+        onSuccess: () => invalidateCredits(client),
+    })
+}
+
+export function useSalesReturnAction() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ id, action }: { id: number; action: 'post' | 'delete' }) => {
+            if (action === 'delete') {
+                return (await api.delete(`/sales-returns/${id}`)).data
+            }
+
+            return (await api.post<{ data: SalesReturn }>(`/sales-returns/${id}/post`)).data.data
+        },
+        onSuccess: () => invalidateCredits(client),
+    })
+}
+
+/**
+ * A credit note moves the invoice, the customer's account, the shelf and the
+ * books at once, so all four refresh together.
+ */
+function invalidateCredits(client: ReturnType<typeof useQueryClient>): void {
+    for (const key of [
+        'sales-returns',
+        'returnable',
+        'invoices',
+        'invoice',
+        'statement',
+        'treasury-summary',
+        'movements',
+        'stock-summary',
+        'items',
+        'accounting-summary',
+        'trial-balance',
+        'report',
+    ]) {
+        void client.invalidateQueries({ queryKey: [key] })
+    }
+}
+
+/* ── Audit trail ─────────────────────────────────────────── */
+
+export function useActivity(filters: Record<string, unknown> = {}) {
+    const { user } = useAuth()
+
+    return useQuery({
+        queryKey: keys.activity(filters),
+        queryFn: async () =>
+            (await api.get<Paginated<ActivityEntry>>('/activity', { params: pruneRange(filters) }))
+                .data,
+        // Admin-only endpoint; asking as anyone else just 403s.
+        enabled: user?.role === 'admin',
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useActivityFilters() {
+    const { user } = useAuth()
+
+    return useQuery({
+        queryKey: keys.activityFilters,
+        queryFn: async () => (await api.get<ActivityFilters>('/activity/filters')).data,
+        enabled: user?.role === 'admin',
+    })
+}
+
+/* ── Printed vouchers ────────────────────────────────────── */
+
+export function useSupplierPayment(id: number | string | undefined) {
+    return useQuery({
+        queryKey: keys.supplierPayment(id ?? 0),
+        queryFn: async () =>
+            (await api.get<{ data: SupplierPaymentVoucher }>(`/supplier-payments/${id}`)).data.data,
+        enabled: Boolean(id),
+    })
+}
+
+/* ── Purchase requests ───────────────────────────────────── */
+
+export function usePurchaseRequests(filters: Record<string, unknown> = {}) {
+    return useQuery({
+        queryKey: keys.purchaseRequests(filters),
+        queryFn: async () =>
+            (
+                await api.get<{
+                    data: PurchaseRequest[]
+                    meta: { total: number; last_page: number; awaiting: number }
+                }>('/purchase-requests', { params: filters })
+            ).data,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useSavePurchaseRequest(id?: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (
+                await (id
+                    ? api.put<{ data: PurchaseRequest }>(`/purchase-requests/${id}`, payload)
+                    : api.post<{ data: PurchaseRequest }>('/purchase-requests', payload))
+            ).data.data,
+        onSuccess: () => invalidateRequests(client),
+    })
+}
+
+/** Submit, decide, order or delete — the same document moving. */
+export function usePurchaseRequestAction() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({
+            id,
+            action,
+            payload,
+        }: {
+            id: number
+            action: 'submit' | 'decide' | 'order' | 'delete'
+            payload?: Record<string, unknown>
+        }) => {
+            if (action === 'delete') {
+                return (await api.delete(`/purchase-requests/${id}`)).data
+            }
+
+            return (await api.post(`/purchase-requests/${id}/${action}`, payload ?? {})).data
+        },
+        onSuccess: () => invalidateRequests(client),
+    })
+}
+
+function invalidateRequests(client: ReturnType<typeof useQueryClient>): void {
+    for (const key of ['purchase-requests', 'purchase-orders', 'suppliers']) {
+        void client.invalidateQueries({ queryKey: [key] })
+    }
+}
+
+/* ── Serial-tracked units ────────────────────────────────── */
+
+export function useItemSerials(itemId: number | null | undefined, filters: Record<string, unknown> = {}) {
+    return useQuery({
+        queryKey: keys.itemSerials(itemId ?? 0, filters),
+        queryFn: async () =>
+            (
+                await api.get<{ data: ItemSerial[]; meta: { total: number; in_stock: number } }>(
+                    `/items/${itemId}/serials`,
+                    { params: filters },
+                )
+            ).data,
+        enabled: Boolean(itemId),
+    })
+}
+
+export function useScrapSerial() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ id, reason }: { id: number; reason: string }) =>
+            (await api.post(`/serials/${id}/scrap`, { reason })).data,
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: ['item-serials'] })
+            void client.invalidateQueries({ queryKey: ['items'] })
+        },
+    })
 }

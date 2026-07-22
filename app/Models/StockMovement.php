@@ -27,6 +27,7 @@ class StockMovement extends Model
         'purchase_order_id',
         'supplier_invoice_id',
         'purchase_return_id',
+        'sales_return_id',
         'supplier',
         'reference',
         'note',
@@ -79,6 +80,11 @@ class StockMovement extends Model
     public function purchaseReturn(): BelongsTo
     {
         return $this->belongsTo(PurchaseReturn::class);
+    }
+
+    public function salesReturn(): BelongsTo
+    {
+        return $this->belongsTo(SalesReturn::class);
     }
 
     public function actor(): BelongsTo

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Modal } from '@/components/Modal'
+import { SalesReturnsTab } from '@/pages/sales/SalesReturnsTab'
 import { QuotationForm } from '@/components/QuotationForm'
 import { useToast } from '@/components/Toast'
 import { Button, EmptyState, Field, Input, PageHeader, SkeletonCard, Textarea } from '@/components/ui'
@@ -32,25 +33,28 @@ import {
 import type { Quotation } from '@/types'
 import { Link, useNavigate } from 'react-router-dom'
 
+type Tab = 'quotations' | 'orders' | 'returns'
+
+const TABS: Array<[Tab, string]> = [
+    ['quotations', 'عروض الأسعار'],
+    ['orders', 'أوامر البيع'],
+    ['returns', 'المرتجعات'],
+]
+
 export function Sales() {
-    const [tab, setTab] = useState<'quotations' | 'orders'>('quotations')
+    const [tab, setTab] = useState<Tab>('quotations')
 
     return (
         <>
-            <PageHeader title="المبيعات" subtitle="عروض الأسعار وأوامر البيع" />
+            <PageHeader title="المبيعات" subtitle="عروض الأسعار وأوامر البيع والمرتجعات" />
 
-            <div className="mb-4 flex gap-1 rounded-xl bg-navy-100 p-1">
-                {(
-                    [
-                        ['quotations', 'عروض الأسعار'],
-                        ['orders', 'أوامر البيع'],
-                    ] as Array<['quotations' | 'orders', string]>
-                ).map(([value, label]) => (
+            <div className="no-scrollbar mb-4 flex gap-1 overflow-x-auto rounded-xl bg-navy-100 p-1">
+                {TABS.map(([value, label]) => (
                     <button
                         key={value}
                         onClick={() => setTab(value)}
                         className={clsx(
-                            'tap flex-1 rounded-lg px-3 py-2 text-xs font-bold transition',
+                            'tap flex-1 rounded-lg px-3 py-2 text-xs font-bold whitespace-nowrap transition',
                             tab === value ? 'bg-white text-navy-900 shadow-sm' : 'text-navy-500',
                         )}
                     >
@@ -59,7 +63,9 @@ export function Sales() {
                 ))}
             </div>
 
-            {tab === 'quotations' ? <QuotationsTab /> : <OrdersTab />}
+            {tab === 'quotations' && <QuotationsTab />}
+            {tab === 'orders' && <OrdersTab />}
+            {tab === 'returns' && <SalesReturnsTab />}
         </>
     )
 }
@@ -601,6 +607,18 @@ function OrderDetail({ id, onClose }: { id: number; onClose: () => void }) {
                                 إنشاء فاتورة
                             </Button>
                         )}
+
+                        {/* Travels with the driver and gets signed at the
+                            gate, so it is printable before the delivery is
+                            recorded, not after. */}
+                        <Link
+                            to={path(`/print/delivery/${order.id}`)}
+                            target="_blank"
+                            className="btn-secondary text-xs"
+                        >
+                            <Printer className="size-4" />
+                            إذن تسليم
+                        </Link>
 
                         {order.status === 'open' && (
                             <Button

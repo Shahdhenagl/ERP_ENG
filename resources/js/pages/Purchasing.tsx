@@ -1,9 +1,11 @@
 import clsx from 'clsx'
-import { Ban, PackageCheck, Pencil, Plus, ScrollText, Search, Send, Truck, Wallet } from 'lucide-react'
+import { Ban, PackageCheck, Pencil, Plus, Printer, ScrollText, Search, Send, Truck, Wallet } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Modal } from '@/components/Modal'
 import { PeriodPicker, usePeriod } from '@/components/PeriodPicker'
 import { PurchaseReturnsTab } from '@/pages/purchasing/PurchaseReturnsTab'
+import { RequestsTab } from '@/pages/purchasing/RequestsTab'
 import { SupplierInvoicesTab } from '@/pages/purchasing/SupplierInvoicesTab'
 import { PurchaseOrderForm } from '@/components/PurchaseOrderForm'
 import { ReceiveOrderForm } from '@/components/ReceiveOrderForm'
@@ -13,6 +15,7 @@ import { Button, EmptyState, Field, Input, PageHeader, Select, SkeletonCard, Tex
 import { errorMessage } from '@/lib/api'
 import { formatMoney, formatQty, PAYMENT_METHOD } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
+import { useArea } from '@/lib/nav'
 import {
     useCashBoxes,
     usePaySupplier,
@@ -33,9 +36,10 @@ const FULFILMENT_CHIP: Record<string, string> = {
     cancelled: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200',
 }
 
-type Tab = 'orders' | 'invoices' | 'returns' | 'suppliers'
+type Tab = 'requests' | 'orders' | 'invoices' | 'returns' | 'suppliers'
 
 const TABS: Array<[Tab, string]> = [
+    ['requests', 'طلبات الشراء'],
     ['orders', 'أوامر الشراء'],
     ['invoices', 'فواتير الموردين'],
     ['returns', 'المرتجعات'],
@@ -64,6 +68,7 @@ export function Purchasing() {
                 ))}
             </div>
 
+            {tab === 'requests' && <RequestsTab />}
             {tab === 'orders' && <OrdersTab />}
             {tab === 'invoices' && <SupplierInvoicesTab />}
             {tab === 'returns' && <PurchaseReturnsTab />}
@@ -531,6 +536,7 @@ function SuppliersTab() {
 
 function PaySupplierDialog({ supplier, onClose }: { supplier: Supplier; onClose: () => void }) {
     const toast = useToast()
+    const { path } = useArea()
     const pay = usePaySupplier()
     const { data: boxes } = useCashBoxes()
     const { data: bills } = useSupplierInvoices({
@@ -550,6 +556,10 @@ function PaySupplierDialog({ supplier, onClose }: { supplier: Supplier; onClose:
     // "3,000 against SB-2026-0004" on the statement.
     const open = bills?.data.filter((bill) => bill.balance > 0) ?? []
 
+    // Held after a successful payment so the voucher can be printed on the
+    // spot: paying and handing over the slip are one act at the counter.
+    const [voucher, setVoucher] = useState<{ id: number; code: string } | null>(null)
+
     return (
         <Modal
             open
@@ -557,6 +567,9 @@ function PaySupplierDialog({ supplier, onClose }: { supplier: Supplier; onClose:
             title={`سداد لـ ${supplier.name}`}
             size="sm"
             footer={
+                voucher ? (
+                    <Button onClick={onClose}>تم</Button>
+                ) : (
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={pay.isPending}>
                         إلغاء
@@ -567,7 +580,7 @@ function PaySupplierDialog({ supplier, onClose }: { supplier: Supplier; onClose:
                             setErrors({})
 
                             try {
-                                await pay.mutateAsync({
+                                const created = await pay.mutateAsync({
                                     supplier_id: supplier.id,
                                     supplier_invoice_id: invoiceId ? Number(invoiceId) : null,
                                     cash_box_id: Number(boxId || boxes?.[0]?.id),
@@ -576,7 +589,7 @@ function PaySupplierDialog({ supplier, onClose }: { supplier: Supplier; onClose:
                                     reference: reference || null,
                                 })
                                 toast.success('تم تسجيل السداد.')
-                                onClose()
+                                setVoucher(created?.data ?? null)
                             } catch (caught) {
                                 setErrors(fieldErrorsOf(caught))
                                 toast.error(errorMessage(caught, 'تعذّر تسجيل السداد.'))
@@ -586,8 +599,25 @@ function PaySupplierDialog({ supplier, onClose }: { supplier: Supplier; onClose:
                         تسجيل
                     </Button>
                 </>
+                )
             }
         >
+            {voucher ? (
+                <div className="space-y-4 text-center">
+                    <p className="text-sm font-bold text-emerald-700">
+                        تم تسجيل سند الصرف {voucher.code}
+                    </p>
+
+                    <Link
+                        to={path(`/print/vouchers/${voucher.id}`)}
+                        target="_blank"
+                        className="btn-primary inline-flex"
+                    >
+                        <Printer className="size-4" />
+                        طباعة السند
+                    </Link>
+                </div>
+            ) : (
             <div className="space-y-4">
                 <div className="flex items-center justify-between rounded-2xl bg-navy-50 p-4 text-sm">
                     <span className="text-navy-500">المستحق عليه</span>
@@ -669,6 +699,7 @@ function PaySupplierDialog({ supplier, onClose }: { supplier: Supplier; onClose:
                     />
                 </Field>
             </div>
+            )}
         </Modal>
     )
 }

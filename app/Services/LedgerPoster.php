@@ -8,6 +8,7 @@ use App\Models\Account;
 use App\Models\CashMovement;
 use App\Models\Invoice;
 use App\Models\JournalEntry;
+use App\Models\SalesReturn;
 use App\Models\StockMovement;
 use App\Models\SupplierInvoice;
 use App\Models\User;
@@ -126,6 +127,42 @@ class LedgerPoster
             'entry_date' => $invoice->invoice_date?->toDateString() ?? now()->toDateString(),
             'source' => 'supplier_invoice',
             'memo' => "فاتورة مورّد {$invoice->code} — ".($invoice->supplier?->name ?? ''),
+        ], $actor);
+    }
+
+    /**
+     * A credit note — the sale, reversed.
+     *
+     *   Dr  مرتجعات المبيعات      قيمة البنود
+     *   Dr  ض.ق.م المستحقة        الضريبة المردودة
+     *       Cr  العملاء               الإجمالي
+     *
+     * The debit lands on a contra-revenue account rather than on revenue
+     * itself, so a period shows what was sold and what came back instead of
+     * only the difference. A month with heavy returns should look different
+     * from a quiet month with the same net.
+     *
+     * The goods coming back are posted by `stockMovement()` on the movement the
+     * return wrote, which reverses cost of sales by what they cost when sold.
+     */
+    public function salesReturn(SalesReturn $return, ?User $actor = null): ?JournalEntry
+    {
+        if (! $return->isPosted()) {
+            return null;
+        }
+
+        $this->ready();
+
+        return $this->ledger->postFor($return, 'posted', function () use ($return) {
+            return [
+                ['account' => 'sales_return', 'debit' => (float) $return->subtotal, 'memo' => $return->code],
+                ['account' => 'vat_output', 'debit' => (float) $return->tax_amount],
+                ['account' => 'receivable', 'credit' => (float) $return->total],
+            ];
+        }, [
+            'entry_date' => $return->return_date?->toDateString() ?? now()->toDateString(),
+            'source' => 'sales_return',
+            'memo' => "مرتجع مبيعات {$return->code} — ".($return->customer?->name ?? ''),
         ], $actor);
     }
 
@@ -302,6 +339,14 @@ class LedgerPoster
                 MovementType::PurchaseReturn => [
                     ['account' => 'payable', 'debit' => $value, 'memo' => $memo],
                     ['account' => 'inventory', 'credit' => $value],
+                ],
+
+                // Goods back from a customer: cost of sales unwinds by what the
+                // goods cost when they went out, which is why the return froze
+                // that figure onto the movement rather than using today's.
+                MovementType::SalesReturn => [
+                    ['account' => 'inventory', 'debit' => $value, 'memo' => $memo],
+                    ['account' => 'cogs', 'credit' => $value],
                 ],
 
                 // Direction is carried by which warehouse column is filled —

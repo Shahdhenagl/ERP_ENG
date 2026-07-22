@@ -134,6 +134,7 @@ class PurchasingService
                     : (float) $orderLine->unit_price;
 
                 $movements[] = $this->ledger->receive($item, $warehouse, $qty, $unitCost, $actor, [
+                    'serials' => $line['serials'] ?? [],
                     'supplier_id' => $order->supplier_id,
                     'purchase_order_id' => $order->id,
                     'supplier' => $order->supplier->name,

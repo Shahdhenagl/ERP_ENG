@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Contract extends Model
@@ -18,6 +19,7 @@ class Contract extends Model
     protected $fillable = [
         'code',
         'customer_id',
+        'renewed_from_id',
         'title',
         'starts_on',
         'ends_on',
@@ -76,6 +78,17 @@ class Contract extends Model
     }
 
     /** Empty means the contract covers everything the customer owns. */
+    /** The contract this one renewed, and the one that renewed it. */
+    public function renewedFrom(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'renewed_from_id');
+    }
+
+    public function renewal(): HasOne
+    {
+        return $this->hasOne(self::class, 'renewed_from_id');
+    }
+
     public function assets(): BelongsToMany
     {
         return $this->belongsToMany(Asset::class);

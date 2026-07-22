@@ -64,13 +64,21 @@ await login(page, 'admin@cityeng.local')
 await page.goto(`${BASE}/manager/assets`, { waitUntil: 'domcontentloaded' })
 await settled(page)
 
+// الضمانات is nested under الأجهزة in the sidebar. Its own two sections live
+// on the strip inside the module rather than in the nav, so they are only
+// reachable once the module is open — which is what this walks.
 const parent = page.locator('aside a[href="/manager/warranties"]').first()
-const register = page.locator('aside a[href="/manager/warranties/register"]').first()
-const claimsLink = page.locator('aside a[href="/manager/warranties/claims"]').first()
+check('الضمانات is nested under الأجهزة in the sidebar', await parent.isVisible())
 
-check('الضمانات is in the sidebar', await parent.isVisible())
-check('سجل الضمانات is nested under it', await register.isVisible())
-check('المطالبات is nested under it', await claimsLink.isVisible())
+await parent.click()
+await page.waitForURL(/\/manager\/warranties/, { timeout: 20000 })
+await settled(page)
+
+const register = page.locator('a[href="/manager/warranties/register"]').first()
+const claimsLink = page.locator('a[href="/manager/warranties/claims"]').first()
+
+check('سجل الضمانات is on the module strip', await register.isVisible())
+check('المطالبات is on the module strip', await claimsLink.isVisible())
 
 /* ── Register cover ──────────────────────────────────────── */
 

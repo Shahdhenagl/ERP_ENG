@@ -217,6 +217,10 @@ export interface Contract {
     currency: string
     sla_response_hours: number | null
     sla_resolution_hours: number | null
+    /** Set when this contract renewed another, and when one renewed it. */
+    renewed_from_id: number | null
+    renewed_from_code: string | null
+    renewal_code: string | null
     notes: string | null
     assets_count?: number
     assets?: Asset[]
@@ -400,6 +404,8 @@ export interface Supplier {
     returned_total: number
     billed_extras: number
     paid_total: number
+    /** Credited back by posted returns — never collected, so never "paid". */
+    credited_total: number
     balance: number
     /** Deliveries whose invoice has not arrived yet. */
     uninvoiced_total: number
@@ -463,7 +469,14 @@ export interface PurchaseOrder {
 
 export type InvoiceStatus = 'draft' | 'issued' | 'void'
 /** Derived from the receipts against the invoice, never stored. */
-export type PaymentState = 'draft' | 'void' | 'unpaid' | 'partly_paid' | 'paid' | 'overdue'
+export type PaymentState =
+    | 'draft'
+    | 'void'
+    | 'unpaid'
+    | 'partly_paid'
+    | 'paid'
+    | 'credited'
+    | 'overdue'
 export type PaymentMethod = 'cash' | 'bank_transfer' | 'cheque' | 'wallet'
 /** `custody` is a technician's float — a box with their name on it. */
 export type CashBoxType = 'cash' | 'bank' | 'custody'
@@ -502,6 +515,8 @@ export interface Invoice {
     tax_amount: number
     total: number
     paid_total: number
+    /** Credited back by posted returns — never collected, so never "paid". */
+    credited_total: number
     balance: number
     currency: string
 
@@ -1391,4 +1406,201 @@ export interface WarrantyReport {
     repair_cost: number
     by_status: Array<{ status: string; label: string; count: number }>
     by_model: Array<{ model: string; claims: number }>
+}
+
+/* ── Sales returns (credit notes) ────────────────────────── */
+
+export interface SalesReturnLine {
+    id?: number
+    invoice_line_id: number | null
+    item_id: number | null
+    item?: string | null
+    description: string
+    qty: number
+    unit_price: number
+    line_total: number
+    /** Whether the goods go back on a shelf or are written off. */
+    restock: boolean
+    unit_cost: number
+}
+
+export interface SalesReturn {
+    id: number
+    code: string
+
+    customer_id: number
+    customer: string | null
+
+    invoice_id: number
+    invoice_code: string | null
+
+    warehouse_id: number | null
+    warehouse: string | null
+
+    return_date: string | null
+    reason: string
+
+    /** Nothing moves — not the stock, not the debt — until this is posted. */
+    status: 'draft' | 'posted'
+    status_label: string
+
+    subtotal: number
+    tax_rate: number
+    tax_amount: number
+    total: number
+
+    lines: SalesReturnLine[] | null
+    notes: string | null
+    created_at: string | null
+}
+
+/** What an invoice can still take back, line by line. */
+export interface ReturnableInvoice {
+    invoice: {
+        id: number
+        code: string
+        customer: string | null
+        tax_rate: number
+        total: number
+        credited: number
+        balance: number
+    }
+    lines: Array<{
+        invoice_line_id: number
+        item_id: number | null
+        description: string
+        unit: string | null
+        qty: number
+        returned: number
+        remaining: number
+        unit_price: number
+    }>
+}
+
+/* ── Audit trail ─────────────────────────────────────────── */
+
+export interface ActivityEntry {
+    id: number
+    action: string
+    module: string
+    module_label: string
+    verb_label: string
+    /** «الفواتير · إصدار», or the raw action when it is not recognised. */
+    label: string
+    /** Worth picking out of a long list: refused logins, voids, user changes. */
+    is_sensitive: boolean
+
+    description: string | null
+    properties: Record<string, unknown> | null
+
+    user_id: number | null
+    user: string | null
+    user_role: string | null
+
+    subject_type: string | null
+    subject_id: number | null
+
+    ip_address: string | null
+    created_at: string | null
+}
+
+export interface ActivityFilters {
+    modules: Array<{ value: string; label: string }>
+    actions: Array<{ value: string; total: number }>
+    users: Array<{ value: number; label: string }>
+    sensitive_count: number
+}
+
+/** سند صرف — one payment to a supplier, as it is printed. */
+export interface SupplierPaymentVoucher {
+    id: number
+    code: string
+    amount: number
+    method: PaymentMethod
+    method_label: string
+    paid_at: string | null
+    reference: string | null
+    note: string | null
+    supplier: string | null
+    supplier_tax_id: string | null
+    cash_box: string | null
+    invoice_code: string | null
+    actor: string | null
+}
+
+/* ── Purchase requests ───────────────────────────────────── */
+
+export type RequestStatus = 'draft' | 'submitted' | 'approved' | 'rejected' | 'ordered'
+
+export interface PurchaseRequestLine {
+    id?: number
+    item_id: number | null
+    item?: string | null
+    description: string
+    qty: number
+    unit: string | null
+    note: string | null
+    /** False means this line cannot become an order line as it stands. */
+    in_catalogue: boolean
+}
+
+export interface PurchaseRequest {
+    id: number
+    code: string
+
+    requested_by: number
+    requester: string | null
+
+    task_id: number | null
+    task_code: string | null
+    warehouse: string | null
+
+    needed_by: string | null
+    priority: TaskPriority
+    reason: string | null
+
+    status: RequestStatus
+    status_label: string
+    is_editable: boolean
+
+    decided_by: number | null
+    decider: string | null
+    decided_at: string | null
+    decision_note: string | null
+
+    purchase_order_id: number | null
+    purchase_order_code: string | null
+
+    lines: PurchaseRequestLine[] | null
+    created_at: string | null
+}
+
+/* ── Serial-tracked units ────────────────────────────────── */
+
+export type SerialStatus = 'in_stock' | 'issued' | 'returned' | 'scrapped'
+
+export interface ItemSerial {
+    id: number
+    serial: string
+    status: SerialStatus
+    status_label: string
+    is_available: boolean
+
+    item_id: number
+    item: string | null
+    item_code: string | null
+
+    warehouse: string | null
+    asset_id: number | null
+    asset: string | null
+
+    /** Where it went, which is the whole point of tracking it. */
+    issued_on_task: string | null
+    note: string | null
+
+    received_at?: string | null
+    received_from?: string | null
+    issued_at?: string | null
+
+    created_at: string | null
 }

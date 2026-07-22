@@ -89,6 +89,11 @@ class Invoice extends Model
         return $this->hasMany(InvoiceLine::class)->orderBy('sort');
     }
 
+    public function salesReturns(): HasMany
+    {
+        return $this->hasMany(SalesReturn::class);
+    }
+
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
@@ -108,13 +113,23 @@ class Invoice extends Model
             : $this->payments()->sum('amount')), 2);
     }
 
+    /**
+     * Credited back by posted returns. Drafts are excluded — a return that has
+     * not been posted has not happened, and letting it reduce the debt would
+     * let anyone forgive an invoice by typing one and leaving it.
+     */
+    public function creditedTotal(): float
+    {
+        return round((float) $this->salesReturns()->posted()->sum('total'), 2);
+    }
+
     public function balance(): float
     {
         if (! $this->status->countsAsReceivable()) {
             return 0.0;
         }
 
-        return round((float) $this->total - $this->paidTotal(), 2);
+        return round((float) $this->total - $this->creditedTotal() - $this->paidTotal(), 2);
     }
 
     /**
@@ -132,10 +147,20 @@ class Invoice extends Model
         }
 
         $paid = $this->paidTotal();
+        $credited = $this->creditedTotal();
+
+        // An invoice fully credited was never collected and is not "paid" —
+        // saying so would hide a returned sale inside the collection figures.
+        // Guarded on a positive total: without it a zero invoice satisfies
+        // "credited >= total" with no credit note in sight and reads as
+        // returned.
+        if ($credited > 0.005 && $credited + 0.005 >= (float) $this->total) {
+            return 'credited';
+        }
 
         // Compare with a cent of tolerance: decimal arithmetic on money should
         // not leave an invoice reading "unpaid" over a rounding crumb.
-        if ($paid + 0.005 >= (float) $this->total) {
+        if ($paid + $credited + 0.005 >= (float) $this->total) {
             return 'paid';
         }
 
@@ -152,6 +177,7 @@ class Invoice extends Model
             'draft' => 'مسودة',
             'void' => 'ملغاة',
             'paid' => 'مدفوعة',
+            'credited' => 'مرتجعة',
             'partly_paid' => 'مدفوعة جزئيًا',
             'overdue' => 'متأخرة',
             default => 'غير مدفوعة',
@@ -191,8 +217,17 @@ class Invoice extends Model
      */
     public function scopeOutstanding(Builder $query): Builder
     {
+        // Credits count alongside receipts. Without them a fully returned
+        // invoice keeps appearing on the chase list and inside the receivable
+        // total, which is the same figure the treasury screen reports.
         return $query->receivable()->whereRaw(
-            'invoices.total > (select coalesce(sum(amount), 0) from payments where payments.invoice_id = invoices.id and payments.deleted_at is null) + 0.005',
+            'invoices.total > ('
+            .'(select coalesce(sum(amount), 0) from payments'
+            .' where payments.invoice_id = invoices.id and payments.deleted_at is null)'
+            .' + (select coalesce(sum(total), 0) from sales_returns'
+            .' where sales_returns.invoice_id = invoices.id'
+            ." and sales_returns.status = 'posted' and sales_returns.deleted_at is null)"
+            .') + 0.005',
         );
     }
 

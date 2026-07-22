@@ -5,7 +5,9 @@ import { Link } from 'react-router-dom'
 import { ContractForm } from '@/components/ContractForm'
 import { ConfirmDialog } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
+import { SectionTabs } from '@/components/SectionTabs'
 import { Button, EmptyState, ErrorState, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
+import { DEVICE_SECTIONS } from '@/lib/sections'
 import { errorMessage } from '@/lib/api'
 import { CONTRACT_STATUS, expiryChip } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
@@ -68,6 +70,8 @@ export function ContractList() {
                     </Button>
                 }
             />
+
+            <SectionTabs sections={DEVICE_SECTIONS} />
 
             <div className="mb-4 space-y-3">
                 <div className="relative">

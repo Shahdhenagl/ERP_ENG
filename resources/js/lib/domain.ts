@@ -265,6 +265,9 @@ export const PAYMENT_STATE: Record<PaymentState, { label: string; chip: string }
     unpaid: { label: 'غير مدفوعة', chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' },
     partly_paid: { label: 'مدفوعة جزئيًا', chip: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200' },
     paid: { label: 'مدفوعة', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
+    // Violet, not green: a returned sale was never collected, and it should
+    // not read as a win on the invoice list.
+    credited: { label: 'مرتجعة', chip: 'bg-violet-50 text-violet-700 ring-1 ring-violet-200' },
     overdue: { label: 'متأخرة', chip: 'bg-red-50 text-red-700 ring-1 ring-red-200' },
 }
 

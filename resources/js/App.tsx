@@ -32,6 +32,8 @@ import { InvoicePrint } from '@/pages/print/InvoicePrint'
 import { QuotationPrint } from '@/pages/print/QuotationPrint'
 import { ServiceReportPrint } from '@/pages/print/ServiceReportPrint'
 import { StatementPrint } from '@/pages/print/StatementPrint'
+import { DeliveryNotePrint } from '@/pages/print/DeliveryNotePrint'
+import { PaymentVoucherPrint } from '@/pages/print/PaymentVoucherPrint'
 import { WarrantyCertificate } from '@/pages/print/WarrantyCertificate'
 import { ContractReportPage } from '@/pages/reports/ContractReportPage'
 import { CustodyReportPage } from '@/pages/reports/CustodyReportPage'
@@ -51,6 +53,7 @@ import { Profile } from '@/pages/Profile'
 import { TaskDetail } from '@/pages/TaskDetail'
 import { TaskForm } from '@/pages/TaskForm'
 import { TaskList } from '@/pages/TaskList'
+import { AuditLog } from '@/pages/AuditLog'
 import { UserList } from '@/pages/UserList'
 import type { Role } from '@/types'
 
@@ -90,6 +93,8 @@ export function App() {
                                     <Route path="quotations/:id" element={<QuotationPrint />} />
                                     <Route path="statements/:id" element={<StatementPrint />} />
                                     <Route path="warranty/:id" element={<WarrantyCertificate />} />
+                                    <Route path="delivery/:id" element={<DeliveryNotePrint />} />
+                                    <Route path="vouchers/:id" element={<PaymentVoucherPrint />} />
                                 </Route>
 
                                 {/* The service report is unprefixed: a technician
@@ -172,6 +177,7 @@ export function App() {
 
                                         <Route element={<RequireRole roles={['admin']} />}>
                                             <Route path="users" element={<UserList />} />
+                                            <Route path="audit" element={<AuditLog />} />
                                             <Route path="settings" element={<Settings />} />
                                         </Route>
                                     </Route>

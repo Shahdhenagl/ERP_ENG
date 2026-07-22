@@ -87,7 +87,7 @@ export function ReportsLayout() {
                 }
             />
 
-            <SectionTabs sections={SECTIONS} />
+            <SectionTabs sections={SECTIONS} always />
 
             {report.periodic && (
                 <PeriodPicker period={period} presets={['month', 'quarter', 'year', 'all']} />

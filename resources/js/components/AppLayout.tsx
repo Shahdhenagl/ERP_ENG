@@ -2,7 +2,6 @@ import clsx from 'clsx'
 import {
     ArrowLeftRight,
     Bell,
-    BookOpen,
     Boxes,
     Building2,
     Calculator,
@@ -22,8 +21,6 @@ import {
     TrendingUp,
     Boxes as BoxesIcon,
     ShieldCheck,
-    ShieldPlus,
-    FileWarning,
     Truck,
     Users,
     Wallet,
@@ -62,18 +59,17 @@ const NAV: NavItem[] = [
     { to: '/', label: 'الرئيسية', icon: LayoutDashboard },
     { to: '/tasks', label: 'المهام', icon: ClipboardList },
     { to: '/customers', label: 'العملاء', icon: Building2, roles: ['admin', 'manager'] },
-    { to: '/assets', label: 'الأجهزة', icon: HardDrive, roles: ['admin', 'manager'] },
-    { to: '/contracts', label: 'عقود الصيانة', icon: ScrollText, roles: ['admin', 'manager'], short: 'العقود' },
     {
-        to: '/warranties',
-        label: 'الضمانات',
-        icon: ShieldCheck,
+        to: '/assets',
+        label: 'الأجهزة',
+        icon: HardDrive,
         roles: ['admin', 'manager'],
-        // The parent redirects to the register, so it is not repeated as a
-        // child — two rows pointing at one screen would both light up.
+        // Grouped under the device rather than listed beside it: a maintenance
+        // contract and a warranty are both promises about a specific unit, and
+        // that is how anyone looking for one thinks of it.
         children: [
-            { to: '/warranties/register', label: 'سجل الضمانات', icon: ShieldPlus },
-            { to: '/warranties/claims', label: 'المطالبات', icon: FileWarning },
+            { to: '/contracts', label: 'عقود الصيانة', icon: ScrollText },
+            { to: '/warranties', label: 'الضمانات', icon: ShieldCheck },
         ],
     },
     {
@@ -95,23 +91,13 @@ const NAV: NavItem[] = [
         label: 'الفواتير',
         icon: Receipt,
         roles: ['admin', 'manager'],
-        // The parent is the invoice list itself, so it is not repeated as a
-        // child — two rows pointing at one route would both light up.
-        children: [{ to: '/treasury', label: 'الخزينة', icon: Wallet }],
-    },
-    {
-        to: '/accounting',
-        label: 'المحاسبة المالية',
-        icon: Calculator,
-        roles: ['admin', 'manager'],
-        short: 'حسابات',
-        // Seven sections is more than the sidebar should carry, so only the
-        // three anyone opens without being sent there are listed; the rest are
-        // one tap away on the strip at the top of the module.
+        short: 'مالية',
+        // The money group. The parent is the invoice list itself, so it is not
+        // repeated as a child — two rows pointing at one route would both
+        // light up. Accounting keeps its own seven-section strip inside.
         children: [
-            { to: '/accounting/accounts', label: 'دليل الحسابات', icon: BookOpen },
-            { to: '/accounting/journal', label: 'القيود اليومية', icon: ScrollText },
-            { to: '/accounting/trial-balance', label: 'ميزان المراجعة', icon: Scale },
+            { to: '/treasury', label: 'الخزينة', icon: Wallet },
+            { to: '/accounting', label: 'المحاسبة المالية', icon: Calculator },
         ],
     },
     {
@@ -129,8 +115,17 @@ const NAV: NavItem[] = [
         ],
     },
     { to: '/stock', label: 'عهدتي', icon: Package, roles: ['technician'] },
-    { to: '/users', label: 'المستخدمون', icon: Users, roles: ['admin'], short: 'الفريق' },
-    { to: '/settings', label: 'بيانات الشركة', icon: Settings2, roles: ['admin'], short: 'إعدادات' },
+    {
+        to: '/users',
+        label: 'الإدارة',
+        icon: Users,
+        roles: ['admin'],
+        short: 'إدارة',
+        children: [
+            { to: '/audit', label: 'سجل العمليات', icon: ScrollText },
+            { to: '/settings', label: 'بيانات الشركة', icon: Settings2 },
+        ],
+    },
 ]
 
 export function AppLayout() {

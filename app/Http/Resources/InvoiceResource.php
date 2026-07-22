@@ -38,6 +38,9 @@ class InvoiceResource extends JsonResource
             'tax_amount' => (float) $this->tax_amount,
             'total' => (float) $this->total,
             'paid_total' => $this->paidTotal(),
+            // Credited back by posted returns. Shown separately from what was
+            // collected: money that never arrived is not money received.
+            'credited_total' => $this->creditedTotal(),
             'balance' => $this->balance(),
             'currency' => $this->currency,
 

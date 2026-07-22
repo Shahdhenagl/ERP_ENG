@@ -1,7 +1,9 @@
 import { Save } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useToast } from '@/components/Toast'
+import { SectionTabs } from '@/components/SectionTabs'
 import { Button, Field, Input, PageHeader, PageLoader, Textarea } from '@/components/ui'
+import { ADMIN_SECTIONS } from '@/lib/sections'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { useSaveSettings, useSettings } from '@/lib/queries'
 
@@ -50,6 +52,8 @@ export function Settings() {
                     </Button>
                 }
             />
+
+            <SectionTabs sections={ADMIN_SECTIONS} />
 
             <div className="grid gap-5 lg:grid-cols-2">
                 <section className="card p-5">

@@ -113,6 +113,8 @@ class PurchaseOrderController extends Controller
             'lines.*.item_id' => ['required', 'exists:items,id'],
             'lines.*.qty' => ['required', 'numeric', 'min:0'],
             'lines.*.unit_cost' => ['nullable', 'numeric', 'min:0'],
+            'lines.*.serials' => ['nullable', 'array'],
+            'lines.*.serials.*' => ['string', 'max:64'],
             'reference' => ['nullable', 'string', 'max:64'],
             'note' => ['nullable', 'string', 'max:1000'],
         ]);

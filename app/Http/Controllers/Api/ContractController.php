@@ -12,6 +12,7 @@ use App\Services\MaintenancePlanner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -133,6 +134,68 @@ class ContractController extends Controller
         );
 
         return new ContractResource($this->loaded($contract->fresh()));
+    }
+
+    /**
+     * Renew a contract for another term.
+     *
+     * A new contract, not an edit to the old one. Last year's dates, price and
+     * visit plan are the record of what was actually delivered, and moving them
+     * would erase it — along with any argument about whether the visits
+     * promised were made. The new one starts the day after the old one ends,
+     * so a renewal signed early leaves no gap in cover, and carries the same
+     * devices unless the operator changes them.
+     */
+    public function renew(Request $request, Contract $contract): ContractResource
+    {
+        if ($contract->renewal()->exists()) {
+            throw ValidationException::withMessages([
+                'contract' => 'تم تجديد هذا العقد بالفعل.',
+            ]);
+        }
+
+        $data = $request->validate([
+            'months' => ['nullable', 'integer', 'min:1', 'max:120'],
+            'value' => ['nullable', 'numeric', 'min:0'],
+            'visits_per_year' => ['nullable', 'integer', 'min:1', 'max:52'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $starts = $contract->ends_on->copy()->addDay();
+        $months = (int) ($data['months'] ?? 12);
+
+        $renewal = DB::transaction(function () use ($contract, $data, $starts, $months, $request) {
+            $new = Contract::create([
+                'customer_id' => $contract->customer_id,
+                'renewed_from_id' => $contract->id,
+                'title' => $contract->title,
+                'starts_on' => $starts->toDateString(),
+                // A year from 1 January ends on 31 December, not on the
+                // anniversary — the same rule the warranty terms follow.
+                'ends_on' => $starts->copy()->addMonths($months)->subDay()->toDateString(),
+                'visits_per_year' => $data['visits_per_year'] ?? $contract->visits_per_year,
+                'value' => $data['value'] ?? $contract->value,
+                'currency' => $contract->currency,
+                'sla_response_hours' => $contract->sla_response_hours,
+                'sla_resolution_hours' => $contract->sla_resolution_hours,
+                'notes' => $data['notes'] ?? $contract->notes,
+                'created_by' => $request->user()->id,
+            ]);
+
+            // The same devices, because a renewal covering different units is a
+            // different contract and should be typed as one.
+            $new->assets()->sync($contract->assets->pluck('id'));
+
+            return $new;
+        });
+
+        ActivityLog::record(
+            action: 'contract.renewed',
+            subject: $renewal,
+            description: "تجديد العقد {$contract->code} حتى {$renewal->ends_on->toDateString()}",
+        );
+
+        return new ContractResource($this->loaded($renewal));
     }
 
     public function cancel(Contract $contract): ContractResource

@@ -113,6 +113,10 @@ class StockController extends Controller
             'unit_cost' => ['required', 'numeric', 'min:0'],
             'reference' => ['nullable', 'string', 'max:64'],
             'note' => ['nullable', 'string', 'max:1000'],
+            // Required by the ledger for a tracked item, refused as a count
+            // mismatch if they do not line up with the quantity.
+            'serials' => ['nullable', 'array'],
+            'serials.*' => ['string', 'max:64'],
         ]);
 
         $movement = $this->purchasing->receiveDirect(

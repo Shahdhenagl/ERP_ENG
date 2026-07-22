@@ -3,6 +3,7 @@ import {
     ArrowRight,
     Ban,
     CalendarClock,
+    CalendarPlus,
     CircleCheck,
     HardDrive,
     Lock,
@@ -13,16 +14,17 @@ import {
     Wallet,
 } from 'lucide-react'
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ContractForm } from '@/components/ContractForm'
-import { ConfirmDialog } from '@/components/Modal'
+import { ConfirmDialog, Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
-import { Button, ErrorState, PageHeader, PageLoader } from '@/components/ui'
-import { errorMessage } from '@/lib/api'
+import { Button, ErrorState, Field, Input, PageHeader, PageLoader } from '@/components/ui'
+import { errorMessage, fieldErrors } from '@/lib/api'
 import { CONTRACT_STATUS, VISIT_STATUS, expiryChip } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
 import { useArea } from '@/lib/nav'
-import { useContract, useContractAction } from '@/lib/queries'
+import { useContract, useContractAction, useRenewContract } from '@/lib/queries'
+import type { Contract } from '@/types'
 import type { ContractVisit } from '@/types'
 
 export function ContractDetail() {
@@ -35,6 +37,7 @@ export function ContractDetail() {
 
     const [editOpen, setEditOpen] = useState(false)
     const [cancelling, setCancelling] = useState(false)
+    const [renewing, setRenewing] = useState(false)
 
     if (isLoading) return <PageLoader />
     if (isError || !contract) {
@@ -120,6 +123,19 @@ export function ContractDetail() {
                                 توليد أوامر الشغل المستحقة
                             </Button>
                         )}
+
+                        {/* Offered while it is running or once it has run out —
+                            a renewal is sold before the gap, not after it. */}
+                        {['active', 'expired'].includes(contract.effective_status) &&
+                            !contract.renewal_code && (
+                                <Button
+                                    variant="secondary"
+                                    icon={CalendarPlus}
+                                    onClick={() => setRenewing(true)}
+                                >
+                                    تجديد العقد
+                                </Button>
+                            )}
 
                         <Button
                             variant="secondary"
@@ -251,6 +267,10 @@ export function ContractDetail() {
                 />
             )}
 
+            {renewing && (
+                <RenewDialog contract={contract} onClose={() => setRenewing(false)} />
+            )}
+
             <ConfirmDialog
                 open={cancelling}
                 onClose={() => setCancelling(false)}
@@ -334,5 +354,109 @@ function Term({
                 <dd className="text-sm font-bold text-navy-800">{value ?? '—'}</dd>
             </div>
         </div>
+    )
+}
+
+/* ── Renewing ────────────────────────────────────────────── */
+
+/**
+ * Sell another term.
+ *
+ * The new contract starts the day after this one ends, so a renewal signed
+ * early leaves no gap in cover — and it arrives as a draft, because someone
+ * still has to agree the term before its visits are planned.
+ */
+function RenewDialog({ contract, onClose }: { contract: Contract; onClose: () => void }) {
+    const toast = useToast()
+    const navigate = useNavigate()
+    const { path } = useArea()
+    const renew = useRenewContract(contract.id)
+    const [errors, setErrors] = useState<Record<string, string>>({})
+
+    const [months, setMonths] = useState('12')
+    const [value, setValue] = useState(contract.value ?? '')
+    const [visits, setVisits] = useState(String(contract.visits_per_year))
+
+    return (
+        <Modal
+            open
+            onClose={onClose}
+            title={`تجديد العقد ${contract.code}`}
+            description={`العقد الحالي ينتهي في ${formatDate(contract.ends_on)} — التجديد يبدأ في اليوم التالي.`}
+            size="sm"
+            footer={
+                <>
+                    <Button variant="secondary" onClick={onClose} disabled={renew.isPending}>
+                        إلغاء
+                    </Button>
+                    <Button
+                        loading={renew.isPending}
+                        onClick={async () => {
+                            setErrors({})
+
+                            try {
+                                const created = await renew.mutateAsync({
+                                    months: Number(months),
+                                    value: value === '' ? null : Number(value),
+                                    visits_per_year: Number(visits),
+                                })
+                                toast.success(`تم إنشاء العقد ${created.code} كمسودة.`)
+                                onClose()
+                                navigate(path(`/contracts/${created.id}`))
+                            } catch (caught) {
+                                setErrors(fieldErrors(caught))
+                                toast.error(errorMessage(caught, 'تعذّر تجديد العقد.'))
+                            }
+                        }}
+                    >
+                        تجديد
+                    </Button>
+                </>
+            }
+        >
+            <div className="space-y-4">
+                <Field label="المدة (شهور)" required error={errors.months}>
+                    <Input
+                        type="number"
+                        min={1}
+                        max={120}
+                        value={months}
+                        onChange={(e) => setMonths(e.target.value)}
+                        dir="ltr"
+                        className="text-left"
+                    />
+                </Field>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label="القيمة" error={errors.value}>
+                        <Input
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            value={value}
+                            onChange={(e) => setValue(e.target.value)}
+                            dir="ltr"
+                            className="text-left"
+                        />
+                    </Field>
+
+                    <Field label="زيارات في السنة" error={errors.visits_per_year}>
+                        <Input
+                            type="number"
+                            min={1}
+                            max={52}
+                            value={visits}
+                            onChange={(e) => setVisits(e.target.value)}
+                            dir="ltr"
+                            className="text-left"
+                        />
+                    </Field>
+                </div>
+
+                <p className="rounded-xl bg-navy-50 p-3 text-[11px] text-navy-500">
+                    نفس الأجهزة تنتقل للعقد الجديد، والعقد الحالي يبقى كما هو سجلًا لما تم تنفيذه.
+                </p>
+            </div>
+        </Modal>
     )
 }

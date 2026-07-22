@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Enums\InvoiceStatus;
 use App\Models\CashMovement;
 use App\Models\Invoice;
+use App\Models\SalesReturn;
 use App\Models\StockMovement;
 use App\Models\SupplierInvoice;
 use App\Services\LedgerPoster;
@@ -45,12 +46,23 @@ class PostingObserver
             $model instanceof CashMovement => $this->poster->cashMovement($model),
             $model instanceof StockMovement => $this->poster->stockMovement($model),
             $model instanceof SupplierInvoice => $this->poster->supplierInvoice($model),
+            $model instanceof SalesReturn => $this->poster->salesReturn($model),
             default => null,
         });
     }
 
     public function updated(Model $model): void
     {
+        // A credit note posts when it leaves draft, which is an update: it is
+        // created empty and priced afterwards, the same as a supplier bill.
+        if ($model instanceof SalesReturn) {
+            if ($model->wasChanged('status')) {
+                $this->guard(fn () => $this->poster->salesReturn($model));
+            }
+
+            return;
+        }
+
         // A supplier bill posts when it stops being a draft, which is an
         // update — it is created empty and priced afterwards.
         if ($model instanceof SupplierInvoice) {

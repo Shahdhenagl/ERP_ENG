@@ -81,8 +81,15 @@ class ItemController extends Controller
                 'nullable', 'string', 'max:64',
                 Rule::unique('items')->ignore($item?->id)->whereNull('deleted_at'),
             ],
+            // What the scanner reads. Separate from `sku`, which is the
+            // supplier's own number for the same thing.
+            'barcode' => [
+                'nullable', 'string', 'max:64',
+                Rule::unique('items')->ignore($item?->id)->whereNull('deleted_at'),
+            ],
             'category' => ['required', Rule::enum(ItemCategory::class)],
             'unit' => ['required', 'string', 'max:24'],
+            'tracks_serials' => ['boolean'],
             'reorder_level' => ['nullable', 'numeric', 'min:0', 'max:9999999'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'is_active' => ['boolean'],

@@ -40,6 +40,10 @@ class ContractResource extends JsonResource
             'sla_response_hours' => $this->sla_response_hours,
             'sla_resolution_hours' => $this->sla_resolution_hours,
 
+            'renewed_from_id' => $this->renewed_from_id,
+            'renewed_from_code' => $this->renewedFrom?->code,
+            // Set once a successor exists, which is what stops a second one.
+            'renewal_code' => $this->renewal?->code,
             'notes' => $this->notes,
 
             'assets_count' => $this->whenCounted('assets'),

@@ -15,6 +15,13 @@ class ItemResource extends JsonResource
             'id' => $this->id,
             'code' => $this->code,
             'sku' => $this->sku,
+            'barcode' => $this->barcode,
+            'tracks_serials' => (bool) $this->tracks_serials,
+            // Only meaningful on a tracked item, and cheap enough to always
+            // send: a count of units actually on a shelf right now.
+            'serials_in_stock' => $this->tracks_serials
+                ? $this->serials()->available()->count()
+                : null,
             'name' => $this->name,
 
             'category' => $this->category->value,

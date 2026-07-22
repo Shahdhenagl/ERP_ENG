@@ -3,7 +3,9 @@ import { Pencil, Plus, Save, Search, Trash2, UserCircle2, Users } from 'lucide-r
 import { useEffect, useRef, useState } from 'react'
 import { ConfirmDialog, Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
+import { SectionTabs } from '@/components/SectionTabs'
 import { Button, EmptyState, ErrorState, Field, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
+import { ADMIN_SECTIONS } from '@/lib/sections'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import { useDeleteUser, useSaveUser, useUsers } from '@/lib/queries'
@@ -52,6 +54,8 @@ export function UserList() {
                     </Button>
                 }
             />
+
+            <SectionTabs sections={ADMIN_SECTIONS} />
 
             <div className="mb-4 flex gap-2">
                 <div className="relative flex-1">

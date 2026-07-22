@@ -55,7 +55,7 @@ export function AccountingLayout() {
                 subtitle={summary ? `صافي الفترة ${formatMoney(summary.net_profit)}` : undefined}
             />
 
-            <SectionTabs sections={SECTIONS} />
+            <SectionTabs sections={SECTIONS} always />
 
             <PeriodPicker period={period} presets={['month', 'quarter', 'year', 'all']} />
 

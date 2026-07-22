@@ -117,6 +117,28 @@ class SupplierController extends Controller
         return response()->json(['data' => ['id' => $payment->id, 'code' => $payment->code]], 201);
     }
 
+    /** One voucher, for the sheet of paper that gets signed and filed. */
+    public function showPayment(SupplierPayment $payment): JsonResponse
+    {
+        $payment->load(['supplier', 'box', 'actor', 'invoice']);
+
+        return response()->json(['data' => [
+            'id' => $payment->id,
+            'code' => $payment->code,
+            'amount' => (float) $payment->amount,
+            'method' => $payment->method->value,
+            'method_label' => $payment->method->label(),
+            'paid_at' => $payment->paid_at?->toDateString(),
+            'reference' => $payment->reference,
+            'note' => $payment->note,
+            'supplier' => $payment->supplier?->name,
+            'supplier_tax_id' => $payment->supplier?->tax_id,
+            'cash_box' => $payment->box?->name,
+            'invoice_code' => $payment->invoice?->code,
+            'actor' => $payment->actor?->name,
+        ]]);
+    }
+
     public function reversePayment(Request $request, SupplierPayment $payment): JsonResponse
     {
         $this->purchasing->reversePayment($payment, $request->user());

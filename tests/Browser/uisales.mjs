@@ -49,7 +49,11 @@ check('shows one still awaiting a reply', quotations.includes('مُرسَل'))
 check('shows the one that was won', quotations.includes('مقبول'))
 check('links the won quote to its order', /←\s*SO-/.test(quotations))
 
-await page.getByText('أوامر البيع', { exact: true }).click()
+// The tab, not the label wherever else it appears — the module gained a
+// returns tab and a text match alone is no longer unambiguous.
+await page.getByRole('button', { name: 'أوامر البيع', exact: true }).click()
+await page.waitForFunction(() => document.body.innerText.includes('SO-'), null, { timeout: 25000 })
+    .catch(() => {})
 await settled(page)
 
 const orders = await page.locator('body').innerText()
@@ -137,7 +141,11 @@ check(`accepting a lapsed quote refused — ${lapsed.acceptStatus}`, lapsed.acce
 
 await page.goto(`${BASE}/manager/sales`, { waitUntil: 'domcontentloaded' })
 await page.waitForSelector('text=عروض الأسعار', { timeout: 20000 })
-await page.getByText('أوامر البيع', { exact: true }).click()
+// The tab, not the label wherever else it appears — the module gained a
+// returns tab and a text match alone is no longer unambiguous.
+await page.getByRole('button', { name: 'أوامر البيع', exact: true }).click()
+await page.waitForFunction(() => document.body.innerText.includes('SO-'), null, { timeout: 25000 })
+    .catch(() => {})
 await settled(page)
 
 // Scoped to the card, since the same words label the filter chip above it.

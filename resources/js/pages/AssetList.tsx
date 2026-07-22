@@ -5,7 +5,9 @@ import { Link } from 'react-router-dom'
 import { AssetForm } from '@/components/AssetForm'
 import { ConfirmDialog } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
+import { SectionTabs } from '@/components/SectionTabs'
 import { Button, EmptyState, ErrorState, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
+import { DEVICE_SECTIONS } from '@/lib/sections'
 import { errorMessage } from '@/lib/api'
 import { ASSET_STATUS, warrantyChip } from '@/lib/domain'
 import { useArea } from '@/lib/nav'
@@ -67,6 +69,8 @@ export function AssetList() {
                     </Button>
                 }
             />
+
+            <SectionTabs sections={DEVICE_SECTIONS} />
 
             <div className="mb-4 space-y-3">
                 <div className="relative">

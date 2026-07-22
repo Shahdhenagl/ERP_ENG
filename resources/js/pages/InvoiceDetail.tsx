@@ -98,6 +98,14 @@ export function InvoiceDetail() {
                                 متبقٍ {formatMoney(invoice.balance)}
                             </p>
                         )}
+                        {/* Stated on its own line: an invoice whose balance
+                            fell without a receipt looks like a mistake unless
+                            the reason is on the page. */}
+                        {invoice.credited_total > 0 && (
+                            <p className="tabular text-xs font-bold text-violet-700">
+                                مرتجع {formatMoney(invoice.credited_total)}
+                            </p>
+                        )}
                     </div>
                 </div>
 

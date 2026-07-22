@@ -17,9 +17,12 @@ class Item extends Model
     protected $fillable = [
         'code',
         'sku',
+        'barcode',
         'name',
         'category',
+        'item_category_id',
         'unit',
+        'tracks_serials',
         'avg_cost',
         'reorder_level',
         'notes',
@@ -31,6 +34,7 @@ class Item extends Model
     {
         return [
             'category' => ItemCategory::class,
+            'tracks_serials' => 'boolean',
             'avg_cost' => 'decimal:2',
             'reorder_level' => 'decimal:3',
             'is_active' => 'boolean',
@@ -58,6 +62,17 @@ class Item extends Model
     public function levels(): HasMany
     {
         return $this->hasMany(StockLevel::class);
+    }
+
+    /** The editable grouping. `category` is the old fixed enum beside it. */
+    public function group(): BelongsTo
+    {
+        return $this->belongsTo(ItemCategory::class, 'item_category_id');
+    }
+
+    public function serials(): HasMany
+    {
+        return $this->hasMany(ItemSerial::class);
     }
 
     public function movements(): HasMany
@@ -115,7 +130,11 @@ class Item extends Model
         return $query->where(function (Builder $q) use ($term) {
             $q->where('name', 'like', "%{$term}%")
                 ->orWhere('code', 'like', "%{$term}%")
-                ->orWhere('sku', 'like', "%{$term}%");
+                ->orWhere('sku', 'like', "%{$term}%")
+                ->orWhere('barcode', 'like', "%{$term}%")
+                // A scan on the search box should land on the item whether the
+                // code is on the item or on one of its units.
+                ->orWhereHas('serials', fn (Builder $s) => $s->where('serial', 'like', "%{$term}%"));
         });
     }
 

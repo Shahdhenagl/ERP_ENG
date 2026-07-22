@@ -65,6 +65,9 @@ class ChartOfAccounts
         // Contra-revenue: carries a debit balance and nets off the two above,
         // which is exactly what a discount does to a period's income.
         ['4104', 'خصم مسموح به',                  'revenue',   'sales_discount',   false],
+        // Also contra-revenue: what was sold and handed back, kept visible
+        // rather than netted off the sales figure it reverses.
+        ['4105', 'مرتجعات المبيعات',              'revenue',   'sales_return',     false],
 
         // ── 5 Expenses ───────────────────────────────────────
         ['5',    'المصروفات',                     'expense',   null,               true],

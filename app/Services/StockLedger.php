@@ -23,6 +23,8 @@ use Illuminate\Validation\ValidationException;
  */
 class StockLedger
 {
+    public function __construct(protected SerialRegistry $serials) {}
+
     /**
      * Goods arriving from a supplier. This is the only operation that moves an
      * item's average cost.
@@ -47,7 +49,7 @@ class StockLedger
             $this->recalculateAverageCost($item, $qty, $unitCost);
             $this->add($item, $warehouse, $qty);
 
-            return $this->log($item, MovementType::Receipt, $qty, $unitCost, $actor, [
+            $movement = $this->log($item, MovementType::Receipt, $qty, $unitCost, $actor, [
                 'to_warehouse_id' => $warehouse->id,
                 // Who it came from is set as the row is written, not stamped on
                 // afterwards: the accounting entry is raised the moment the
@@ -59,6 +61,12 @@ class StockLedger
                 'reference' => $context['reference'] ?? null,
                 'note' => $context['note'] ?? null,
             ]);
+
+            // Inside the same transaction as the quantity: a receipt whose
+            // serials are refused must not leave the count raised.
+            $this->serials->receive($item, $warehouse, $context['serials'] ?? [], $movement, $qty);
+
+            return $movement;
         });
     }
 
@@ -97,6 +105,43 @@ class StockLedger
                     'note' => $context['note'] ?? null,
                 ],
             );
+        });
+    }
+
+    /**
+     * Goods a customer has handed back, going onto a shelf again.
+     *
+     * Valued at what they cost when they were sold rather than at today's
+     * average: the entry that put them into cost of sales has to be reversed by
+     * the same amount, or the margin on a returned job never comes back.
+     *
+     * @param  array<string, mixed>  $context
+     */
+    public function returnFromCustomer(
+        Item $item,
+        Warehouse $warehouse,
+        float $qty,
+        float $unitCost,
+        User $actor,
+        array $context = [],
+    ): StockMovement {
+        $this->assertPositive($qty);
+
+        return DB::transaction(function () use ($item, $warehouse, $qty, $unitCost, $actor, $context) {
+            // The average is deliberately left alone. Only a purchase tells us
+            // anything new about what stock costs; goods coming back are the
+            // same goods at the same cost they left at.
+            $this->add($item, $warehouse, $qty);
+
+            $movement = $this->log($item, MovementType::SalesReturn, $qty, $unitCost, $actor, [
+                'to_warehouse_id' => $warehouse->id,
+                'sales_return_id' => $context['sales_return_id'] ?? null,
+                'note' => $context['note'] ?? null,
+            ]);
+
+            $this->serials->returnFromCustomer($item, $warehouse, $context['serials'] ?? [], $movement);
+
+            return $movement;
         });
     }
 
@@ -141,17 +186,22 @@ class StockLedger
         Task $task,
         User $actor,
         ?string $note = null,
+        array $serials = [],
     ): StockMovement {
         $this->assertPositive($qty);
 
-        return DB::transaction(function () use ($item, $from, $qty, $task, $actor, $note) {
+        return DB::transaction(function () use ($item, $from, $qty, $task, $actor, $note, $serials) {
             $this->subtract($item, $from, $qty);
 
-            return $this->log($item, MovementType::Issue, $qty, (float) $item->avg_cost, $actor, [
+            $movement = $this->log($item, MovementType::Issue, $qty, (float) $item->avg_cost, $actor, [
                 'from_warehouse_id' => $from->id,
                 'task_id' => $task->id,
                 'note' => $note,
             ]);
+
+            $this->serials->issue($item, $serials, $movement, $qty);
+
+            return $movement;
         });
     }
 

@@ -12,6 +12,7 @@ import { useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { PeriodPicker, usePeriod } from '@/components/PeriodPicker'
 import { SectionTabs } from '@/components/SectionTabs'
+import { MONEY_SECTIONS } from '@/lib/sections'
 import { useToast } from '@/components/Toast'
 import { Button, EmptyState, Field, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
@@ -26,11 +27,6 @@ import {
 } from '@/lib/queries'
 import { TreasuryDialog } from '@/pages/treasury/TreasuryDialog'
 import type { CashBoxSummary } from '@/types'
-
-const SECTIONS = [
-    ['/invoices', 'الفواتير'],
-    ['/treasury', 'الخزينة'],
-] as const
 
 export function TreasuryPage() {
     const period = usePeriod('month')
@@ -56,7 +52,7 @@ export function TreasuryPage() {
                 }
             />
 
-            <SectionTabs sections={SECTIONS} />
+            <SectionTabs sections={MONEY_SECTIONS} />
 
             <PeriodPicker period={period} />
 

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Models\SalesReturn;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -57,10 +58,30 @@ class StatementController extends Controller
                 'credit' => (float) $payment->amount,
             ]);
 
+        // Credit notes reduce the debt exactly as a receipt does, and leaving
+        // them out would carry a balance down the page that disagrees with the
+        // one on the invoice.
+        $credits = SalesReturn::query()
+            ->where('customer_id', $customer->id)
+            ->posted()
+            ->when($from, fn ($q) => $q->whereDate('return_date', '>=', $from))
+            ->when($to, fn ($q) => $q->whereDate('return_date', '<=', $to))
+            ->with('invoice')
+            ->get()
+            ->map(fn (SalesReturn $return) => [
+                'date' => $return->return_date?->toDateString(),
+                'type' => 'credit',
+                'type_label' => 'مرتجع مبيعات',
+                'code' => $return->code,
+                'note' => $return->invoice?->code,
+                'debit' => 0.0,
+                'credit' => (float) $return->total,
+            ]);
+
         // Sort by date, then invoices ahead of receipts on the same day — money
         // cannot be collected against an invoice that has not been raised yet,
         // so showing it the other way round reads as a negative balance.
-        $rows = $invoices->concat($payments)
+        $rows = $invoices->concat($payments)->concat($credits)
             ->sortBy([['date', 'asc'], ['type', 'asc']])
             ->values();
 

@@ -24,13 +24,29 @@ class AuthController extends Controller
 
         $user = User::where('email', $data['email'])->first();
 
+        // A refused attempt is the event an audit log exists for. Recorded with
+        // the address it came from and without the password, and deliberately
+        // not saying which half was wrong — the log should not confirm to a
+        // reader whether an email address is registered here.
         if (! $user || ! Hash::check($data['password'], $user->password)) {
+            ActivityLog::record(
+                'auth.failed',
+                $user,
+                'محاولة دخول فاشلة — '.$data['email'],
+            );
+
             throw ValidationException::withMessages([
                 'email' => 'بيانات الدخول غير صحيحة.',
             ]);
         }
 
         if (! $user->is_active) {
+            ActivityLog::record(
+                'auth.blocked',
+                $user,
+                "محاولة دخول لحساب موقوف — {$user->name}",
+            );
+
             throw ValidationException::withMessages([
                 'email' => 'هذا الحساب موقوف. تواصل مع مدير النظام.',
             ]);

@@ -3,6 +3,7 @@ import { AlertTriangle, FileText, Search, Wallet } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { SectionTabs } from '@/components/SectionTabs'
+import { MONEY_SECTIONS } from '@/lib/sections'
 import { EmptyState, ErrorState, Input, PageHeader, SkeletonCard } from '@/components/ui'
 import { formatMoney, PAYMENT_STATE } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
@@ -10,12 +11,6 @@ import { useArea } from '@/lib/nav'
 import { useInvoices, useTreasurySummary } from '@/lib/queries'
 
 type Filter = 'all' | 'outstanding' | 'overdue'
-
-/** The treasury lives under the invoices in the sidebar; mirror that here. */
-const SECTIONS = [
-    ['/invoices', 'الفواتير'],
-    ['/treasury', 'الخزينة'],
-] as const
 
 export function InvoiceList() {
     const { path } = useArea()
@@ -45,7 +40,7 @@ export function InvoiceList() {
                 subtitle={data ? `${data.meta.total} فاتورة` : undefined}
             />
 
-            <SectionTabs sections={SECTIONS} />
+            <SectionTabs sections={MONEY_SECTIONS} />
 
             {summary && (
                 <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">

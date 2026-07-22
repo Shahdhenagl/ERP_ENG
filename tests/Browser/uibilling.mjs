@@ -104,11 +104,18 @@ check('total picks up the labour price', (await page.locator('body').innerText()
 /* ── Issue it ────────────────────────────────────────────── */
 
 await page.getByRole('button', { name: 'إصدار الفاتورة' }).click()
-await page.waitForTimeout(2500)
-await settled(page)
 
-const issued = await page.locator('body').innerText()
-check('invoice becomes unpaid once issued', issued.includes('غير مدفوعة'))
+// Waited for rather than paused on: the status badge is refetched after the
+// issue, and a fixed pause reads the previous one under load.
+const issued = await page
+    .waitForFunction(() => document.body.innerText.includes('غير مدفوعة'), null, {
+        timeout: 25000,
+    })
+    .then(() => true)
+    .catch(() => false)
+
+check('invoice becomes unpaid once issued', issued)
+await settled(page)
 
 /* ── Collect part of it ──────────────────────────────────── */
 

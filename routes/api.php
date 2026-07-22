@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AccountingController;
+use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AssetController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BranchController;
@@ -9,11 +10,15 @@ use App\Http\Controllers\Api\CustodyController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\InvoiceController;
+use App\Http\Controllers\Api\ItemCategoryController;
 use App\Http\Controllers\Api\ItemController;
+use App\Http\Controllers\Api\ItemSerialController;
 use App\Http\Controllers\Api\PurchaseOrderController;
+use App\Http\Controllers\Api\PurchaseRequestController;
 use App\Http\Controllers\Api\QuotationController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\SalesOrderController;
+use App\Http\Controllers\Api\SalesReturnController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\StatementController;
 use App\Http\Controllers\Api\SupplierController;
@@ -84,7 +89,20 @@ Route::middleware(['auth:sanctum', 'role'])->group(function () {
     // assets they have never been dispatched to.
     Route::get('assets/{asset}', [AssetController::class, 'show']);
 
+    // ── Purchase requests ────────────────────────────────────
+    // A technician who has just run out is the person who knows, so these
+    // are open to every role; the controller scopes the list to their own.
+    Route::get('purchase-requests', [PurchaseRequestController::class, 'index']);
+    Route::post('purchase-requests', [PurchaseRequestController::class, 'store']);
+    Route::get('purchase-requests/{purchaseRequest}', [PurchaseRequestController::class, 'show']);
+    Route::put('purchase-requests/{purchaseRequest}', [PurchaseRequestController::class, 'update']);
+    Route::delete('purchase-requests/{purchaseRequest}', [PurchaseRequestController::class, 'destroy']);
+    Route::post('purchase-requests/{purchaseRequest}/submit', [PurchaseRequestController::class, 'submit']);
+
     // A technician needs to see what is in their own van to report parts used.
+    // A scanner points at this: which unit is this, and where has it been.
+    Route::get('serials/lookup', [ItemSerialController::class, 'lookup']);
+
     Route::get('stock/mine', [StockController::class, 'myStock']);
     Route::get('stock/warehouses', [StockController::class, 'warehouses']);
     Route::get('stock/movements', [StockController::class, 'movements']);
@@ -165,11 +183,15 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     // Lifecycle is explicit rather than a status field anyone can PUT: each of
     // these rebuilds or tears down the visit plan behind it.
     Route::post('contracts/{contract}/activate', [ContractController::class, 'activate']);
+    Route::post('contracts/{contract}/renew', [ContractController::class, 'renew']);
     Route::post('contracts/{contract}/cancel', [ContractController::class, 'cancel']);
     Route::post('contracts/{contract}/materialise', [ContractController::class, 'materialise']);
 
     // ── Inventory ────────────────────────────────────────────
     Route::apiResource('items', ItemController::class);
+    Route::apiResource('item-categories', ItemCategoryController::class)->except(['show']);
+    Route::get('items/{item}/serials', [ItemSerialController::class, 'index']);
+    Route::post('serials/{serial}/scrap', [ItemSerialController::class, 'scrap']);
 
     // ── Stores ───────────────────────────────────────────────
     Route::post('warehouses', [StockController::class, 'storeWarehouse']);
@@ -198,6 +220,7 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::delete('suppliers/{supplier}', [SupplierController::class, 'destroy']);
 
     Route::post('supplier-payments', [SupplierController::class, 'pay']);
+    Route::get('supplier-payments/{payment}', [SupplierController::class, 'showPayment']);
     Route::delete('supplier-payments/{payment}', [SupplierController::class, 'reversePayment']);
 
     // ── Supplier bills & purchase returns ────────────────────
@@ -218,6 +241,9 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::post('purchase-returns', [SupplierInvoiceController::class, 'storeReturn']);
     Route::post('purchase-returns/{purchaseReturn}/post', [SupplierInvoiceController::class, 'postReturn']);
     Route::delete('purchase-returns/{purchaseReturn}', [SupplierInvoiceController::class, 'destroyReturn']);
+
+    Route::post('purchase-requests/{purchaseRequest}/decide', [PurchaseRequestController::class, 'decide']);
+    Route::post('purchase-requests/{purchaseRequest}/order', [PurchaseRequestController::class, 'toOrder']);
 
     Route::get('purchase-orders', [PurchaseOrderController::class, 'index']);
     Route::post('purchase-orders', [PurchaseOrderController::class, 'store']);
@@ -257,6 +283,17 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::post('invoices/{invoice}/issue', [InvoiceController::class, 'issue']);
     Route::post('invoices/{invoice}/void', [InvoiceController::class, 'void']);
     Route::post('tasks/{task}/invoice', [InvoiceController::class, 'fromTask']);
+
+    // ── Sales returns (credit notes) ─────────────────────────
+    // Always raised against the invoice they reverse, which is what makes
+    // 'more back than went out' a question with an answer.
+    Route::get('sales-returns', [SalesReturnController::class, 'index']);
+    Route::post('sales-returns', [SalesReturnController::class, 'store']);
+    Route::get('sales-returns/{salesReturn}', [SalesReturnController::class, 'show']);
+    Route::put('sales-returns/{salesReturn}', [SalesReturnController::class, 'update']);
+    Route::delete('sales-returns/{salesReturn}', [SalesReturnController::class, 'destroy']);
+    Route::post('sales-returns/{salesReturn}/post', [SalesReturnController::class, 'post']);
+    Route::get('invoices/{invoice}/returnable', [SalesReturnController::class, 'returnable']);
 
     Route::get('treasury/summary', [TreasuryController::class, 'summary']);
     Route::get('treasury/boxes', [TreasuryController::class, 'boxes']);
@@ -298,6 +335,12 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    // ── Audit trail ──────────────────────────────────────────
+    // Read-only by design. There is no write endpoint and no delete: a log
+    // anyone can add to or remove from answers nothing.
+    Route::get('activity', [ActivityLogController::class, 'index']);
+    Route::get('activity/filters', [ActivityLogController::class, 'filters']);
+
     Route::put('settings', [SettingController::class, 'update']);
     Route::apiResource('users', UserController::class);
 
