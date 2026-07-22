@@ -6,6 +6,7 @@ use App\Enums\InvoiceStatus;
 use App\Models\CashMovement;
 use App\Models\Invoice;
 use App\Models\StockMovement;
+use App\Models\SupplierInvoice;
 use App\Services\LedgerPoster;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
@@ -43,12 +44,27 @@ class PostingObserver
             $model instanceof Invoice => $this->poster->invoice($model),
             $model instanceof CashMovement => $this->poster->cashMovement($model),
             $model instanceof StockMovement => $this->poster->stockMovement($model),
+            $model instanceof SupplierInvoice => $this->poster->supplierInvoice($model),
             default => null,
         });
     }
 
     public function updated(Model $model): void
     {
+        // A supplier bill posts when it stops being a draft, which is an
+        // update — it is created empty and priced afterwards.
+        if ($model instanceof SupplierInvoice) {
+            if ($model->wasChanged('status')) {
+                $this->guard(fn () => match ($model->status) {
+                    'posted' => $this->poster->supplierInvoice($model),
+                    'void' => $this->poster->supplierInvoiceVoided($model),
+                    default => null,
+                });
+            }
+
+            return;
+        }
+
         if (! $model instanceof Invoice || ! $model->wasChanged('status')) {
             return;
         }

@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\CashMovement;
 use App\Models\Invoice;
 use App\Models\StockMovement;
+use App\Models\SupplierInvoice;
 use App\Models\Task;
 use App\Observers\PostingObserver;
 use App\Observers\TaskObserver;
@@ -33,5 +34,6 @@ class AppServiceProvider extends ServiceProvider
         Invoice::observe(PostingObserver::class);
         CashMovement::observe(PostingObserver::class);
         StockMovement::observe(PostingObserver::class);
+        SupplierInvoice::observe(PostingObserver::class);
     }
 }

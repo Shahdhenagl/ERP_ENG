@@ -38,6 +38,8 @@ class ChartOfAccounts
         ['1103', 'المخزون',                       'asset',     'inventory',        false],
         ['1104', 'عهد الموظفين',                  'asset',     'staff_custody',    true],
         ['1105', 'مصروفات مدفوعة مقدمًا',          'asset',     null,               false],
+        // Tax we paid our suppliers and reclaim against tax we charged.
+        ['1106', 'ضريبة القيمة المضافة على المشتريات', 'asset',  'vat_input',        false],
         ['12',   'الأصول الثابتة',                'asset',     null,               true],
         ['1201', 'أصول ثابتة',                    'asset',     'fixed_assets',     false],
         ['1202', 'مجمع الإهلاك',                  'asset',     'depreciation',     false],
@@ -69,6 +71,8 @@ class ChartOfAccounts
         ['51',   'تكلفة المبيعات',                'expense',   null,               true],
         ['5101', 'تكلفة البضاعة المباعة',         'expense',   'cogs',             false],
         ['5102', 'عجز وزيادة المخزون',            'expense',   'stock_adjustment', false],
+        // Where a supplier bill disagrees with the price the goods came in at.
+        ['5103', 'فروق أسعار الشراء',             'expense',   'purchase_variance', false],
         ['52',   'مصروفات تشغيلية',               'expense',   null,               true],
         ['5201', 'رواتب وأجور',                   'expense',   null,               false],
         ['5202', 'إيجارات',                       'expense',   null,               false],

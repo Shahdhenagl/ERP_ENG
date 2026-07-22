@@ -395,10 +395,14 @@ export interface Supplier {
     notes: string | null
     is_active: boolean
 
-    /** Derived: value received, less what has been paid. */
+    /** Derived: goods in, plus what the bills added, less returns and payments. */
     purchased_total: number
+    returned_total: number
+    billed_extras: number
     paid_total: number
     balance: number
+    /** Deliveries whose invoice has not arrived yet. */
+    uninvoiced_total: number
 
     orders?: Array<{
         id: number
@@ -1107,4 +1111,148 @@ export interface DeviceHistory {
         repairs: number
         replacements: number
     }
+}
+
+/* ── Supplier bills & purchase returns ───────────────────── */
+
+export type SupplierInvoiceStatus = 'draft' | 'posted' | 'void'
+
+/** Derived from the payments against it, never stored. */
+export type SupplierPaymentState =
+    | 'draft'
+    | 'void'
+    | 'unpaid'
+    | 'partly_paid'
+    | 'paid'
+    | 'overdue'
+
+export interface SupplierInvoiceLine {
+    id?: number
+    item_id: number | null
+    item_code?: string | null
+    description: string
+    qty: number
+    unit_price: number
+    line_total: number
+}
+
+export interface SupplierInvoice {
+    id: number
+    code: string
+    /** The supplier's own number — what they quote on the phone. */
+    supplier_ref: string | null
+
+    supplier_id: number
+    supplier?: string | null
+
+    purchase_order_id: number | null
+    purchase_order_code?: string | null
+
+    invoice_date: string | null
+    due_date: string | null
+
+    subtotal: number
+    discount: number
+    tax_rate: number
+    tax_amount: number
+    total: number
+    currency: string
+
+    /** Cost the goods receipt already put into payables. */
+    covered_value: number
+    /** What this bill adds on top of that — tax, price difference, or all of it. */
+    accrual: number
+
+    paid_total: number
+    returned_total: number
+    balance: number
+
+    status: SupplierInvoiceStatus
+    payment_state: SupplierPaymentState
+    payment_state_label: string
+    void_reason: string | null
+
+    lines?: SupplierInvoiceLine[]
+    receipts_count?: number
+
+    notes: string | null
+    created_at: string | null
+}
+
+/** A delivery with no bill against it yet. */
+export interface UninvoicedReceipt {
+    id: number
+    item_id: number
+    item: string | null
+    unit: string | null
+    qty: number
+    unit_cost: number
+    value: number
+    purchase_order_id: number | null
+    purchase_order_code: string | null
+    received_at: string | null
+}
+
+export interface PurchaseReturnLine {
+    id?: number
+    item_id: number
+    item?: string | null
+    unit?: string | null
+    qty: number
+    unit_cost: number
+    line_total: number
+}
+
+export interface PurchaseReturn {
+    id: number
+    code: string
+
+    supplier_id: number
+    supplier?: string | null
+
+    supplier_invoice_id: number | null
+    supplier_invoice_code?: string | null
+
+    warehouse_id: number
+    warehouse?: string | null
+
+    return_date: string | null
+    reason: string
+    /** Nothing leaves the shelf until this is `posted`. */
+    status: 'draft' | 'posted'
+    status_label: string
+    total: number
+
+    lines?: PurchaseReturnLine[]
+    notes: string | null
+    created_at: string | null
+}
+
+export interface SupplierStatementRow {
+    date: string | null
+    type: 'receipt' | 'invoice' | 'payment' | 'return'
+    type_label: string
+    code: string
+    note: string | null
+    debit: number
+    credit: number
+    balance: number
+}
+
+export interface SupplierStatement {
+    supplier: {
+        id: number
+        code: string
+        name: string
+        company: string | null
+        phone: string | null
+        tax_id: string | null
+    }
+    period: { from: string | null; to: string | null }
+    opening_balance: number
+    rows: SupplierStatementRow[]
+    total_credit: number
+    total_debit: number
+    closing_balance: number
+    uninvoiced: number
 }

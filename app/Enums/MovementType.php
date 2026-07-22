@@ -9,6 +9,7 @@ enum MovementType: string
     case Issue = 'issue';
     case Return = 'return';
     case Adjustment = 'adjustment';
+    case PurchaseReturn = 'purchase_return';
 
     public function label(): string
     {
@@ -18,6 +19,7 @@ enum MovementType: string
             self::Issue => 'صرف على مهمة',
             self::Return => 'مرتجع من مهمة',
             self::Adjustment => 'تسوية جرد',
+            self::PurchaseReturn => 'مرتجع مشتريات',
         };
     }
 

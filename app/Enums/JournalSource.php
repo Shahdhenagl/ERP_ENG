@@ -9,6 +9,7 @@ enum JournalSource: string
     case Payment = 'payment';
     case Expense = 'expense';
     case Transfer = 'transfer';
+    case SupplierInvoice = 'supplier_invoice';
     case SupplierPayment = 'supplier_payment';
     case Custody = 'custody';
     case Stock = 'stock';
@@ -22,6 +23,7 @@ enum JournalSource: string
             self::Payment => 'سند قبض',
             self::Expense => 'مصروف',
             self::Transfer => 'تحويل بين الخزائن',
+            self::SupplierInvoice => 'فاتورة مورّد',
             self::SupplierPayment => 'سند صرف لمورد',
             self::Custody => 'عهدة موظف',
             self::Stock => 'حركة مخزون',

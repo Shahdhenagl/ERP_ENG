@@ -29,6 +29,10 @@ import type {
     StatementMeta,
     StatementRow,
     Supplier,
+    SupplierInvoice,
+    SupplierStatement,
+    PurchaseReturn,
+    UninvoicedReceipt,
     StockMovement,
     DeviceHistory,
     Warranty,
@@ -92,6 +96,13 @@ export const keys = {
     warrantyClaims: (filters?: Record<string, unknown>) => ['warranty-claims', filters ?? {}] as const,
     warrantyClaim: (id: number | string) => ['warranty-claim', Number(id)] as const,
     deviceHistory: (id: number | string) => ['device-history', Number(id)] as const,
+
+    supplierInvoices: (f?: Record<string, unknown>) => ['supplier-invoices', f ?? {}] as const,
+    supplierInvoice: (id: number | string) => ['supplier-invoice', Number(id)] as const,
+    uninvoicedReceipts: (id: number | string) => ['uninvoiced-receipts', Number(id)] as const,
+    supplierStatement: (id: number | string, range?: Record<string, unknown>) =>
+        ['supplier-statement', Number(id), range ?? {}] as const,
+    purchaseReturns: (f?: Record<string, unknown>) => ['purchase-returns', f ?? {}] as const,
 
     suppliers: (filters?: Record<string, unknown>) => ['suppliers', filters ?? {}] as const,
     supplier: (id: number | string) => ['supplier', Number(id)] as const,
@@ -1550,6 +1561,165 @@ export function useRaiseRepairOrder() {
 
 function invalidateWarranties(client: ReturnType<typeof useQueryClient>): void {
     for (const key of ['warranties', 'warranty', 'warranty-claims', 'device-history', 'assets', 'asset']) {
+        void client.invalidateQueries({ queryKey: [key] })
+    }
+}
+
+/* ── Supplier bills & purchase returns ───────────────────── */
+
+export function useSupplierInvoices(filters: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: keys.supplierInvoices(filters),
+        queryFn: async () =>
+            (await api.get<Paginated<SupplierInvoice>>('/supplier-invoices', { params: filters }))
+                .data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useSupplierInvoice(id: number | string | undefined) {
+    return useQuery({
+        queryKey: keys.supplierInvoice(id ?? 0),
+        queryFn: async () =>
+            (await api.get<{ data: SupplierInvoice }>(`/supplier-invoices/${id}`)).data.data,
+        enabled: Boolean(id),
+    })
+}
+
+/** Deliveries a bill can still be drafted from. */
+export function useUninvoicedReceipts(supplierId: number | null | undefined) {
+    return useQuery({
+        queryKey: keys.uninvoicedReceipts(supplierId ?? 0),
+        queryFn: async () =>
+            (
+                await api.get<{ data: UninvoicedReceipt[]; total: number }>(
+                    `/suppliers/${supplierId}/uninvoiced`,
+                )
+            ).data,
+        enabled: Boolean(supplierId),
+    })
+}
+
+export function useSupplierStatement(
+    supplierId: number | string | undefined,
+    range: Record<string, unknown> = {},
+) {
+    const params = pruneRange(range)
+
+    return useQuery({
+        queryKey: keys.supplierStatement(supplierId ?? 0, params),
+        queryFn: async () =>
+            (await api.get<{ data: SupplierStatement }>(`/suppliers/${supplierId}/statement`, {
+                params,
+            })).data.data,
+        enabled: Boolean(supplierId),
+    })
+}
+
+export function useSaveSupplierInvoice(id?: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (
+                await (id
+                    ? api.put<{ data: SupplierInvoice }>(`/supplier-invoices/${id}`, payload)
+                    : api.post<{ data: SupplierInvoice }>('/supplier-invoices', payload))
+            ).data.data,
+        onSuccess: () => invalidatePayables(client),
+    })
+}
+
+/** Post, void or delete — the same document moving, so one hook. */
+export function useSupplierInvoiceAction() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({
+            id,
+            action,
+            payload,
+        }: {
+            id: number
+            action: 'post' | 'void' | 'delete'
+            payload?: Record<string, unknown>
+        }) => {
+            if (action === 'delete') {
+                return (await api.delete(`/supplier-invoices/${id}`)).data
+            }
+
+            return (
+                await api.post<{ data: SupplierInvoice }>(
+                    `/supplier-invoices/${id}/${action}`,
+                    payload ?? {},
+                )
+            ).data.data
+        },
+        onSuccess: () => invalidatePayables(client),
+    })
+}
+
+export function usePurchaseReturns(filters: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: keys.purchaseReturns(filters),
+        queryFn: async () =>
+            (await api.get<Paginated<PurchaseReturn>>('/purchase-returns', { params: filters })).data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useSavePurchaseReturn() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (await api.post<{ data: PurchaseReturn }>('/purchase-returns', payload)).data.data,
+        onSuccess: () => invalidatePayables(client),
+    })
+}
+
+export function usePurchaseReturnAction() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ id, action }: { id: number; action: 'post' | 'delete' }) => {
+            if (action === 'delete') {
+                return (await api.delete(`/purchase-returns/${id}`)).data
+            }
+
+            return (await api.post<{ data: PurchaseReturn }>(`/purchase-returns/${id}/post`)).data
+                .data
+        },
+        onSuccess: () => invalidatePayables(client),
+    })
+}
+
+/**
+ * Billing a delivery, returning it and paying for it all move the same three
+ * things: what is owed, what is on the shelf, and what the books say.
+ */
+function invalidatePayables(client: ReturnType<typeof useQueryClient>): void {
+    for (const key of [
+        'supplier-invoices',
+        'supplier-invoice',
+        'uninvoiced-receipts',
+        'supplier-statement',
+        'purchase-returns',
+        'suppliers',
+        'supplier',
+        'purchase-orders',
+        'movements',
+        'stock-summary',
+        'items',
+        'accounting-summary',
+        'trial-balance',
+    ]) {
         void client.invalidateQueries({ queryKey: [key] })
     }
 }

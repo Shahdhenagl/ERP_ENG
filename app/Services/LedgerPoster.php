@@ -9,6 +9,7 @@ use App\Models\CashMovement;
 use App\Models\Invoice;
 use App\Models\JournalEntry;
 use App\Models\StockMovement;
+use App\Models\SupplierInvoice;
 use App\Models\User;
 
 /**
@@ -75,6 +76,78 @@ class LedgerPoster
             'source' => 'invoice',
             'memo' => "فاتورة {$invoice->code} — ".($invoice->customer?->name ?? ''),
         ], $actor);
+    }
+
+    /**
+     * A supplier's bill — but only the part of it the goods receipt did not
+     * already record.
+     *
+     *   Dr  ض.ق.م على المشتريات    الضريبة
+     *   Dr  فروق أسعار الشراء      الفرق عن سعر الاستلام
+     *       Cr  الموردون               مجموع الاثنين
+     *
+     * Posting the bill in full would double every purchase: `stockMovement()`
+     * credits the payable the moment stock arrives with a supplier on it. So a
+     * bill matching its delivery exactly and carrying no tax posts nothing at
+     * all, which is correct and is why `accrual()` exists.
+     *
+     * A bill with no delivery behind it — carriage, a service call — has no
+     * receipt to have recorded anything, so its whole net value is an expense.
+     */
+    public function supplierInvoice(SupplierInvoice $invoice, ?User $actor = null): ?JournalEntry
+    {
+        if ($invoice->status !== 'posted') {
+            return null;
+        }
+
+        $this->ready();
+
+        return $this->ledger->postFor($invoice, 'posted', function () use ($invoice) {
+            $covered = $invoice->coveredValue();
+            $tax = round((float) $invoice->tax_amount, 2);
+            $difference = round((float) $invoice->total - $tax - $covered, 2);
+
+            if (abs($tax) < 0.005 && abs($difference) < 0.005) {
+                return [];
+            }
+
+            // Goods behind it → the gap is a price variance. Nothing behind it
+            // → the whole value is a cost the company has just taken on.
+            $account = $covered > 0 ? 'purchase_variance' : 'general_expense';
+
+            return [
+                ['account' => 'vat_input', 'debit' => $tax, 'memo' => $invoice->code],
+                $difference >= 0
+                    ? ['account' => $account, 'debit' => $difference, 'memo' => $invoice->supplier_ref]
+                    : ['account' => $account, 'credit' => abs($difference), 'memo' => $invoice->supplier_ref],
+                ['account' => 'payable', 'credit' => round($tax + $difference, 2)],
+            ];
+        }, [
+            'entry_date' => $invoice->invoice_date?->toDateString() ?? now()->toDateString(),
+            'source' => 'supplier_invoice',
+            'memo' => "فاتورة مورّد {$invoice->code} — ".($invoice->supplier?->name ?? ''),
+        ], $actor);
+    }
+
+    /** A supplier bill torn up. Undone by its mirror, like a sales invoice. */
+    public function supplierInvoiceVoided(SupplierInvoice $invoice, ?User $actor = null): ?JournalEntry
+    {
+        $posted = $this->ledger->entryFor($invoice, 'posted');
+
+        if (! $posted || $this->ledger->entryFor($invoice, 'voided')) {
+            return null;
+        }
+
+        return $this->ledger->reverse(
+            $posted,
+            "إلغاء فاتورة المورّد {$invoice->code}",
+            $actor,
+            attributes: [
+                'sourceable_type' => $invoice->getMorphClass(),
+                'sourceable_id' => $invoice->getKey(),
+                'event' => 'voided',
+            ],
+        );
     }
 
     /**
@@ -222,6 +295,13 @@ class LedgerPoster
                 MovementType::Return => [
                     ['account' => 'inventory', 'debit' => $value, 'memo' => $memo],
                     ['account' => 'cogs', 'credit' => $value],
+                ],
+
+                // Goods back to the supplier: the exact reverse of the receipt
+                // that brought them in, so the debt falls by what they cost.
+                MovementType::PurchaseReturn => [
+                    ['account' => 'payable', 'debit' => $value, 'memo' => $memo],
+                    ['account' => 'inventory', 'credit' => $value],
                 ],
 
                 // Direction is carried by which warehouse column is filled —

@@ -14,7 +14,7 @@ class SupplierPayment extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'code', 'supplier_id', 'cash_box_id', 'amount',
+        'code', 'supplier_id', 'supplier_invoice_id', 'cash_box_id', 'amount',
         'method', 'paid_at', 'reference', 'note', 'user_id',
     ];
 
@@ -46,6 +46,12 @@ class SupplierPayment extends Model
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
+    }
+
+    /** The bill this was against. Null is a payment on account. */
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(SupplierInvoice::class, 'supplier_invoice_id');
     }
 
     public function box(): BelongsTo

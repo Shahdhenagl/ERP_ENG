@@ -8,6 +8,7 @@ use App\Models\Item;
 use App\Models\PurchaseOrder;
 use App\Models\StockMovement;
 use App\Models\Supplier;
+use App\Models\SupplierInvoice;
 use App\Models\SupplierPayment;
 use App\Models\User;
 use App\Models\Warehouse;
@@ -177,6 +178,35 @@ class PurchasingService
 
         $supplier = Supplier::findOrFail($data['supplier_id']);
 
+        // Allocating to a bill is what makes a supplier statement readable —
+        // "3,000 against SB-2026-0004" rather than "3,000, work it out".
+        $invoice = ! empty($data['supplier_invoice_id'])
+            ? SupplierInvoice::findOrFail($data['supplier_invoice_id'])
+            : null;
+
+        if ($invoice) {
+            if ($invoice->supplier_id !== $supplier->id) {
+                throw ValidationException::withMessages([
+                    'supplier_invoice_id' => 'الفاتورة لا تخص هذا المورّد.',
+                ]);
+            }
+
+            if ($invoice->status !== 'posted') {
+                throw ValidationException::withMessages([
+                    'supplier_invoice_id' => 'لا يمكن السداد على فاتورة غير مُرحّلة.',
+                ]);
+            }
+
+            // Refused rather than absorbed: paying more than a bill asks for is
+            // nearly always the wrong bill, and an unallocated payment is the
+            // honest way to record a genuine advance.
+            if ($amount > $invoice->balance() + 0.005) {
+                throw ValidationException::withMessages([
+                    'amount' => 'المتبقي على الفاتورة '.number_format($invoice->balance(), 2).' فقط.',
+                ]);
+            }
+        }
+
         $box = ! empty($data['cash_box_id'])
             ? CashBox::findOrFail($data['cash_box_id'])
             : CashBox::default();
@@ -189,9 +219,10 @@ class PurchasingService
 
         // Paying beyond what is owed is allowed — an advance to a supplier is a
         // real thing — but it is worth surfacing rather than hiding.
-        return DB::transaction(function () use ($data, $amount, $supplier, $box, $actor) {
+        return DB::transaction(function () use ($data, $amount, $supplier, $invoice, $box, $actor) {
             $payment = SupplierPayment::create([
                 'supplier_id' => $supplier->id,
+                'supplier_invoice_id' => $invoice?->id,
                 'cash_box_id' => $box->id,
                 'amount' => $amount,
                 'method' => $data['method'] ?? 'cash',

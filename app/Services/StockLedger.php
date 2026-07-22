@@ -62,6 +62,44 @@ class StockLedger
         });
     }
 
+    /**
+     * Goods going back out to the supplier.
+     *
+     * Valued at the average in force, which is what the stock is carried at —
+     * so removing it leaves the average where it was rather than nudging it,
+     * and the debt drops by what the goods actually cost the company.
+     *
+     * @param  array<string, mixed>  $context
+     */
+    public function returnToSupplier(
+        Item $item,
+        Warehouse $warehouse,
+        float $qty,
+        User $actor,
+        array $context = [],
+    ): StockMovement {
+        $this->assertPositive($qty);
+
+        return DB::transaction(function () use ($item, $warehouse, $qty, $actor, $context) {
+            $this->subtract($item, $warehouse, $qty);
+
+            return $this->log(
+                $item,
+                MovementType::PurchaseReturn,
+                $qty,
+                (float) ($context['unit_cost'] ?? $item->avg_cost),
+                $actor,
+                [
+                    'from_warehouse_id' => $warehouse->id,
+                    'supplier_id' => $context['supplier_id'] ?? null,
+                    'purchase_return_id' => $context['purchase_return_id'] ?? null,
+                    'supplier_invoice_id' => $context['supplier_invoice_id'] ?? null,
+                    'note' => $context['note'] ?? null,
+                ],
+            );
+        });
+    }
+
     /** Store → van, or a van handing stock back. */
     public function transfer(
         Item $item,

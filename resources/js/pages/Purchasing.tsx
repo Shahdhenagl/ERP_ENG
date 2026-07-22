@@ -1,7 +1,10 @@
 import clsx from 'clsx'
-import { Ban, PackageCheck, Pencil, Plus, Search, Send, Truck, Wallet } from 'lucide-react'
+import { Ban, PackageCheck, Pencil, Plus, ScrollText, Search, Send, Truck, Wallet } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Modal } from '@/components/Modal'
+import { PeriodPicker, usePeriod } from '@/components/PeriodPicker'
+import { PurchaseReturnsTab } from '@/pages/purchasing/PurchaseReturnsTab'
+import { SupplierInvoicesTab } from '@/pages/purchasing/SupplierInvoicesTab'
 import { PurchaseOrderForm } from '@/components/PurchaseOrderForm'
 import { ReceiveOrderForm } from '@/components/ReceiveOrderForm'
 import { SupplierForm } from '@/components/SupplierForm'
@@ -16,7 +19,9 @@ import {
     usePurchaseOrder,
     usePurchaseOrderAction,
     usePurchaseOrders,
+    useSupplierInvoices,
     useSuppliers,
+    useSupplierStatement,
 } from '@/lib/queries'
 import type { PurchaseOrder, Supplier } from '@/types'
 
@@ -28,25 +33,29 @@ const FULFILMENT_CHIP: Record<string, string> = {
     cancelled: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200',
 }
 
+type Tab = 'orders' | 'invoices' | 'returns' | 'suppliers'
+
+const TABS: Array<[Tab, string]> = [
+    ['orders', 'أوامر الشراء'],
+    ['invoices', 'فواتير الموردين'],
+    ['returns', 'المرتجعات'],
+    ['suppliers', 'الموردون'],
+]
+
 export function Purchasing() {
-    const [tab, setTab] = useState<'orders' | 'suppliers'>('orders')
+    const [tab, setTab] = useState<Tab>('orders')
 
     return (
         <>
-            <PageHeader title="المشتريات" subtitle="الموردون وأوامر الشراء والاستلام" />
+            <PageHeader title="المشتريات" subtitle="الموردون وأوامر الشراء والفواتير والاستلام" />
 
-            <div className="mb-4 flex gap-1 rounded-xl bg-navy-100 p-1">
-                {(
-                    [
-                        ['orders', 'أوامر الشراء'],
-                        ['suppliers', 'الموردون'],
-                    ] as Array<['orders' | 'suppliers', string]>
-                ).map(([value, label]) => (
+            <div className="no-scrollbar mb-4 flex gap-1 overflow-x-auto rounded-xl bg-navy-100 p-1">
+                {TABS.map(([value, label]) => (
                     <button
                         key={value}
                         onClick={() => setTab(value)}
                         className={clsx(
-                            'tap flex-1 rounded-lg px-3 py-2 text-xs font-bold transition',
+                            'tap flex-1 rounded-lg px-3 py-2 text-xs font-bold whitespace-nowrap transition',
                             tab === value ? 'bg-white text-navy-900 shadow-sm' : 'text-navy-500',
                         )}
                     >
@@ -55,7 +64,10 @@ export function Purchasing() {
                 ))}
             </div>
 
-            {tab === 'orders' ? <OrdersTab /> : <SuppliersTab />}
+            {tab === 'orders' && <OrdersTab />}
+            {tab === 'invoices' && <SupplierInvoicesTab />}
+            {tab === 'returns' && <PurchaseReturnsTab />}
+            {tab === 'suppliers' && <SuppliersTab />}
         </>
     )
 }
@@ -360,6 +372,7 @@ function SuppliersTab() {
     const [formOpen, setFormOpen] = useState(false)
     const [editing, setEditing] = useState<Supplier | undefined>()
     const [paying, setPaying] = useState<Supplier | null>(null)
+    const [statementFor, setStatementFor] = useState<Supplier | null>(null)
 
     const { data: suppliers, isLoading } = useSuppliers({
         search,
@@ -449,10 +462,17 @@ function SuppliersTab() {
                                     >
                                         {formatMoney(supplier.balance)}
                                     </p>
+                                    {/* Deliveries whose invoice has not turned up.
+                                        Worth chasing before a month-end. */}
+                                    {supplier.uninvoiced_total > 0 && (
+                                        <p className="tabular mt-0.5 text-[10px] text-sky-600">
+                                            بلا فاتورة {formatMoney(supplier.uninvoiced_total)}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 
-                            <div className="mt-3 flex gap-2 border-t border-navy-100 pt-3">
+                            <div className="mt-3 flex flex-wrap gap-2 border-t border-navy-100 pt-3">
                                 <Button
                                     variant="secondary"
                                     icon={Pencil}
@@ -463,6 +483,15 @@ function SuppliersTab() {
                                     }}
                                 >
                                     تعديل
+                                </Button>
+
+                                <Button
+                                    variant="secondary"
+                                    icon={ScrollText}
+                                    className="text-xs"
+                                    onClick={() => setStatementFor(supplier)}
+                                >
+                                    كشف حساب
                                 </Button>
 
                                 {supplier.balance > 0 && (
@@ -490,6 +519,12 @@ function SuppliersTab() {
             )}
 
             {paying && <PaySupplierDialog supplier={paying} onClose={() => setPaying(null)} />}
+            {statementFor && (
+                <SupplierStatementDialog
+                    supplier={statementFor}
+                    onClose={() => setStatementFor(null)}
+                />
+            )}
         </>
     )
 }
@@ -498,12 +533,22 @@ function PaySupplierDialog({ supplier, onClose }: { supplier: Supplier; onClose:
     const toast = useToast()
     const pay = usePaySupplier()
     const { data: boxes } = useCashBoxes()
+    const { data: bills } = useSupplierInvoices({
+        supplier_id: supplier.id,
+        outstanding: 1,
+        per_page: 100,
+    })
     const [errors, setErrors] = useState<Record<string, string>>({})
 
     const [amount, setAmount] = useState(supplier.balance.toFixed(2))
+    const [invoiceId, setInvoiceId] = useState('')
     const [boxId, setBoxId] = useState('')
     const [method, setMethod] = useState('cash')
     const [reference, setReference] = useState('')
+
+    // Bills still owing something. Choosing one is what turns "3,000 paid" into
+    // "3,000 against SB-2026-0004" on the statement.
+    const open = bills?.data.filter((bill) => bill.balance > 0) ?? []
 
     return (
         <Modal
@@ -524,6 +569,7 @@ function PaySupplierDialog({ supplier, onClose }: { supplier: Supplier; onClose:
                             try {
                                 await pay.mutateAsync({
                                     supplier_id: supplier.id,
+                                    supplier_invoice_id: invoiceId ? Number(invoiceId) : null,
                                     cash_box_id: Number(boxId || boxes?.[0]?.id),
                                     amount: Number(amount),
                                     method,
@@ -549,6 +595,38 @@ function PaySupplierDialog({ supplier, onClose }: { supplier: Supplier; onClose:
                         {formatMoney(supplier.balance)}
                     </span>
                 </div>
+
+                {open.length > 0 && (
+                    <Field
+                        label="على فاتورة"
+                        error={errors.supplier_invoice_id}
+                        hint="اتركها فارغة لتسجيل دفعة تحت الحساب"
+                    >
+                        <Select
+                            value={invoiceId}
+                            onChange={(e) => {
+                                setInvoiceId(e.target.value)
+
+                                // Default the amount to what that bill still
+                                // asks for — paying more is refused anyway.
+                                const bill = open.find(
+                                    (candidate) => candidate.id === Number(e.target.value),
+                                )
+
+                                if (bill) setAmount(bill.balance.toFixed(2))
+                            }}
+                        >
+                            <option value="">— دفعة تحت الحساب —</option>
+                            {open.map((bill) => (
+                                <option key={bill.id} value={bill.id}>
+                                    {bill.code}
+                                    {bill.supplier_ref ? ` · ${bill.supplier_ref}` : ''} —{' '}
+                                    {formatMoney(bill.balance)}
+                                </option>
+                            ))}
+                        </Select>
+                    </Field>
+                )}
 
                 <Field label="المبلغ" required error={errors.amount}>
                     <Input
@@ -601,5 +679,128 @@ function fieldErrorsOf(error: unknown): Record<string, string> {
 
     return Object.fromEntries(
         Object.entries(response?.data?.errors ?? {}).map(([key, messages]) => [key, messages[0]]),
+    )
+}
+
+/* ── Supplier statement ──────────────────────────────────── */
+
+/**
+ * One supplier's account, oldest first.
+ *
+ * Goods received sit on their own line rather than folded into a bill, because
+ * that is the order the events happen in — and a delivery with no invoice
+ * behind it is exactly what the clerk came here to find.
+ */
+function SupplierStatementDialog({
+    supplier,
+    onClose,
+}: {
+    supplier: Supplier
+    onClose: () => void
+}) {
+    const period = usePeriod('year')
+    const { data, isLoading } = useSupplierStatement(supplier.id, period.range)
+
+    return (
+        <Modal open onClose={onClose} title={`كشف حساب ${supplier.name}`} size="xl">
+            <PeriodPicker period={period} presets={['month', 'quarter', 'year', 'all']} />
+
+            {isLoading || !data ? (
+                <SkeletonCard />
+            ) : (
+                <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                        <StatementFigure label="رصيد أول المدة" value={data.opening_balance} />
+                        <StatementFigure label="عليه" value={data.total_credit} tone="up" />
+                        <StatementFigure label="له / مدفوع" value={data.total_debit} tone="down" />
+                        <StatementFigure
+                            label="الرصيد"
+                            value={data.closing_balance}
+                            tone="brand"
+                        />
+                    </div>
+
+                    {data.uninvoiced > 0 && (
+                        <p className="rounded-xl bg-sky-50 p-3 text-xs text-sky-800">
+                            استلامات بقيمة {formatMoney(data.uninvoiced)} لم تصل فاتورتها بعد —
+                            محمّلة على الحساب بالفعل.
+                        </p>
+                    )}
+
+                    {data.rows.length === 0 ? (
+                        <p className="rounded-xl bg-navy-50 p-4 text-center text-sm text-navy-400">
+                            لا توجد حركات في هذه الفترة.
+                        </p>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="doc-table">
+                                <thead>
+                                    <tr>
+                                        <th className="w-24">التاريخ</th>
+                                        <th className="w-28">النوع</th>
+                                        <th>البيان</th>
+                                        <th className="w-24 text-left">عليه</th>
+                                        <th className="w-24 text-left">له</th>
+                                        <th className="w-28 text-left">الرصيد</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {data.rows.map((row, index) => (
+                                        <tr key={`${row.type}-${row.code}-${index}`}>
+                                            <td className="tabular text-navy-500">
+                                                {row.date ? formatDate(row.date) : '—'}
+                                            </td>
+                                            <td className="text-navy-600">{row.type_label}</td>
+                                            <td>
+                                                <span className="font-semibold text-navy-800">
+                                                    {row.code}
+                                                </span>
+                                                {row.note && (
+                                                    <span className="block text-[11px] text-navy-400">
+                                                        {row.note}
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="tabular text-left text-amber-700">
+                                                {row.credit > 0 ? formatMoney(row.credit) : '—'}
+                                            </td>
+                                            <td className="tabular text-left text-emerald-700">
+                                                {row.debit > 0 ? formatMoney(row.debit) : '—'}
+                                            </td>
+                                            <td className="tabular text-left font-bold text-navy-900">
+                                                {formatMoney(row.balance)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            )}
+        </Modal>
+    )
+}
+
+function StatementFigure({
+    label,
+    value,
+    tone,
+}: {
+    label: string
+    value: number
+    tone?: 'up' | 'down' | 'brand'
+}) {
+    const colour = tone
+        ? { up: 'text-amber-700', down: 'text-emerald-700', brand: 'text-brand-700' }[tone]
+        : 'text-navy-500'
+
+    return (
+        <div className="card p-3">
+            <p className="text-[11px] font-bold text-navy-400">{label}</p>
+            <p className={clsx('tabular mt-1 text-base font-extrabold', colour)}>
+                {formatMoney(value)}
+            </p>
+        </div>
     )
 }

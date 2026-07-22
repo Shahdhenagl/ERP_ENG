@@ -52,6 +52,16 @@ class Supplier extends Model
         return $this->hasMany(SupplierPayment::class);
     }
 
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(SupplierInvoice::class);
+    }
+
+    public function returns(): HasMany
+    {
+        return $this->hasMany(PurchaseReturn::class);
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -68,19 +78,62 @@ class Supplier extends Model
             ->value('total'), 2);
     }
 
+    /** Value of everything sent back, at the cost it was received at. */
+    public function returnedTotal(): float
+    {
+        return round((float) $this->receipts()
+            ->where('type', 'purchase_return')
+            ->selectRaw('coalesce(sum(qty * unit_cost), 0) as total')
+            ->value('total'), 2);
+    }
+
+    /**
+     * What the bills add beyond the goods themselves: tax, price differences,
+     * and bills with no delivery behind them at all.
+     *
+     * Adding bill totals in full would double every purchase — the cost was
+     * already owed the moment the goods arrived.
+     */
+    public function billedExtras(): float
+    {
+        return round($this->invoices()
+            ->where('status', 'posted')
+            ->get()
+            ->sum(fn (SupplierInvoice $invoice) => $invoice->accrual()), 2);
+    }
+
     public function paidTotal(): float
     {
         return round((float) $this->payments()->sum('amount'), 2);
     }
 
     /**
-     * What the company still owes. Derived rather than stored: there is no
-     * separate bill document, so what is owed is simply what has arrived less
-     * what has been handed over.
+     * What the company still owes.
+     *
+     * Derived, never stored, and deliberately built from the same four facts
+     * the payable account is built from — goods in, what the bill added, goods
+     * back out, money out. A test asserts the two agree; if they ever diverge,
+     * one of them is lying to the person deciding who to pay.
      */
     public function balance(): float
     {
-        return round($this->purchasedTotal() - $this->paidTotal(), 2);
+        return round(
+            $this->purchasedTotal()
+            + $this->billedExtras()
+            - $this->returnedTotal()
+            - $this->paidTotal(),
+            2,
+        );
+    }
+
+    /** Goods received that no bill covers yet — the supplier's invoice is late. */
+    public function uninvoicedTotal(): float
+    {
+        return round((float) $this->receipts()
+            ->where('type', 'receipt')
+            ->whereNull('supplier_invoice_id')
+            ->selectRaw('coalesce(sum(qty * unit_cost), 0) as total')
+            ->value('total'), 2);
     }
 
     // ── Scopes ───────────────────────────────────────────────

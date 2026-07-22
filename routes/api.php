@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\SalesOrderController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\StatementController;
 use App\Http\Controllers\Api\SupplierController;
+use App\Http\Controllers\Api\SupplierInvoiceController;
 use App\Http\Controllers\Api\TreasuryController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\StockController;
@@ -185,6 +186,25 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
 
     Route::post('supplier-payments', [SupplierController::class, 'pay']);
     Route::delete('supplier-payments/{payment}', [SupplierController::class, 'reversePayment']);
+
+    // ── Supplier bills & purchase returns ────────────────────
+    // The bill covers deliveries that are already in the payable, so these
+    // two sit next to the receipts they account for rather than under sales.
+    Route::get('supplier-invoices', [SupplierInvoiceController::class, 'index']);
+    Route::post('supplier-invoices', [SupplierInvoiceController::class, 'store']);
+    Route::get('supplier-invoices/{supplierInvoice}', [SupplierInvoiceController::class, 'show']);
+    Route::put('supplier-invoices/{supplierInvoice}', [SupplierInvoiceController::class, 'update']);
+    Route::delete('supplier-invoices/{supplierInvoice}', [SupplierInvoiceController::class, 'destroy']);
+    Route::post('supplier-invoices/{supplierInvoice}/post', [SupplierInvoiceController::class, 'post']);
+    Route::post('supplier-invoices/{supplierInvoice}/void', [SupplierInvoiceController::class, 'void']);
+
+    Route::get('suppliers/{supplier}/uninvoiced', [SupplierInvoiceController::class, 'uninvoicedReceipts']);
+    Route::get('suppliers/{supplier}/statement', [SupplierInvoiceController::class, 'statement']);
+
+    Route::get('purchase-returns', [SupplierInvoiceController::class, 'returns']);
+    Route::post('purchase-returns', [SupplierInvoiceController::class, 'storeReturn']);
+    Route::post('purchase-returns/{purchaseReturn}/post', [SupplierInvoiceController::class, 'postReturn']);
+    Route::delete('purchase-returns/{purchaseReturn}', [SupplierInvoiceController::class, 'destroyReturn']);
 
     Route::get('purchase-orders', [PurchaseOrderController::class, 'index']);
     Route::post('purchase-orders', [PurchaseOrderController::class, 'store']);

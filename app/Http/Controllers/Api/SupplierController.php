@@ -141,10 +141,16 @@ class SupplierController extends Controller
             'notes' => $supplier->notes,
             'is_active' => $supplier->is_active,
 
-            // Derived: what arrived, less what was handed over.
+            // Derived: what arrived, plus what the bills added, less what went
+            // back and what was handed over.
             'purchased_total' => $supplier->purchasedTotal(),
+            'returned_total' => $supplier->returnedTotal(),
+            'billed_extras' => $supplier->billedExtras(),
             'paid_total' => $supplier->paidTotal(),
             'balance' => $supplier->balance(),
+            // Deliveries whose invoice has not turned up yet — worth chasing
+            // before a month-end, and worth seeing next to the balance.
+            'uninvoiced_total' => $supplier->uninvoicedTotal(),
         ];
     }
 

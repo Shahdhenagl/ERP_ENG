@@ -25,6 +25,8 @@ class StockMovement extends Model
         'task_id',
         'supplier_id',
         'purchase_order_id',
+        'supplier_invoice_id',
+        'purchase_return_id',
         'supplier',
         'reference',
         'note',
@@ -58,6 +60,25 @@ class StockMovement extends Model
     public function task(): BelongsTo
     {
         return $this->belongsTo(Task::class);
+    }
+
+    // No `supplier()` relation on purpose: `supplier` is still a column here,
+    // holding the free-text name receipts carried before suppliers were real
+    // records. A relation of the same name would be shadowed by the attribute
+    // and read as a string wherever anyone expected a model.
+    public function purchaseOrder(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrder::class);
+    }
+
+    public function supplierInvoice(): BelongsTo
+    {
+        return $this->belongsTo(SupplierInvoice::class);
+    }
+
+    public function purchaseReturn(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseReturn::class);
     }
 
     public function actor(): BelongsTo
