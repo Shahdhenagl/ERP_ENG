@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AssetController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BranchController;
+use App\Http\Controllers\Api\ChequeController;
 use App\Http\Controllers\Api\ContractController;
 use App\Http\Controllers\Api\CustodyController;
 use App\Http\Controllers\Api\CustomerController;
@@ -294,6 +295,18 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::delete('sales-returns/{salesReturn}', [SalesReturnController::class, 'destroy']);
     Route::post('sales-returns/{salesReturn}/post', [SalesReturnController::class, 'post']);
     Route::get('invoices/{invoice}/returnable', [SalesReturnController::class, 'returnable']);
+
+    // ── Cheques & bank reconciliation ────────────────────────
+    // A cheque is a promise, not money: nothing here touches the treasury
+    // until it clears, and clearing goes through the ordinary receipt and
+    // voucher paths.
+    Route::get('cheques', [ChequeController::class, 'index']);
+    Route::post('cheques', [ChequeController::class, 'store']);
+    Route::get('cheques/{cheque}', [ChequeController::class, 'show']);
+    Route::post('cheques/{cheque}/transition', [ChequeController::class, 'transition']);
+
+    Route::get('treasury/boxes/{box}/reconciliation', [ChequeController::class, 'reconciliation']);
+    Route::post('treasury/reconcile', [ChequeController::class, 'reconcile']);
 
     Route::get('treasury/summary', [TreasuryController::class, 'summary']);
     Route::get('treasury/boxes', [TreasuryController::class, 'boxes']);

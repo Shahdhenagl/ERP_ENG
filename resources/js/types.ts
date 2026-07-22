@@ -1604,3 +1604,84 @@ export interface ItemSerial {
 
     created_at: string | null
 }
+
+/* ── Cheques & bank reconciliation ───────────────────────── */
+
+export type ChequeDirection = 'incoming' | 'outgoing'
+export type ChequeStatus = 'held' | 'deposited' | 'cleared' | 'bounced' | 'cancelled'
+
+export interface Cheque {
+    id: number
+    code: string
+    direction: ChequeDirection
+    direction_label: string
+
+    cheque_number: string
+    bank_name: string | null
+    /** Whose name is on the paper — not always the customer's. */
+    party_name: string | null
+
+    customer_id: number | null
+    customer: string | null
+    supplier_id: number | null
+    supplier: string | null
+
+    invoice_id: number | null
+    invoice_code: string | null
+    supplier_invoice_code: string | null
+
+    issue_date: string | null
+    due_date: string | null
+    amount: number
+
+    status: ChequeStatus
+    status_label: string
+    is_open: boolean
+    /** Past its date and still not banked. Derived, never stored. */
+    is_due: boolean
+    days_to_due: number
+
+    cash_box_id: number | null
+    box: string | null
+    payment_code: string | null
+
+    deposited_on: string | null
+    settled_on: string | null
+    bounce_reason: string | null
+    notes: string | null
+    created_at: string | null
+}
+
+/** The two figures a cheque book is kept for. */
+export interface ChequeOutlook {
+    days: number
+    incoming_total: number
+    incoming_due: number
+    outgoing_total: number
+    outgoing_due: number
+    overdue_incoming: number
+    bounced_this_year: number
+}
+
+export interface ReconciliationRow {
+    id: number
+    date: string | null
+    direction: 'in' | 'out'
+    amount: number
+    source: string
+    note: string | null
+    customer: string | null
+    reconciled: boolean
+    reconciled_at: string | null
+}
+
+export interface Reconciliation {
+    box: { id: number; name: string; type: CashBoxType }
+    book_balance: number
+    reconciled_balance: number
+    /** What the bank has not shown yet — cheques in the post, a late deposit. */
+    unreconciled_total: number
+    statement_balance: number | null
+    difference: number | null
+    rows: ReconciliationRow[]
+}

@@ -21,6 +21,9 @@ import type {
     DashboardData,
     CashBoxSummary,
     CashMovementRow,
+    Cheque,
+    ChequeOutlook,
+    Reconciliation,
     Invoice,
     Item,
     Paginated,
@@ -101,6 +104,9 @@ export const keys = {
     invoice: (id: number | string) => ['invoice', Number(id)] as const,
     payments: (filters?: Record<string, unknown>) => ['payments', filters ?? {}] as const,
     cashBoxes: ['cash-boxes'] as const,
+    cheques: (f?: Record<string, unknown>) => ['cheques', f ?? {}] as const,
+    reconciliation: (id: number | string, p?: Record<string, unknown>) =>
+        ['reconciliation', Number(id), p ?? {}] as const,
     cashMovements: (filters?: Record<string, unknown>) => ['cash-movements', filters ?? {}] as const,
     treasurySummary: (range?: Record<string, unknown>) => ['treasury-summary', range ?? {}] as const,
     treasuryStatement: (id: number | string, range?: Record<string, unknown>) =>
@@ -2019,4 +2025,94 @@ export function useScrapSerial() {
             void client.invalidateQueries({ queryKey: ['items'] })
         },
     })
+}
+
+/* ── Cheques & bank reconciliation ───────────────────────── */
+
+export function useCheques(filters: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: keys.cheques(filters),
+        queryFn: async () =>
+            (
+                await api.get<{ data: Cheque[]; meta: ChequeOutlook & { total: number } }>(
+                    '/cheques',
+                    { params: pruneRange(filters) },
+                )
+            ).data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useSaveCheque() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (await api.post<{ data: Cheque }>('/cheques', payload)).data.data,
+        onSuccess: () => invalidateCheques(client),
+    })
+}
+
+/** Deposit, clear, bounce or cancel — one document changing state. */
+export function useChequeTransition() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ id, ...payload }: { id: number } & Record<string, unknown>) =>
+            (await api.post<{ data: Cheque }>(`/cheques/${id}/transition`, payload)).data.data,
+        onSuccess: () => invalidateCheques(client),
+    })
+}
+
+export function useReconciliation(
+    boxId: number | null | undefined,
+    params: Record<string, unknown> = {},
+) {
+    return useQuery({
+        queryKey: keys.reconciliation(boxId ?? 0, params),
+        queryFn: async () =>
+            (
+                await api.get<Reconciliation>(`/treasury/boxes/${boxId}/reconciliation`, {
+                    params: pruneRange(params),
+                })
+            ).data,
+        enabled: Boolean(boxId),
+    })
+}
+
+export function useReconcile() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: { ids: number[]; reconciled: boolean }) =>
+            (await api.post('/treasury/reconcile', payload)).data,
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: ['reconciliation'] })
+        },
+    })
+}
+
+/**
+ * Clearing a cheque produces a receipt or a voucher, so everything a payment
+ * touches moves with it.
+ */
+function invalidateCheques(client: ReturnType<typeof useQueryClient>): void {
+    for (const key of [
+        'cheques',
+        'reconciliation',
+        'invoices',
+        'invoice',
+        'payments',
+        'cash-boxes',
+        'cash-movements',
+        'treasury-summary',
+        'suppliers',
+        'supplier-invoices',
+        'statement',
+    ]) {
+        void client.invalidateQueries({ queryKey: [key] })
+    }
 }

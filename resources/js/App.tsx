@@ -45,6 +45,7 @@ import { WarrantyReportPage } from '@/pages/reports/WarrantyReportPage'
 import { ClaimsPage } from '@/pages/warranty/ClaimsPage'
 import { WarrantyLayout } from '@/pages/warranty/WarrantyLayout'
 import { WarrantyRegisterPage } from '@/pages/warranty/WarrantyRegisterPage'
+import { ChequesPage } from '@/pages/treasury/ChequesPage'
 import { TreasuryPage } from '@/pages/treasury/TreasuryPage'
 import { MyStock } from '@/pages/MyStock'
 import { Dashboard } from '@/pages/Dashboard'
@@ -148,6 +149,7 @@ export function App() {
                                         <Route path="invoices" element={<InvoiceList />} />
                                         <Route path="invoices/:id" element={<InvoiceDetail />} />
                                         <Route path="treasury" element={<TreasuryPage />} />
+                                        <Route path="cheques" element={<ChequesPage />} />
 
                                         {/* Sections rather than tabs for the
                                             same reason as inventory: the

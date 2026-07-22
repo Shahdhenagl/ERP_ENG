@@ -30,12 +30,17 @@ class CashMovement extends Model
         'account_id',
         'cost_center_id',
         'note',
+        'reconciled_at',
+        'reconciled_by',
         'user_id',
     ];
 
     protected function casts(): array
     {
-        return ['amount' => 'decimal:2'];
+        return [
+            'amount' => 'decimal:2',
+            'reconciled_at' => 'datetime',
+        ];
     }
 
     public function box(): BelongsTo

@@ -1,6 +1,7 @@
 import clsx from 'clsx'
 import {
     ArrowLeftRight,
+    Banknote,
     Bell,
     Boxes,
     Building2,
@@ -97,6 +98,7 @@ const NAV: NavItem[] = [
         // light up. Accounting keeps its own seven-section strip inside.
         children: [
             { to: '/treasury', label: 'الخزينة', icon: Wallet },
+            { to: '/cheques', label: 'الشيكات', icon: Banknote },
             { to: '/accounting', label: 'المحاسبة المالية', icon: Calculator },
         ],
     },

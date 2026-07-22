@@ -22,6 +22,7 @@ export const DEVICE_SECTIONS = [
 export const MONEY_SECTIONS = [
     ['/invoices', 'الفواتير'],
     ['/treasury', 'الخزينة'],
+    ['/cheques', 'الشيكات'],
     ['/accounting', 'المحاسبة'],
 ] as const
 
