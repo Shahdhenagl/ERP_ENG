@@ -1,12 +1,13 @@
 import clsx from 'clsx'
-import { ArrowRight, Building2, CalendarClock, HardDrive, MapPin, Pencil, ShieldCheck } from 'lucide-react'
+import { ArrowRight, Building2, CalendarClock, HardDrive, MapPin, Pencil } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AssetForm } from '@/components/AssetForm'
 import { TaskCard } from '@/components/TaskCard'
 import { EmptyState, ErrorState, PageLoader } from '@/components/ui'
+import { DeviceWarrantyBlock } from '@/pages/warranty/DeviceWarrantyBlock'
 import { useAuth } from '@/lib/auth'
-import { ASSET_STATUS, warrantyChip } from '@/lib/domain'
+import { ASSET_STATUS } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
 import { useAsset } from '@/lib/queries'
 
@@ -85,32 +86,10 @@ export function AssetDetail() {
                 )}
             </div>
 
-            {/* ══ Warranty ══════════════════════════════════════ */}
-            <div className="card mt-4 p-5">
-                <div className="flex items-center gap-2">
-                    <ShieldCheck className="size-4 text-navy-400" />
-                    <h2 className="text-sm font-bold text-navy-900">الضمان</h2>
-                    <span className={clsx('badge mr-auto', warrantyChip(asset.under_warranty))}>
-                        {asset.warranty_label}
-                    </span>
-                </div>
-
-                {asset.under_warranty === null ? (
-                    <p className="mt-3 text-sm text-navy-500">
-                        لا يوجد تاريخ بيع أو مدة ضمان مسجّلة، لذلك لا يمكن تحديد حالة الضمان.
-                        {canDispatch && ' أضفهما من زر التعديل بالأعلى.'}
-                    </p>
-                ) : (
-                    <dl className="mt-4 grid gap-4 sm:grid-cols-3">
-                        <Detail label="تاريخ البيع" value={asset.sold_at ? formatDate(asset.sold_at) : null} />
-                        <Detail label="مدة الضمان" value={`${asset.warranty_months} شهر`} />
-                        <Detail
-                            label="ينتهي في"
-                            value={asset.warranty_ends_at ? formatDate(asset.warranty_ends_at) : null}
-                        />
-                    </dl>
-                )}
-            </div>
+            {/* ══ Warranty and what has been claimed on it ══════ */}
+            {/* Dispatchers only: the history endpoint is theirs, and a
+                technician standing at the unit sees its cover on the job. */}
+            {canDispatch && <DeviceWarrantyBlock asset={asset} />}
 
             {/* ══ Service history ═══════════════════════════════ */}
             <div className="mt-6">

@@ -26,6 +26,20 @@ async function login(page, email) {
     await page.waitForFunction(() => !location.pathname.startsWith('/login'), { timeout: 20000 })
 }
 
+/**
+ * Wait for text to appear rather than for a fixed number of seconds.
+ *
+ * `artisan serve` runs one worker unless PHP_CLI_SERVER_WORKERS is set, so
+ * every request on a page queues behind the last one. A timed wait passes when
+ * this suite runs alone and fails when it runs after fourteen others.
+ */
+async function sees(page, text, timeout = 25000) {
+    return page
+        .waitForFunction((t) => document.body.innerText.includes(t), text, { timeout })
+        .then(() => true)
+        .catch(() => false)
+}
+
 async function settled(page) {
     await page
         .waitForFunction(
@@ -89,12 +103,11 @@ await settled(page)
 
 /* ── The analysis ────────────────────────────────────────── */
 
-const analysis = await page.locator('body').innerText()
-check('shows the opening balance', analysis.includes('رصيد أول المدة'))
-check('shows total income', analysis.includes('إجمالي الإيراد'))
-check('shows total expense', analysis.includes('إجمالي المصروف'))
-check('states the net for the period', analysis.includes('صافي الفترة'))
-check('breaks income down by cause', analysis.includes('تحصيل من العملاء'))
+check('shows the opening balance', await sees(page, 'رصيد أول المدة'))
+check('shows total income', await sees(page, 'إجمالي الإيراد'))
+check('shows total expense', await sees(page, 'إجمالي المصروف'))
+check('states the net for the period', await sees(page, 'صافي الفترة'))
+check('breaks income down by cause', await sees(page, 'تحصيل من العملاء'))
 
 /* ── Filters ─────────────────────────────────────────────── */
 
@@ -146,21 +159,23 @@ const opened = page.waitForResponse(
 await dialog.getByRole('button', { name: 'حفظ' }).click()
 check(`second box opened — ${(await opened).status()}`, (await opened).status() === 201)
 
-await page.waitForTimeout(2000)
-await settled(page)
-check('the new box is listed', (await page.locator('body').innerText()).includes(name))
+check('the new box is listed', await sees(page, name))
 
 /* ── One box's account ───────────────────────────────────── */
 
-await page.getByText('الخزينة الرئيسية').first().click()
+const mainBox = page.getByText('الخزينة الرئيسية').first()
+await mainBox.waitFor({ state: 'visible', timeout: 25000 })
+await mainBox.click()
 await page.waitForSelector('[role=dialog]', { timeout: 20000 })
-await page.waitForTimeout(1500)
+
+// The statement is fetched when the dialog opens, so wait for its own rows
+// rather than for the dialog frame that appears immediately.
+check('the statement names the box', await sees(page, 'كشف الخزينة الرئيسية'))
+check('the statement lists the collection', await sees(page, 'تحصيل من العملاء'))
 await settled(page)
 
 const statement = await page.locator('[role=dialog]').innerText()
-check('the statement names the box', statement.includes('كشف الخزينة الرئيسية'))
 check('the statement carries a balance column', statement.includes('الرصيد'))
-check('the statement lists the collection', statement.includes('تحصيل من العملاء'))
 
 // The last row's running balance must equal the closing figure — that is the
 // whole point of a statement, and it is where an off-by-one would show.
@@ -216,7 +231,11 @@ process.exit(failures === 0 ? 0 : 1)
 
 async function readIncome(page, preset) {
     await page.getByRole('button', { name: preset, exact: true }).click()
-    await page.waitForTimeout(1500)
+
+    // The previous figure stays on screen while the new one loads, so a fixed
+    // pause would read the old number under load. Wait for the requests the
+    // click set off to finish instead.
+    await page.waitForLoadState('networkidle').catch(() => {})
     await settled(page)
 
     return currentIncome(page)

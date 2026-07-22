@@ -30,6 +30,9 @@ import type {
     StatementRow,
     Supplier,
     StockMovement,
+    DeviceHistory,
+    Warranty,
+    WarrantyClaim,
     TreasuryStatement,
     TreasurySummary,
     VanStockLine,
@@ -83,6 +86,12 @@ export const keys = {
     treasurySummary: (range?: Record<string, unknown>) => ['treasury-summary', range ?? {}] as const,
     treasuryStatement: (id: number | string, range?: Record<string, unknown>) =>
         ['treasury-statement', Number(id), range ?? {}] as const,
+
+    warranties: (filters?: Record<string, unknown>) => ['warranties', filters ?? {}] as const,
+    warranty: (id: number | string) => ['warranty', Number(id)] as const,
+    warrantyClaims: (filters?: Record<string, unknown>) => ['warranty-claims', filters ?? {}] as const,
+    warrantyClaim: (id: number | string) => ['warranty-claim', Number(id)] as const,
+    deviceHistory: (id: number | string) => ['device-history', Number(id)] as const,
 
     suppliers: (filters?: Record<string, unknown>) => ['suppliers', filters ?? {}] as const,
     supplier: (id: number | string) => ['supplier', Number(id)] as const,
@@ -1421,6 +1430,126 @@ function invalidateBooks(client: ReturnType<typeof useQueryClient>): void {
         'balance-sheet',
         'cost-centers',
     ]) {
+        void client.invalidateQueries({ queryKey: [key] })
+    }
+}
+
+/* ── Warranties & claims ─────────────────────────────────── */
+
+export function useWarranties(filters: Record<string, unknown> = {}) {
+    return useQuery({
+        queryKey: keys.warranties(filters),
+        queryFn: async () =>
+            (await api.get<Paginated<Warranty>>('/warranties', { params: filters })).data,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useWarrantyClaims(filters: Record<string, unknown> = {}) {
+    return useQuery({
+        queryKey: keys.warrantyClaims(filters),
+        queryFn: async () =>
+            (await api.get<Paginated<WarrantyClaim>>('/warranty-claims', { params: filters })).data,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useWarranty(id: number | string | undefined) {
+    return useQuery({
+        queryKey: keys.warranty(id ?? 0),
+        queryFn: async () => (await api.get<{ data: Warranty }>(`/warranties/${id}`)).data.data,
+        enabled: Boolean(id),
+    })
+}
+
+/** «تاريخ الجهاز»: cover, claims and the repair orders they produced. */
+export function useDeviceHistory(assetId: number | string | undefined) {
+    return useQuery({
+        queryKey: keys.deviceHistory(assetId ?? 0),
+        queryFn: async () => (await api.get<DeviceHistory>(`/assets/${assetId}/history`)).data,
+        enabled: Boolean(assetId),
+    })
+}
+
+export function useRegisterWarranty() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (await api.post<{ data: Warranty }>('/warranties', payload)).data.data,
+        onSuccess: () => invalidateWarranties(client),
+    })
+}
+
+/**
+ * Extending, voiding and updating in one hook: they are the same document
+ * moving, and the screens that call them refresh the same lists afterwards.
+ */
+export function useWarrantyAction() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({
+            id,
+            action,
+            payload,
+        }: {
+            id: number
+            action: 'extend' | 'void' | 'update'
+            payload?: Record<string, unknown>
+        }) => {
+            if (action === 'update') {
+                return (await api.put<{ data: Warranty }>(`/warranties/${id}`, payload ?? {})).data.data
+            }
+
+            return (await api.post<{ data: Warranty }>(`/warranties/${id}/${action}`, payload ?? {}))
+                .data.data
+        },
+        onSuccess: () => invalidateWarranties(client),
+    })
+}
+
+export function useFileClaim() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (await api.post<{ data: WarrantyClaim }>('/warranty-claims', payload)).data.data,
+        onSuccess: () => invalidateWarranties(client),
+    })
+}
+
+/** Approve, reject, mark repaired, or swap the unit. */
+export function useDecideClaim() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ id, ...payload }: { id: number } & Record<string, unknown>) =>
+            (await api.post<{ data: WarrantyClaim }>(`/warranty-claims/${id}/decide`, payload)).data
+                .data,
+        onSuccess: () => invalidateWarranties(client),
+    })
+}
+
+export function useRaiseRepairOrder() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ id, ...payload }: { id: number } & Record<string, unknown>) =>
+            (await api.post<{ data: Task }>(`/warranty-claims/${id}/repair-order`, payload)).data.data,
+        onSuccess: (_, variables) => {
+            invalidateWarranties(client)
+            // A repair order is a work order, so the dispatch board and the
+            // dashboard's open-job counts move with it.
+            void client.invalidateQueries({ queryKey: ['tasks'] })
+            void client.invalidateQueries({ queryKey: keys.dashboard })
+            void client.invalidateQueries({ queryKey: keys.warrantyClaim(variables.id) })
+        },
+    })
+}
+
+function invalidateWarranties(client: ReturnType<typeof useQueryClient>): void {
+    for (const key of ['warranties', 'warranty', 'warranty-claims', 'device-history', 'assets', 'asset']) {
         void client.invalidateQueries({ queryKey: [key] })
     }
 }

@@ -88,12 +88,43 @@ class Asset extends Model
 
     // ── Warranty ─────────────────────────────────────────────
 
+    public function warranties(): HasMany
+    {
+        return $this->hasMany(Warranty::class);
+    }
+
+    public function claims(): HasMany
+    {
+        return $this->hasMany(WarrantyClaim::class);
+    }
+
     /**
-     * Warranty runs from the sale date — not delivery, not commissioning.
-     * Without both a sale date and a term there is nothing to compute, which
-     * is different from "expired" and has to stay distinguishable.
+     * When cover runs out — the furthest date any live warranty reaches.
+     *
+     * Warranty records win over the two columns on this table because they are
+     * the only place an extension or transferred cover can be expressed. The
+     * columns stay as the fallback so units registered before warranties
+     * existed do not silently lose their cover.
      */
     public function warrantyEndsAt(): ?CarbonInterface
+    {
+        $recorded = $this->relationLoaded('warranties')
+            ? $this->warranties->where('status', 'active')->max('ends_on')
+            : $this->warranties()->where('status', 'active')->max('ends_on');
+
+        if ($recorded) {
+            return now()->parse($recorded);
+        }
+
+        return $this->soldWarrantyEndsAt();
+    }
+
+    /**
+     * The old two-column term: from the sale date, not delivery or
+     * commissioning. Without both a sale date and a term there is nothing to
+     * compute, which is different from "expired" and stays distinguishable.
+     */
+    public function soldWarrantyEndsAt(): ?CarbonInterface
     {
         if (! $this->sold_at || ! $this->warranty_months) {
             return null;
@@ -142,11 +173,19 @@ class Asset extends Model
         });
     }
 
+    /** Covered by a warranty record, or — failing that — by the sale term. */
     public function scopeUnderWarranty(Builder $query): Builder
     {
-        return $query
-            ->whereNotNull('sold_at')
-            ->whereNotNull('warranty_months')
-            ->whereRaw('DATE_ADD(sold_at, INTERVAL warranty_months MONTH) > ?', [now()->toDateString()]);
+        return $query->where(function (Builder $q) {
+            $q->whereHas('warranties', fn (Builder $w) => $w->effective())
+                ->orWhere(fn (Builder $fallback) => $fallback
+                    ->whereDoesntHave('warranties')
+                    ->whereNotNull('sold_at')
+                    ->whereNotNull('warranty_months')
+                    ->whereRaw(
+                        'DATE_ADD(sold_at, INTERVAL warranty_months MONTH) > ?',
+                        [now()->toDateString()],
+                    ));
+        });
     }
 }

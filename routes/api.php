@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\TaskReportController;
 use App\Http\Controllers\Api\TaskStatusController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\WarrantyController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -119,6 +120,26 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::delete('assets/{asset}', [AssetController::class, 'destroy']);
 
     Route::get('technicians', [UserController::class, 'technicians']);
+
+    // ── Warranties & claims ──────────────────────────────────
+    Route::get('warranties', [WarrantyController::class, 'index']);
+    Route::post('warranties', [WarrantyController::class, 'store']);
+    Route::get('warranties/{warranty}', [WarrantyController::class, 'show']);
+    Route::put('warranties/{warranty}', [WarrantyController::class, 'update']);
+
+    // A term only moves by being extended or torn up — never by editing the
+    // dates, which would erase what was originally promised.
+    Route::post('warranties/{warranty}/extend', [WarrantyController::class, 'extend']);
+    Route::post('warranties/{warranty}/void', [WarrantyController::class, 'void']);
+
+    // «تاريخ الجهاز» — cover, claims and the repair orders they produced.
+    Route::get('assets/{asset}/history', [WarrantyController::class, 'history']);
+
+    Route::get('warranty-claims', [WarrantyController::class, 'claims']);
+    Route::post('warranty-claims', [WarrantyController::class, 'storeClaim']);
+    Route::get('warranty-claims/{claim}', [WarrantyController::class, 'showClaim']);
+    Route::post('warranty-claims/{claim}/decide', [WarrantyController::class, 'decide']);
+    Route::post('warranty-claims/{claim}/repair-order', [WarrantyController::class, 'repairOrder']);
 
     // ── Maintenance contracts ────────────────────────────────
     Route::get('contracts', [ContractController::class, 'index']);

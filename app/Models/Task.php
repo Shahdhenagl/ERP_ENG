@@ -68,6 +68,10 @@ class Task extends Model
     {
         static::creating(function (self $task) {
             $task->code ??= static::nextCode();
+            // The column default only applies inside the database, so a task
+            // created without an explicit status would carry a null one back
+            // through the resource and blow up on `$task->status->value`.
+            $task->status ??= TaskStatus::Pending;
         });
     }
 

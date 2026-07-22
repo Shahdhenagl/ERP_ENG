@@ -27,6 +27,7 @@ use App\Services\PurchasingService;
 use App\Services\SalesService;
 use App\Services\MaintenancePlanner;
 use App\Services\StockLedger;
+use App\Services\WarrantyService;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -228,6 +229,10 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $contract->assets()->attach([$assets[0]->id, $assets[3]->id]);
+
+        // Devices carry a sale date and a term; turning those into warranty
+        // records is what makes them claimable rather than merely labelled.
+        app(WarrantyService::class)->backfillFromAssets($manager);
 
         $planner = app(MaintenancePlanner::class);
         $planner->plan($contract);

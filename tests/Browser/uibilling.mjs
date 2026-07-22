@@ -150,8 +150,15 @@ await page.goto(`${BASE}/manager/treasury`, { waitUntil: 'domcontentloaded' })
 await page.waitForSelector('text=حركة الخزينة', { timeout: 20000 })
 await settled(page)
 
-const treasury = await page.locator('body').innerText()
-check('treasury lists the main box', treasury.includes('الخزينة الرئيسية'))
+// The box list is its own request, so it can still be in flight when the
+// movement feed has already painted. Waited for rather than read on arrival.
+const boxListed = await page
+    .waitForFunction(() => document.body.innerText.includes('الخزينة الرئيسية'), null, {
+        timeout: 25000,
+    })
+    .then(() => true)
+    .catch(() => false)
+check('treasury lists the main box', boxListed)
 
 // The ledger row for the receipt, waited for rather than read on arrival.
 const ledgerRow = await page

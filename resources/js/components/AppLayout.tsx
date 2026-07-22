@@ -18,6 +18,9 @@ import {
     Scale,
     ScrollText,
     Settings2,
+    ShieldCheck,
+    ShieldPlus,
+    FileWarning,
     Truck,
     Users,
     Wallet,
@@ -58,6 +61,18 @@ const NAV: NavItem[] = [
     { to: '/customers', label: 'العملاء', icon: Building2, roles: ['admin', 'manager'] },
     { to: '/assets', label: 'الأجهزة', icon: HardDrive, roles: ['admin', 'manager'] },
     { to: '/contracts', label: 'عقود الصيانة', icon: ScrollText, roles: ['admin', 'manager'], short: 'العقود' },
+    {
+        to: '/warranties',
+        label: 'الضمانات',
+        icon: ShieldCheck,
+        roles: ['admin', 'manager'],
+        // The parent redirects to the register, so it is not repeated as a
+        // child — two rows pointing at one screen would both light up.
+        children: [
+            { to: '/warranties/register', label: 'سجل الضمانات', icon: ShieldPlus },
+            { to: '/warranties/claims', label: 'المطالبات', icon: FileWarning },
+        ],
+    },
     {
         to: '/inventory',
         label: 'المخزون',

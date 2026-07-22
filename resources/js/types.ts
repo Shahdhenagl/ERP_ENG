@@ -1005,3 +1005,106 @@ export interface AccountingSummary {
         stock_movements: number
     }
 }
+
+/* ── Warranties ──────────────────────────────────────────── */
+
+export type WarrantyKind = 'company' | 'supplier' | 'extension'
+export type WarrantyCovers = 'parts' | 'labour' | 'both'
+
+/** Derived from the dates on every read — nothing here runs on a timer. */
+export type WarrantyEffectiveStatus = 'active' | 'expiring' | 'expired' | 'scheduled' | 'void'
+
+export interface Warranty {
+    id: number
+    code: string
+
+    asset_id: number
+    asset?: string | null
+    asset_code?: string | null
+    serial?: string | null
+
+    customer_id: number
+    customer?: string | null
+
+    kind: WarrantyKind
+    kind_label: string
+    covers: WarrantyCovers
+    covers_label: string
+
+    starts_on: string | null
+    ends_on: string | null
+    /** Negative once the term has elapsed. */
+    days_remaining: number
+
+    status: 'active' | 'void'
+    effective_status: WarrantyEffectiveStatus
+    effective_status_label: string
+    void_reason: string | null
+
+    /** Set on an extension: the warranty it follows. */
+    parent_id: number | null
+    parent_code?: string | null
+
+    invoice_id: number | null
+    invoice_code?: string | null
+    supplier_id: number | null
+    supplier?: string | null
+    supplier_reference: string | null
+
+    terms: string | null
+    notes: string | null
+
+    claims_count?: number
+    created_at: string | null
+}
+
+export type ClaimStatus = 'open' | 'approved' | 'rejected' | 'repaired' | 'replaced' | 'closed'
+
+export interface WarrantyClaim {
+    id: number
+    code: string
+
+    warranty_id: number
+    warranty?: Warranty
+
+    asset_id: number
+    asset?: string | null
+    asset_code?: string | null
+    serial?: string | null
+    customer?: string | null
+
+    /** The day the fault happened — what cover is judged against. */
+    reported_on: string | null
+    fault: string
+
+    status: ClaimStatus
+    status_label: string
+    is_final: boolean
+    decision_note: string | null
+    age_days: number
+
+    /** The repair order raised for this claim — an ordinary work order. */
+    task_id: number | null
+    task_code?: string | null
+    task_status?: string | null
+
+    replacement_asset_id: number | null
+    replacement?: string | null
+    replacement_code?: string | null
+
+    resolved_at: string | null
+    created_at: string | null
+}
+
+/** «تاريخ الجهاز» — everything one unit has cost us. */
+export interface DeviceHistory {
+    asset: Asset
+    cover: Warranty | null
+    warranties: Warranty[]
+    claims: WarrantyClaim[]
+    summary: {
+        claims_open: number
+        repairs: number
+        replacements: number
+    }
+}

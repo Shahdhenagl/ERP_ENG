@@ -32,6 +32,10 @@ import { InvoicePrint } from '@/pages/print/InvoicePrint'
 import { QuotationPrint } from '@/pages/print/QuotationPrint'
 import { ServiceReportPrint } from '@/pages/print/ServiceReportPrint'
 import { StatementPrint } from '@/pages/print/StatementPrint'
+import { WarrantyCertificate } from '@/pages/print/WarrantyCertificate'
+import { ClaimsPage } from '@/pages/warranty/ClaimsPage'
+import { WarrantyLayout } from '@/pages/warranty/WarrantyLayout'
+import { WarrantyRegisterPage } from '@/pages/warranty/WarrantyRegisterPage'
 import { TreasuryPage } from '@/pages/treasury/TreasuryPage'
 import { MyStock } from '@/pages/MyStock'
 import { Dashboard } from '@/pages/Dashboard'
@@ -78,6 +82,7 @@ export function App() {
                                     <Route path="invoices/:id" element={<InvoicePrint />} />
                                     <Route path="quotations/:id" element={<QuotationPrint />} />
                                     <Route path="statements/:id" element={<StatementPrint />} />
+                                    <Route path="warranty/:id" element={<WarrantyCertificate />} />
                                 </Route>
 
                                 {/* The service report is unprefixed: a technician
@@ -120,6 +125,12 @@ export function App() {
                                             <Route path="custody" element={<CustodyPage />} />
                                             <Route path="movements" element={<MovementsPage />} />
                                         </Route>
+                                        <Route path="warranties" element={<WarrantyLayout />}>
+                                            <Route index element={<Navigate to="register" replace />} />
+                                            <Route path="register" element={<WarrantyRegisterPage />} />
+                                            <Route path="claims" element={<ClaimsPage />} />
+                                        </Route>
+
                                         <Route path="sales" element={<Sales />} />
                                         <Route path="purchasing" element={<Purchasing />} />
                                         <Route path="invoices" element={<InvoiceList />} />

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import type {
     AssetStatus,
+    ClaimStatus,
     ContractEffectiveStatus,
     DeviceCondition,
     ItemCategory,
@@ -27,6 +28,8 @@ import type {
     TaskStatus,
     TaskType,
     VisitStatus,
+    WarrantyEffectiveStatus,
+    WarrantyKind,
 } from '@/types'
 
 /**
@@ -187,6 +190,30 @@ export function warrantyChip(underWarranty: boolean | null): string {
     return underWarranty
         ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
         : 'bg-red-50 text-red-700 ring-1 ring-red-200'
+}
+
+/** Cover, as the server derives it from today's date on every read. */
+export const WARRANTY_STATUS: Record<WarrantyEffectiveStatus, { label: string; chip: string }> = {
+    active: { label: 'ساري', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
+    expiring: { label: 'قارب على الانتهاء', chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' },
+    expired: { label: 'منتهي', chip: 'bg-red-50 text-red-700 ring-1 ring-red-200' },
+    scheduled: { label: 'لم يبدأ', chip: 'bg-sky-50 text-sky-700 ring-1 ring-sky-200' },
+    void: { label: 'ملغي', chip: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200' },
+}
+
+export const WARRANTY_KIND: Record<WarrantyKind, string> = {
+    company: 'ضمان الشركة',
+    supplier: 'ضمان المورّد',
+    extension: 'تمديد ضمان',
+}
+
+export const CLAIM_STATUS: Record<ClaimStatus, { label: string; chip: string }> = {
+    open: { label: 'تحت الفحص', chip: 'bg-sky-50 text-sky-700 ring-1 ring-sky-200' },
+    approved: { label: 'معتمدة', chip: 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200' },
+    rejected: { label: 'مرفوضة', chip: 'bg-red-50 text-red-700 ring-1 ring-red-200' },
+    repaired: { label: 'تم الإصلاح', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
+    replaced: { label: 'تم الاستبدال', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
+    closed: { label: 'مغلقة', chip: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200' },
 }
 
 /** Quotations carry the lapse the server derives from today's date. */

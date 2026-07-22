@@ -29,14 +29,27 @@ async function login(page, email) {
     await page.waitForFunction(() => !location.pathname.startsWith('/login'), { timeout: 20000 })
 }
 
-async function settled(page) {
+/**
+ * Wait for a screen to have actually rendered, not merely to have stopped
+ * showing a skeleton.
+ *
+ * The sidebar paints before the first query resolves, so «no shimmer on the
+ * page» is true for a moment before there is anything to read — long enough to
+ * make an assertion pass or fail for reasons that have nothing to do with the
+ * code. A marker the section is known to contain is the honest signal.
+ */
+async function settled(page, marker) {
     await page
         .waitForFunction(
-            () => !document.querySelector('.shimmer') && !document.querySelector('.animate-spin'),
+            (text) =>
+                !document.querySelector('.shimmer') &&
+                !document.querySelector('.animate-spin') &&
+                (!text || document.body.innerText.includes(text)),
+            marker,
             { timeout: 20000 },
         )
         .catch(() => {})
-    await page.waitForTimeout(600)
+    await page.waitForTimeout(400)
 }
 
 const context = await browser.newContext({ viewport: { width: 1440, height: 950 }, locale: 'ar-EG' })
@@ -49,8 +62,12 @@ await login(page, 'admin@cityeng.local')
 /* ── A sale and a receipt, so the books have something in ── */
 
 const SALE = 4000
+const TAX = 0.14
+const COLLECTED = 1000
+/** What the sale leaves owing once the part-payment is taken off. */
+const OUTSTANDING = SALE * (1 + TAX) - COLLECTED
 
-const setup = await page.evaluate(async (amount) => {
+const setup = await page.evaluate(async ({ amount, collected, taxRate }) => {
     const token = localStorage.getItem('ce.token')
     const send = async (method, url, body) => {
         const response = await fetch(`/api${url}`, {
@@ -72,7 +89,7 @@ const setup = await page.evaluate(async (amount) => {
     const invoice = await send('POST', '/invoices', {
         customer_id: customerId,
         issue_date: new Date().toISOString().slice(0, 10),
-        tax_rate: 14,
+        tax_rate: taxRate * 100,
         lines: [{ description: 'توريد وتركيب', qty: 1, unit_price: amount }],
     })
 
@@ -81,29 +98,34 @@ const setup = await page.evaluate(async (amount) => {
 
     const paid = await send('POST', '/payments', {
         invoice_id: id,
-        amount: 1000,
+        amount: collected,
     })
 
     return { invoiceOk: issued.ok, paymentOk: paid.ok }
-}, SALE)
+}, { amount: SALE, collected: COLLECTED, taxRate: TAX })
 
 check('a sale was raised and part-collected through the API', setup.invoiceOk && setup.paymentOk)
 
 /* ── The chart ───────────────────────────────────────────── */
 
 await page.goto(`${BASE}/manager/accounting`, { waitUntil: 'domcontentloaded' })
-await settled(page)
+// 1102 is the receivable: present in every seeded chart, and a code rather
+// than a name, so an operator renaming an account cannot break the test.
+await settled(page, '1102')
 
 check('the module redirects to the chart of accounts', page.url().includes('/accounting/accounts'))
 
 const chart = await page.evaluate(() => document.body.innerText)
-check('the chart is seeded on first look', chart.includes('المخزون') && chart.includes('الإيرادات'))
+check('the chart is seeded on first look', chart.includes('1103') && chart.includes('4101'))
 
 // Matched by code rather than by name: the seeded names carry brackets, and a
 // bracket typed into a right-to-left string is a coin toss as to which way
 // round it ends up in the file.
+//
+// The invoice debited the customer with the tax-inclusive total and the receipt
+// credited back what was paid, so the account must hold at least the remainder.
 const receivable = await accountBalance(page, '1102')
-check('the receivable carries what is still owed on the sale', receivable >= SALE)
+check('the receivable carries what is still owed on the sale', receivable >= OUTSTANDING - 0.005)
 
 // Every box the treasury shows gets its own line under cash, which is the
 // point of hanging the chart off the boxes rather than a single «cash» account.
@@ -112,7 +134,7 @@ check('each cash box has its own account under cash', /\n1101\d\d\n/.test(chart)
 /* ── The journal ─────────────────────────────────────────── */
 
 await page.goto(`${BASE}/manager/accounting/journal`, { waitUntil: 'domcontentloaded' })
-await settled(page)
+await settled(page, 'JV-')
 
 const journal = await page.evaluate(() => document.body.innerText)
 check('the invoice reached the journal', journal.includes('فاتورة مبيعات'))
@@ -129,12 +151,12 @@ await page.waitForTimeout(400)
 /* ── The statements ──────────────────────────────────────── */
 
 await page.goto(`${BASE}/manager/accounting/trial-balance`, { waitUntil: 'domcontentloaded' })
-await settled(page)
+await settled(page, 'الميزان')
 const trial = await page.evaluate(() => document.body.innerText)
 check('the trial balance is level', trial.includes('الميزان متوازن'))
 
 await page.goto(`${BASE}/manager/accounting/income-statement`, { waitUntil: 'domcontentloaded' })
-await settled(page)
+await settled(page, 'مجمل الربح')
 const income = await page.evaluate(() => document.body.innerText)
 check('the income statement shows gross and net profit', income.includes('مجمل الربح'))
 
@@ -145,10 +167,10 @@ check('the sale reached revenue net of its tax', revenue >= SALE)
 
 // Tax collected is owed to the authority, not earned.
 const vat = await accountBalance(page, '2102')
-check('the tax was held as a liability rather than counted as income', vat >= SALE * 0.14)
+check('the tax was held as a liability rather than counted as income', vat >= SALE * TAX)
 
 await page.goto(`${BASE}/manager/accounting/balance-sheet`, { waitUntil: 'domcontentloaded' })
-await settled(page)
+await settled(page, 'الميزانية')
 const sheet = await page.evaluate(() => document.body.innerText)
 check('the balance sheet balances', sheet.includes('الميزانية متوازنة'))
 check('profit is folded into equity without a closing entry', sheet.includes('أرباح الفترة'))
@@ -156,12 +178,12 @@ check('profit is folded into equity without a closing entry', sheet.includes('أ
 /* ── The general ledger ──────────────────────────────────── */
 
 await page.goto(`${BASE}/manager/accounting/ledger`, { waitUntil: 'domcontentloaded' })
-await settled(page)
+await settled(page, 'الرصيد')
 const ledger = await page.evaluate(() => document.body.innerText)
 check('the general ledger opens on an account rather than an empty frame', ledger.includes('الرصيد'))
 
 await page.goto(`${BASE}/manager/accounting/cost-centers`, { waitUntil: 'domcontentloaded' })
-await settled(page)
+await settled(page, 'مراكز التكلفة')
 const centres = await page.evaluate(() => document.body.innerText)
 check('cost centres read as optional rather than missing', centres.includes('اختيارية'))
 
