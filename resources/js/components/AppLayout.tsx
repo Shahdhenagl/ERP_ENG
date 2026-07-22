@@ -2,8 +2,10 @@ import clsx from 'clsx'
 import {
     ArrowLeftRight,
     Bell,
+    BookOpen,
     Boxes,
     Building2,
+    Calculator,
     ClipboardList,
     FileText,
     HandCoins,
@@ -13,10 +15,12 @@ import {
     Package,
     Plus,
     Receipt,
+    Scale,
     ScrollText,
     Settings2,
     Truck,
     Users,
+    Wallet,
     Warehouse,
     type LucideIcon,
 } from 'lucide-react'
@@ -68,7 +72,30 @@ const NAV: NavItem[] = [
     },
     { to: '/sales', label: 'المبيعات', icon: FileText, roles: ['admin', 'manager'], short: 'بيع' },
     { to: '/purchasing', label: 'المشتريات', icon: Truck, roles: ['admin', 'manager'], short: 'شراء' },
-    { to: '/invoices', label: 'الفواتير', icon: Receipt, roles: ['admin', 'manager'] },
+    {
+        to: '/invoices',
+        label: 'الفواتير',
+        icon: Receipt,
+        roles: ['admin', 'manager'],
+        // The parent is the invoice list itself, so it is not repeated as a
+        // child — two rows pointing at one route would both light up.
+        children: [{ to: '/treasury', label: 'الخزينة', icon: Wallet }],
+    },
+    {
+        to: '/accounting',
+        label: 'المحاسبة المالية',
+        icon: Calculator,
+        roles: ['admin', 'manager'],
+        short: 'حسابات',
+        // Seven sections is more than the sidebar should carry, so only the
+        // three anyone opens without being sent there are listed; the rest are
+        // one tap away on the strip at the top of the module.
+        children: [
+            { to: '/accounting/accounts', label: 'دليل الحسابات', icon: BookOpen },
+            { to: '/accounting/journal', label: 'القيود اليومية', icon: ScrollText },
+            { to: '/accounting/trial-balance', label: 'ميزان المراجعة', icon: Scale },
+        ],
+    },
     { to: '/stock', label: 'عهدتي', icon: Package, roles: ['technician'] },
     { to: '/users', label: 'المستخدمون', icon: Users, roles: ['admin'], short: 'الفريق' },
     { to: '/settings', label: 'بيانات الشركة', icon: Settings2, roles: ['admin'], short: 'إعدادات' },
@@ -300,7 +327,9 @@ function SidebarLink({
         <NavLink
             to={href}
             // A parent with children would otherwise light up on every child
-            // route and leave two rows looking selected at once.
+            // route and leave two rows looking selected at once. Nested items
+            // keep prefix matching so a detail page still highlights its
+            // section.
             end={item.to === '/' || Boolean(item.children)}
             className={({ isActive }) =>
                 clsx(

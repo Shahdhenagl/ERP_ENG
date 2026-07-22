@@ -49,6 +49,12 @@ class StockLedger
 
             return $this->log($item, MovementType::Receipt, $qty, $unitCost, $actor, [
                 'to_warehouse_id' => $warehouse->id,
+                // Who it came from is set as the row is written, not stamped on
+                // afterwards: the accounting entry is raised the moment the
+                // movement exists, and a receipt with no supplier on it books
+                // as stock appearing from nowhere rather than as a purchase.
+                'supplier_id' => $context['supplier_id'] ?? null,
+                'purchase_order_id' => $context['purchase_order_id'] ?? null,
                 'supplier' => $context['supplier'] ?? null,
                 'reference' => $context['reference'] ?? null,
                 'note' => $context['note'] ?? null,

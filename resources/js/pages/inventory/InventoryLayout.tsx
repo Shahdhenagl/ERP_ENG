@@ -1,12 +1,12 @@
 import clsx from 'clsx'
 import { ArrowLeftRight, ClipboardList, PackagePlus, Plus } from 'lucide-react'
 import { useState } from 'react'
-import { NavLink, Outlet, useOutletContext } from 'react-router-dom'
+import { Outlet, useOutletContext } from 'react-router-dom'
 import { ItemForm } from '@/components/ItemForm'
+import { SectionTabs } from '@/components/SectionTabs'
 import { StockOperationForm } from '@/components/StockOperationForm'
 import { Button, PageHeader } from '@/components/ui'
 import { formatMoney } from '@/lib/domain'
-import { useArea } from '@/lib/nav'
 import { useStockSummary } from '@/lib/queries'
 import type { Item } from '@/types'
 
@@ -35,7 +35,6 @@ const SECTIONS = [
 ] as const
 
 export function InventoryLayout() {
-    const { path } = useArea()
     const { data: summary } = useStockSummary()
 
     const [itemForm, setItemForm] = useState(false)
@@ -96,23 +95,7 @@ export function InventoryLayout() {
                 </Button>
             </div>
 
-            {/* Mirrors the sidebar, for the screens that have no sidebar. */}
-            <div className="mb-4 flex gap-1 overflow-x-auto rounded-xl bg-navy-100 p-1 lg:hidden">
-                {SECTIONS.map(([to, label]) => (
-                    <NavLink
-                        key={to}
-                        to={path(to)}
-                        className={({ isActive }) =>
-                            clsx(
-                                'tap flex-1 rounded-lg px-3 py-2 text-center text-xs font-bold whitespace-nowrap transition',
-                                isActive ? 'bg-white text-navy-900 shadow-sm' : 'text-navy-500',
-                            )
-                        }
-                    >
-                        {label}
-                    </NavLink>
-                ))}
-            </div>
+            <SectionTabs sections={SECTIONS} />
 
             <Outlet context={{ openItemForm } satisfies InventoryContext} />
 

@@ -23,6 +23,8 @@ class StockMovement extends Model
         'qty',
         'unit_cost',
         'task_id',
+        'supplier_id',
+        'purchase_order_id',
         'supplier',
         'reference',
         'note',

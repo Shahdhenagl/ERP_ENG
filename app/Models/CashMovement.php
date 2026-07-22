@@ -20,8 +20,15 @@ class CashMovement extends Model
         'amount',
         'source',
         'payment_id',
+        // Present since purchasing landed but never fillable, so every voucher
+        // written before this was saved with a null link back to itself.
+        'supplier_payment_id',
         'counterpart_box_id',
         'category',
+        // Which expense heading it belongs under, and which part of the
+        // business wore it. Only ever set on a payment out.
+        'account_id',
+        'cost_center_id',
         'note',
         'user_id',
     ];
@@ -39,6 +46,28 @@ class CashMovement extends Model
     public function payment(): BelongsTo
     {
         return $this->belongsTo(Payment::class);
+    }
+
+    public function supplierPayment(): BelongsTo
+    {
+        return $this->belongsTo(SupplierPayment::class);
+    }
+
+    /** The box on the other end of a transfer, or of a float advanced. */
+    public function counterpartBox(): BelongsTo
+    {
+        return $this->belongsTo(CashBox::class, 'counterpart_box_id');
+    }
+
+    /** The expense heading chosen when this was recorded, if any. */
+    public function account(): BelongsTo
+    {
+        return $this->belongsTo(Account::class);
+    }
+
+    public function costCenter(): BelongsTo
+    {
+        return $this->belongsTo(CostCenter::class);
     }
 
     public function actor(): BelongsTo

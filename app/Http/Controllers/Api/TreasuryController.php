@@ -11,6 +11,7 @@ use App\Models\CashMovement;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Services\BillingService;
+use App\Services\TreasuryReport;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -18,7 +19,10 @@ use Illuminate\Validation\Rule;
 
 class TreasuryController extends Controller
 {
-    public function __construct(protected BillingService $billing) {}
+    public function __construct(
+        protected BillingService $billing,
+        protected TreasuryReport $report,
+    ) {}
 
     /* ── Receipts ────────────────────────────────────────── */
 
@@ -151,8 +155,12 @@ class TreasuryController extends Controller
 
     public function movements(Request $request): JsonResponse
     {
+        $request->validate(['from' => ['nullable', 'date'], 'to' => ['nullable', 'date']]);
+
         $movements = CashMovement::query()
             ->when($request->integer('cash_box_id'), fn ($q, $id) => $q->where('cash_box_id', $id))
+            ->when($request->date('from'), fn ($q, $from) => $q->whereDate('created_at', '>=', $from))
+            ->when($request->date('to'), fn ($q, $to) => $q->whereDate('created_at', '<=', $to))
             ->with(['box', 'actor', 'payment.customer'])
             ->orderByDesc('id')
             ->paginate($request->integer('per_page', 30));
@@ -163,12 +171,9 @@ class TreasuryController extends Controller
                 'direction' => $m->direction,
                 'amount' => (float) $m->amount,
                 'source' => $m->source,
-                'source_label' => match ($m->source) {
-                    'payment' => 'تحصيل',
-                    'expense' => 'مصروف',
-                    'transfer' => 'تحويل',
-                    default => 'رصيد افتتاحي',
-                },
+                // Custody advances and supplier payments also land here, so the
+                // labels come from the one map the report already uses.
+                'source_label' => TreasuryReport::LABELS[$m->source] ?? $m->source,
                 'box' => $m->box?->name,
                 'category' => $m->category,
                 'note' => $m->note,
@@ -182,12 +187,18 @@ class TreasuryController extends Controller
 
     /* ── Headline numbers ────────────────────────────────── */
 
-    public function summary(): JsonResponse
+    public function summary(Request $request): JsonResponse
     {
         $outstanding = (float) Invoice::query()->outstanding()->sum('total');
         $collectedOnOutstanding = (float) Payment::query()
             ->whereIn('invoice_id', Invoice::query()->outstanding()->select('id'))
             ->sum('amount');
+
+        $filters = $request->validate([
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date'],
+            'cash_box_id' => ['nullable', 'exists:cash_boxes,id'],
+        ]);
 
         return response()->json([
             'cash_on_hand' => round(CashBox::all()->sum(fn (CashBox $b) => $b->balance()), 2),
@@ -196,6 +207,24 @@ class TreasuryController extends Controller
             'collected_this_month' => round((float) Payment::query()
                 ->whereBetween('paid_at', [now()->startOfMonth(), now()->endOfMonth()])
                 ->sum('amount'), 2),
+
+            // Income and expense over whatever window was asked for. Absent
+            // filters mean "everything", which is what an unfiltered screen
+            // should show rather than nothing.
+            'analysis' => $this->report->forPeriod($filters),
+        ]);
+    }
+
+    /** One box's ledger, with the balance carried down the page. */
+    public function statement(Request $request, CashBox $box): JsonResponse
+    {
+        $filters = $request->validate([
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date'],
+        ]);
+
+        return response()->json([
+            'data' => $this->report->statement($box, $filters['from'] ?? null, $filters['to'] ?? null),
         ]);
     }
 }

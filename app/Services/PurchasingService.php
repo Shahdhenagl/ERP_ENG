@@ -132,18 +132,13 @@ class PurchasingService
                     ? (float) $line['unit_cost']
                     : (float) $orderLine->unit_price;
 
-                $movement = $this->ledger->receive($item, $warehouse, $qty, $unitCost, $actor, [
-                    'reference' => $context['reference'] ?? null,
-                    'note' => $context['note'] ?? null,
-                ]);
-
-                $movement->forceFill([
+                $movements[] = $this->ledger->receive($item, $warehouse, $qty, $unitCost, $actor, [
                     'supplier_id' => $order->supplier_id,
                     'purchase_order_id' => $order->id,
                     'supplier' => $order->supplier->name,
-                ])->save();
-
-                $movements[] = $movement;
+                    'reference' => $context['reference'] ?? null,
+                    'note' => $context['note'] ?? null,
+                ]);
             }
         });
 
@@ -159,14 +154,11 @@ class PurchasingService
         User $actor,
         array $context = [],
     ): StockMovement {
-        $movement = $this->ledger->receive($item, Warehouse::main(), $qty, $unitCost, $actor, $context);
-
-        $movement->forceFill([
+        return $this->ledger->receive($item, Warehouse::main(), $qty, $unitCost, $actor, [
+            ...$context,
             'supplier_id' => $supplier->id,
             'supplier' => $supplier->name,
-        ])->save();
-
-        return $movement->fresh();
+        ]);
     }
 
     /**

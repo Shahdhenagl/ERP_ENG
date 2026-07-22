@@ -2,9 +2,17 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import type {
+    Account,
+    AccountLedger,
+    AccountingSummary,
     AppNotification,
     Asset,
+    BalanceSheet,
     Branch,
+    CostCenterReport,
+    IncomeStatement,
+    JournalEntry,
+    TrialBalance,
     Contract,
     CustodyStatement,
     Customer,
@@ -22,6 +30,8 @@ import type {
     StatementRow,
     Supplier,
     StockMovement,
+    TreasuryStatement,
+    TreasurySummary,
     VanStockLine,
     WarehouseSummary,
     Task,
@@ -70,7 +80,9 @@ export const keys = {
     payments: (filters?: Record<string, unknown>) => ['payments', filters ?? {}] as const,
     cashBoxes: ['cash-boxes'] as const,
     cashMovements: (filters?: Record<string, unknown>) => ['cash-movements', filters ?? {}] as const,
-    treasurySummary: ['treasury-summary'] as const,
+    treasurySummary: (range?: Record<string, unknown>) => ['treasury-summary', range ?? {}] as const,
+    treasuryStatement: (id: number | string, range?: Record<string, unknown>) =>
+        ['treasury-statement', Number(id), range ?? {}] as const,
 
     suppliers: (filters?: Record<string, unknown>) => ['suppliers', filters ?? {}] as const,
     supplier: (id: number | string) => ['supplier', Number(id)] as const,
@@ -1031,22 +1043,52 @@ export function useCashMovements(filters: Record<string, unknown> = {}) {
     })
 }
 
-export function useTreasurySummary() {
+/** `range` narrows the analysis; the headline figures ignore it. */
+export function useTreasurySummary(range: Record<string, unknown> = {}) {
     const { canDispatch } = useAuth()
+    const params = pruneRange(range)
 
     return useQuery({
-        queryKey: keys.treasurySummary,
+        queryKey: keys.treasurySummary(params),
         queryFn: async () =>
-            (
-                await api.get<{
-                    cash_on_hand: number
-                    receivable: number
-                    overdue_count: number
-                    collected_this_month: number
-                }>('/treasury/summary')
-            ).data,
+            (await api.get<TreasurySummary>('/treasury/summary', { params })).data,
         enabled: canDispatch,
+        placeholderData: (previous) => previous,
     })
+}
+
+export function useTreasuryStatement(
+    boxId: number | null | undefined,
+    range: Record<string, unknown> = {},
+) {
+    const params = pruneRange(range)
+
+    return useQuery({
+        queryKey: keys.treasuryStatement(boxId ?? 0, params),
+        queryFn: async () =>
+            (await api.get<{ data: TreasuryStatement }>(`/treasury/boxes/${boxId}/statement`, {
+                params,
+            })).data.data,
+        enabled: Boolean(boxId),
+    })
+}
+
+export function useSaveCashBox() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (await api.post('/treasury/boxes', payload)).data,
+        onSuccess: () => invalidateMoney(client),
+    })
+}
+
+/**
+ * Blank dates must not reach the API as `from=` — the `date` rule rejects an
+ * empty string, and the key would fragment the cache besides.
+ */
+function pruneRange(range: Record<string, unknown>): Record<string, unknown> {
+    return Object.fromEntries(Object.entries(range).filter(([, value]) => Boolean(value)))
 }
 
 export function usePayments(filters: Record<string, unknown> = {}) {
@@ -1096,6 +1138,7 @@ function invalidateMoney(client: ReturnType<typeof useQueryClient>): void {
         'cash-boxes',
         'cash-movements',
         'treasury-summary',
+        'treasury-statement',
         'task',
     ]) {
         void client.invalidateQueries({ queryKey: [key] })
@@ -1148,4 +1191,236 @@ export function useMarkAllRead() {
             void client.invalidateQueries({ queryKey: keys.notifications })
         },
     })
+}
+
+/* â”€â”€ Accounting â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+
+export const accountingKeys = {
+    summary: (range?: Record<string, unknown>) => ['accounting-summary', range ?? {}] as const,
+    accounts: (filters?: Record<string, unknown>) => ['accounts', filters ?? {}] as const,
+    accountLedger: (id: number | string, range?: Record<string, unknown>) =>
+        ['account-ledger', Number(id), range ?? {}] as const,
+    entries: (filters?: Record<string, unknown>) => ['journal-entries', filters ?? {}] as const,
+    entry: (id: number | string) => ['journal-entry', Number(id)] as const,
+    trialBalance: (range?: Record<string, unknown>) => ['trial-balance', range ?? {}] as const,
+    incomeStatement: (range?: Record<string, unknown>) => ['income-statement', range ?? {}] as const,
+    balanceSheet: (range?: Record<string, unknown>) => ['balance-sheet', range ?? {}] as const,
+    costCenters: (range?: Record<string, unknown>) => ['cost-centers', range ?? {}] as const,
+}
+
+export function useAccountingSummary(range: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+    const params = pruneRange(range)
+
+    return useQuery({
+        queryKey: accountingKeys.summary(params),
+        queryFn: async () =>
+            (await api.get<AccountingSummary>('/accounting/summary', { params })).data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useAccounts(filters: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+    const params = pruneRange(filters)
+
+    return useQuery({
+        queryKey: accountingKeys.accounts(params),
+        queryFn: async () =>
+            (await api.get<{ data: Account[] }>('/accounting/accounts', { params })).data.data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useAccountLedger(
+    accountId: number | null | undefined,
+    range: Record<string, unknown> = {},
+) {
+    const params = pruneRange(range)
+
+    return useQuery({
+        queryKey: accountingKeys.accountLedger(accountId ?? 0, params),
+        queryFn: async () =>
+            (await api.get<{ data: AccountLedger }>(`/accounting/accounts/${accountId}/ledger`, {
+                params,
+            })).data.data,
+        enabled: Boolean(accountId),
+    })
+}
+
+export function useJournalEntries(filters: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+    const params = pruneRange(filters)
+
+    return useQuery({
+        queryKey: accountingKeys.entries(params),
+        queryFn: async () =>
+            (await api.get<{ data: JournalEntry[]; meta: { total: number; last_page: number } }>(
+                '/accounting/entries',
+                { params },
+            )).data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useTrialBalance(range: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+    const params = pruneRange(range)
+
+    return useQuery({
+        queryKey: accountingKeys.trialBalance(params),
+        queryFn: async () =>
+            (await api.get<{ data: TrialBalance }>('/accounting/trial-balance', { params })).data
+                .data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useIncomeStatement(range: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+    const params = pruneRange(range)
+
+    return useQuery({
+        queryKey: accountingKeys.incomeStatement(params),
+        queryFn: async () =>
+            (await api.get<{ data: IncomeStatement }>('/accounting/income-statement', { params }))
+                .data.data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useBalanceSheet(range: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+    const params = pruneRange(range)
+
+    return useQuery({
+        queryKey: accountingKeys.balanceSheet(params),
+        queryFn: async () =>
+            (await api.get<{ data: BalanceSheet }>('/accounting/balance-sheet', { params })).data
+                .data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useCostCenters(range: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+    const params = pruneRange(range)
+
+    return useQuery({
+        queryKey: accountingKeys.costCenters(params),
+        queryFn: async () =>
+            (await api.get<{ data: CostCenterReport[] }>('/accounting/cost-centers', { params }))
+                .data.data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useSaveAccount(id?: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            id
+                ? (await api.put(`/accounting/accounts/${id}`, payload)).data
+                : (await api.post('/accounting/accounts', payload)).data,
+        onSuccess: () => invalidateBooks(client),
+    })
+}
+
+export function useDeleteAccount() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id: number) => (await api.delete(`/accounting/accounts/${id}`)).data,
+        onSuccess: () => invalidateBooks(client),
+    })
+}
+
+export function useSaveCostCenter(id?: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            id
+                ? (await api.put(`/accounting/cost-centers/${id}`, payload)).data
+                : (await api.post('/accounting/cost-centers', payload)).data,
+        onSuccess: () => invalidateBooks(client),
+    })
+}
+
+export function useDeleteCostCenter() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id: number) => (await api.delete(`/accounting/cost-centers/${id}`)).data,
+        onSuccess: () => invalidateBooks(client),
+    })
+}
+
+export function usePostEntry() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (await api.post<{ data: JournalEntry }>('/accounting/entries', payload)).data.data,
+        onSuccess: () => invalidateBooks(client),
+    })
+}
+
+/** Reverse any entry, or strike out a hand-written one. */
+export function useEntryAction() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({
+            id,
+            action,
+            payload,
+        }: {
+            id: number
+            action: 'reverse' | 'void'
+            payload?: Record<string, unknown>
+        }) =>
+            action === 'void'
+                ? (await api.delete(`/accounting/entries/${id}`)).data
+                : (await api.post(`/accounting/entries/${id}/reverse`, payload ?? {})).data,
+        onSuccess: () => invalidateBooks(client),
+    })
+}
+
+/** Catch up documents that never reached the journal. */
+export function useRepostLedger() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async () => (await api.post<{ message: string }>('/accounting/post')).data,
+        onSuccess: () => invalidateBooks(client),
+    })
+}
+
+/**
+ * Every statement is a different view of the same journal, so one posting moves
+ * all of them â€” there is no subset worth being clever about.
+ */
+function invalidateBooks(client: ReturnType<typeof useQueryClient>): void {
+    for (const key of [
+        'accounting-summary',
+        'accounts',
+        'account-ledger',
+        'journal-entries',
+        'journal-entry',
+        'trial-balance',
+        'income-statement',
+        'balance-sheet',
+        'cost-centers',
+    ]) {
+        void client.invalidateQueries({ queryKey: [key] })
+    }
 }

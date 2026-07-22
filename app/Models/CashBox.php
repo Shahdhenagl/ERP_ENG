@@ -11,7 +11,7 @@ class CashBox extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'type', 'user_id', 'account_number', 'currency', 'is_active'];
+    protected $fillable = ['name', 'type', 'user_id', 'account_id', 'account_number', 'currency', 'is_active'];
 
     protected function casts(): array
     {
@@ -29,16 +29,43 @@ class CashBox extends Model
     }
 
     /**
+     * This box's own line in the chart of accounts, opened the first time money
+     * moves through it. Null until then, which is why nothing may assume it.
+     */
+    public function account(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Account::class);
+    }
+
+    /**
      * Balance is the sum of the ledger, never a stored column. Keeping a
      * running total in a field is how a treasury quietly stops matching the
      * receipts that made it.
      */
     public function balance(): float
     {
-        $in = (float) $this->movements()->where('direction', 'in')->sum('amount');
-        $out = (float) $this->movements()->where('direction', 'out')->sum('amount');
+        return $this->balanceAsOf(null);
+    }
 
-        return round($in - $out, 2);
+    /**
+     * The balance at the end of a given day, or now when none is given.
+     *
+     * A statement for a period is meaningless without the figure it opened
+     * with, and that figure is everything that happened before it.
+     */
+    public function balanceAsOf(?string $date): float
+    {
+        $movements = $this->movements();
+
+        if ($date !== null) {
+            $movements->whereDate('created_at', '<=', $date);
+        }
+
+        $rows = $movements->selectRaw('direction, coalesce(sum(amount), 0) as total')
+            ->groupBy('direction')
+            ->pluck('total', 'direction');
+
+        return round((float) ($rows['in'] ?? 0) - (float) ($rows['out'] ?? 0), 2);
     }
 
     public function scopeActive(Builder $query): Builder

@@ -533,6 +533,8 @@ export interface CashBoxSummary {
     id: number
     name: string
     type: CashBoxType
+    /** Set only on a custody box — whose float it is. */
+    holder?: string | null
     type_label: string
     account_number: string | null
     currency: string
@@ -540,11 +542,76 @@ export interface CashBoxSummary {
     balance: number
 }
 
+/** One heading on the income or expense side, e.g. "تحصيل من العملاء". */
+export interface TreasuryBreakdownRow {
+    source: string
+    label: string
+    total: number
+    count: number
+}
+
+/**
+ * Income against expense over a period. `closing_balance` is what the boxes
+ * hold at the end of the window, which only equals opening + net when the
+ * window runs to today.
+ */
+export interface TreasuryAnalysis {
+    period: { from: string | null; to: string | null }
+    opening_balance: number
+    income: TreasuryBreakdownRow[]
+    expense: TreasuryBreakdownRow[]
+    income_total: number
+    expense_total: number
+    net: number
+    closing_balance: number
+    boxes: Array<{
+        id: number
+        name: string
+        type: CashBoxType
+        holder: string | null
+        balance: number
+    }>
+}
+
+export interface TreasuryStatementRow {
+    id: number
+    date: string | null
+    direction: 'in' | 'out'
+    source: string
+    label: string
+    category: string | null
+    note: string | null
+    customer: string | null
+    actor: string | null
+    in: number
+    out: number
+    /** Running balance, carried down from the opening figure. */
+    balance: number
+}
+
+export interface TreasuryStatement {
+    box: { id: number; name: string; type: CashBoxType; holder: string | null }
+    period: { from: string | null; to: string | null }
+    opening_balance: number
+    rows: TreasuryStatementRow[]
+    in_total: number
+    out_total: number
+    closing_balance: number
+}
+
+export interface TreasurySummary {
+    cash_on_hand: number
+    receivable: number
+    overdue_count: number
+    collected_this_month: number
+    analysis: TreasuryAnalysis
+}
+
 export interface CashMovementRow {
     id: number
     direction: 'in' | 'out'
     amount: number
-    source: 'payment' | 'expense' | 'transfer' | 'opening'
+    source: string
     source_label: string
     box: string | null
     category: string | null
@@ -779,5 +846,162 @@ export interface Paginated<T> {
         total: number
         per_page?: number
         unread_count?: number
+    }
+}
+
+/* ── Accounting ──────────────────────────────────────────── */
+
+export type AccountType = 'asset' | 'liability' | 'equity' | 'revenue' | 'expense'
+
+export interface Account {
+    id: number
+    code: string
+    name: string
+    type: AccountType
+    type_label: string
+    parent_id: number | null
+    is_group: boolean
+    /** Seeded and depended on by the posting rules: renameable, not deletable. */
+    is_system: boolean
+    is_active: boolean
+    /** The machine name a posting rule knows it by, when it has one. */
+    key: string | null
+    notes: string | null
+    /** How far to indent it; the API walks the parents so the screen need not. */
+    depth: number
+    /** Signed the way the account is meant to read, with children rolled in. */
+    balance: number
+}
+
+export interface JournalLine {
+    id: number
+    account_id: number
+    account_code: string | null
+    account_name: string | null
+    cost_center: string | null
+    debit: number
+    credit: number
+    memo: string | null
+}
+
+export interface JournalEntry {
+    id: number
+    code: string
+    entry_date: string | null
+    memo: string | null
+    source: string
+    source_label: string
+    /** Only a hand-written entry may be struck out rather than reversed. */
+    is_manual: boolean
+    is_void: boolean
+    reverses: string | null
+    total: number
+    created_by: string | null
+    lines: JournalLine[]
+}
+
+export interface LedgerRow {
+    id: number
+    date: string | null
+    code: string | null
+    entry_id: number
+    source: string | null
+    source_label: string | null
+    memo: string | null
+    cost_center: string | null
+    debit: number
+    credit: number
+    balance: number
+}
+
+export interface AccountLedger {
+    account: { id: number; code: string; name: string; type: AccountType; type_label: string }
+    period: { from: string | null; to: string | null }
+    opening_balance: number
+    rows: LedgerRow[]
+    debit_total: number
+    credit_total: number
+    closing_balance: number
+}
+
+export interface TrialBalanceRow {
+    id: number
+    code: string
+    name: string
+    type: AccountType
+    type_label: string
+    debit: number
+    credit: number
+    balance_debit: number
+    balance_credit: number
+}
+
+export interface TrialBalance {
+    period: { from: string | null; to: string | null }
+    rows: TrialBalanceRow[]
+    debit_total: number
+    credit_total: number
+    balance_debit_total: number
+    balance_credit_total: number
+    /** Zero when the ledger is sound. Shown rather than hidden. */
+    difference: number
+}
+
+export interface StatementGroup {
+    key: string
+    name: string
+    total: number
+    accounts: Array<{ id: number; code: string; name: string; total: number }>
+}
+
+export interface IncomeStatement {
+    period: { from: string | null; to: string | null }
+    revenue: StatementGroup[]
+    revenue_total: number
+    cost_of_sales: StatementGroup[]
+    cost_of_sales_total: number
+    gross_profit: number
+    expenses: StatementGroup[]
+    expenses_total: number
+    net_profit: number
+}
+
+export interface BalanceSheet {
+    as_of: string | null
+    assets: StatementGroup[]
+    assets_total: number
+    liabilities: StatementGroup[]
+    liabilities_total: number
+    equity: StatementGroup[]
+    /** Profit earned and not yet moved anywhere — folded into equity here. */
+    retained_earnings: number
+    equity_total: number
+    liabilities_and_equity_total: number
+    difference: number
+}
+
+export interface CostCenterReport {
+    id: number
+    code: string
+    name: string
+    is_active: boolean
+    total: number
+    accounts: Array<{ id: number; code: string; name: string; total: number }>
+}
+
+export interface AccountingSummary {
+    period: { from: string | null; to: string | null }
+    revenue: number
+    expenses: number
+    net_profit: number
+    assets: number
+    liabilities: number
+    equity: number
+    balanced: boolean
+    /** Documents that moved money but never reached the journal. */
+    unposted: {
+        invoices: number
+        cash_movements: number
+        stock_movements: number
     }
 }

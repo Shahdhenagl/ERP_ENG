@@ -5,6 +5,14 @@ import { ToastProvider } from '@/components/Toast'
 import { PageLoader } from '@/components/ui'
 import { AuthProvider, useAuth } from '@/lib/auth'
 import { areaFor } from '@/lib/nav'
+import { AccountingLayout } from '@/pages/accounting/AccountingLayout'
+import { AccountsPage } from '@/pages/accounting/AccountsPage'
+import { BalanceSheetPage } from '@/pages/accounting/BalanceSheetPage'
+import { CostCentersPage } from '@/pages/accounting/CostCentersPage'
+import { GeneralLedgerPage } from '@/pages/accounting/GeneralLedgerPage'
+import { IncomeStatementPage } from '@/pages/accounting/IncomeStatementPage'
+import { JournalPage } from '@/pages/accounting/JournalPage'
+import { TrialBalancePage } from '@/pages/accounting/TrialBalancePage'
 import { AssetDetail } from '@/pages/AssetDetail'
 import { AssetList } from '@/pages/AssetList'
 import { ContractDetail } from '@/pages/ContractDetail'
@@ -24,7 +32,7 @@ import { InvoicePrint } from '@/pages/print/InvoicePrint'
 import { QuotationPrint } from '@/pages/print/QuotationPrint'
 import { ServiceReportPrint } from '@/pages/print/ServiceReportPrint'
 import { StatementPrint } from '@/pages/print/StatementPrint'
-import { Treasury } from '@/pages/Treasury'
+import { TreasuryPage } from '@/pages/treasury/TreasuryPage'
 import { MyStock } from '@/pages/MyStock'
 import { Dashboard } from '@/pages/Dashboard'
 import { Login } from '@/pages/Login'
@@ -116,7 +124,22 @@ export function App() {
                                         <Route path="purchasing" element={<Purchasing />} />
                                         <Route path="invoices" element={<InvoiceList />} />
                                         <Route path="invoices/:id" element={<InvoiceDetail />} />
-                                        <Route path="treasury" element={<Treasury />} />
+                                        <Route path="treasury" element={<TreasuryPage />} />
+
+                                        {/* Sections rather than tabs for the
+                                            same reason as inventory: the
+                                            sidebar links straight into one. */}
+                                        <Route path="accounting" element={<AccountingLayout />}>
+                                            <Route index element={<Navigate to="accounts" replace />} />
+                                            <Route path="accounts" element={<AccountsPage />} />
+                                            <Route path="journal" element={<JournalPage />} />
+                                            <Route path="ledger" element={<GeneralLedgerPage />} />
+                                            <Route path="trial-balance" element={<TrialBalancePage />} />
+                                            <Route path="income-statement" element={<IncomeStatementPage />} />
+                                            <Route path="balance-sheet" element={<BalanceSheetPage />} />
+                                            <Route path="cost-centers" element={<CostCentersPage />} />
+                                        </Route>
+
                                         <Route path="profile" element={<Profile />} />
 
                                         <Route element={<RequireRole roles={['admin']} />}>

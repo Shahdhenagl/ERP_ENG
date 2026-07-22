@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AccountingController;
 use App\Http\Controllers\Api\AssetController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BranchController;
@@ -205,6 +206,7 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
 
     Route::get('treasury/summary', [TreasuryController::class, 'summary']);
     Route::get('treasury/boxes', [TreasuryController::class, 'boxes']);
+    Route::get('treasury/boxes/{box}/statement', [TreasuryController::class, 'statement']);
     Route::post('treasury/boxes', [TreasuryController::class, 'storeBox']);
     Route::get('treasury/movements', [TreasuryController::class, 'movements']);
     Route::post('treasury/expense', [TreasuryController::class, 'expense']);
@@ -213,6 +215,27 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::get('payments', [TreasuryController::class, 'payments']);
     Route::post('payments', [TreasuryController::class, 'receive']);
     Route::delete('payments/{payment}', [TreasuryController::class, 'reverse']);
+
+    /*
+    | Accounting — reading
+    |
+    | The statements are what the office manager checks the month against, so
+    | they sit with the dispatchers. Everything that changes the chart or writes
+    | the journal by hand is admin-only, below.
+    */
+    Route::prefix('accounting')->group(function () {
+        Route::get('summary', [AccountingController::class, 'summary']);
+        Route::get('accounts', [AccountingController::class, 'accounts']);
+        Route::get('accounts/{account}/ledger', [AccountingController::class, 'ledgerFor']);
+        Route::get('cost-centers', [AccountingController::class, 'costCenters']);
+
+        Route::get('entries', [AccountingController::class, 'entries']);
+        Route::get('entries/{entry}', [AccountingController::class, 'entry']);
+
+        Route::get('trial-balance', [AccountingController::class, 'trialBalance']);
+        Route::get('income-statement', [AccountingController::class, 'incomeStatement']);
+        Route::get('balance-sheet', [AccountingController::class, 'balanceSheet']);
+    });
 });
 
 /*
@@ -223,4 +246,29 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::put('settings', [SettingController::class, 'update']);
     Route::apiResource('users', UserController::class);
+
+    /*
+    | Accounting — writing
+    |
+    | The chart is the shape every report is read through, and a hand-written
+    | entry is the one way into the journal that no document vouches for.
+    | Both belong with whoever answers for the books.
+    */
+    Route::prefix('accounting')->group(function () {
+        Route::post('accounts', [AccountingController::class, 'storeAccount']);
+        Route::put('accounts/{account}', [AccountingController::class, 'updateAccount']);
+        Route::delete('accounts/{account}', [AccountingController::class, 'destroyAccount']);
+
+        Route::post('cost-centers', [AccountingController::class, 'storeCostCenter']);
+        Route::put('cost-centers/{costCenter}', [AccountingController::class, 'updateCostCenter']);
+        Route::delete('cost-centers/{costCenter}', [AccountingController::class, 'destroyCostCenter']);
+
+        Route::post('entries', [AccountingController::class, 'storeEntry']);
+        Route::post('entries/{entry}/reverse', [AccountingController::class, 'reverseEntry']);
+        Route::delete('entries/{entry}', [AccountingController::class, 'destroyEntry']);
+
+        // Catches up documents written before the ledger existed, and any a
+        // swallowed posting failure left behind.
+        Route::post('post', [AccountingController::class, 'post']);
+    });
 });
