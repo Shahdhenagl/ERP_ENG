@@ -33,6 +33,13 @@ import { QuotationPrint } from '@/pages/print/QuotationPrint'
 import { ServiceReportPrint } from '@/pages/print/ServiceReportPrint'
 import { StatementPrint } from '@/pages/print/StatementPrint'
 import { WarrantyCertificate } from '@/pages/print/WarrantyCertificate'
+import { ContractReportPage } from '@/pages/reports/ContractReportPage'
+import { CustodyReportPage } from '@/pages/reports/CustodyReportPage'
+import { ProfitReportPage } from '@/pages/reports/ProfitReportPage'
+import { ReportsLayout } from '@/pages/reports/ReportsLayout'
+import { SalesReportPage } from '@/pages/reports/SalesReportPage'
+import { StockReportPage } from '@/pages/reports/StockReportPage'
+import { WarrantyReportPage } from '@/pages/reports/WarrantyReportPage'
 import { ClaimsPage } from '@/pages/warranty/ClaimsPage'
 import { WarrantyLayout } from '@/pages/warranty/WarrantyLayout'
 import { WarrantyRegisterPage } from '@/pages/warranty/WarrantyRegisterPage'
@@ -149,6 +156,16 @@ export function App() {
                                             <Route path="income-statement" element={<IncomeStatementPage />} />
                                             <Route path="balance-sheet" element={<BalanceSheetPage />} />
                                             <Route path="cost-centers" element={<CostCentersPage />} />
+                                        </Route>
+
+                                        <Route path="reports" element={<ReportsLayout />}>
+                                            <Route index element={<Navigate to="sales" replace />} />
+                                            <Route path="sales" element={<SalesReportPage />} />
+                                            <Route path="profit" element={<ProfitReportPage />} />
+                                            <Route path="stock" element={<StockReportPage />} />
+                                            <Route path="custody" element={<CustodyReportPage />} />
+                                            <Route path="contracts" element={<ContractReportPage />} />
+                                            <Route path="warranties" element={<WarrantyReportPage />} />
                                         </Route>
 
                                         <Route path="profile" element={<Profile />} />

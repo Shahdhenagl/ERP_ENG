@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\ItemController;
 use App\Http\Controllers\Api\PurchaseOrderController;
 use App\Http\Controllers\Api\QuotationController;
+use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\SalesOrderController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\StatementController;
@@ -121,6 +122,18 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::delete('assets/{asset}', [AssetController::class, 'destroy']);
 
     Route::get('technicians', [UserController::class, 'technicians']);
+
+    // ── Reports ──────────────────────────────────────────────
+    // Read-only views over what the other modules already own. The export is
+    // deliberately generic: handing over the rows beats a report builder
+    // nobody can verify.
+    Route::get('reports/sales', [ReportController::class, 'sales']);
+    Route::get('reports/profitability', [ReportController::class, 'profitability']);
+    Route::get('reports/stock', [ReportController::class, 'stock']);
+    Route::get('reports/custody', [ReportController::class, 'custody']);
+    Route::get('reports/contracts', [ReportController::class, 'contracts']);
+    Route::get('reports/warranties', [ReportController::class, 'warranties']);
+    Route::get('reports/{report}/export', [ReportController::class, 'export']);
 
     // ── Warranties & claims ──────────────────────────────────
     Route::get('warranties', [WarrantyController::class, 'index']);

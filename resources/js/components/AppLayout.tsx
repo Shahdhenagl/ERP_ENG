@@ -18,6 +18,9 @@ import {
     Scale,
     ScrollText,
     Settings2,
+    BarChart3,
+    TrendingUp,
+    Boxes as BoxesIcon,
     ShieldCheck,
     ShieldPlus,
     FileWarning,
@@ -111,6 +114,20 @@ const NAV: NavItem[] = [
             { to: '/accounting/trial-balance', label: 'ميزان المراجعة', icon: Scale },
         ],
     },
+    {
+        to: '/reports',
+        label: 'التقارير',
+        icon: BarChart3,
+        roles: ['admin', 'manager'],
+        // Six sections is more than the sidebar should carry flat, and the
+        // parent redirects to the first, so it is not repeated as a child.
+        children: [
+            { to: '/reports/sales', label: 'المبيعات', icon: TrendingUp },
+            { to: '/reports/profit', label: 'الأرباح', icon: Scale },
+            { to: '/reports/stock', label: 'المخزون', icon: BoxesIcon },
+            { to: '/reports/custody', label: 'العهد', icon: HandCoins },
+        ],
+    },
     { to: '/stock', label: 'عهدتي', icon: Package, roles: ['technician'] },
     { to: '/users', label: 'المستخدمون', icon: Users, roles: ['admin'], short: 'الفريق' },
     { to: '/settings', label: 'بيانات الشركة', icon: Settings2, roles: ['admin'], short: 'إعدادات' },
@@ -167,7 +184,10 @@ export function AppLayout() {
                         </div>
                     </div>
 
-                    <nav className="flex-1 space-y-1 px-4">
+                    {/* Scrolls. An admin's nav is now longer than a laptop
+                        screen, and without this the last few entries sit below
+                        the fold with no way to reach them at all. */}
+                    <nav className="no-scrollbar flex-1 space-y-1 overflow-y-auto px-4 pb-4">
                         {visibleNav.map((item) => (
                             <div key={item.to}>
                                 <SidebarLink item={item} href={path(item.to)} />

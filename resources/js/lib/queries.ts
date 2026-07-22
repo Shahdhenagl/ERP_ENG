@@ -33,6 +33,12 @@ import type {
     SupplierStatement,
     PurchaseReturn,
     UninvoicedReceipt,
+    SalesReport,
+    ProfitReport,
+    StockReport,
+    CustodyReport,
+    ContractReport,
+    WarrantyReport,
     StockMovement,
     DeviceHistory,
     Warranty,
@@ -103,6 +109,8 @@ export const keys = {
     supplierStatement: (id: number | string, range?: Record<string, unknown>) =>
         ['supplier-statement', Number(id), range ?? {}] as const,
     purchaseReturns: (f?: Record<string, unknown>) => ['purchase-returns', f ?? {}] as const,
+    report: (name: string, params?: Record<string, unknown>) =>
+        ['report', name, params ?? {}] as const,
 
     suppliers: (filters?: Record<string, unknown>) => ['suppliers', filters ?? {}] as const,
     supplier: (id: number | string) => ['supplier', Number(id)] as const,
@@ -1722,4 +1730,63 @@ function invalidatePayables(client: ReturnType<typeof useQueryClient>): void {
     ]) {
         void client.invalidateQueries({ queryKey: [key] })
     }
+}
+
+/* ── Reports ─────────────────────────────────────────────── */
+
+/**
+ * Every report is the same shape of request: a window, sometimes a threshold,
+ * always read-only. One hook rather than six near-identical ones.
+ */
+function useReport<T>(name: string, params: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+    const clean = pruneRange(params)
+
+    return useQuery({
+        queryKey: keys.report(name, clean),
+        queryFn: async () => (await api.get<{ data: T }>(`/reports/${name}`, { params: clean })).data.data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export const useSalesReport = (range: Record<string, unknown> = {}) =>
+    useReport<SalesReport>('sales', range)
+
+export const useProfitReport = (range: Record<string, unknown> = {}) =>
+    useReport<ProfitReport>('profitability', range)
+
+export const useStockReport = (idleDays = 90) =>
+    useReport<StockReport>('stock', { idle_days: idleDays })
+
+export const useCustodyReport = () => useReport<CustodyReport>('custody')
+
+export const useContractReport = (days = 60) => useReport<ContractReport>('contracts', { days })
+
+export const useWarrantyReport = (days = 60) => useReport<WarrantyReport>('warranties', { days })
+
+/**
+ * Pull a report's rows as a spreadsheet.
+ *
+ * Fetched with the auth header and handed to the browser as a blob rather than
+ * linked directly — an `<a href>` carries no token, and the endpoint is not
+ * open to anyone who guesses the URL.
+ */
+export async function downloadReport(
+    name: string,
+    params: Record<string, unknown> = {},
+): Promise<void> {
+    const response = await api.get(`/reports/${name}/export`, {
+        params: pruneRange(params),
+        responseType: 'blob',
+    })
+
+    const url = URL.createObjectURL(response.data as Blob)
+    const link = document.createElement('a')
+
+    link.href = url
+    link.download = `${name}.csv`
+    link.click()
+
+    URL.revokeObjectURL(url)
 }

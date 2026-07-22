@@ -1256,3 +1256,139 @@ export interface SupplierStatement {
     closing_balance: number
     uninvoiced: number
 }
+
+/* ── Reports ─────────────────────────────────────────────── */
+
+export interface SalesReport {
+    period: { from: string | null; to: string | null }
+    invoices: number
+    subtotal: number
+    discount: number
+    tax: number
+    total: number
+    collected: number
+    outstanding: number
+    average_invoice: number
+    by_customer: Array<{ id: number; name: string; invoices: number; total: number }>
+    by_item: Array<{ item_id: number | null; name: string; qty: number; total: number }>
+}
+
+export interface ProfitJob {
+    invoice_id: number
+    code: string
+    task_code: string | null
+    customer: string | null
+    date: string | null
+    revenue: number
+    parts_cost: number
+    margin: number
+    margin_pct: number
+}
+
+export interface ProfitReport {
+    period: { from: string | null; to: string | null }
+    revenue: number
+    cost_of_sales: number
+    gross_profit: number
+    expenses: number
+    net_profit: number
+    gross_margin_pct: number
+    jobs: ProfitJob[]
+    jobs_revenue: number
+    jobs_cost: number
+}
+
+export interface StockReport {
+    idle_days: number
+    total_value: number
+    items_count: number
+    by_warehouse: Array<{
+        id: number
+        name: string
+        type: WarehouseType
+        type_label: string
+        qty: number
+        value: number
+    }>
+    below_reorder: Array<{
+        id: number
+        code: string
+        name: string
+        qty: number
+        unit: string
+        reorder_level: number
+        shortfall: number
+    }>
+    /** Stock nobody has touched — money sitting in a corner. */
+    idle: Array<{
+        id: number
+        code: string
+        name: string
+        qty: number
+        unit: string
+        value: number
+        last_movement: string | null
+    }>
+    idle_value: number
+    most_consumed: Array<{ id: number; name: string; unit: string; qty: number; value: number }>
+}
+
+export interface CustodyReport {
+    technicians: CustodyStatement[]
+    cash_total: number
+    stock_total: number
+    devices_total: number
+    total_value: number
+}
+
+export interface ContractReportRow {
+    id: number
+    code: string
+    customer: string | null
+    label: string
+    starts_on: string | null
+    ends_on: string | null
+    days_remaining: number
+    effective_status: ContractEffectiveStatus
+    value: number
+    visits: number
+    visits_done: number
+    visits_overdue: number
+    /** Visits made against visits promised. */
+    compliance_pct: number
+}
+
+export interface ContractReport {
+    expiring_within: number
+    active: number
+    expiring: ContractReportRow[]
+    expired: ContractReportRow[]
+    annual_value: number
+    visits_overdue: number
+    sla_breaches: number
+    rows: ContractReportRow[]
+}
+
+export interface WarrantyReport {
+    expiring_within: number
+    active_cover: number
+    expiring: Array<{
+        id: number
+        code: string
+        asset: string | null
+        asset_code: string | null
+        customer: string | null
+        ends_on: string | null
+        days_remaining: number
+        kind_label: string
+    }>
+    claims_total: number
+    claims_open: number
+    repairs: number
+    replacements: number
+    rejected: number
+    /** Parts consumed honouring the cover — work done and never billed. */
+    repair_cost: number
+    by_status: Array<{ status: string; label: string; count: number }>
+    by_model: Array<{ model: string; claims: number }>
+}
