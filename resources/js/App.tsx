@@ -18,6 +18,7 @@ import { AssetList } from '@/pages/AssetList'
 import { ContractDetail } from '@/pages/ContractDetail'
 import { ContractList } from '@/pages/ContractList'
 import { CustomerList } from '@/pages/CustomerList'
+import { CustomerProfile } from '@/pages/CustomerProfile'
 import { CustodyPage } from '@/pages/inventory/CustodyPage'
 import { InventoryLayout } from '@/pages/inventory/InventoryLayout'
 import { ItemsPage } from '@/pages/inventory/ItemsPage'
@@ -130,6 +131,7 @@ export function App() {
                                         <Route path="tasks/:id" element={<TaskDetail />} />
                                         <Route path="tasks/:id/edit" element={<TaskForm />} />
                                         <Route path="customers" element={<CustomerList />} />
+                                        <Route path="customers/:id" element={<CustomerProfile />} />
                                         <Route path="crm" element={<CrmPage />} />
                                         <Route path="assets" element={<AssetList />} />
                                         <Route path="assets/:id" element={<AssetDetail />} />

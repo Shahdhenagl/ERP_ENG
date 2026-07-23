@@ -127,6 +127,7 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::post('tasks/{task}/assign', [TaskController::class, 'assign'])->middleware('can:tasks.dispatch');
 
     Route::get('customers/{customer}/statement', StatementController::class)->middleware('can:customers.manage');
+    Route::get('customers/{customer}/profile', [CustomerController::class, 'profile'])->middleware('can:customers.manage');
 
     // ── Customer branches ────────────────────────────────────
     Route::get('branches', [BranchController::class, 'index'])->middleware('can:customers.manage');

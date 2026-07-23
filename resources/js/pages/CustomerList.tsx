@@ -18,16 +18,26 @@ import { BranchForm } from '@/components/BranchForm'
 import { CustomerForm } from '@/components/CustomerForm'
 import { ConfirmDialog } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
-import { Button, EmptyState, ErrorState, Input, PageHeader, SkeletonCard } from '@/components/ui'
+import { Button, EmptyState, ErrorState, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
 import { errorMessage } from '@/lib/api'
 import { telLink } from '@/lib/format'
 import { useArea } from '@/lib/nav'
 import { useCustomerBranches, useCustomers, useDeleteBranch, useDeleteCustomer } from '@/lib/queries'
-import type { Branch, Customer } from '@/types'
+import { CUSTOMER_TYPES, type Branch, type ContractStanding, type Customer } from '@/types'
+
+const STANDING_CHIP: Record<ContractStanding, string> = {
+    active: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
+    expiring: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
+    expired: 'bg-red-50 text-red-700 ring-1 ring-red-200',
+    none: 'bg-navy-50 text-navy-400 ring-1 ring-navy-200',
+}
 
 export function CustomerList() {
     const toast = useToast()
     const [search, setSearch] = useState('')
+    const [type, setType] = useState('')
+    const [contract, setContract] = useState('')
+    const [active, setActive] = useState('')
     const [formOpen, setFormOpen] = useState(false)
     const [editing, setEditing] = useState<Customer | undefined>()
     const [deleting, setDeleting] = useState<Customer | undefined>()
@@ -35,7 +45,13 @@ export function CustomerList() {
     const [editingBranch, setEditingBranch] = useState<Branch | undefined>()
 
     const { path } = useArea()
-    const { data, isLoading, isError, refetch } = useCustomers({ search, per_page: 40 })
+    const { data, isLoading, isError, refetch } = useCustomers({
+        search,
+        type: type || undefined,
+        contract: contract || undefined,
+        active: active === '' ? undefined : active,
+        per_page: 40,
+    })
     const remove = useDeleteCustomer()
 
     const timer = useRef<number>(0)
@@ -68,7 +84,7 @@ export function CustomerList() {
                 }
             />
 
-            <div className="relative mb-4">
+            <div className="relative mb-3">
                 <Search className="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-navy-300" />
                 <Input
                     defaultValue={search}
@@ -76,6 +92,31 @@ export function CustomerList() {
                     placeholder="ابحث بالاسم أو الشركة أو رقم الهاتف…"
                     className="pr-10"
                 />
+            </div>
+
+            <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                <Select value={type} onChange={(e) => setType(e.target.value)} aria-label="نوع المؤسسة">
+                    <option value="">كل الأنواع</option>
+                    {Object.entries(CUSTOMER_TYPES).map(([value, label]) => (
+                        <option key={value} value={value}>
+                            {label}
+                        </option>
+                    ))}
+                </Select>
+
+                <Select value={contract} onChange={(e) => setContract(e.target.value)} aria-label="حالة العقد">
+                    <option value="">كل حالات العقد</option>
+                    <option value="active">عقد ساري</option>
+                    <option value="expiring">قارب على الانتهاء</option>
+                    <option value="expired">عقد منتهي</option>
+                    <option value="none">بلا عقد</option>
+                </Select>
+
+                <Select value={active} onChange={(e) => setActive(e.target.value)} aria-label="النشاط">
+                    <option value="">الكل (نشط وغير نشط)</option>
+                    <option value="1">النشطون</option>
+                    <option value="0">غير النشطين</option>
+                </Select>
             </div>
 
             {isError ? (
@@ -103,20 +144,31 @@ export function CustomerList() {
                         <div key={customer.id} className="card p-4">
                             <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex flex-wrap items-center gap-2">
                                         <span className="tabular text-[11px] font-bold text-brand-600">
                                             {customer.code}
                                         </span>
-                                        {(customer.tasks_count ?? 0) > 0 && (
-                                            <span className="badge bg-navy-50 text-navy-500">
-                                                {customer.tasks_count} مهمة
+                                        {customer.type_label && (
+                                            <span className="badge bg-brand-50 text-brand-700">
+                                                {customer.type_label}
                                             </span>
+                                        )}
+                                        {customer.contract_standing && customer.contract_standing !== 'none' && (
+                                            <span className={clsx('badge', STANDING_CHIP[customer.contract_standing])}>
+                                                {customer.contract_standing_label}
+                                            </span>
+                                        )}
+                                        {!customer.is_active && (
+                                            <span className="badge bg-navy-100 text-navy-500">غير نشط</span>
                                         )}
                                     </div>
 
-                                    <h3 className="mt-1 truncate text-sm font-bold text-navy-900">
+                                    <Link
+                                        to={path(`/customers/${customer.id}`)}
+                                        className="mt-1 block truncate text-sm font-bold text-navy-900 hover:text-brand-600 hover:underline"
+                                    >
                                         {customer.name}
-                                    </h3>
+                                    </Link>
 
                                     {customer.company && (
                                         <p className="truncate text-xs text-navy-400">{customer.company}</p>

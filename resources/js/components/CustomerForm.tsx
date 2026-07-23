@@ -2,10 +2,10 @@ import { MapPin, Save } from 'lucide-react'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
-import { Button, Field, Input, Textarea } from '@/components/ui'
+import { Button, Field, Input, Select, Textarea } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { useSaveCustomer } from '@/lib/queries'
-import type { Customer } from '@/types'
+import { CUSTOMER_TYPES, type Customer } from '@/types'
 
 interface CustomerFormProps {
     open: boolean
@@ -23,6 +23,7 @@ export function CustomerForm({ open, onClose, customer, onSaved }: CustomerFormP
     const [form, setForm] = useState({
         name: customer?.name ?? '',
         company: customer?.company ?? '',
+        type: customer?.type ?? '',
         phone: customer?.phone ?? '',
         whatsapp: customer?.whatsapp ?? '',
         email: customer?.email ?? '',
@@ -32,6 +33,7 @@ export function CustomerForm({ open, onClose, customer, onSaved }: CustomerFormP
         lng: customer?.lng?.toString() ?? '',
         map_url: customer?.map_url ?? '',
         notes: customer?.notes ?? '',
+        is_active: customer ? customer.is_active : true,
     })
 
     const set = (key: keyof typeof form) => (value: string) =>
@@ -80,6 +82,7 @@ export function CustomerForm({ open, onClose, customer, onSaved }: CustomerFormP
                 lat: form.lat === '' ? null : Number(form.lat),
                 lng: form.lng === '' ? null : Number(form.lng),
                 company: form.company || null,
+                type: form.type || null,
                 whatsapp: form.whatsapp || null,
                 email: form.email || null,
                 address: form.address || null,
@@ -131,6 +134,32 @@ export function CustomerForm({ open, onClose, customer, onSaved }: CustomerFormP
                             onChange={(event) => set('company')(event.target.value)}
                             placeholder="اسم الشركة (اختياري)"
                         />
+                    </Field>
+
+                    <Field label="نوع المؤسسة" error={errors.type}>
+                        <Select
+                            value={form.type}
+                            onChange={(event) => set('type')(event.target.value)}
+                        >
+                            <option value="">— غير محدد —</option>
+                            {Object.entries(CUSTOMER_TYPES).map(([value, label]) => (
+                                <option key={value} value={value}>
+                                    {label}
+                                </option>
+                            ))}
+                        </Select>
+                    </Field>
+
+                    <Field label="الحالة" error={errors.is_active}>
+                        <Select
+                            value={form.is_active ? '1' : '0'}
+                            onChange={(event) =>
+                                setForm((current) => ({ ...current, is_active: event.target.value === '1' }))
+                            }
+                        >
+                            <option value="1">نشط</option>
+                            <option value="0">غير نشط</option>
+                        </Select>
                     </Field>
 
                     <Field label="رقم الهاتف" required error={errors.phone}>

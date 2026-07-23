@@ -75,7 +75,9 @@ class LeadService
             $customer = Customer::create([
                 'name' => $lead->name,
                 'company' => $lead->company,
-                'phone' => $lead->phone ?: '—',
+                // Null, not a placeholder: the phone column is unique now, and
+                // two dashes would collide. A won lead can be phoneless.
+                'phone' => $lead->phone ?: null,
                 'whatsapp' => $lead->whatsapp,
                 'email' => $lead->email,
                 'notes' => $lead->notes,

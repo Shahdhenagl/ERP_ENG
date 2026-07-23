@@ -32,12 +32,20 @@ export interface User {
     permissions?: string[]
 }
 
+export type CustomerType =
+    | 'factory' | 'hospital' | 'hotel' | 'bank' | 'data_center'
+    | 'government' | 'company' | 'tower' | 'education' | 'retail' | 'other'
+
+export type ContractStanding = 'active' | 'expiring' | 'expired' | 'none'
+
 export interface Customer {
     id: number
     code: string
     name: string
     company: string | null
-    phone: string
+    type: CustomerType | null
+    type_label: string | null
+    phone: string | null
     whatsapp: string | null
     whatsapp_number: string | null
     whatsapp_link: string | null
@@ -51,11 +59,66 @@ export interface Customer {
     notes: string | null
     is_active: boolean
     tasks_count?: number
+    contracts_count?: number
+    active_contracts_count?: number
+    contract_standing?: ContractStanding
+    contract_standing_label?: string
     created_at: string | null
 }
 
+/** The institution kinds, value → Arabic label, mirroring Customer::TYPES. */
+export const CUSTOMER_TYPES: Record<CustomerType, string> = {
+    factory: 'مصنع',
+    hospital: 'مستشفى',
+    hotel: 'فندق',
+    bank: 'بنك',
+    data_center: 'مركز بيانات',
+    government: 'جهة حكومية',
+    company: 'شركة / مؤسسة',
+    tower: 'برج / عقار',
+    education: 'مؤسسة تعليمية',
+    retail: 'محل تجاري',
+    other: 'أخرى',
+}
+
+export interface CustomerProfile {
+    customer: Customer
+    summary: {
+        contracts: number
+        active_contracts: number
+        expiring_contracts: number
+        quotations: number
+        assets: number
+        tasks: number
+        outstanding: number
+    }
+    contracts: Array<{
+        id: number
+        code: string
+        title: string | null
+        starts_on: string | null
+        ends_on: string | null
+        value: number
+        status: string
+        status_label: string
+        days_remaining: number
+    }>
+    quotations: Array<{
+        id: number
+        code: string
+        title: string | null
+        issue_date: string | null
+        total: number
+        status: string
+        status_label: string
+    }>
+    assets: Array<{ id: number; code: string; label: string; serial: string | null }>
+}
+
 export type ItemCategory = 'battery' | 'spare_part' | 'consumable'
-export type MovementType = 'receipt' | 'transfer' | 'issue' | 'return' | 'adjustment'
+export type MovementType =
+    | 'receipt' | 'transfer' | 'issue' | 'return' | 'adjustment'
+    | 'purchase_return' | 'sales_return'
 export type WarehouseType = 'store' | 'van'
 
 export interface Item {

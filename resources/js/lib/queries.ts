@@ -27,6 +27,7 @@ import type {
     Contract,
     CustodyStatement,
     Customer,
+    CustomerProfile,
     DashboardData,
     CashBoxSummary,
     CashMovementRow,
@@ -322,6 +323,15 @@ export function useCustomer(id: number | string | undefined) {
     return useQuery({
         queryKey: keys.customer(id ?? 0),
         queryFn: async () => (await api.get<{ data: Customer }>(`/customers/${id}`)).data.data,
+        enabled: Boolean(id),
+    })
+}
+
+export function useCustomerProfile(id: number | string | undefined) {
+    return useQuery({
+        queryKey: ['customer-profile', Number(id ?? 0)],
+        queryFn: async () =>
+            (await api.get<{ data: CustomerProfile }>(`/customers/${id}/profile`)).data.data,
         enabled: Boolean(id),
     })
 }
