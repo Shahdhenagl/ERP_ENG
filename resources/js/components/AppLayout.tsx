@@ -289,25 +289,30 @@ export function AppLayout() {
                         </span>
                     </Link>
 
-                    {/* The wordmark stays on phones too. Hiding it left the header
-                        as a bare circle with no indication of whose app this is,
-                        which is the one thing a brand mark is there to do. */}
-                    {/* The wordmark stays on phones too. Hiding it left the header
-                        as a bare circle with no indication of whose app this is,
-                        which is the one thing a brand mark is there to do.
-                        Sized down at 320px so the name survives whole rather
-                        than truncating to "...gineering". */}
-                    <div className="flex min-w-0 flex-1 items-center justify-center gap-1.5 sm:gap-2">
-                        {/* Below 360px the mark yields to the name — between an
-                            icon and the words, the words identify the app. */}
-                        <img
-                            src="/brand/logo-mark.png"
-                            alt=""
-                            className="hidden size-7 shrink-0 object-contain min-[360px]:block sm:size-8"
-                        />
-                        <span className="truncate text-[11px] font-extrabold text-navy-900 min-[360px]:text-[13px] sm:text-sm">
-                            City Engineering
-                        </span>
+                    {/* The header wordmark, centred. It is the app's only brand
+                        mark wherever the sidebar is not — on phones, and for
+                        every role but an admin on a wide screen. There the
+                        sidebar already carries the name, so the centre mark
+                        hides rather than print it twice; the flex spacer stays
+                        so the bell and logout keep their end of the bar. */}
+                    <div className="flex min-w-0 flex-1 items-center justify-center">
+                        <div
+                            className={clsx(
+                                'flex min-w-0 items-center gap-1.5 sm:gap-2',
+                                hasSidebar && 'lg:hidden',
+                            )}
+                        >
+                            {/* Below 360px the mark yields to the name — between
+                                an icon and the words, the words identify the app. */}
+                            <img
+                                src="/brand/logo-mark.png"
+                                alt=""
+                                className="hidden size-7 shrink-0 object-contain min-[360px]:block sm:size-8"
+                            />
+                            <span className="truncate text-[11px] font-extrabold text-navy-900 min-[360px]:text-[13px] sm:text-sm">
+                                City Engineering
+                            </span>
+                        </div>
                     </div>
 
                     <button
