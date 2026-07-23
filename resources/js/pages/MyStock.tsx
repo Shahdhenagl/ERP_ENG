@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import { Package } from 'lucide-react'
 import { EmptyState, PageHeader, SkeletonCard } from '@/components/ui'
-import { formatQty, ITEM_CATEGORY, MOVEMENT_TYPE } from '@/lib/domain'
+import { formatQty, ITEM_CATEGORY, MOVEMENT_TYPE, MOVEMENT_TYPE_FALLBACK } from '@/lib/domain'
 import { formatSmart } from '@/lib/format'
 import { useMovements, useMyStock } from '@/lib/queries'
 
@@ -55,7 +55,7 @@ export function MyStock() {
 
                     <div className="space-y-2">
                         {movements.data.map((movement) => {
-                            const meta = MOVEMENT_TYPE[movement.type]
+                            const meta = MOVEMENT_TYPE[movement.type] ?? MOVEMENT_TYPE_FALLBACK
 
                             return (
                                 <div key={movement.id} className="card p-3.5">

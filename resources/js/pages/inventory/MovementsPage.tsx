@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import { ClipboardList } from 'lucide-react'
 import { EmptyState, SkeletonCard } from '@/components/ui'
-import { formatMoney, formatQty, MOVEMENT_TYPE } from '@/lib/domain'
+import { formatMoney, formatQty, MOVEMENT_TYPE, MOVEMENT_TYPE_FALLBACK } from '@/lib/domain'
 import { formatSmart } from '@/lib/format'
 import { useMovements } from '@/lib/queries'
 
@@ -18,7 +18,7 @@ export function MovementsPage() {
     return (
         <div className="space-y-2">
             {data.data.map((movement) => {
-                const meta = MOVEMENT_TYPE[movement.type]
+                const meta = MOVEMENT_TYPE[movement.type] ?? MOVEMENT_TYPE_FALLBACK
 
                 return (
                     <div key={movement.id} className="card p-3.5">

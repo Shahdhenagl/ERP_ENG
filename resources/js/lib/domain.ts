@@ -251,6 +251,16 @@ export const MOVEMENT_TYPE: Record<MovementType, { label: string; chip: string; 
     issue: { label: 'صرف على مهمة', chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200', sign: '−' },
     return: { label: 'مرتجع من مهمة', chip: 'bg-teal-50 text-teal-700 ring-1 ring-teal-200', sign: '+' },
     adjustment: { label: 'تسوية جرد', chip: 'bg-purple-50 text-purple-700 ring-1 ring-purple-200', sign: '±' },
+    // Goods handed back to a supplier leave stock; a customer's return re-enters it.
+    purchase_return: { label: 'مرتجع مشتريات', chip: 'bg-rose-50 text-rose-700 ring-1 ring-rose-200', sign: '−' },
+    sales_return: { label: 'مرتجع مبيعات', chip: 'bg-teal-50 text-teal-700 ring-1 ring-teal-200', sign: '+' },
+}
+
+/** Fallback so a movement type the map has not met yet never breaks the list. */
+export const MOVEMENT_TYPE_FALLBACK = {
+    label: 'حركة',
+    chip: 'bg-navy-100 text-navy-600',
+    sign: '±' as const,
 }
 
 /**
