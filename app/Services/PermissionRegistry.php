@@ -53,6 +53,10 @@ class PermissionRegistry
         'accounting.view' => ['عرض الحسابات والقوائم', 'المالية'],
         'accounting.manage' => ['القيود اليدوية ودليل الحسابات', 'المالية'],
 
+        // ── People ───────────────────────────────────────────
+        'hr.manage' => ['الموظفون والإجازات', 'الموارد البشرية'],
+        'payroll.manage' => ['الرواتب والسلف والمسيّرات', 'الموارد البشرية'],
+
         // ── Oversight ────────────────────────────────────────
         'reports.view' => ['التقارير', 'الإدارة'],
         'users.manage' => ['المستخدمون والصلاحيات', 'الإدارة'],
@@ -83,6 +87,8 @@ class PermissionRegistry
             'invoices.manage',
             'treasury.manage',
             'cheques.manage',
+            'hr.manage',
+            'payroll.manage',
             // A manager could read the books but never write a manual entry.
             'accounting.view',
             'reports.view',

@@ -8,6 +8,8 @@ use App\Models\Account;
 use App\Models\CashMovement;
 use App\Models\Invoice;
 use App\Models\JournalEntry;
+use App\Models\PayrollRun;
+use App\Models\Payslip;
 use App\Models\SalesReturn;
 use App\Models\StockMovement;
 use App\Models\SupplierInvoice;
@@ -166,6 +168,61 @@ class LedgerPoster
         ], $actor);
     }
 
+    /**
+     * A payroll run, approved.
+     *
+     *   Dr  رواتب وأجور           الأجر المكتسب (بعد أيام الغياب)
+     *       Cr  رواتب مستحقة          صافي المستحق للموظفين
+     *       Cr  سلف الموظفين          ما استُرد من السلف
+     *       Cr  تأمينات مستحقة        حصة التأمينات
+     *       Cr  ضريبة مستحقة          ضريبة كسب العمل
+     *       Cr  مصروفات مستحقة        أي خصومات أخرى
+     *
+     * The debit is earned pay, not gross: the company does not owe for days
+     * nobody worked. What it withholds — tax, insurance, an advance being
+     * recovered — is a liability or an asset it recovers, not cash yet, so the
+     * cash side waits until each slip is paid. Every credit sums to the debit
+     * because that is how each slip was built.
+     */
+    public function payrollRun(PayrollRun $run, ?User $actor = null): ?JournalEntry
+    {
+        if ($run->status === 'draft') {
+            return null;
+        }
+
+        $this->ready();
+
+        return $this->ledger->postFor($run, 'approved', function () use ($run) {
+            $slips = $run->payslips;
+
+            $earned = round($slips->sum(fn (Payslip $s) => $s->earnedPay()), 2);
+            $net = round($slips->sum('net'), 2);
+            $advances = round($slips->sum('advance_recovery'), 2);
+            $insurance = round($slips->sum('insurance'), 2);
+            $tax = round($slips->sum('tax'), 2);
+            $other = round($slips->sum('other_deductions'), 2);
+
+            if ($earned <= 0) {
+                return [];
+            }
+
+            // Only the lines that carry a figure — an entry with a zero credit
+            // is noise on the page.
+            return array_values(array_filter([
+                ['account' => 'salaries', 'debit' => $earned, 'memo' => $run->code],
+                $net > 0 ? ['account' => 'accrued_salaries', 'credit' => $net] : null,
+                $advances > 0 ? ['account' => 'staff_advances', 'credit' => $advances] : null,
+                $insurance > 0 ? ['account' => 'insurance_payable', 'credit' => $insurance] : null,
+                $tax > 0 ? ['account' => 'payroll_tax_payable', 'credit' => $tax] : null,
+                $other > 0 ? ['account' => 'accrued_expenses', 'credit' => $other] : null,
+            ]));
+        }, [
+            'entry_date' => $run->approved_at?->toDateString() ?? now()->toDateString(),
+            'source' => 'payroll',
+            'memo' => "مسير رواتب {$run->monthLabel()}",
+        ], $actor);
+    }
+
     /** A supplier bill torn up. Undone by its mirror, like a sales invoice. */
     public function supplierInvoiceVoided(SupplierInvoice $invoice, ?User $actor = null): ?JournalEntry
     {
@@ -264,6 +321,10 @@ class LedgerPoster
                 'payment' => Account::key('receivable'),
                 'supplier_payment' => Account::key('payable'),
                 'opening' => Account::key('opening_equity'),
+                // An advance is an asset until a payslip recovers it; a paid
+                // salary clears the accrual the run raised on approval.
+                'advance' => Account::key('staff_advances'),
+                'payroll' => Account::key('accrued_salaries'),
                 default => $this->expenseAccount($movement),
             };
 

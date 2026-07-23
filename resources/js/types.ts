@@ -1718,3 +1718,150 @@ export interface UserPermissions {
     /** The two folded together — what this user may actually do. */
     effective: string[]
 }
+
+/* ── Human resources ─────────────────────────────────────── */
+
+export interface Allowance {
+    name: string
+    amount: number
+}
+
+export interface Employee {
+    id: number
+    code: string
+    name: string
+    user_id: number | null
+    national_id: string | null
+    phone: string | null
+    job_title: string | null
+    department: string | null
+
+    hired_on: string | null
+    left_on: string | null
+    employment_type: 'full_time' | 'part_time' | 'contract'
+
+    basic_salary: number
+    allowances: Allowance[]
+    allowances_total: number
+    gross_salary: number
+    insurance_rate: number
+    tax_rate: number
+
+    annual_leave_days: number
+    annual_leave_remaining: number
+    outstanding_advances: number
+
+    bank_name: string | null
+    bank_account: string | null
+
+    status: 'active' | 'suspended' | 'terminated'
+    status_label: string
+    notes: string | null
+
+    leave?: Array<{
+        id: number
+        code: string
+        type_label: string
+        from_date: string | null
+        to_date: string | null
+        days: number
+        status: string
+        status_label: string
+    }>
+    advances?: Array<{ id: number; code: string; advance_date: string | null; amount: number }>
+    payslips?: Array<{
+        id: number
+        run_code: string | null
+        month: string | null
+        net: number
+        paid_on: string | null
+    }>
+}
+
+export type LeaveType = 'annual' | 'sick' | 'unpaid'
+export type LeaveStatus = 'pending' | 'approved' | 'rejected' | 'cancelled'
+
+export interface LeaveRequest {
+    id: number
+    code: string
+    employee_id: number
+    employee: string | null
+    employee_code: string | null
+    type: LeaveType
+    type_label: string
+    from_date: string | null
+    to_date: string | null
+    days: number
+    status: LeaveStatus
+    status_label: string
+    reason: string | null
+    decided_by: string | null
+    decided_at: string | null
+    decision_note: string | null
+    /** The balance as it stands, for an approver weighing an annual request. */
+    annual_remaining: number | null
+    created_at: string | null
+}
+
+export interface SalaryAdvance {
+    id: number
+    code: string
+    employee: string | null
+    employee_id: number
+    advance_date: string | null
+    amount: number
+    installment: number
+    outstanding: number
+    box: string | null
+}
+
+export type PayrollStatus = 'draft' | 'approved' | 'paid'
+
+export interface Payslip {
+    id: number
+    payroll_run_id: number
+    run_code: string | null
+    month: string | null
+    employee_id: number
+    employee: string | null
+    employee_code: string | null
+    job_title: string | null
+
+    basic_salary: number
+    allowances: Allowance[]
+    allowances_total: number
+    gross: number
+
+    unpaid_days: number
+    unpaid_deduction: number
+    advance_recovery: number
+    insurance: number
+    tax: number
+    other_deductions: number
+    other_note: string | null
+    total_deductions: number
+
+    net: number
+
+    paid_on: string | null
+    box: string | null
+    is_paid: boolean
+}
+
+export interface PayrollRun {
+    id: number
+    code: string
+    year: number
+    month: number
+    month_label: string
+    status: PayrollStatus
+    status_label: string
+    days_in_month?: number
+    approved_at: string | null
+    payslips_count?: number
+    gross_total?: number
+    deductions_total?: number
+    net_total: number
+    unpaid_net: number
+    payslips?: Payslip[]
+}

@@ -42,6 +42,8 @@ import { ReportsLayout } from '@/pages/reports/ReportsLayout'
 import { SalesReportPage } from '@/pages/reports/SalesReportPage'
 import { StockReportPage } from '@/pages/reports/StockReportPage'
 import { WarrantyReportPage } from '@/pages/reports/WarrantyReportPage'
+import { HrPage } from '@/pages/hr/HrPage'
+import { PayslipPrint } from '@/pages/print/PayslipPrint'
 import { ClaimsPage } from '@/pages/warranty/ClaimsPage'
 import { WarrantyLayout } from '@/pages/warranty/WarrantyLayout'
 import { WarrantyRegisterPage } from '@/pages/warranty/WarrantyRegisterPage'
@@ -96,6 +98,7 @@ export function App() {
                                     <Route path="warranty/:id" element={<WarrantyCertificate />} />
                                     <Route path="delivery/:id" element={<DeliveryNotePrint />} />
                                     <Route path="vouchers/:id" element={<PaymentVoucherPrint />} />
+                                    <Route path="payslips/:id" element={<PayslipPrint />} />
                                 </Route>
 
                                 {/* The service report is unprefixed: a technician
@@ -150,6 +153,7 @@ export function App() {
                                         <Route path="invoices/:id" element={<InvoiceDetail />} />
                                         <Route path="treasury" element={<TreasuryPage />} />
                                         <Route path="cheques" element={<ChequesPage />} />
+                                        <Route path="hr" element={<HrPage />} />
 
                                         {/* Sections rather than tabs for the
                                             same reason as inventory: the

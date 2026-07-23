@@ -23,6 +23,7 @@ import {
     Boxes as BoxesIcon,
     ShieldCheck,
     Truck,
+    UserCog,
     Users,
     Wallet,
     Warehouse,
@@ -48,6 +49,12 @@ interface NavItem {
      * the dashboard and a technician's own screens.
      */
     permission?: string
+    /**
+     * Any one of these opens it. For a module split across two permissions —
+     * HR is people-management and payroll at once, and either half is enough
+     * to warrant the entry.
+     */
+    anyPermission?: string[]
     /** Used in the bottom bar, where a long label truncates on a phone. */
     short?: string
     /**
@@ -125,6 +132,14 @@ const NAV: NavItem[] = [
             { to: '/reports/custody', permission: 'reports.view', label: 'العهد', icon: HandCoins },
         ],
     },
+    {
+        to: '/hr',
+        anyPermission: ['hr.manage', 'payroll.manage'],
+        label: 'الموارد البشرية',
+        icon: UserCog,
+        roles: ['admin', 'manager'],
+        short: 'موظفون',
+    },
     { to: '/stock', label: 'عهدتي', icon: Package, roles: ['technician'] },
     {
         to: '/users',
@@ -161,7 +176,8 @@ export function AppLayout() {
     // would open onto a list of things that all refuse you.
     const allowed = (item: NavItem) =>
         (! item.roles || (user && item.roles.includes(user.role))) &&
-        (! item.permission || can(item.permission))
+        (! item.permission || can(item.permission)) &&
+        (! item.anyPermission || item.anyPermission.some((p) => can(p)))
 
     const visibleNav = NAV.filter(allowed).map((item) =>
         item.children ? { ...item, children: item.children.filter(allowed) } : item,

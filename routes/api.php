@@ -9,6 +9,9 @@ use App\Http\Controllers\Api\ChequeController;
 use App\Http\Controllers\Api\ContractController;
 use App\Http\Controllers\Api\CustodyController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\EmployeeController;
+use App\Http\Controllers\Api\LeaveController;
+use App\Http\Controllers\Api\PayrollController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\ItemCategoryController;
@@ -142,6 +145,29 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::delete('assets/{asset}', [AssetController::class, 'destroy'])->middleware('can:assets.manage');
 
     Route::get('technicians', [UserController::class, 'technicians']);
+
+    // ── Human resources ──────────────────────────────────────
+    // Employees and leave under one permission; the money — advances and
+    // payroll — under another, because paying salaries is a treasury act.
+    Route::apiResource('employees', EmployeeController::class)->middleware('can:hr.manage');
+
+    Route::get('leave', [LeaveController::class, 'index'])->middleware('can:hr.manage');
+    Route::post('leave', [LeaveController::class, 'store'])->middleware('can:hr.manage');
+    Route::post('leave/{leaveRequest}/decide', [LeaveController::class, 'decide'])->middleware('can:hr.manage');
+    Route::post('leave/{leaveRequest}/cancel', [LeaveController::class, 'cancel'])->middleware('can:hr.manage');
+
+    Route::get('advances', [PayrollController::class, 'advances'])->middleware('can:payroll.manage');
+    Route::post('advances', [PayrollController::class, 'storeAdvance'])->middleware('can:payroll.manage');
+
+    Route::get('payroll', [PayrollController::class, 'index'])->middleware('can:payroll.manage');
+    Route::post('payroll', [PayrollController::class, 'open'])->middleware('can:payroll.manage');
+    Route::get('payroll/{payrollRun}', [PayrollController::class, 'show'])->middleware('can:payroll.manage');
+    Route::post('payroll/{payrollRun}/approve', [PayrollController::class, 'approve'])->middleware('can:payroll.manage');
+    Route::post('payroll/{payrollRun}/pay', [PayrollController::class, 'pay'])->middleware('can:payroll.manage');
+
+    Route::get('payslips/{payslip}', [PayrollController::class, 'slip'])->middleware('can:payroll.manage');
+    Route::put('payslips/{payslip}', [PayrollController::class, 'adjustSlip'])->middleware('can:payroll.manage');
+    Route::post('payslips/{payslip}/pay', [PayrollController::class, 'paySlip'])->middleware('can:payroll.manage');
 
     // ── Reports ──────────────────────────────────────────────
     // Read-only views over what the other modules already own. The export is

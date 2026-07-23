@@ -15,6 +15,7 @@ enum JournalSource: string
     case Custody = 'custody';
     case Stock = 'stock';
     case Opening = 'opening';
+    case Payroll = 'payroll';
 
     public function label(): string
     {
@@ -30,6 +31,7 @@ enum JournalSource: string
             self::Custody => 'عهدة موظف',
             self::Stock => 'حركة مخزون',
             self::Opening => 'رصيد افتتاحي',
+            self::Payroll => 'مسير رواتب',
         };
     }
 

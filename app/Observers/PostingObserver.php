@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Enums\InvoiceStatus;
 use App\Models\CashMovement;
 use App\Models\Invoice;
+use App\Models\PayrollRun;
 use App\Models\SalesReturn;
 use App\Models\StockMovement;
 use App\Models\SupplierInvoice;
@@ -53,6 +54,16 @@ class PostingObserver
 
     public function updated(Model $model): void
     {
+        // A payroll run posts when it is approved, which is an update — the
+        // slips are created first, then locked.
+        if ($model instanceof PayrollRun) {
+            if ($model->wasChanged('status') && $model->status !== 'draft') {
+                $this->guard(fn () => $this->poster->payrollRun($model));
+            }
+
+            return;
+        }
+
         // A credit note posts when it leaves draft, which is an update: it is
         // created empty and priced afterwards, the same as a supplier bill.
         if ($model instanceof SalesReturn) {

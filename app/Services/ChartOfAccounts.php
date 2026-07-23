@@ -40,6 +40,9 @@ class ChartOfAccounts
         ['1105', 'مصروفات مدفوعة مقدمًا',          'asset',     null,               false],
         // Tax we paid our suppliers and reclaim against tax we charged.
         ['1106', 'ضريبة القيمة المضافة على المشتريات', 'asset',  'vat_input',        false],
+        // Money advanced to an employee, sitting as an asset until a payslip
+        // recovers it.
+        ['1107', 'سلف الموظفين',                   'asset',     'staff_advances',   false],
         ['12',   'الأصول الثابتة',                'asset',     null,               true],
         ['1201', 'أصول ثابتة',                    'asset',     'fixed_assets',     false],
         ['1202', 'مجمع الإهلاك',                  'asset',     'depreciation',     false],
@@ -49,7 +52,12 @@ class ChartOfAccounts
         ['21',   'الخصوم المتداولة',              'liability', null,               true],
         ['2101', 'الموردون (الدائنون)',           'liability', 'payable',          false],
         ['2102', 'ضريبة القيمة المضافة المستحقة', 'liability', 'vat_output',       false],
-        ['2103', 'مصروفات مستحقة',                'liability', null,               false],
+        ['2103', 'مصروفات مستحقة',                'liability', 'accrued_expenses', false],
+        // Net pay owed to staff, and the statutory amounts withheld from it and
+        // owed onward to the insurance authority and the tax office.
+        ['2104', 'رواتب مستحقة',                   'liability', 'accrued_salaries', false],
+        ['2105', 'تأمينات اجتماعية مستحقة',        'liability', 'insurance_payable', false],
+        ['2106', 'ضريبة كسب عمل مستحقة',           'liability', 'payroll_tax_payable', false],
 
         // ── 3 Equity ─────────────────────────────────────────
         ['3',    'حقوق الملكية',                  'equity',    null,               true],
@@ -77,7 +85,7 @@ class ChartOfAccounts
         // Where a supplier bill disagrees with the price the goods came in at.
         ['5103', 'فروق أسعار الشراء',             'expense',   'purchase_variance', false],
         ['52',   'مصروفات تشغيلية',               'expense',   null,               true],
-        ['5201', 'رواتب وأجور',                   'expense',   null,               false],
+        ['5201', 'رواتب وأجور',                   'expense',   'salaries',         false],
         ['5202', 'إيجارات',                       'expense',   null,               false],
         ['5203', 'كهرباء ومياه',                  'expense',   null,               false],
         ['5204', 'وقود وانتقالات',                'expense',   null,               false],

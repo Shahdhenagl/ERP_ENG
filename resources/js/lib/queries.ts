@@ -7,6 +7,11 @@ import type {
     AccountingSummary,
     ActivityEntry,
     ActivityFilters,
+    Employee,
+    LeaveRequest,
+    SalaryAdvance,
+    PayrollRun,
+    Payslip,
     PermissionCatalogue,
     UserPermissions,
     AppNotification,
@@ -81,6 +86,13 @@ export const keys = {
     permissionCatalogue: ['permission-catalogue'] as const,
     userPermissions: (id: number | string) => ['user-permissions', Number(id)] as const,
     technicians: ['technicians'] as const,
+    employees: (f?: Record<string, unknown>) => ['employees', f ?? {}] as const,
+    employee: (id: number | string) => ['employee', Number(id)] as const,
+    leave: (f?: Record<string, unknown>) => ['leave', f ?? {}] as const,
+    advances: (f?: Record<string, unknown>) => ['advances', f ?? {}] as const,
+    payrollRuns: (f?: Record<string, unknown>) => ['payroll-runs', f ?? {}] as const,
+    payrollRun: (id: number | string) => ['payroll-run', Number(id)] as const,
+    payslip: (id: number | string) => ['payslip', Number(id)] as const,
     notifications: ['notifications'] as const,
 
     custody: ['custody'] as const,
@@ -2156,4 +2168,198 @@ export function useSavePermissions(userId: number) {
             void client.invalidateQueries({ queryKey: ['users'] })
         },
     })
+}
+
+/* ── Human resources ─────────────────────────────────────── */
+
+export function useEmployees(filters: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: keys.employees(filters),
+        queryFn: async () =>
+            (await api.get<Paginated<Employee> & { meta: { active: number; monthly_payroll: number } }>(
+                '/employees',
+                { params: filters },
+            )).data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useEmployee(id: number | string | undefined) {
+    return useQuery({
+        queryKey: keys.employee(id ?? 0),
+        queryFn: async () => (await api.get<{ data: Employee }>(`/employees/${id}`)).data.data,
+        enabled: Boolean(id),
+    })
+}
+
+export function useSaveEmployee(id?: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (
+                await (id
+                    ? api.put<{ data: Employee }>(`/employees/${id}`, payload)
+                    : api.post<{ data: Employee }>('/employees', payload))
+            ).data.data,
+        onSuccess: () => invalidateHr(client),
+    })
+}
+
+export function useDeleteEmployee() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id: number) => (await api.delete(`/employees/${id}`)).data,
+        onSuccess: () => invalidateHr(client),
+    })
+}
+
+export function useLeave(filters: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: keys.leave(filters),
+        queryFn: async () =>
+            (await api.get<Paginated<LeaveRequest> & { meta: { pending: number } }>('/leave', {
+                params: filters,
+            })).data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useSaveLeave() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (await api.post<{ data: LeaveRequest }>('/leave', payload)).data.data,
+        onSuccess: () => invalidateHr(client),
+    })
+}
+
+export function useLeaveAction() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ id, ...payload }: { id: number } & Record<string, unknown>) =>
+            (await api.post<{ data: LeaveRequest }>(`/leave/${id}/decide`, payload)).data.data,
+        onSuccess: () => invalidateHr(client),
+    })
+}
+
+export function useAdvances(filters: Record<string, unknown> = {}) {
+    return useQuery({
+        queryKey: keys.advances(filters),
+        queryFn: async () =>
+            (await api.get<{ data: SalaryAdvance[]; meta: { total: number } }>('/advances', {
+                params: filters,
+            })).data,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useSaveAdvance() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (await api.post('/advances', payload)).data,
+        onSuccess: () => invalidateHr(client),
+    })
+}
+
+export function usePayrollRuns(filters: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: keys.payrollRuns(filters),
+        queryFn: async () =>
+            (await api.get<{ data: PayrollRun[]; meta: { total: number } }>('/payroll', {
+                params: filters,
+            })).data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function usePayrollRun(id: number | string | undefined) {
+    return useQuery({
+        queryKey: keys.payrollRun(id ?? 0),
+        queryFn: async () => (await api.get<{ data: PayrollRun }>(`/payroll/${id}`)).data.data,
+        enabled: Boolean(id),
+    })
+}
+
+export function useOpenPayroll() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: { year: number; month: number }) =>
+            (await api.post<{ data: PayrollRun }>('/payroll', payload)).data.data,
+        onSuccess: () => invalidateHr(client),
+    })
+}
+
+/** Approve or pay a whole run — one document moving. */
+export function usePayrollAction(runId: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ action, ...payload }: { action: 'approve' | 'pay' } & Record<string, unknown>) =>
+            (await api.post<{ data: PayrollRun }>(`/payroll/${runId}/${action}`, payload)).data.data,
+        onSuccess: () => invalidateHr(client),
+    })
+}
+
+export function usePayslip(id: number | string | undefined) {
+    return useQuery({
+        queryKey: keys.payslip(id ?? 0),
+        queryFn: async () => (await api.get<{ data: Payslip }>(`/payslips/${id}`)).data.data,
+        enabled: Boolean(id),
+    })
+}
+
+/** Adjust a slip, or pay it on its own. */
+export function usePayslipAction() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({
+            id,
+            action,
+            payload,
+        }: {
+            id: number
+            action: 'adjust' | 'pay'
+            payload?: Record<string, unknown>
+        }) =>
+            action === 'adjust'
+                ? (await api.put<{ data: Payslip }>(`/payslips/${id}`, payload ?? {})).data.data
+                : (await api.post<{ data: Payslip }>(`/payslips/${id}/pay`, payload ?? {})).data.data,
+        onSuccess: () => invalidateHr(client),
+    })
+}
+
+/** Payroll moves money, so the treasury and the books refresh with HR. */
+function invalidateHr(client: ReturnType<typeof useQueryClient>): void {
+    for (const key of [
+        'employees',
+        'employee',
+        'leave',
+        'advances',
+        'payroll-runs',
+        'payroll-run',
+        'payslip',
+        'cash-boxes',
+        'treasury-summary',
+        'accounting-summary',
+        'trial-balance',
+    ]) {
+        void client.invalidateQueries({ queryKey: [key] })
+    }
 }
