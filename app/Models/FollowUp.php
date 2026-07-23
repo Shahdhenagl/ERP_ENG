@@ -23,6 +23,7 @@ class FollowUp extends Model
         'type',
         'due_at',
         'done_at',
+        'reminded_at',
         'note',
         'outcome',
         'owner_id',
@@ -34,6 +35,7 @@ class FollowUp extends Model
         return [
             'due_at' => 'datetime',
             'done_at' => 'datetime',
+            'reminded_at' => 'datetime',
         ];
     }
 
@@ -115,5 +117,18 @@ class FollowUp extends Model
     public function scopeDue(Builder $query): Builder
     {
         return $query->whereNull('done_at')->where('due_at', '<=', now());
+    }
+
+    /**
+     * Open, due by the end of today, and never reminded about. The morning run
+     * catches a follow-up on the day it falls due, not the day after — the due
+     * date included, hence end-of-day rather than now.
+     */
+    public function scopeNeedsReminder(Builder $query): Builder
+    {
+        return $query
+            ->whereNull('done_at')
+            ->whereNull('reminded_at')
+            ->where('due_at', '<=', now()->endOfDay());
     }
 }

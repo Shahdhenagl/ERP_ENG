@@ -105,8 +105,15 @@ check('an advance was disbursed', Boolean(seed.advanceCode))
 /* ── The nav carries the module, and it opens on the roster ── */
 
 await page.goto(`${BASE}/manager`, { waitUntil: 'domcontentloaded' })
-await page.waitForTimeout(1000)
-check('the nav carries the HR module', (await page.locator('a[href="/manager/hr"]').count()) > 0)
+// Wait for the link rather than a fixed beat: under a full parallel sweep the
+// async user/nav can take longer than any timeout worth hard-coding.
+const navHasHr = await page
+    .locator('a[href="/manager/hr"]')
+    .first()
+    .waitFor({ state: 'attached', timeout: 15000 })
+    .then(() => true)
+    .catch(() => false)
+check('the nav carries the HR module', navHasHr)
 
 await page.goto(`${BASE}/manager/hr`, { waitUntil: 'domcontentloaded' })
 check('the page opens on the roster', await sees(page, 'الموارد البشرية'))

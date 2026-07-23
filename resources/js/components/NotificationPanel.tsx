@@ -113,8 +113,15 @@ export function NotificationPanel({ open, onClose }: { open: boolean; onClose: (
                         <li key={notification.id}>
                             <button
                                 onClick={() => {
-                                    if (notification.data.task_id) {
-                                        navigate(path(`/tasks/${notification.data.task_id}`))
+                                    // Every notification carries where it points;
+                                    // task ones kept their id, so honour both.
+                                    const to = notification.data.url
+                                        ? notification.data.url
+                                        : notification.data.task_id
+                                          ? `/tasks/${notification.data.task_id}`
+                                          : null
+                                    if (to) {
+                                        navigate(path(to))
                                         onClose()
                                     }
                                 }}
