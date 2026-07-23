@@ -194,6 +194,43 @@ export function Dashboard() {
                 </section>
             )}
 
+            {/* ── Cover running out ──────────────────────────── */}
+            {/* Each of these is money waiting to be asked for: a renewal or an
+                extension sold before the customer feels uncovered, not after.
+                Gated by the permission that opens the module it links to, so an
+                office user who cannot see contracts is not shown their list. */}
+            {can('contracts.manage') && Boolean(data?.contracts_expiring?.length) && (
+                <ExpiryAlert
+                    title="عقود قاربت على الانتهاء"
+                    tone="amber"
+                    linkTo={path('/contracts')}
+                    linkLabel="العقود"
+                    rows={data!.contracts_expiring!.map((contract) => ({
+                        id: `c-${contract.id}`,
+                        title: contract.customer?.name ?? contract.label,
+                        subtitle: contract.code,
+                        endsOn: contract.ends_on,
+                        daysRemaining: contract.days_remaining,
+                    }))}
+                />
+            )}
+
+            {can('warranties.manage') && Boolean(data?.warranties_expiring?.length) && (
+                <ExpiryAlert
+                    title="ضمانات قاربت على الانتهاء"
+                    tone="violet"
+                    linkTo={path('/warranties')}
+                    linkLabel="الضمانات"
+                    rows={data!.warranties_expiring!.map((warranty) => ({
+                        id: `w-${warranty.id}`,
+                        title: `${warranty.asset_code} · ${warranty.asset ?? ''}`,
+                        subtitle: `${warranty.customer ?? ''} · ${warranty.code}`,
+                        endsOn: warranty.ends_on,
+                        daysRemaining: warranty.days_remaining,
+                    }))}
+                />
+            )}
+
             {/* ── What needs attention now ───────────────────── */}
             <section className="mt-8">
                 <div className="mb-3 flex items-center justify-between">
@@ -327,5 +364,79 @@ function StatusBar({ counts }: { counts?: Record<string, number> }) {
                 })}
             </div>
         </div>
+    )
+}
+
+/** Amber as a term runs down, red once it has. Same chip as the reports use. */
+function daysChip(days: number): string {
+    if (days < 0) return 'bg-red-50 text-red-700'
+    if (days <= 30) return 'bg-amber-50 text-amber-700'
+
+    return 'bg-emerald-50 text-emerald-700'
+}
+
+interface ExpiryRow {
+    id: string
+    title: string
+    subtitle: string
+    endsOn: string | null
+    daysRemaining: number
+}
+
+function ExpiryAlert({
+    title,
+    tone,
+    linkTo,
+    linkLabel,
+    rows,
+}: {
+    title: string
+    tone: 'amber' | 'violet'
+    linkTo: string
+    linkLabel: string
+    rows: ExpiryRow[]
+}) {
+    const accent = tone === 'amber' ? 'text-amber-600' : 'text-violet-600'
+
+    return (
+        <section className="mt-8">
+            <div className="mb-3 flex items-center justify-between">
+                <h2 className="flex items-center gap-2 text-sm font-bold text-navy-700">
+                    <AlertTriangle className={clsx('size-4', accent)} />
+                    {title}
+                </h2>
+                <Link to={linkTo} className="text-xs font-bold text-brand-600 hover:underline">
+                    {linkLabel}
+                </Link>
+            </div>
+
+            <div className="space-y-2">
+                {rows.map((row) => (
+                    <Link
+                        key={row.id}
+                        to={linkTo}
+                        className="card-interactive flex items-center justify-between gap-3 p-3.5"
+                    >
+                        <div className="min-w-0">
+                            <p className="truncate text-sm font-bold text-navy-900">{row.title}</p>
+                            <p className="tabular truncate text-[11px] text-navy-400">
+                                {row.subtitle}
+                            </p>
+                        </div>
+
+                        <span
+                            className={clsx(
+                                'badge shrink-0',
+                                daysChip(row.daysRemaining),
+                            )}
+                        >
+                            {row.daysRemaining >= 0
+                                ? `باقٍ ${row.daysRemaining} يوم`
+                                : `انتهى منذ ${Math.abs(row.daysRemaining)} يوم`}
+                        </span>
+                    </Link>
+                ))}
+            </div>
+        </section>
     )
 }

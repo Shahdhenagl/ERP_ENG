@@ -146,6 +146,69 @@ check('statement renders', statement.includes('كشف حساب عميل'))
 check('statement shows the balance', statement.includes('الرصيد المستحق'))
 check('statement lists the invoice just raised', statement.includes('INV-'))
 
+/* ── Delivery note and payment voucher ───────────────────── */
+
+const paperwork = await page.evaluate(async (customerId) => {
+    const token = localStorage.getItem('ce.token')
+    const headers = {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+    }
+    const get = async (url) => (await fetch(url, { headers })).json()
+    const post = async (url, body) =>
+        (await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) })).json()
+
+    // A sales order to print a delivery note from.
+    const order = await post('/api/sales-orders', {
+        customer_id: customerId,
+        lines: [{ description: 'وحدة UPS 10kVA', qty: 2, unit_price: 30000 }],
+    })
+
+    // A supplier voucher to print. Fund a box, then pay.
+    const suppliers = await get('/api/suppliers?per_page=1')
+    const voucher = await post('/api/supplier-payments', {
+        supplier_id: suppliers.data[0].id,
+        amount: 500,
+        method: 'cash',
+    })
+
+    return {
+        orderId: order.data?.id ?? order.id,
+        voucherId: voucher.data?.id ?? voucher.id,
+    }
+}, ids.customerId)
+
+check('a sales order exists to deliver', Boolean(paperwork.orderId))
+check('a voucher exists to print', Boolean(paperwork.voucherId))
+
+await page.goto(`${BASE}/manager/print/delivery/${paperwork.orderId}`, {
+    waitUntil: 'domcontentloaded',
+})
+await page.waitForSelector('.doc-sheet', { timeout: 20000 })
+await settled(page)
+
+const delivery = await printedText(page)
+check('delivery note renders', delivery.includes('إذن تسليم'))
+check('delivery note lists the goods', delivery.includes('وحدة UPS 10kVA'))
+// A delivery note carries no prices: it is signed at a gate, and money is the
+// invoice's business.
+check('delivery note shows no prices', !delivery.includes('30,000'))
+check('delivery note has a received column', delivery.includes('المستلَم'))
+
+await page.goto(`${BASE}/manager/print/vouchers/${paperwork.voucherId}`, {
+    waitUntil: 'domcontentloaded',
+})
+await page.waitForSelector('.doc-sheet', { timeout: 20000 })
+await settled(page)
+
+const voucher = await printedText(page)
+check('payment voucher renders', voucher.includes('سند صرف'))
+// The amount appears in words as well as figures — a voucher is a payment
+// instruction, and a digit added to a figure is the oldest alteration there is.
+check('voucher writes the amount in words', voucher.includes('فقط'))
+check('voucher is signed for', voucher.includes('أمين الخزينة'))
+
 /* ── Chrome is hidden when printing ──────────────────────── */
 
 const chromeHidden = await page.evaluate(() => {

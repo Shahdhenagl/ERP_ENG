@@ -10,6 +10,7 @@ use App\Models\Contract;
 use App\Models\Customer;
 use App\Models\Task;
 use App\Models\User;
+use App\Models\Warranty;
 use App\Services\MaintenancePlanner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -139,6 +140,28 @@ class DashboardController extends Controller
             $payload['contracts_expiring'] = ContractResource::collection(
                 Contract::query()->expiringWithin(60)->with('customer')->orderBy('ends_on')->limit(5)->get(),
             )->resolve();
+
+            // Cover about to lapse is money waiting to be asked for: an
+            // extension is sellable while the customer still feels covered, and
+            // worthless the day after. Sixty days matches the contract horizon.
+            $expiringCover = Warranty::query()
+                ->expiringWithin(60)
+                ->with(['asset', 'customer'])
+                ->orderBy('ends_on')
+                ->limit(5)
+                ->get();
+
+            $stats['warranties_expiring'] = Warranty::query()->expiringWithin(60)->count();
+
+            $payload['warranties_expiring'] = $expiringCover->map(fn (Warranty $warranty) => [
+                'id' => $warranty->id,
+                'code' => $warranty->code,
+                'asset' => $warranty->asset?->label(),
+                'asset_code' => $warranty->asset?->code,
+                'customer' => $warranty->customer?->name,
+                'ends_on' => $warranty->ends_on?->toDateString(),
+                'days_remaining' => $warranty->daysRemaining(),
+            ])->values();
 
             $payload['stats'] = $stats;
         }

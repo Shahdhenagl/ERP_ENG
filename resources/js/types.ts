@@ -828,6 +828,7 @@ export interface DashboardData {
         technicians_total?: number
         /** Contract visits waiting for a technician within the next month. */
         maintenance_due?: number
+        warranties_expiring?: number
         contracts_active?: number
         contracts_expiring?: number
         technician_load?: Array<{
@@ -842,6 +843,16 @@ export interface DashboardData {
     /** Dispatcher-only: the visits that need someone put on them. */
     maintenance_due?: Task[]
     contracts_expiring?: Contract[]
+    /** Cover about to lapse — a renewal or extension waiting to be sold. */
+    warranties_expiring?: Array<{
+        id: number
+        code: string
+        asset: string | null
+        asset_code: string | null
+        customer: string | null
+        ends_on: string | null
+        days_remaining: number
+    }>
 }
 
 export interface AppNotification {
