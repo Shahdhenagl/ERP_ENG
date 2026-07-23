@@ -42,6 +42,7 @@ import { ReportsLayout } from '@/pages/reports/ReportsLayout'
 import { SalesReportPage } from '@/pages/reports/SalesReportPage'
 import { StockReportPage } from '@/pages/reports/StockReportPage'
 import { WarrantyReportPage } from '@/pages/reports/WarrantyReportPage'
+import { CrmPage } from '@/pages/crm/CrmPage'
 import { HrPage } from '@/pages/hr/HrPage'
 import { PayslipPrint } from '@/pages/print/PayslipPrint'
 import { ClaimsPage } from '@/pages/warranty/ClaimsPage'
@@ -128,6 +129,7 @@ export function App() {
                                         <Route path="tasks/:id" element={<TaskDetail />} />
                                         <Route path="tasks/:id/edit" element={<TaskForm />} />
                                         <Route path="customers" element={<CustomerList />} />
+                                        <Route path="crm" element={<CrmPage />} />
                                         <Route path="assets" element={<AssetList />} />
                                         <Route path="assets/:id" element={<AssetDetail />} />
                                         <Route path="contracts" element={<ContractList />} />

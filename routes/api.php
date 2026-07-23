@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\ContractController;
 use App\Http\Controllers\Api\CustodyController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\EmployeeController;
+use App\Http\Controllers\Api\FollowUpController;
+use App\Http\Controllers\Api\LeadController;
 use App\Http\Controllers\Api\LeaveController;
 use App\Http\Controllers\Api\PayrollController;
 use App\Http\Controllers\Api\DashboardController;
@@ -145,6 +147,22 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::delete('assets/{asset}', [AssetController::class, 'destroy'])->middleware('can:assets.manage');
 
     Route::get('technicians', [UserController::class, 'technicians']);
+
+    // ── CRM: leads and follow-ups ────────────────────────────
+    // The front of the funnel. Winning a lead mints a customer, so the whole
+    // module sits behind one permission distinct from customer management.
+    Route::get('leads', [LeadController::class, 'index'])->middleware('can:crm.manage');
+    Route::post('leads', [LeadController::class, 'store'])->middleware('can:crm.manage');
+    Route::get('leads/{lead}', [LeadController::class, 'show'])->middleware('can:crm.manage');
+    Route::put('leads/{lead}', [LeadController::class, 'update'])->middleware('can:crm.manage');
+    Route::post('leads/{lead}/status', [LeadController::class, 'status'])->middleware('can:crm.manage');
+    Route::delete('leads/{lead}', [LeadController::class, 'destroy'])->middleware('can:crm.manage');
+
+    Route::get('follow-ups', [FollowUpController::class, 'index'])->middleware('can:crm.manage');
+    Route::post('follow-ups', [FollowUpController::class, 'store'])->middleware('can:crm.manage');
+    Route::put('follow-ups/{followUp}', [FollowUpController::class, 'update'])->middleware('can:crm.manage');
+    Route::post('follow-ups/{followUp}/complete', [FollowUpController::class, 'complete'])->middleware('can:crm.manage');
+    Route::delete('follow-ups/{followUp}', [FollowUpController::class, 'destroy'])->middleware('can:crm.manage');
 
     // ── Human resources ──────────────────────────────────────
     // Employees and leave under one permission; the money — advances and

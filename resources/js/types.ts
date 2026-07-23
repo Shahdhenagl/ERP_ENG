@@ -831,6 +831,7 @@ export interface DashboardData {
         warranties_expiring?: number
         contracts_active?: number
         contracts_expiring?: number
+        follow_ups_due?: number
         technician_load?: Array<{
             id: number
             name: string
@@ -852,6 +853,16 @@ export interface DashboardData {
         customer: string | null
         ends_on: string | null
         days_remaining: number
+    }>
+    /** Follow-ups past their date — someone you said you'd get back to. */
+    follow_ups_due?: Array<{
+        id: number
+        type_label: string
+        subject: string | null
+        subject_type: 'lead' | 'customer' | null
+        subject_id: number
+        due_at: string | null
+        owner: string | null
     }>
 }
 
@@ -1864,4 +1875,55 @@ export interface PayrollRun {
     net_total: number
     unpaid_net: number
     payslips?: Payslip[]
+}
+
+/* ── CRM: leads and follow-ups ───────────────────────────── */
+
+export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'won' | 'lost'
+export type LeadSource = 'referral' | 'call' | 'walk_in' | 'social' | 'website' | 'other'
+export type FollowUpType = 'call' | 'visit' | 'whatsapp' | 'email' | 'note'
+export type FollowUpStatus = 'pending' | 'overdue' | 'done'
+
+export interface FollowUp {
+    id: number
+    type: FollowUpType
+    type_label: string
+    due_at: string | null
+    done_at: string | null
+    status: FollowUpStatus
+    status_label: string
+    note: string | null
+    outcome: string | null
+    subject_type?: 'lead' | 'customer' | null
+    subject_id?: number
+    subject?: string | null
+    subject_code?: string | null
+    owner: string | null
+    owner_id?: number | null
+    created_at?: string
+}
+
+export interface Lead {
+    id: number
+    code: string
+    name: string
+    company: string | null
+    phone: string | null
+    whatsapp: string | null
+    whatsapp_number: string | null
+    email: string | null
+    source: LeadSource | null
+    source_label: string | null
+    status: LeadStatus
+    status_label: string
+    est_value: number | null
+    notes: string | null
+    lost_reason: string | null
+    owner: string | null
+    owner_id: number | null
+    customer_id: number | null
+    open_follow_ups?: number | null
+    created_at?: string
+    /** Only present on the detail view. */
+    follow_ups?: FollowUp[]
 }

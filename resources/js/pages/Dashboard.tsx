@@ -231,6 +231,44 @@ export function Dashboard() {
                 />
             )}
 
+            {/* Someone you promised to get back to, past the date. Gated by the
+                CRM permission, like the alerts above are by their modules'. */}
+            {can('crm.manage') && Boolean(data?.follow_ups_due?.length) && (
+                <section className="mt-8">
+                    <div className="mb-3 flex items-center justify-between">
+                        <h2 className="flex items-center gap-2 text-sm font-bold text-navy-700">
+                            <AlertTriangle className="size-4 text-red-600" />
+                            متابعات فات موعدها
+                        </h2>
+                        <Link to={path('/crm')} className="text-xs font-bold text-brand-600 hover:underline">
+                            المتابعات
+                        </Link>
+                    </div>
+
+                    <div className="space-y-2">
+                        {data!.follow_ups_due!.map((followUp) => (
+                            <Link
+                                key={followUp.id}
+                                to={path('/crm')}
+                                className="card-interactive flex items-center justify-between gap-3 p-3.5"
+                            >
+                                <div className="min-w-0">
+                                    <p className="truncate text-sm font-bold text-navy-900">
+                                        {followUp.subject ?? '—'}
+                                    </p>
+                                    <p className="tabular truncate text-[11px] text-navy-400">
+                                        {followUp.type_label}
+                                        {followUp.due_at && ` · ${followUp.due_at}`}
+                                        {followUp.owner && ` · ${followUp.owner}`}
+                                    </p>
+                                </div>
+                                <span className="badge shrink-0 bg-red-50 text-red-700">متأخّر</span>
+                            </Link>
+                        ))}
+                    </div>
+                </section>
+            )}
+
             {/* ── What needs attention now ───────────────────── */}
             <section className="mt-8">
                 <div className="mb-3 flex items-center justify-between">

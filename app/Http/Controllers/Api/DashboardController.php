@@ -8,6 +8,7 @@ use App\Http\Resources\TaskResource;
 use App\Http\Resources\ContractResource;
 use App\Models\Contract;
 use App\Models\Customer;
+use App\Models\FollowUp;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\Warranty;
@@ -162,6 +163,33 @@ class DashboardController extends Controller
                 'ends_on' => $warranty->ends_on?->toDateString(),
                 'days_remaining' => $warranty->daysRemaining(),
             ])->values();
+
+            // A promise to call someone back, past its date. The same logic as
+            // the cover chase list, one step earlier in the relationship: this
+            // is the person you said you would get back to and have not.
+            if ($user->hasPermission('crm.manage')) {
+                $due = FollowUp::query()
+                    ->due()
+                    ->with(['subject', 'owner'])
+                    ->orderBy('due_at')
+                    ->limit(5)
+                    ->get();
+
+                $stats['follow_ups_due'] = FollowUp::query()->due()->count();
+
+                $payload['follow_ups_due'] = $due->map(fn (FollowUp $f) => [
+                    'id' => $f->id,
+                    'type_label' => $f->typeLabel(),
+                    'subject' => $f->subjectName(),
+                    'subject_type' => array_search($f->subject_type, [
+                        'lead' => \App\Models\Lead::class,
+                        'customer' => \App\Models\Customer::class,
+                    ], true) ?: null,
+                    'subject_id' => $f->subject_id,
+                    'due_at' => $f->due_at?->toDateString(),
+                    'owner' => $f->owner?->name,
+                ])->values();
+            }
 
             $payload['stats'] = $stats;
         }

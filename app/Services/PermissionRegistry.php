@@ -33,6 +33,7 @@ class PermissionRegistry
         // ── Work ─────────────────────────────────────────────
         'tasks.dispatch' => ['إنشاء وإسناد أوامر العمل', 'العمل'],
         'customers.manage' => ['إدارة العملاء والفروع', 'العمل'],
+        'crm.manage' => ['العملاء المحتملون والمتابعات', 'العمل'],
         'assets.manage' => ['إدارة الأجهزة', 'العمل'],
         'contracts.manage' => ['إدارة عقود الصيانة', 'العمل'],
         'warranties.manage' => ['إدارة الضمانات والمطالبات', 'العمل'],
@@ -76,6 +77,7 @@ class PermissionRegistry
         'manager' => [
             'tasks.dispatch',
             'customers.manage',
+            'crm.manage',
             'assets.manage',
             'contracts.manage',
             'warranties.manage',

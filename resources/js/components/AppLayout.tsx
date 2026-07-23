@@ -18,6 +18,7 @@ import {
     Scale,
     ScrollText,
     Settings2,
+    Target,
     BarChart3,
     TrendingUp,
     Boxes as BoxesIcon,
@@ -72,6 +73,14 @@ const NAV: NavItem[] = [
     { to: '/', label: 'الرئيسية', icon: LayoutDashboard },
     { to: '/tasks', label: 'المهام', icon: ClipboardList },
     { to: '/customers', permission: 'customers.manage', label: 'العملاء', icon: Building2, roles: ['admin', 'manager'] },
+    {
+        to: '/crm',
+        permission: 'crm.manage',
+        label: 'العملاء المحتملون',
+        icon: Target,
+        roles: ['admin', 'manager'],
+        short: 'محتملون',
+    },
     {
         to: '/assets',
         permission: 'assets.manage',

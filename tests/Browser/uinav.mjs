@@ -67,9 +67,10 @@ const topLevel = await page.evaluate(() =>
 // The ceiling is a guard against sprawl, not a hard cap: a genuinely new
 // top-level domain earns a row. HR — people and payroll — is the eleventh,
 // the way inventory and sales each stand on their own.
-check(`the sidebar carries ${topLevel.length} top-level entries`, topLevel.length <= 11)
+check(`the sidebar carries ${topLevel.length} top-level entries`, topLevel.length <= 12)
 check('الأجهزة is one of them', topLevel.includes('الأجهزة'))
 check('الموارد البشرية earns its own row', topLevel.includes('الموارد البشرية'))
+check('العملاء المحتملون earns its own row', topLevel.includes('العملاء المحتملون'))
 check('عقود الصيانة is not', !topLevel.includes('عقود الصيانة'))
 check('المحاسبة المالية is not', !topLevel.includes('المحاسبة المالية'))
 

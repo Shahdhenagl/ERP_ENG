@@ -12,6 +12,8 @@ import type {
     SalaryAdvance,
     PayrollRun,
     Payslip,
+    Lead,
+    FollowUp,
     PermissionCatalogue,
     UserPermissions,
     AppNotification,
@@ -93,6 +95,9 @@ export const keys = {
     payrollRuns: (f?: Record<string, unknown>) => ['payroll-runs', f ?? {}] as const,
     payrollRun: (id: number | string) => ['payroll-run', Number(id)] as const,
     payslip: (id: number | string) => ['payslip', Number(id)] as const,
+    leads: (f?: Record<string, unknown>) => ['leads', f ?? {}] as const,
+    lead: (id: number | string) => ['lead', Number(id)] as const,
+    followUps: (f?: Record<string, unknown>) => ['follow-ups', f ?? {}] as const,
     notifications: ['notifications'] as const,
 
     custody: ['custody'] as const,
@@ -2360,6 +2365,117 @@ function invalidateHr(client: ReturnType<typeof useQueryClient>): void {
         'accounting-summary',
         'trial-balance',
     ]) {
+        void client.invalidateQueries({ queryKey: [key] })
+    }
+}
+
+/* ── CRM: leads and follow-ups ───────────────────────────── */
+
+export function useLeads(filters: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: keys.leads(filters),
+        queryFn: async () =>
+            (await api.get<{
+                data: Lead[]
+                meta: { total: number; last_page: number; pipeline: Record<string, number> }
+            }>('/leads', { params: filters })).data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useLead(id: number | string | undefined) {
+    return useQuery({
+        queryKey: keys.lead(id ?? 0),
+        queryFn: async () => (await api.get<{ data: Lead }>(`/leads/${id}`)).data.data,
+        enabled: Boolean(id),
+    })
+}
+
+export function useSaveLead(id?: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            id
+                ? (await api.put<{ data: Lead }>(`/leads/${id}`, payload)).data.data
+                : (await api.post<{ data: Lead }>('/leads', payload)).data.data,
+        onSuccess: () => invalidateCrm(client),
+    })
+}
+
+export function useDeleteLead() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id: number) => (await api.delete(`/leads/${id}`)).data,
+        onSuccess: () => invalidateCrm(client),
+    })
+}
+
+/** Move a lead along the pipeline; winning it mints a customer. */
+export function useLeadStatus(id: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: { status: string; lost_reason?: string }) =>
+            (await api.post<{ data: Lead; customer_id: number | null }>(
+                `/leads/${id}/status`,
+                payload,
+            )).data,
+        onSuccess: () => invalidateCrm(client),
+    })
+}
+
+export function useFollowUps(filters: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: keys.followUps(filters),
+        queryFn: async () =>
+            (await api.get<{ data: FollowUp[]; meta: { total: number; overdue: number } }>(
+                '/follow-ups',
+                { params: filters },
+            )).data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useSaveFollowUp() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (await api.post<{ data: FollowUp }>('/follow-ups', payload)).data.data,
+        onSuccess: () => invalidateCrm(client),
+    })
+}
+
+export function useCompleteFollowUp() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ id, outcome }: { id: number; outcome?: string }) =>
+            (await api.post<{ data: FollowUp }>(`/follow-ups/${id}/complete`, { outcome })).data.data,
+        onSuccess: () => invalidateCrm(client),
+    })
+}
+
+export function useDeleteFollowUp() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id: number) => (await api.delete(`/follow-ups/${id}`)).data,
+        onSuccess: () => invalidateCrm(client),
+    })
+}
+
+/** Winning a lead creates a customer, so the customer lists refresh too. */
+function invalidateCrm(client: ReturnType<typeof useQueryClient>): void {
+    for (const key of ['leads', 'lead', 'follow-ups', 'customers', 'dashboard']) {
         void client.invalidateQueries({ queryKey: [key] })
     }
 }
