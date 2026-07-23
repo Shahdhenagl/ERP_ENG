@@ -62,6 +62,13 @@ class ReportController extends Controller
         ]);
     }
 
+    public function crm(Request $request): JsonResponse
+    {
+        [$from, $to] = $this->window($request);
+
+        return response()->json(['data' => $this->reports->crm($from, $to)]);
+    }
+
     /**
      * Any report's own table, as a spreadsheet.
      *
@@ -81,6 +88,7 @@ class ReportController extends Controller
             'custody' => $this->custodyRows(),
             'contracts' => $this->contractRows($request->integer('days') ?: 60),
             'warranties' => $this->warrantyRows($request->integer('days') ?: 60),
+            'crm' => $this->crmRows($from, $to),
             default => abort(404, 'تقرير غير معروف.'),
         };
 
@@ -191,6 +199,20 @@ class ReportController extends Controller
             collect($report['expiring'])->map(fn ($row) => [
                 $row['code'], $row['asset'], $row['customer'],
                 $row['ends_on'], $row['days_remaining'], $row['kind_label'],
+            ]),
+        ];
+    }
+
+    /** @return array{0: string, 1: array<int, string>, 2: iterable<int, array<int, mixed>>} */
+    protected function crmRows(?string $from, ?string $to): array
+    {
+        $report = $this->reports->crm($from, $to);
+
+        return [
+            'crm-'.($from ?? 'all').'.csv',
+            ['المصدر', 'إجمالي العملاء المحتملين', 'المكسوبون', 'نسبة التحويل %'],
+            collect($report['by_source'])->map(fn ($row) => [
+                $row['label'], $row['total'], $row['won'], $row['conversion_pct'],
             ]),
         ];
     }

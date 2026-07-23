@@ -166,3 +166,52 @@ it('completes a follow-up with its outcome', function () {
         ->assertJsonPath('data.status', 'done')
         ->assertJsonPath('data.outcome', 'ردّ ووافق على زيارة');
 });
+
+/* ── The CRM report ──────────────────────────────────────── */
+
+it('reports the open pipeline value by stage', function () {
+    Lead::factory()->create(['status' => 'new', 'est_value' => 10000]);
+    Lead::factory()->create(['status' => 'qualified', 'est_value' => 40000]);
+    Lead::factory()->create(['status' => 'won', 'est_value' => 99999]);   // closed, out of the open pipeline
+
+    $report = app(\App\Services\ReportService::class)->crm();
+
+    expect($report['open_count'])->toBe(2)
+        ->and($report['open_value'])->toBe(50000.0);
+});
+
+it('computes a win rate only from decided deals', function () {
+    $service = app(\App\Services\ReportService::class);
+
+    // No decided deals yet — the rate is not a number, it is null.
+    expect($service->crm()['win_rate'])->toBeNull();
+
+    Lead::factory()->count(3)->create(['status' => 'won']);
+    Lead::factory()->create(['status' => 'lost']);
+    Lead::factory()->create(['status' => 'new']); // open — not counted either way
+
+    expect($service->crm()['win_rate'])->toBe(75.0);
+});
+
+it('measures conversion by source', function () {
+    Lead::factory()->count(2)->create(['source' => 'referral', 'status' => 'won']);
+    Lead::factory()->create(['source' => 'referral', 'status' => 'lost']);
+
+    $report = app(\App\Services\ReportService::class)->crm();
+    $referral = collect($report['by_source'])->firstWhere('source', 'referral');
+
+    expect($referral['total'])->toBe(3)
+        ->and($referral['won'])->toBe(2)
+        ->and($referral['conversion_pct'])->toBe(66.7);
+});
+
+it('serves the CRM report to a permitted user and refuses a technician', function () {
+    actingAs($this->manager)
+        ->getJson('/api/reports/crm')
+        ->assertOk()
+        ->assertJsonStructure(['data' => ['pipeline', 'win_rate', 'by_source', 'follow_ups_overdue']]);
+
+    actingAs($this->technician)
+        ->getJson('/api/reports/crm')
+        ->assertForbidden();
+});

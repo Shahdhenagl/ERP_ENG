@@ -58,6 +58,7 @@ import type {
     CustodyReport,
     ContractReport,
     WarrantyReport,
+    CrmReport,
     StockMovement,
     DeviceHistory,
     Warranty,
@@ -1821,6 +1822,9 @@ export const useCustodyReport = () => useReport<CustodyReport>('custody')
 export const useContractReport = (days = 60) => useReport<ContractReport>('contracts', { days })
 
 export const useWarrantyReport = (days = 60) => useReport<WarrantyReport>('warranties', { days })
+
+export const useCrmReport = (range: Record<string, unknown> = {}) =>
+    useReport<CrmReport>('crm', range)
 
 /**
  * Pull a report's rows as a spreadsheet.

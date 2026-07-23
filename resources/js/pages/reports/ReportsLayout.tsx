@@ -36,6 +36,7 @@ const SECTIONS = [
     ['/reports/custody', 'العهد'],
     ['/reports/contracts', 'العقود'],
     ['/reports/warranties', 'الضمانات'],
+    ['/reports/crm', 'العملاء المحتملون'],
 ] as const
 
 /** Which report the current URL is on, and whether a period applies to it. */
@@ -46,6 +47,7 @@ const REPORT_BY_PATH: Record<string, { name: string; periodic: boolean }> = {
     custody: { name: 'custody', periodic: false },
     contracts: { name: 'contracts', periodic: false },
     warranties: { name: 'warranties', periodic: false },
+    crm: { name: 'crm', periodic: true },
 }
 
 export function ReportsLayout() {

@@ -197,6 +197,7 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::get('reports/custody', [ReportController::class, 'custody'])->middleware('can:reports.view');
     Route::get('reports/contracts', [ReportController::class, 'contracts'])->middleware('can:reports.view');
     Route::get('reports/warranties', [ReportController::class, 'warranties'])->middleware('can:reports.view');
+    Route::get('reports/crm', [ReportController::class, 'crm'])->middleware('can:reports.view');
     Route::get('reports/{report}/export', [ReportController::class, 'export'])->middleware('can:reports.view');
 
     // ── Warranties & claims ──────────────────────────────────

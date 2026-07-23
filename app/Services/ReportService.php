@@ -5,8 +5,10 @@ namespace App\Services;
 use App\Enums\InvoiceStatus;
 use App\Enums\TaskStatus;
 use App\Models\Contract;
+use App\Models\FollowUp;
 use App\Models\Invoice;
 use App\Models\Item;
+use App\Models\Lead;
 use App\Models\StockMovement;
 use App\Models\Task;
 use App\Models\Warranty;
@@ -437,6 +439,89 @@ class ReportService
             'repair_cost' => $repairCost,
             'by_status' => $byStatus,
             'by_model' => $byModel,
+        ];
+    }
+
+    /* ── CRM ─────────────────────────────────────────────── */
+
+    /**
+     * The pipeline as a report: what is open and worth, what closed over the
+     * period and how it closed, and which sources actually convert.
+     *
+     * Two clocks are at work. The open pipeline is a snapshot — its value is
+     * whatever is in play right now, regardless of when it entered. Won and lost
+     * are counted within the window, because a win rate is only meaningful over
+     * a stretch of time.
+     *
+     * @return array<string, mixed>
+     */
+    public function crm(?string $from = null, ?string $to = null): array
+    {
+        // Open pipeline by stage — a snapshot, so no date filter.
+        $stages = ['new' => 'جديد', 'contacted' => 'تم التواصل', 'qualified' => 'مؤهَّل'];
+
+        $openByStatus = Lead::query()
+            ->open()
+            ->selectRaw('status, count(*) as n, coalesce(sum(est_value), 0) as value')
+            ->groupBy('status')
+            ->get()
+            ->keyBy('status');
+
+        $pipeline = collect($stages)->map(fn ($label, $status) => [
+            'status' => $status,
+            'label' => $label,
+            'count' => (int) ($openByStatus[$status]->n ?? 0),
+            'value' => round((float) ($openByStatus[$status]->value ?? 0), 2),
+        ])->values();
+
+        // Won and lost within the window — the closed deals a rate is built from.
+        $closed = fn (string $status) => Lead::query()
+            ->where('status', $status)
+            ->when($from, fn ($q) => $q->whereDate('updated_at', '>=', $from))
+            ->when($to, fn ($q) => $q->whereDate('updated_at', '<=', $to));
+
+        $won = (clone $closed('won'))->count();
+        $lost = (clone $closed('lost'))->count();
+        $wonValue = round((float) (clone $closed('won'))->sum('est_value'), 2);
+        $decided = $won + $lost;
+
+        // Where the deals come from, and which sources turn into wins. The
+        // conversion is over all leads ever from that source, not just the
+        // window, because a source proves itself over its whole history.
+        $bySource = Lead::query()
+            ->selectRaw("coalesce(source, 'other') as source, count(*) as total,
+                         sum(case when status = 'won' then 1 else 0 end) as won")
+            ->groupBy('source')
+            ->get()
+            ->map(fn ($row) => [
+                'source' => $row->source,
+                'label' => (new Lead(['source' => $row->source]))->sourceLabel(),
+                'total' => (int) $row->total,
+                'won' => (int) $row->won,
+                'conversion_pct' => $row->total > 0
+                    ? round(($row->won / $row->total) * 100, 1)
+                    : 0.0,
+            ])
+            ->sortByDesc('total')
+            ->values();
+
+        return [
+            'period' => ['from' => $from, 'to' => $to],
+            'open_count' => (int) $pipeline->sum('count'),
+            'open_value' => round((float) $pipeline->sum('value'), 2),
+            'pipeline' => $pipeline,
+
+            'won' => $won,
+            'lost' => $lost,
+            'won_value' => $wonValue,
+            // A win rate needs decided deals under it; with none, it is not 0%,
+            // it is simply not yet a number.
+            'win_rate' => $decided > 0 ? round(($won / $decided) * 100, 1) : null,
+
+            'by_source' => $bySource,
+
+            'follow_ups_open' => FollowUp::query()->open()->count(),
+            'follow_ups_overdue' => FollowUp::query()->due()->count(),
         ];
     }
 

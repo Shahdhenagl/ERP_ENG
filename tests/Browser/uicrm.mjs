@@ -87,8 +87,13 @@ check('an overdue follow-up was booked', Boolean(seed.followUpId))
 /* ── The nav carries CRM, and the dashboard chases the overdue ── */
 
 await page.goto(`${BASE}/manager`, { waitUntil: 'domcontentloaded' })
-await page.waitForTimeout(1200)
-check('the nav carries the CRM module', (await page.locator('a[href="/manager/crm"]').count()) > 0)
+const navHasCrm = await page
+    .locator('a[href="/manager/crm"]')
+    .first()
+    .waitFor({ state: 'attached', timeout: 15000 })
+    .then(() => true)
+    .catch(() => false)
+check('the nav carries the CRM module', navHasCrm)
 check('the dashboard flags the overdue follow-up', await sees(page, 'متابعات فات موعدها'))
 
 /* ── The pipeline lists the lead ─────────────────────────── */
@@ -119,6 +124,14 @@ check('it is marked late', await sees(page, 'متأخّر'))
 
 await page.getByRole('button', { name: 'إغلاق' }).first().click()
 check('closing it empties the chase list', await sees(page, 'لا متابعات مفتوحة'))
+
+/* ── The report reads the pipeline back ──────────────────── */
+
+await page.goto(`${BASE}/manager/reports/crm`, { waitUntil: 'domcontentloaded' })
+check('the CRM report opens', await sees(page, 'نسبة الكسب'))
+check('it breaks the pipeline down by source', await sees(page, 'الفعالية حسب المصدر'))
+// The lead we won earlier came from a referral, so it converted 100%.
+check('it shows the won deal', await sees(page, 'مكسوب في الفترة'))
 
 /* ── The API bars a technician ───────────────────────────── */
 

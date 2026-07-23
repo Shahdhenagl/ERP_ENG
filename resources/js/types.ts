@@ -1432,6 +1432,27 @@ export interface WarrantyReport {
     by_model: Array<{ model: string; claims: number }>
 }
 
+export interface CrmReport {
+    period: { from: string | null; to: string | null }
+    open_count: number
+    open_value: number
+    pipeline: Array<{ status: string; label: string; count: number; value: number }>
+    won: number
+    lost: number
+    won_value: number
+    /** Null until at least one deal is decided — a rate needs a denominator. */
+    win_rate: number | null
+    by_source: Array<{
+        source: string | null
+        label: string | null
+        total: number
+        won: number
+        conversion_pct: number
+    }>
+    follow_ups_open: number
+    follow_ups_overdue: number
+}
+
 /* ── Sales returns (credit notes) ────────────────────────── */
 
 export interface SalesReturnLine {

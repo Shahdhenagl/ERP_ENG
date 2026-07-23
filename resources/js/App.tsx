@@ -42,6 +42,7 @@ import { ReportsLayout } from '@/pages/reports/ReportsLayout'
 import { SalesReportPage } from '@/pages/reports/SalesReportPage'
 import { StockReportPage } from '@/pages/reports/StockReportPage'
 import { WarrantyReportPage } from '@/pages/reports/WarrantyReportPage'
+import { CrmReportPage } from '@/pages/reports/CrmReportPage'
 import { CrmPage } from '@/pages/crm/CrmPage'
 import { HrPage } from '@/pages/hr/HrPage'
 import { PayslipPrint } from '@/pages/print/PayslipPrint'
@@ -179,6 +180,7 @@ export function App() {
                                             <Route path="custody" element={<CustodyReportPage />} />
                                             <Route path="contracts" element={<ContractReportPage />} />
                                             <Route path="warranties" element={<WarrantyReportPage />} />
+                                            <Route path="crm" element={<CrmReportPage />} />
                                         </Route>
 
                                         <Route path="profile" element={<Profile />} />
