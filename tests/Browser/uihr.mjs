@@ -121,7 +121,7 @@ check('the roster shows the new hire', await sees(page, seed.name))
 
 /* ── Leave: the request shows, and it can be approved ─────── */
 
-await page.getByRole('button', { name: 'الإجازات' }).click()
+await page.getByRole('link', { name: 'الإجازات', exact: true }).click()
 check('the leave request is listed', await sees(page, seed.leaveCode))
 
 // `exact` matters: the "بانتظار الاعتماد" filter toggle contains the word too.
@@ -130,7 +130,7 @@ check('the leave is approved', await sees(page, 'معتمدة'))
 
 /* ── Advances: the disbursement and its outstanding balance ── */
 
-await page.getByRole('button', { name: 'السلف' }).click()
+await page.getByRole('link', { name: 'السلف', exact: true }).click()
 check('the advance is listed', await sees(page, seed.advanceCode))
 check('its outstanding balance is shown', await sees(page, 'متبقٍ'))
 
@@ -156,7 +156,7 @@ const run = await page.evaluate(async () => {
 check('a payroll month was opened', Boolean(run.id) && run.slips > 0)
 
 await page.goto(`${BASE}/manager/hr`, { waitUntil: 'domcontentloaded' })
-await page.getByRole('button', { name: 'الرواتب' }).click()
+await page.getByRole('link', { name: 'الرواتب', exact: true }).click()
 check('the run is listed', await sees(page, 'أغسطس'))
 
 await page.getByRole('button', { name: /أغسطس/ }).first().click()

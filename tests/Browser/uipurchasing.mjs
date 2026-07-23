@@ -95,8 +95,10 @@ const over = await page.evaluate(async (s) => {
 
 check(`over-receipt refused — ${over}`, over === 422)
 
-// And the good delivery goes through, through the UI.
-await page.reload({ waitUntil: 'domcontentloaded' })
+// And the good delivery goes through, through the UI. Straight to the orders
+// section — the tab lives in the URL now, so a reload would have kept us on
+// suppliers where the receive button is not.
+await page.goto(`${BASE}/manager/purchasing/orders`, { waitUntil: 'domcontentloaded' })
 await page.waitForSelector('text=أوامر الشراء', { timeout: 20000 })
 await settled(page)
 

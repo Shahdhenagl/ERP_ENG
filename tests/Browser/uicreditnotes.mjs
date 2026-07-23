@@ -135,7 +135,7 @@ check(
 await page.goto(`${BASE}/manager/sales`, { waitUntil: 'domcontentloaded' })
 await settled(page)
 
-await page.getByRole('button', { name: 'المرتجعات' }).click()
+await page.getByRole('link', { name: 'مرتجعات المبيعات', exact: true }).click()
 await page.waitForTimeout(800)
 
 await page.getByRole('button', { name: 'مرتجع مبيعات' }).first().click()

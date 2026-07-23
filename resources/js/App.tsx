@@ -153,12 +153,15 @@ export function App() {
                                         </Route>
 
                                         <Route path="sales" element={<Sales />} />
+                                        <Route path="sales/:tab" element={<Sales />} />
                                         <Route path="purchasing" element={<Purchasing />} />
+                                        <Route path="purchasing/:tab" element={<Purchasing />} />
                                         <Route path="invoices" element={<InvoiceList />} />
                                         <Route path="invoices/:id" element={<InvoiceDetail />} />
                                         <Route path="treasury" element={<TreasuryPage />} />
                                         <Route path="cheques" element={<ChequesPage />} />
                                         <Route path="hr" element={<HrPage />} />
+                                        <Route path="hr/:tab" element={<HrPage />} />
 
                                         {/* Sections rather than tabs for the
                                             same reason as inventory: the

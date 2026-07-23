@@ -1,13 +1,13 @@
 import { chromium } from 'playwright'
 
 /**
- * Nothing is hidden by the grouping.
+ * The sidebar folds; nothing is lost in the fold.
  *
- * Only an admin gets a sidebar. A manager navigates from the bottom bar, which
- * carries top-level destinations alone — so every module demoted to a child has
- * to be reachable from a section strip instead. Tidying the sidebar by making
- * four modules unreachable would look like an improvement and be a regression,
- * which is exactly why this suite exists.
+ * An admin gets a sidebar of collapsible groups — a header per module, its
+ * sections tucked inside until the group is opened. A manager gets no sidebar
+ * at all and reaches the same sections from the strip each page carries. This
+ * suite proves a group opens onto its sections, a section opens from the
+ * sidebar, and a manager still reaches everything the admin can.
  */
 
 const BASE = 'http://127.0.0.1:8000'
@@ -40,7 +40,7 @@ async function settled(page) {
     await page.waitForTimeout(400)
 }
 
-/** Every destination the page offers, sidebar or strip, as hrefs. */
+/** Every visible in-area link, as hrefs. */
 async function linksOn(page) {
     return page.evaluate(() =>
         [...document.querySelectorAll('a[href^="/manager"]')]
@@ -54,83 +54,86 @@ const page = await context.newPage()
 const errors = []
 page.on('pageerror', (e) => errors.push(e.message))
 
-/* ── The admin sidebar is shorter than it was ────────────── */
+/* ── The admin sidebar folds modules into groups ─────────── */
 
 await login(page, 'admin@cityeng.local')
 await page.goto(`${BASE}/manager`, { waitUntil: 'domcontentloaded' })
 await settled(page)
 
-const topLevel = await page.evaluate(() =>
-    [...document.querySelectorAll('aside > nav > div > a')].map((a) => a.innerText.trim()),
+// Group headers are buttons; a group holds its sections folded away.
+const groups = await page.evaluate(() =>
+    [...document.querySelectorAll('aside nav button')].map((b) => b.innerText.trim()),
+)
+check(
+    'modules are grouped under headers',
+    groups.some((g) => g.includes('إدارة العملاء')) &&
+        groups.some((g) => g.includes('المبيعات')) &&
+        groups.some((g) => g.includes('الموارد البشرية')),
 )
 
-// The ceiling is a guard against sprawl, not a hard cap: a genuinely new
-// top-level domain earns a row. HR — people and payroll — is the eleventh,
-// the way inventory and sales each stand on their own.
-check(`the sidebar carries ${topLevel.length} top-level entries`, topLevel.length <= 12)
-check('الأجهزة is one of them', topLevel.includes('الأجهزة'))
-check('الموارد البشرية earns its own row', topLevel.includes('الموارد البشرية'))
-check('العملاء المحتملون earns its own row', topLevel.includes('العملاء المحتملون'))
-check('عقود الصيانة is not', !topLevel.includes('عقود الصيانة'))
-check('المحاسبة المالية is not', !topLevel.includes('المحاسبة المالية'))
+// A collapsed group keeps its sections out of the DOM/off-screen.
+const salesHidden = await page.evaluate(() => {
+    const a = document.querySelector('aside a[href="/manager/sales/orders"]')
+    return !a || a.offsetParent === null
+})
+check('a collapsed group hides its sections', salesHidden)
 
-// Nested where they were promoted from.
-const nested = await page.evaluate(() =>
-    [...document.querySelectorAll('aside a')].map((a) => a.getAttribute('href')),
+// Opening a group reveals its sections.
+await page.getByRole('button', { name: 'المبيعات', exact: true }).click()
+const salesShown = await page
+    .waitForSelector('aside a[href="/manager/sales/orders"]', { state: 'visible', timeout: 8000 })
+    .then(() => true)
+    .catch(() => false)
+check('opening a group reveals its sections', salesShown)
+
+// A section opens from the sidebar.
+await page.getByRole('link', { name: 'أوامر البيع' }).click()
+await page.waitForTimeout(600)
+check('a section opens straight from the sidebar', page.url().includes('/manager/sales/orders'))
+
+// Customers and leads share one group now.
+await page.getByRole('button', { name: 'إدارة العملاء', exact: true }).click()
+await page.waitForTimeout(400)
+const customerGroup = await linksOn(page)
+check(
+    'customers and leads live in one group',
+    customerGroup.includes('/manager/customers') && customerGroup.includes('/manager/crm'),
 )
 
-for (const href of [
-    '/manager/contracts',
-    '/manager/warranties',
-    '/manager/treasury',
-    '/manager/accounting',
-    '/manager/settings',
-]) {
-    check(`${href} is still in the sidebar`, nested.includes(href))
-}
-
-// The last entry has to be clickable — the reason the nav scrolls at all.
-const lastEntry = page.locator('aside > nav > div > a').last()
-await lastEntry.click()
-check('the last sidebar entry is reachable', !page.url().endsWith('/manager'))
-
-/* ── A manager loses nothing ─────────────────────────────── */
+/* ── A manager keeps every section, via the strips ───────── */
 
 await login(page, 'manager@cityeng.local')
 
-await page.goto(`${BASE}/manager/assets`, { waitUntil: 'domcontentloaded' })
-await settled(page)
-
 check('a manager still gets no sidebar', (await page.locator('aside').count()) === 0)
 
+// The device group's sections, from the strip on the assets page.
+await page.goto(`${BASE}/manager/assets`, { waitUntil: 'domcontentloaded' })
+await settled(page)
 const fromAssets = await linksOn(page)
 check('عقود الصيانة is reachable from الأجهزة', fromAssets.includes('/manager/contracts'))
 check('الضمانات is reachable from الأجهزة', fromAssets.includes('/manager/warranties'))
 
-await page.goto(`${BASE}/manager/contracts`, { waitUntil: 'domcontentloaded' })
-await settled(page)
-const fromContracts = await linksOn(page)
-check('the strip is on the contracts page too', fromContracts.includes('/manager/warranties'))
-
+// The money group's sections.
 await page.goto(`${BASE}/manager/invoices`, { waitUntil: 'domcontentloaded' })
 await settled(page)
-
 const fromInvoices = await linksOn(page)
-check('الخزينة is reachable from الفواتير', fromInvoices.includes('/manager/treasury'))
-check('المحاسبة is reachable from الفواتير', fromInvoices.includes('/manager/accounting'))
+check('الخزينة is reachable from المالية', fromInvoices.includes('/manager/treasury'))
+check('المحاسبة is reachable from المالية', fromInvoices.includes('/manager/accounting'))
 
-await page.goto(`${BASE}/manager/treasury`, { waitUntil: 'domcontentloaded' })
+// The sales group's sections, from the strip.
+await page.goto(`${BASE}/manager/sales`, { waitUntil: 'domcontentloaded' })
 await settled(page)
-check(
-    'and from الخزينة as well',
-    (await linksOn(page)).includes('/manager/accounting'),
-)
+const fromSales = await linksOn(page)
+check('a manager reaches the sales sections', fromSales.includes('/manager/sales/returns'))
 
-/* ── Every grouped module still opens ────────────────────── */
+/* ── Every grouped section still opens ────────────────────── */
 
 for (const [path, marker] of [
+    ['/manager/customers', 'العملاء'],
+    ['/manager/crm', 'العملاء المحتملون'],
+    ['/manager/sales/orders', 'أوامر البيع'],
+    ['/manager/purchasing/suppliers', 'الموردون'],
     ['/manager/contracts', 'عقود الصيانة'],
-    ['/manager/warranties', 'الضمانات'],
     ['/manager/treasury', 'الخزينة'],
     ['/manager/accounting', 'المحاسبة'],
 ]) {

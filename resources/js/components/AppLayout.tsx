@@ -6,6 +6,8 @@ import {
     Boxes,
     Building2,
     Calculator,
+    CalendarDays,
+    ChevronDown,
     ClipboardList,
     FileText,
     HandCoins,
@@ -72,25 +74,31 @@ interface NavItem {
 const NAV: NavItem[] = [
     { to: '/', label: 'الرئيسية', icon: LayoutDashboard },
     { to: '/tasks', label: 'المهام', icon: ClipboardList },
-    { to: '/customers', permission: 'customers.manage', label: 'العملاء', icon: Building2, roles: ['admin', 'manager'] },
     {
-        to: '/crm',
-        permission: 'crm.manage',
-        label: 'العملاء المحتملون',
-        icon: Target,
+        // The account, and the ones still being won, under one roof — a
+        // customer and a lead are the same person a step apart.
+        to: '/customers',
+        label: 'إدارة العملاء',
+        icon: Building2,
         roles: ['admin', 'manager'],
-        short: 'محتملون',
+        anyPermission: ['customers.manage', 'crm.manage'],
+        short: 'عملاء',
+        children: [
+            { to: '/customers', permission: 'customers.manage', label: 'العملاء', icon: Building2 },
+            { to: '/crm', permission: 'crm.manage', label: 'العملاء المحتملون', icon: Target },
+        ],
     },
     {
         to: '/assets',
         permission: 'assets.manage',
-        label: 'الأجهزة',
+        label: 'الأجهزة والعقود',
         icon: HardDrive,
         roles: ['admin', 'manager'],
-        // Grouped under the device rather than listed beside it: a maintenance
-        // contract and a warranty are both promises about a specific unit, and
-        // that is how anyone looking for one thinks of it.
+        short: 'أجهزة',
+        // A device, its maintenance contract and its warranty are three
+        // promises about one unit — filed together, the way anyone looks.
         children: [
+            { to: '/assets', permission: 'assets.manage', label: 'الأجهزة', icon: HardDrive },
             { to: '/contracts', permission: 'contracts.manage', label: 'عقود الصيانة', icon: ScrollText },
             { to: '/warranties', permission: 'warranties.manage', label: 'الضمانات', icon: ShieldCheck },
         ],
@@ -108,37 +116,46 @@ const NAV: NavItem[] = [
             { to: '/inventory/movements', permission: 'inventory.view', label: 'سجل الحركة', icon: ArrowLeftRight },
         ],
     },
-    { to: '/sales', permission: 'sales.manage', label: 'المبيعات', icon: FileText, roles: ['admin', 'manager'], short: 'بيع' },
-    { to: '/purchasing', permission: 'purchasing.manage', label: 'المشتريات', icon: Truck, roles: ['admin', 'manager'], short: 'شراء' },
     {
-        to: '/invoices',
-        permission: 'invoices.manage',
-        label: 'الفواتير',
-        icon: Receipt,
+        to: '/sales',
+        permission: 'sales.manage',
+        label: 'المبيعات',
+        icon: FileText,
         roles: ['admin', 'manager'],
-        short: 'مالية',
-        // The money group. The parent is the invoice list itself, so it is not
-        // repeated as a child — two rows pointing at one route would both
-        // light up. Accounting keeps its own seven-section strip inside.
+        short: 'بيع',
         children: [
-            { to: '/treasury', permission: 'treasury.manage', label: 'الخزينة', icon: Wallet },
-            { to: '/cheques', permission: 'cheques.manage', label: 'الشيكات', icon: Banknote },
-            { to: '/accounting', permission: 'accounting.view', label: 'المحاسبة المالية', icon: Calculator },
+            { to: '/sales/quotations', permission: 'sales.manage', label: 'عروض الأسعار', icon: FileText },
+            { to: '/sales/orders', permission: 'sales.manage', label: 'أوامر البيع', icon: Receipt },
+            { to: '/sales/returns', permission: 'sales.manage', label: 'مرتجعات المبيعات', icon: ArrowLeftRight },
         ],
     },
     {
-        to: '/reports',
-        permission: 'reports.view',
-        label: 'التقارير',
-        icon: BarChart3,
+        to: '/purchasing',
+        permission: 'purchasing.manage',
+        label: 'المشتريات',
+        icon: Truck,
         roles: ['admin', 'manager'],
-        // Six sections is more than the sidebar should carry flat, and the
-        // parent redirects to the first, so it is not repeated as a child.
+        short: 'شراء',
         children: [
-            { to: '/reports/sales', permission: 'reports.view', label: 'المبيعات', icon: TrendingUp },
-            { to: '/reports/profit', permission: 'reports.view', label: 'الأرباح', icon: Scale },
-            { to: '/reports/stock', permission: 'reports.view', label: 'المخزون', icon: BoxesIcon },
-            { to: '/reports/custody', permission: 'reports.view', label: 'العهد', icon: HandCoins },
+            { to: '/purchasing/requests', permission: 'purchasing.manage', label: 'طلبات الشراء', icon: ClipboardList },
+            { to: '/purchasing/orders', permission: 'purchasing.manage', label: 'أوامر الشراء', icon: Truck },
+            { to: '/purchasing/invoices', permission: 'purchasing.manage', label: 'فواتير الموردين', icon: Receipt },
+            { to: '/purchasing/returns', permission: 'purchasing.manage', label: 'مرتجعات المشتريات', icon: ArrowLeftRight },
+            { to: '/purchasing/suppliers', permission: 'purchasing.manage', label: 'الموردون', icon: Building2 },
+        ],
+    },
+    {
+        to: '/invoices',
+        permission: 'invoices.manage',
+        label: 'المالية',
+        icon: Receipt,
+        roles: ['admin', 'manager'],
+        short: 'مالية',
+        children: [
+            { to: '/invoices', permission: 'invoices.manage', label: 'الفواتير', icon: Receipt },
+            { to: '/treasury', permission: 'treasury.manage', label: 'الخزينة', icon: Wallet },
+            { to: '/cheques', permission: 'cheques.manage', label: 'الشيكات', icon: Banknote },
+            { to: '/accounting', permission: 'accounting.view', label: 'المحاسبة المالية', icon: Calculator },
         ],
     },
     {
@@ -148,6 +165,25 @@ const NAV: NavItem[] = [
         icon: UserCog,
         roles: ['admin', 'manager'],
         short: 'موظفون',
+        children: [
+            { to: '/hr/employees', permission: 'hr.manage', label: 'الموظفون', icon: Users },
+            { to: '/hr/leave', permission: 'hr.manage', label: 'الإجازات', icon: CalendarDays },
+            { to: '/hr/advances', permission: 'payroll.manage', label: 'السلف', icon: HandCoins },
+            { to: '/hr/payroll', permission: 'payroll.manage', label: 'الرواتب', icon: Banknote },
+        ],
+    },
+    {
+        to: '/reports',
+        permission: 'reports.view',
+        label: 'التقارير',
+        icon: BarChart3,
+        roles: ['admin', 'manager'],
+        children: [
+            { to: '/reports/sales', permission: 'reports.view', label: 'المبيعات', icon: TrendingUp },
+            { to: '/reports/profit', permission: 'reports.view', label: 'الأرباح', icon: Scale },
+            { to: '/reports/stock', permission: 'reports.view', label: 'المخزون', icon: BoxesIcon },
+            { to: '/reports/custody', permission: 'reports.view', label: 'العهد', icon: HandCoins },
+        ],
     },
     { to: '/stock', label: 'عهدتي', icon: Package, roles: ['technician'] },
     {
@@ -158,6 +194,7 @@ const NAV: NavItem[] = [
         roles: ['admin'],
         short: 'إدارة',
         children: [
+            { to: '/users', permission: 'users.manage', label: 'المستخدمون', icon: Users },
             { to: '/audit', permission: 'audit.view', label: 'سجل العمليات', icon: ScrollText },
             { to: '/settings', permission: 'settings.manage', label: 'بيانات الشركة', icon: Settings2 },
         ],
@@ -229,27 +266,13 @@ export function AppLayout() {
                         screen, and without this the last few entries sit below
                         the fold with no way to reach them at all. */}
                     <nav className="no-scrollbar flex-1 space-y-1 overflow-y-auto px-4 pb-4">
-                        {visibleNav.map((item) => (
-                            <div key={item.to}>
-                                <SidebarLink item={item} href={path(item.to)} />
-
-                                {/* Children stay visible rather than collapsing:
-                                    the whole point is that the sub-sections are
-                                    reachable in one click, not two. */}
-                                {item.children && (
-                                    <div className="mt-0.5 mr-4 space-y-0.5 border-r border-white/10 pr-2">
-                                        {item.children.map((child) => (
-                                            <SidebarLink
-                                                key={child.to}
-                                                item={child}
-                                                href={path(child.to)}
-                                                nested
-                                            />
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        ))}
+                        {visibleNav.map((item) =>
+                            item.children?.length ? (
+                                <SidebarGroup key={item.to} item={item} path={path} />
+                            ) : (
+                                <SidebarLink key={item.to} item={item} href={path(item.to)} />
+                            ),
+                        )}
                     </nav>
 
                     {canDispatch && (
@@ -389,6 +412,58 @@ export function AppLayout() {
             </div>
 
             <NotificationPanel open={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
+        </div>
+    )
+}
+
+/**
+ * A collapsible group in the sidebar — the header folds its sub-sections away
+ * until asked for, so the whole system fits without becoming a wall of links.
+ *
+ * It opens itself when the page you are on lives inside it, and after that
+ * follows your clicks. The header is a toggle, not a link: every destination is
+ * a child, so there is no second thing the same row could mean.
+ */
+function SidebarGroup({ item, path }: { item: NavItem; path: (suffix: string) => string }) {
+    const location = useLocation()
+    const Icon = item.icon
+    const children = item.children ?? []
+
+    const containsActive = children.some((child) => {
+        const href = path(child.to)
+        return location.pathname === href || location.pathname.startsWith(`${href}/`)
+    })
+
+    const [open, setOpen] = useState(containsActive)
+
+    useEffect(() => {
+        if (containsActive) setOpen(true)
+    }, [containsActive])
+
+    return (
+        <div>
+            <button
+                onClick={() => setOpen((value) => !value)}
+                aria-expanded={open}
+                className={clsx(
+                    'flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all',
+                    containsActive && !open
+                        ? 'text-white'
+                        : 'text-brand-100/70 hover:bg-white/10 hover:text-white',
+                )}
+            >
+                <Icon className="size-4.5 shrink-0" />
+                <span className="flex-1 text-right">{item.label}</span>
+                <ChevronDown className={clsx('size-4 shrink-0 transition-transform', open && 'rotate-180')} />
+            </button>
+
+            {open && (
+                <div className="mt-0.5 mr-4 space-y-0.5 border-r border-white/10 pr-2">
+                    {children.map((child) => (
+                        <SidebarLink key={child.to} item={child} href={path(child.to)} nested />
+                    ))}
+                </div>
+            )}
         </div>
     )
 }

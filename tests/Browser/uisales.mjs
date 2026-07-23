@@ -51,7 +51,7 @@ check('links the won quote to its order', /←\s*SO-/.test(quotations))
 
 // The tab, not the label wherever else it appears — the module gained a
 // returns tab and a text match alone is no longer unambiguous.
-await page.getByRole('button', { name: 'أوامر البيع', exact: true }).click()
+await page.getByRole('link', { name: 'أوامر البيع', exact: true }).click()
 await page.waitForFunction(() => document.body.innerText.includes('SO-'), null, { timeout: 25000 })
     .catch(() => {})
 await settled(page)
@@ -143,7 +143,7 @@ await page.goto(`${BASE}/manager/sales`, { waitUntil: 'domcontentloaded' })
 await page.waitForSelector('text=عروض الأسعار', { timeout: 20000 })
 // The tab, not the label wherever else it appears — the module gained a
 // returns tab and a text match alone is no longer unambiguous.
-await page.getByRole('button', { name: 'أوامر البيع', exact: true }).click()
+await page.getByRole('link', { name: 'أوامر البيع', exact: true }).click()
 await page.waitForFunction(() => document.body.innerText.includes('SO-'), null, { timeout: 25000 })
     .catch(() => {})
 await settled(page)

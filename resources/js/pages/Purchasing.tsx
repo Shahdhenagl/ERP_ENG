@@ -1,9 +1,10 @@
 import clsx from 'clsx'
 import { Ban, PackageCheck, Pencil, Plus, Printer, ScrollText, Search, Send, Truck, Wallet } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, Navigate, useParams } from 'react-router-dom'
 import { Modal } from '@/components/Modal'
 import { PeriodPicker, usePeriod } from '@/components/PeriodPicker'
+import { SectionTabs } from '@/components/SectionTabs'
 import { PurchaseReturnsTab } from '@/pages/purchasing/PurchaseReturnsTab'
 import { RequestsTab } from '@/pages/purchasing/RequestsTab'
 import { SupplierInvoicesTab } from '@/pages/purchasing/SupplierInvoicesTab'
@@ -38,41 +39,32 @@ const FULFILMENT_CHIP: Record<string, string> = {
 
 type Tab = 'requests' | 'orders' | 'invoices' | 'returns' | 'suppliers'
 
-const TABS: Array<[Tab, string]> = [
-    ['requests', 'طلبات الشراء'],
-    ['orders', 'أوامر الشراء'],
-    ['invoices', 'فواتير الموردين'],
-    ['returns', 'المرتجعات'],
-    ['suppliers', 'الموردون'],
+const TABS: Array<{ key: Tab; label: string; to: string }> = [
+    { key: 'requests', label: 'طلبات الشراء', to: '/purchasing/requests' },
+    { key: 'orders', label: 'أوامر الشراء', to: '/purchasing/orders' },
+    { key: 'invoices', label: 'فواتير الموردين', to: '/purchasing/invoices' },
+    { key: 'returns', label: 'مرتجعات المشتريات', to: '/purchasing/returns' },
+    { key: 'suppliers', label: 'الموردون', to: '/purchasing/suppliers' },
 ]
 
 export function Purchasing() {
-    const [tab, setTab] = useState<Tab>('orders')
+    const { tab } = useParams<{ tab: Tab }>()
+    // Orders is the section this module opens on when none is named.
+    const active = TABS.find((entry) => entry.key === tab) ?? TABS[1]
+
+    if (active.key !== tab) return <Navigate to={active.key} replace />
 
     return (
         <>
             <PageHeader title="المشتريات" subtitle="الموردون وأوامر الشراء والفواتير والاستلام" />
 
-            <div className="no-scrollbar mb-4 flex gap-1 overflow-x-auto rounded-xl bg-navy-100 p-1">
-                {TABS.map(([value, label]) => (
-                    <button
-                        key={value}
-                        onClick={() => setTab(value)}
-                        className={clsx(
-                            'tap flex-1 rounded-lg px-3 py-2 text-xs font-bold whitespace-nowrap transition',
-                            tab === value ? 'bg-white text-navy-900 shadow-sm' : 'text-navy-500',
-                        )}
-                    >
-                        {label}
-                    </button>
-                ))}
-            </div>
+            <SectionTabs sections={TABS.map((entry) => [entry.to, entry.label] as const)} />
 
-            {tab === 'requests' && <RequestsTab />}
-            {tab === 'orders' && <OrdersTab />}
-            {tab === 'invoices' && <SupplierInvoicesTab />}
-            {tab === 'returns' && <PurchaseReturnsTab />}
-            {tab === 'suppliers' && <SuppliersTab />}
+            {active.key === 'requests' && <RequestsTab />}
+            {active.key === 'orders' && <OrdersTab />}
+            {active.key === 'invoices' && <SupplierInvoicesTab />}
+            {active.key === 'returns' && <PurchaseReturnsTab />}
+            {active.key === 'suppliers' && <SuppliersTab />}
         </>
     )
 }

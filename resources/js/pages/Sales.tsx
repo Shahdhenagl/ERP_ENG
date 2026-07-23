@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Modal } from '@/components/Modal'
+import { SectionTabs } from '@/components/SectionTabs'
 import { SalesReturnsTab } from '@/pages/sales/SalesReturnsTab'
 import { QuotationForm } from '@/components/QuotationForm'
 import { useToast } from '@/components/Toast'
@@ -31,41 +32,32 @@ import {
     useSalesOrders,
 } from '@/lib/queries'
 import type { Quotation } from '@/types'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 
 type Tab = 'quotations' | 'orders' | 'returns'
 
-const TABS: Array<[Tab, string]> = [
-    ['quotations', 'عروض الأسعار'],
-    ['orders', 'أوامر البيع'],
-    ['returns', 'المرتجعات'],
+const TABS: Array<{ key: Tab; label: string; to: string }> = [
+    { key: 'quotations', label: 'عروض الأسعار', to: '/sales/quotations' },
+    { key: 'orders', label: 'أوامر البيع', to: '/sales/orders' },
+    { key: 'returns', label: 'مرتجعات المبيعات', to: '/sales/returns' },
 ]
 
 export function Sales() {
-    const [tab, setTab] = useState<Tab>('quotations')
+    const { tab } = useParams<{ tab: Tab }>()
+    const active = TABS.find((entry) => entry.key === tab) ?? TABS[0]
+
+    // Bare /sales lands on the first section; the sidebar reaches the rest.
+    if (active.key !== tab) return <Navigate to={active.key} replace />
 
     return (
         <>
             <PageHeader title="المبيعات" subtitle="عروض الأسعار وأوامر البيع والمرتجعات" />
 
-            <div className="no-scrollbar mb-4 flex gap-1 overflow-x-auto rounded-xl bg-navy-100 p-1">
-                {TABS.map(([value, label]) => (
-                    <button
-                        key={value}
-                        onClick={() => setTab(value)}
-                        className={clsx(
-                            'tap flex-1 rounded-lg px-3 py-2 text-xs font-bold whitespace-nowrap transition',
-                            tab === value ? 'bg-white text-navy-900 shadow-sm' : 'text-navy-500',
-                        )}
-                    >
-                        {label}
-                    </button>
-                ))}
-            </div>
+            <SectionTabs sections={TABS.map((entry) => [entry.to, entry.label] as const)} />
 
-            {tab === 'quotations' && <QuotationsTab />}
-            {tab === 'orders' && <OrdersTab />}
-            {tab === 'returns' && <SalesReturnsTab />}
+            {active.key === 'quotations' && <QuotationsTab />}
+            {active.key === 'orders' && <OrdersTab />}
+            {active.key === 'returns' && <SalesReturnsTab />}
         </>
     )
 }

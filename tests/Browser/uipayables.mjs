@@ -124,7 +124,7 @@ check(
 await page.goto(`${BASE}/manager/purchasing`, { waitUntil: 'domcontentloaded' })
 await settled(page)
 
-await page.getByRole('button', { name: 'فواتير الموردين' }).click()
+await page.getByRole('link', { name: 'فواتير الموردين', exact: true }).click()
 await page.waitForTimeout(800)
 
 await page.getByRole('button', { name: 'فاتورة مورّد' }).first().click()
@@ -171,7 +171,7 @@ check(
 
 /* ── Return part of it ───────────────────────────────────── */
 
-await page.getByRole('button', { name: 'المرتجعات' }).click()
+await page.getByRole('link', { name: 'مرتجعات المشتريات', exact: true }).click()
 await page.waitForTimeout(800)
 
 await page.getByRole('button', { name: 'مرتجع مشتريات' }).first().click()
@@ -226,7 +226,7 @@ check(
 
 /* ── The statement reads back the same balance ───────────── */
 
-await page.getByRole('button', { name: 'الموردون' }).click()
+await page.getByRole('link', { name: 'الموردون', exact: true }).click()
 await page.waitForTimeout(1000)
 await settled(page)
 
