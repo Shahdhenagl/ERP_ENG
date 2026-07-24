@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AccountingController;
 use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AssetController;
+use App\Http\Controllers\Api\AttachmentController;
 use App\Http\Controllers\Api\BatteryController;
 use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\AuthController;
@@ -170,6 +171,13 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::delete('batteries/{battery}', [BatteryController::class, 'destroy'])->middleware('can:assets.manage');
 
     Route::get('technicians', [UserController::class, 'technicians']);
+
+    // Attachments — files on any record that owns them (site surveys, tenders,
+    // batteries). The kind of record carries its own permission, checked in
+    // the controller since it depends on which record is reached.
+    Route::get('attachments/{type}/{id}', [AttachmentController::class, 'index']);
+    Route::post('attachments/{type}/{id}', [AttachmentController::class, 'store']);
+    Route::delete('attachments/{attachment}', [AttachmentController::class, 'destroy']);
 
     // Customer satisfaction — the rating of a closed job, kept off the task.
     Route::get('satisfaction/summary', [SatisfactionController::class, 'summary'])->middleware('can:tasks.dispatch');

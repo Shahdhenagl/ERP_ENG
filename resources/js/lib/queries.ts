@@ -79,6 +79,7 @@ import type {
     TenderSummary,
     PpmVisit,
     PpmSummary,
+    FileAttachment,
     SiteSurvey,
     SatisfactionSurvey,
     SatisfactionSummary,
@@ -396,6 +397,42 @@ export function useRespondSurvey() {
         mutationFn: async ({ id, ...payload }: { id: number; rating: number; comment?: string }) =>
             (await api.post<{ data: SatisfactionSurvey }>(`/satisfaction/${id}/respond`, payload)).data.data,
         onSuccess: () => invalidateSatisfaction(client),
+    })
+}
+
+/* ── Attachments (polymorphic files) ─────────────────────── */
+
+export function useAttachments(type: string, id: number | undefined) {
+    return useQuery({
+        queryKey: ['attachments', type, id ?? 0],
+        queryFn: async () =>
+            (await api.get<{ data: FileAttachment[] }>(`/attachments/${type}/${id}`)).data.data,
+        enabled: Boolean(id),
+    })
+}
+
+export function useUploadFiles(type: string, id: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ files, caption }: { files: File[]; caption?: string }) => {
+            const form = new FormData()
+            files.forEach((file) => form.append('files[]', file))
+            if (caption) form.append('caption', caption)
+
+            return (await api.post(`/attachments/${type}/${id}`, form)).data
+        },
+        onSuccess: () => void client.invalidateQueries({ queryKey: ['attachments', type, id] }),
+    })
+}
+
+export function useDeleteAttachmentFile(type: string, id: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (attachmentId: number) =>
+            (await api.delete(`/attachments/${attachmentId}`)).data,
+        onSuccess: () => void client.invalidateQueries({ queryKey: ['attachments', type, id] }),
     })
 }
 

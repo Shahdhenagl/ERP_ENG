@@ -1,6 +1,7 @@
 import clsx from 'clsx'
 import { FileSignature, Plus, Search, Send, ThumbsDown, Trophy } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { Attachments } from '@/components/Attachments'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import {
@@ -457,6 +458,12 @@ function TenderForm({ tender, onClose }: { tender?: Tender; onClose: () => void 
                 <Field label="ملاحظات" error={errors.notes}>
                     <Textarea value={form.notes} onChange={(e) => set('notes')(e.target.value)} rows={2} />
                 </Field>
+
+                {tender && (
+                    <div className="border-t border-navy-100 pt-4">
+                        <Attachments type="tenders" id={tender.id} label="وثائق المناقصة" />
+                    </div>
+                )}
             </div>
         </Modal>
     )

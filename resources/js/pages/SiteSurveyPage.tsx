@@ -1,6 +1,7 @@
 import clsx from 'clsx'
 import { BadgeCheck, MapPin, Plus, Zap } from 'lucide-react'
 import { useState } from 'react'
+import { Attachments } from '@/components/Attachments'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import {
@@ -333,6 +334,17 @@ function SurveyDialog({ survey, onClose }: { survey?: SiteSurvey; onClose: () =>
                     <Textarea value={form.notes} onChange={(e) => set('notes')(e.target.value)} rows={2} />
                 </Field>
             </fieldset>
+
+            {survey && (
+                <div className="mt-4 border-t border-navy-100 pt-4">
+                    <Attachments
+                        type="site-surveys"
+                        id={survey.id}
+                        label="صور الموقع والمستندات"
+                        readOnly={locked}
+                    />
+                </div>
+            )}
         </Modal>
     )
 }

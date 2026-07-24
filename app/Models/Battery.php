@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\BatteryStatus;
+use App\Models\Concerns\HasAttachments;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -18,7 +19,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Battery extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasAttachments, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'code', 'asset_id', 'customer_id',

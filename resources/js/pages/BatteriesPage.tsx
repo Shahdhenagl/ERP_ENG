@@ -1,6 +1,7 @@
 import clsx from 'clsx'
-import { BatteryCharging, Plus, RefreshCw } from 'lucide-react'
+import { BatteryCharging, Paperclip, Plus, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
+import { Attachments } from '@/components/Attachments'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import {
@@ -36,6 +37,7 @@ export function BatteriesPage() {
     const { data, isLoading } = useBatteries(dueOnly ? { due_within: 30 } : {})
     const [creating, setCreating] = useState(false)
     const [replacing, setReplacing] = useState<Battery | null>(null)
+    const [attachFor, setAttachFor] = useState<Battery | null>(null)
 
     return (
         <>
@@ -79,6 +81,7 @@ export function BatteriesPage() {
                             key={battery.id}
                             battery={battery}
                             onReplace={() => setReplacing(battery)}
+                            onAttach={() => setAttachFor(battery)}
                         />
                     ))}
                 </div>
@@ -88,11 +91,29 @@ export function BatteriesPage() {
             {replacing && (
                 <ReplaceDialog battery={replacing} onClose={() => setReplacing(null)} />
             )}
+            {attachFor && (
+                <Modal
+                    open
+                    onClose={() => setAttachFor(null)}
+                    title={`مرفقات البطارية ${attachFor.code}`}
+                    size="md"
+                >
+                    <Attachments type="batteries" id={attachFor.id} label="صور ومستندات البطارية" />
+                </Modal>
+            )}
         </>
     )
 }
 
-function BatteryRow({ battery, onReplace }: { battery: Battery; onReplace: () => void }) {
+function BatteryRow({
+    battery,
+    onReplace,
+    onAttach,
+}: {
+    battery: Battery
+    onReplace: () => void
+    onAttach: () => void
+}) {
     const remaining = battery.days_until_due
 
     const dueTone = battery.is_overdue
@@ -152,8 +173,8 @@ function BatteryRow({ battery, onReplace }: { battery: Battery; onReplace: () =>
                 </div>
             </div>
 
-            {battery.status === 'active' && (
-                <div className="mt-3 flex gap-2 border-t border-navy-100 pt-3">
+            <div className="mt-3 flex gap-2 border-t border-navy-100 pt-3">
+                {battery.status === 'active' && (
                     <button
                         onClick={onReplace}
                         className="tap inline-flex items-center gap-1.5 rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-700"
@@ -161,8 +182,15 @@ function BatteryRow({ battery, onReplace }: { battery: Battery; onReplace: () =>
                         <RefreshCw className="size-3.5" />
                         استبدال
                     </button>
-                </div>
-            )}
+                )}
+                <button
+                    onClick={onAttach}
+                    className="tap inline-flex items-center gap-1.5 rounded-lg bg-navy-50 px-3 py-1.5 text-xs font-bold text-navy-600"
+                >
+                    <Paperclip className="size-3.5" />
+                    مرفقات
+                </button>
+            </div>
         </div>
     )
 }

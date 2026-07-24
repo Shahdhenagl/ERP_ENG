@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\SurveyStatus;
+use App\Models\Concerns\HasAttachments;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -17,7 +18,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class SiteSurvey extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasAttachments, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'code', 'lead_id', 'customer_id', 'branch_id',

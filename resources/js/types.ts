@@ -275,6 +275,18 @@ export type ContractStatus = 'draft' | 'active' | 'cancelled'
 /** Includes the two states derived from today's date. */
 export type ContractEffectiveStatus = ContractStatus | 'expired' | 'scheduled'
 
+export interface FileAttachment {
+    id: number
+    url: string
+    is_image: boolean
+    original_name: string
+    mime: string | null
+    size: number
+    caption: string | null
+    uploader: string | null
+    created_at: string | null
+}
+
 export type VisitStatus = 'planned' | 'scheduled' | 'done' | 'skipped' | 'cancelled'
 
 export interface ContractVisit {
