@@ -21,7 +21,8 @@ class QuotationController extends Controller
             ->when($request->integer('customer_id'), fn ($q, $id) => $q->where('customer_id', $id))
             ->when($request->string('status')->toString(), fn ($q, $s) => $q->where('status', $s))
             ->when($request->boolean('awaiting'), fn ($q) => $q->awaitingDecision())
-            ->with(['customer', 'salesOrder'])
+            ->when($request->boolean('pending_approval'), fn ($q) => $q->pendingApproval())
+            ->with(['customer', 'salesOrder', 'approver'])
             ->orderByDesc('id')
             ->limit($request->integer('per_page', 50))
             ->get()
@@ -118,6 +119,55 @@ class QuotationController extends Controller
         return response()->json(['data' => $this->present($cancelled->load(['customer', 'lines.item']), true)]);
     }
 
+    /* ── Internal approval ───────────────────────────────── */
+
+    /** Hand a draft to a manager for sign-off before it goes out. */
+    public function submit(Quotation $quotation): JsonResponse
+    {
+        abort_unless($quotation->status === QuotationStatus::Draft, 422, 'لا يُقدَّم للاعتماد إلا عرض في المسودة.');
+
+        $quotation->update([
+            'submitted_at' => now(),
+            'approved_at' => null,
+            'approved_by' => null,
+            'approval_note' => null,
+        ]);
+
+        ActivityLog::record('quotation.submitted', $quotation, "تم تقديم {$quotation->code} للاعتماد");
+
+        return response()->json(['data' => $this->present($quotation->fresh()->load(['customer', 'approver']))]);
+    }
+
+    /** Sign it off — cleared to send to the customer. */
+    public function approveQuote(Request $request, Quotation $quotation): JsonResponse
+    {
+        abort_unless($quotation->isPendingApproval(), 422, 'العرض ليس بانتظار الاعتماد.');
+
+        $quotation->update([
+            'approved_at' => now(),
+            'approved_by' => $request->user()->id,
+            'approval_note' => null,
+        ]);
+
+        ActivityLog::record('quotation.approved', $quotation, "تم اعتماد عرض السعر {$quotation->code}");
+
+        return response()->json(['data' => $this->present($quotation->fresh()->load(['customer', 'approver']))]);
+    }
+
+    /** Send it back to the salesperson with a note instead of approving. */
+    public function rejectApproval(Request $request, Quotation $quotation): JsonResponse
+    {
+        abort_unless($quotation->isPendingApproval(), 422, 'العرض ليس بانتظار الاعتماد.');
+
+        $data = $request->validate(['note' => ['required', 'string', 'max:500']]);
+
+        $quotation->update(['submitted_at' => null, 'approval_note' => $data['note']]);
+
+        ActivityLog::record('quotation.approval_rejected', $quotation, "أُعيد {$quotation->code} للتعديل");
+
+        return response()->json(['data' => $this->present($quotation->fresh()->load(['customer', 'approver']))]);
+    }
+
     public function destroy(Quotation $quotation): JsonResponse
     {
         if ($quotation->status !== QuotationStatus::Draft) {
@@ -168,6 +218,14 @@ class QuotationController extends Controller
 
             'sales_order_id' => $quotation->salesOrder?->id,
             'sales_order_code' => $quotation->salesOrder?->code,
+
+            'submitted_at' => $quotation->submitted_at?->toIso8601String(),
+            'approved_at' => $quotation->approved_at?->toIso8601String(),
+            'approver' => $quotation->approver?->name,
+            'approval_note' => $quotation->approval_note,
+            'is_pending_approval' => $quotation->isPendingApproval(),
+            'is_approved' => $quotation->isApproved(),
+
             'created_at' => $quotation->created_at?->toIso8601String(),
         ];
 

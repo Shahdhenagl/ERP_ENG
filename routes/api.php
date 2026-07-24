@@ -378,6 +378,9 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::get('quotations/{quotation}', [QuotationController::class, 'show'])->middleware('can:sales.manage');
     Route::put('quotations/{quotation}', [QuotationController::class, 'update'])->middleware('can:sales.manage');
     Route::delete('quotations/{quotation}', [QuotationController::class, 'destroy'])->middleware('can:sales.manage');
+    Route::post('quotations/{quotation}/submit', [QuotationController::class, 'submit'])->middleware('can:sales.manage');
+    Route::post('quotations/{quotation}/approve', [QuotationController::class, 'approveQuote'])->middleware('can:sales.manage');
+    Route::post('quotations/{quotation}/reject-approval', [QuotationController::class, 'rejectApproval'])->middleware('can:sales.manage');
     Route::post('quotations/{quotation}/send', [QuotationController::class, 'send'])->middleware('can:sales.manage');
     Route::post('quotations/{quotation}/accept', [QuotationController::class, 'accept'])->middleware('can:sales.manage');
     Route::post('quotations/{quotation}/reject', [QuotationController::class, 'reject'])->middleware('can:sales.manage');

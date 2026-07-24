@@ -445,6 +445,14 @@ export interface Quotation {
 
     sales_order_id: number | null
     sales_order_code: string | null
+
+    submitted_at: string | null
+    approved_at: string | null
+    approver: string | null
+    approval_note: string | null
+    is_pending_approval: boolean
+    is_approved: boolean
+
     lines?: DocumentLine[]
     created_at: string | null
 }

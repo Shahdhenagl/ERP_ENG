@@ -20,6 +20,7 @@ class Quotation extends Model
         'issue_date', 'valid_until', 'status',
         'subtotal', 'discount', 'tax_rate', 'tax_amount', 'total', 'currency',
         'terms', 'notes', 'reject_reason', 'sent_at', 'decided_at', 'created_by',
+        'submitted_at', 'approved_at', 'approved_by', 'approval_note',
     ];
 
     protected function casts(): array
@@ -30,6 +31,8 @@ class Quotation extends Model
             'valid_until' => 'date',
             'sent_at' => 'datetime',
             'decided_at' => 'datetime',
+            'submitted_at' => 'datetime',
+            'approved_at' => 'datetime',
             'subtotal' => 'decimal:2',
             'discount' => 'decimal:2',
             'tax_rate' => 'decimal:2',
@@ -81,6 +84,33 @@ class Quotation extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    // ── Internal approval ────────────────────────────────────
+
+    /** Submitted for sign-off and not yet decided — the approval queue. */
+    public function isPendingApproval(): bool
+    {
+        return $this->status === QuotationStatus::Draft
+            && $this->submitted_at !== null
+            && $this->approved_at === null;
+    }
+
+    public function isApproved(): bool
+    {
+        return $this->approved_at !== null;
+    }
+
+    public function scopePendingApproval(Builder $query): Builder
+    {
+        return $query->where('status', QuotationStatus::Draft->value)
+            ->whereNotNull('submitted_at')
+            ->whereNull('approved_at');
     }
 
     // ── State ────────────────────────────────────────────────

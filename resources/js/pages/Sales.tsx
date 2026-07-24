@@ -1,7 +1,9 @@
 import clsx from 'clsx'
 import {
     Ban,
+    BadgeCheck,
     CheckCircle2,
+    ClipboardCheck,
     FileText,
     Pencil,
     Plus,
@@ -307,6 +309,12 @@ function QuotationDetail({
                         </p>
                     )}
 
+                    {quotation.approval_note && !quotation.is_approved && (
+                        <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-700">
+                            أُعيد للتعديل: {quotation.approval_note}
+                        </p>
+                    )}
+
                     <div className="flex flex-wrap gap-2 border-t border-navy-100 pt-4">
                         {/* Available from draft onwards — a quote is often
                             printed to be read over before it is sent. */}
@@ -328,6 +336,33 @@ function QuotationDetail({
                                 >
                                     تعديل
                                 </Button>
+                                {quotation.is_approved ? (
+                                    <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-700">
+                                        <BadgeCheck className="size-3.5" />
+                                        معتمد{quotation.approver ? ` — ${quotation.approver}` : ''}
+                                    </span>
+                                ) : quotation.is_pending_approval ? (
+                                    <span className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-700">
+                                        بانتظار الاعتماد
+                                    </span>
+                                ) : (
+                                    <Button
+                                        variant="secondary"
+                                        icon={ClipboardCheck}
+                                        className="text-xs"
+                                        loading={action.isPending}
+                                        onClick={async () => {
+                                            try {
+                                                await action.mutateAsync({ id: quotation.id, action: 'submit' })
+                                                toast.success('تم تقديم العرض للاعتماد.')
+                                            } catch (caught) {
+                                                toast.error(errorMessage(caught, 'تعذّر التقديم.'))
+                                            }
+                                        }}
+                                    >
+                                        تقديم للاعتماد
+                                    </Button>
+                                )}
                                 <Button
                                     icon={Send}
                                     className="text-xs"

@@ -37,6 +37,8 @@ import { Purchasing } from '@/pages/Purchasing'
 import { SupplierQuotesPage } from '@/pages/SupplierQuotesPage'
 import { TendersPage } from '@/pages/TendersPage'
 import { Sales } from '@/pages/Sales'
+import { QuoteApprovalsPage } from '@/pages/sales/QuoteApprovalsPage'
+import { DeliveryNotesPage } from '@/pages/sales/DeliveryNotesPage'
 import { Settings } from '@/pages/Settings'
 import { InvoicePrint } from '@/pages/print/InvoicePrint'
 import { QuotationPrint } from '@/pages/print/QuotationPrint'
@@ -180,6 +182,8 @@ export function App() {
                                         </Route>
 
                                         <Route path="sales" element={<Sales />} />
+                                        <Route path="sales/approvals" element={<QuoteApprovalsPage />} />
+                                        <Route path="sales/deliveries" element={<DeliveryNotesPage />} />
                                         <Route path="sales/:tab" element={<Sales />} />
                                         <Route path="purchasing" element={<Purchasing />} />
                                         <Route path="purchasing/:tab" element={<Purchasing />} />

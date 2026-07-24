@@ -119,9 +119,9 @@ export const NAV: NavItem[] = [
         short: 'بيع',
         children: [
             { to: '/sales/quotations', permission: 'sales.manage', label: 'عروض الأسعار', icon: FileText },
-            { to: '/soon/quote-approvals', label: 'اعتماد عروض الأسعار', icon: ClipboardCheck },
+            { to: '/sales/approvals', permission: 'sales.manage', label: 'اعتماد عروض الأسعار', icon: ClipboardCheck },
             { to: '/sales/orders', permission: 'sales.manage', label: 'أوامر البيع', icon: Receipt },
-            { to: '/soon/delivery-notes', label: 'أذون التسليم', icon: Truck },
+            { to: '/sales/deliveries', permission: 'sales.manage', label: 'أذون التسليم', icon: Truck },
             { to: '/invoices', permission: 'invoices.manage', label: 'الفواتير', icon: Receipt },
             { to: '/sales/returns', permission: 'sales.manage', label: 'مرتجعات المبيعات', icon: ArrowLeftRight },
             { to: '/collections', permission: 'treasury.manage', label: 'التحصيلات', icon: HandCoins },

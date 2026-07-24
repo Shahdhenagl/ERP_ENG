@@ -1262,7 +1262,7 @@ export function useQuotationAction() {
             payload,
         }: {
             id: number
-            action: 'send' | 'accept' | 'reject' | 'cancel'
+            action: 'send' | 'accept' | 'reject' | 'cancel' | 'submit' | 'approve' | 'reject-approval'
             payload?: Record<string, unknown>
         }) => (await api.post(`/quotations/${id}/${action}`, payload ?? {})).data,
         onSuccess: () => invalidateSales(client),
