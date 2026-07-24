@@ -74,6 +74,7 @@ import type {
     AttendanceSummaryRow,
     Contact,
     SupplierQuote,
+    Battery,
     Task,
     TaskReport,
     TaskStatus,
@@ -99,6 +100,7 @@ export const keys = {
     employees: (f?: Record<string, unknown>) => ['employees', f ?? {}] as const,
     employee: (id: number | string) => ['employee', Number(id)] as const,
     contacts: (f?: Record<string, unknown>) => ['contacts', f ?? {}] as const,
+    batteries: (f?: Record<string, unknown>) => ['batteries', f ?? {}] as const,
     leave: (f?: Record<string, unknown>) => ['leave', f ?? {}] as const,
     attendance: (f?: Record<string, unknown>) => ['attendance', f ?? {}] as const,
     attendanceSummary: (f?: Record<string, unknown>) => ['attendance-summary', f ?? {}] as const,
@@ -316,6 +318,47 @@ export function useDeleteAttachment(taskId: number) {
         onSuccess: () => {
             void client.invalidateQueries({ queryKey: keys.task(taskId) })
         },
+    })
+}
+
+/* ── Batteries ───────────────────────────────────────────── */
+
+export function useBatteries(filters: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: keys.batteries(filters),
+        queryFn: async () =>
+            (
+                await api.get<{ data: Battery[]; meta: { due_soon: number } }>('/batteries', {
+                    params: filters,
+                })
+            ).data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useSaveBattery() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ id, ...payload }: { id?: number } & Record<string, unknown>) =>
+            id
+                ? (await api.put<{ data: Battery }>(`/batteries/${id}`, payload)).data.data
+                : (await api.post<{ data: Battery }>('/batteries', payload)).data.data,
+        onSuccess: () => void client.invalidateQueries({ queryKey: ['batteries'] }),
+    })
+}
+
+/** Replace chains a new bank onto the old and closes it. */
+export function useReplaceBattery() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ id, ...payload }: { id: number } & Record<string, unknown>) =>
+            (await api.post<{ data: Battery }>(`/batteries/${id}/replace`, payload)).data.data,
+        onSuccess: () => void client.invalidateQueries({ queryKey: ['batteries'] }),
     })
 }
 

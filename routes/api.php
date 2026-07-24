@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AccountingController;
 use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AssetController;
+use App\Http\Controllers\Api\BatteryController;
 use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BranchController;
@@ -156,6 +157,13 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::post('assets', [AssetController::class, 'store'])->middleware('can:assets.manage');
     Route::put('assets/{asset}', [AssetController::class, 'update'])->middleware('can:assets.manage');
     Route::delete('assets/{asset}', [AssetController::class, 'destroy'])->middleware('can:assets.manage');
+
+    // Batteries — the banks inside the units and when each is due to change.
+    Route::get('batteries', [BatteryController::class, 'index'])->middleware('can:assets.manage');
+    Route::post('batteries', [BatteryController::class, 'store'])->middleware('can:assets.manage');
+    Route::put('batteries/{battery}', [BatteryController::class, 'update'])->middleware('can:assets.manage');
+    Route::post('batteries/{battery}/replace', [BatteryController::class, 'replace'])->middleware('can:assets.manage');
+    Route::delete('batteries/{battery}', [BatteryController::class, 'destroy'])->middleware('can:assets.manage');
 
     Route::get('technicians', [UserController::class, 'technicians']);
 

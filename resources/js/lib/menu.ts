@@ -213,7 +213,7 @@ export const NAV: NavItem[] = [
             { to: '/technicians', label: 'الفنيون', icon: UserCheck },
             { to: '/soon/service-parts', label: 'قطع الغيار المستخدمة', icon: Wrench },
             { to: '/soon/ppm', label: 'الصيانة الوقائية (PPM)', icon: CalendarDays },
-            { to: '/soon/batteries', label: 'إدارة البطاريات', icon: BatteryCharging },
+            { to: '/batteries', permission: 'assets.manage', label: 'إدارة البطاريات', icon: BatteryCharging },
             { to: '/soon/csat', label: 'رضا العملاء (CSAT)', icon: Smile },
         ],
     },

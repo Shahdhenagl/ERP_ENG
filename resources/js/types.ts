@@ -1902,6 +1902,37 @@ export interface Employee {
 }
 
 export type LeaveType = 'annual' | 'sick' | 'unpaid'
+export type BatteryStatus = 'active' | 'replaced' | 'faulty'
+
+export interface Battery {
+    id: number
+    code: string
+    asset_id: number | null
+    asset: string | null
+    asset_label: string | null
+    customer_id: number | null
+    customer: string | null
+    serial_number: string | null
+    brand: string | null
+    model: string | null
+    capacity_ah: number | null
+    voltage: number | null
+    count: number
+    installed_on: string | null
+    life_months: number
+    warranty_months: number | null
+    due_at: string | null
+    days_until_due: number | null
+    is_overdue: boolean
+    status: BatteryStatus
+    status_label: string
+    replaced_by_id: number | null
+    replacement_code: string | null
+    replaced_on: string | null
+    notes: string | null
+    created_at: string | null
+}
+
 export type SupplierQuoteStatus = 'received' | 'selected' | 'rejected'
 
 export interface SupplierQuoteLine {
