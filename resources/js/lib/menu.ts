@@ -87,7 +87,7 @@ export const NAV: NavItem[] = [
         roles: ['admin', 'manager'],
         children: [
             { to: '/', label: 'لوحة المعلومات', icon: LayoutDashboard },
-            { to: '/soon/notifications', label: 'التنبيهات', icon: Bell },
+            { to: '/notifications', label: 'التنبيهات', icon: Bell },
             { to: '/tasks', label: 'المهام المطلوبة', icon: ClipboardList },
         ],
     },

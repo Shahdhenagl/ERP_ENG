@@ -1612,6 +1612,17 @@ export function useMarkAllRead() {
     })
 }
 
+export function useMarkNotificationRead() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id: string) => (await api.post(`/notifications/${id}/read`)).data,
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: keys.notifications })
+        },
+    })
+}
+
 /* â”€â”€ Accounting â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 export const accountingKeys = {

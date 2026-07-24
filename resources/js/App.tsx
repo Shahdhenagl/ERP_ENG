@@ -18,6 +18,7 @@ import { AssetList } from '@/pages/AssetList'
 import { BatteriesPage } from '@/pages/BatteriesPage'
 import { SatisfactionPage } from '@/pages/SatisfactionPage'
 import { PpmPage } from '@/pages/PpmPage'
+import { NotificationsPage } from '@/pages/NotificationsPage'
 import { ContractDetail } from '@/pages/ContractDetail'
 import { ContractList } from '@/pages/ContractList'
 import { CustomerList } from '@/pages/CustomerList'
@@ -148,6 +149,7 @@ export function App() {
                                         <Route path="customers" element={<CustomerList />} />
                                         <Route path="customers/:id" element={<CustomerProfile />} />
                                         <Route path="crm" element={<CrmPage />} />
+                                        <Route path="notifications" element={<NotificationsPage />} />
                                         <Route path="contacts" element={<ContactsPage />} />
                                         <Route path="site-surveys" element={<SiteSurveyPage />} />
                                         <Route path="assets" element={<AssetList />} />
