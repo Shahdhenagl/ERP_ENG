@@ -259,6 +259,8 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::post('stock/receive', [StockController::class, 'receive'])->middleware('can:inventory.manage');
     Route::post('stock/transfer', [StockController::class, 'transfer'])->middleware('can:inventory.manage');
     Route::post('stock/adjust', [StockController::class, 'adjust'])->middleware('can:inventory.manage');
+    Route::get('stock/stocktake', [StockController::class, 'stocktakeSheet'])->middleware('can:inventory.manage');
+    Route::post('stock/stocktake', [StockController::class, 'stocktakeCommit'])->middleware('can:inventory.manage');
 
     // ── Purchasing ───────────────────────────────────────────
     Route::get('suppliers', [SupplierController::class, 'index'])->middleware('can:purchasing.manage');

@@ -429,6 +429,67 @@ class StockLedger
         ]);
     }
 
+    /**
+     * A whole-warehouse count in one pass.
+     *
+     * Each line runs through the same single-item adjust, so stock is written
+     * the one way it is ever written. The summary is read back off the movements
+     * each line produced — surplus where the count beat the book, shortage (the
+     * هالك) where it fell short — never from a second tally of its own.
+     *
+     * @param  array<int, array{item_id: int, counted_qty: float|int}>  $counts
+     * @return array<string, mixed>
+     */
+    public function stocktake(Warehouse $warehouse, array $counts, User $actor, ?string $note = null): array
+    {
+        return DB::transaction(function () use ($warehouse, $counts, $actor, $note) {
+            $adjusted = 0;
+            $surplusQty = 0.0;
+            $shortageQty = 0.0;
+            $surplusValue = 0.0;
+            $shortageValue = 0.0;
+
+            foreach ($counts as $count) {
+                $item = Item::find($count['item_id']);
+
+                if (! $item) {
+                    continue;
+                }
+
+                $movement = $this->adjust($item, $warehouse, (float) $count['counted_qty'], $actor, $note);
+
+                // A line whose count matched the book records nothing.
+                if (! $movement) {
+                    continue;
+                }
+
+                $adjusted++;
+                $qty = (float) $movement->qty;
+                $value = round($qty * (float) $item->avg_cost, 2);
+
+                if ($movement->to_warehouse_id === $warehouse->id) {
+                    $surplusQty += $qty;
+                    $surplusValue += $value;
+                } else {
+                    $shortageQty += $qty;
+                    $shortageValue += $value;
+                }
+            }
+
+            return [
+                'counted' => count($counts),
+                'adjusted' => $adjusted,
+                'surplus_qty' => round($surplusQty, 3),
+                'shortage_qty' => round($shortageQty, 3),
+                'net_qty' => round($surplusQty - $shortageQty, 3),
+                'surplus_value' => round($surplusValue, 2),
+                // The value of what the count came up short — the shrinkage.
+                'shrinkage_value' => round($shortageValue, 2),
+                'net_value' => round($surplusValue - $shortageValue, 2),
+            ];
+        });
+    }
+
     protected function assertPositive(float $qty): void
     {
         if ($qty <= 0) {

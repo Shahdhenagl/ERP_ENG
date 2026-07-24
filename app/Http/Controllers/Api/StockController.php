@@ -206,6 +206,51 @@ class StockController extends Controller
     }
 
     /** Headline numbers for the inventory dashboard card. */
+    /**
+     * The count sheet for one warehouse: every active item with the quantity
+     * the book says is on its shelf, ready to have the real one written beside.
+     */
+    public function stocktakeSheet(Request $request): JsonResponse
+    {
+        $data = $request->validate(['warehouse_id' => ['required', 'exists:warehouses,id']]);
+        $warehouse = Warehouse::findOrFail($data['warehouse_id']);
+
+        $items = Item::query()->active()->with('levels')->orderBy('name')->get();
+
+        return response()->json([
+            'warehouse' => ['id' => $warehouse->id, 'name' => $warehouse->name],
+            'items' => $items->map(fn (Item $item) => [
+                'item_id' => $item->id,
+                'name' => $item->name,
+                'sku' => $item->sku,
+                'unit' => $item->unit,
+                'book_qty' => round($item->qtyIn($warehouse), 3),
+                'unit_cost' => (float) $item->avg_cost,
+            ])->values(),
+        ]);
+    }
+
+    /** Apply a whole count: adjust every line that differs, and report the gap. */
+    public function stocktakeCommit(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'warehouse_id' => ['required', 'exists:warehouses,id'],
+            'note' => ['nullable', 'string', 'max:1000'],
+            'counts' => ['required', 'array', 'min:1'],
+            'counts.*.item_id' => ['required', 'integer', 'exists:items,id'],
+            'counts.*.counted_qty' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        $summary = $this->ledger->stocktake(
+            Warehouse::findOrFail($data['warehouse_id']),
+            $data['counts'],
+            $request->user(),
+            $data['note'] ?? null,
+        );
+
+        return response()->json(['data' => $summary]);
+    }
+
     public function summary(): JsonResponse
     {
         $items = Item::query()->active()->with('levels')->get();
