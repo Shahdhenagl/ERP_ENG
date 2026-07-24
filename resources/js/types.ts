@@ -1902,6 +1902,24 @@ export interface Employee {
 }
 
 export type LeaveType = 'annual' | 'sick' | 'unpaid'
+export interface Contact {
+    id: number
+    code: string
+    customer_id: number
+    customer: string | null
+    name: string
+    job_title: string | null
+    department: string | null
+    phone: string | null
+    whatsapp: string | null
+    email: string | null
+    contact_number: string | null
+    is_primary: boolean
+    is_active: boolean
+    notes: string | null
+    created_at: string | null
+}
+
 export type AttendanceStatus = 'present' | 'late' | 'absent' | 'leave' | 'holiday'
 
 export interface Attendance {

@@ -101,7 +101,7 @@ export const NAV: NavItem[] = [
         short: 'عملاء',
         children: [
             { to: '/customers', permission: 'customers.manage', label: 'العملاء', icon: Building2 },
-            { to: '/soon/contacts', label: 'جهات الاتصال', icon: Contact },
+            { to: '/contacts', permission: 'customers.manage', label: 'جهات الاتصال', icon: Contact },
             { to: '/crm', permission: 'crm.manage', label: 'فرص البيع (Leads)', icon: Target },
             { to: '/soon/crm-quotations', label: 'عروض الأسعار (CRM)', icon: FileText },
             { to: '/soon/customer-followups', label: 'متابعة العملاء', icon: CalendarDays },

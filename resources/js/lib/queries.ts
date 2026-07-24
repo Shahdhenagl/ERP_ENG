@@ -72,6 +72,7 @@ import type {
     StocktakeSummary,
     Attendance,
     AttendanceSummaryRow,
+    Contact,
     Task,
     TaskReport,
     TaskStatus,
@@ -96,6 +97,7 @@ export const keys = {
     technicians: ['technicians'] as const,
     employees: (f?: Record<string, unknown>) => ['employees', f ?? {}] as const,
     employee: (id: number | string) => ['employee', Number(id)] as const,
+    contacts: (f?: Record<string, unknown>) => ['contacts', f ?? {}] as const,
     leave: (f?: Record<string, unknown>) => ['leave', f ?? {}] as const,
     attendance: (f?: Record<string, unknown>) => ['attendance', f ?? {}] as const,
     attendanceSummary: (f?: Record<string, unknown>) => ['attendance-summary', f ?? {}] as const,
@@ -311,6 +313,47 @@ export function useDeleteAttachment(taskId: number) {
         onSuccess: () => {
             void client.invalidateQueries({ queryKey: keys.task(taskId) })
         },
+    })
+}
+
+/* ── Contacts ────────────────────────────────────────────── */
+
+export function useContacts(filters: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: keys.contacts(filters),
+        queryFn: async () =>
+            (await api.get<{ data: Contact[] }>('/contacts', { params: filters })).data.data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+/** Create when a customer is given, otherwise update the contact by id. */
+export function useSaveContact() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({
+            id,
+            customer_id,
+            ...payload
+        }: { id?: number; customer_id: number } & Record<string, unknown>) =>
+            id
+                ? (await api.put<{ data: Contact }>(`/contacts/${id}`, payload)).data.data
+                : (await api.post<{ data: Contact }>(`/customers/${customer_id}/contacts`, payload)).data
+                      .data,
+        onSuccess: () => void client.invalidateQueries({ queryKey: ['contacts'] }),
+    })
+}
+
+export function useDeleteContact() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id: number) => (await api.delete(`/contacts/${id}`)).data,
+        onSuccess: () => void client.invalidateQueries({ queryKey: ['contacts'] }),
     })
 }
 

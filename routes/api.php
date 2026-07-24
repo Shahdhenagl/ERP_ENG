@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\ChequeController;
+use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\ContractController;
 use App\Http\Controllers\Api\CustodyController;
 use App\Http\Controllers\Api\CustomerController;
@@ -137,6 +138,13 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::get('branches/{branch}', [BranchController::class, 'show'])->middleware('can:customers.manage');
     Route::put('branches/{branch}', [BranchController::class, 'update'])->middleware('can:customers.manage');
     Route::delete('branches/{branch}', [BranchController::class, 'destroy'])->middleware('can:customers.manage');
+
+    // Contacts — the people at a customer, the same shape as branches.
+    Route::get('contacts', [ContactController::class, 'index'])->middleware('can:customers.manage');
+    Route::get('customers/{customer}/contacts', [ContactController::class, 'forCustomer'])->middleware('can:customers.manage');
+    Route::post('customers/{customer}/contacts', [ContactController::class, 'store'])->middleware('can:customers.manage');
+    Route::put('contacts/{contact}', [ContactController::class, 'update'])->middleware('can:customers.manage');
+    Route::delete('contacts/{contact}', [ContactController::class, 'destroy'])->middleware('can:customers.manage');
 
     Route::get('customers', [CustomerController::class, 'index'])->middleware('can:customers.manage');
     Route::post('customers', [CustomerController::class, 'store'])->middleware('can:customers.manage');

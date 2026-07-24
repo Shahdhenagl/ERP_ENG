@@ -88,6 +88,11 @@ class Customer extends Model
         return $this->hasMany(Branch::class);
     }
 
+    public function contacts(): HasMany
+    {
+        return $this->hasMany(Contact::class);
+    }
+
     public function contracts(): HasMany
     {
         return $this->hasMany(Contract::class);
