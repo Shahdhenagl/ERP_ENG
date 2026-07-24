@@ -16,6 +16,7 @@ import { TrialBalancePage } from '@/pages/accounting/TrialBalancePage'
 import { AssetDetail } from '@/pages/AssetDetail'
 import { AssetList } from '@/pages/AssetList'
 import { BatteriesPage } from '@/pages/BatteriesPage'
+import { SatisfactionPage } from '@/pages/SatisfactionPage'
 import { ContractDetail } from '@/pages/ContractDetail'
 import { ContractList } from '@/pages/ContractList'
 import { CustomerList } from '@/pages/CustomerList'
@@ -148,6 +149,7 @@ export function App() {
                                         <Route path="assets" element={<AssetList />} />
                                         <Route path="assets/:id" element={<AssetDetail />} />
                                         <Route path="batteries" element={<BatteriesPage />} />
+                                        <Route path="satisfaction" element={<SatisfactionPage />} />
                                         <Route path="contracts" element={<ContractList />} />
                                         <Route path="contracts/:id" element={<ContractDetail />} />
                                         {/* Sections rather than tabs, so the

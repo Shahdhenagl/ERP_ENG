@@ -151,6 +151,11 @@ class Task extends Model
         return $this->hasMany(TaskAttachment::class);
     }
 
+    public function satisfactionSurvey(): HasOne
+    {
+        return $this->hasOne(SatisfactionSurvey::class);
+    }
+
     // ── Location helpers ─────────────────────────────────────
 
     /**

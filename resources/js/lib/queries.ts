@@ -75,6 +75,9 @@ import type {
     Contact,
     SupplierQuote,
     Battery,
+    SatisfactionSurvey,
+    SatisfactionSummary,
+    SatisfactionCandidate,
     Task,
     TaskReport,
     TaskStatus,
@@ -101,6 +104,7 @@ export const keys = {
     employee: (id: number | string) => ['employee', Number(id)] as const,
     contacts: (f?: Record<string, unknown>) => ['contacts', f ?? {}] as const,
     batteries: (f?: Record<string, unknown>) => ['batteries', f ?? {}] as const,
+    satisfaction: (f?: Record<string, unknown>) => ['satisfaction', f ?? {}] as const,
     leave: (f?: Record<string, unknown>) => ['leave', f ?? {}] as const,
     attendance: (f?: Record<string, unknown>) => ['attendance', f ?? {}] as const,
     attendanceSummary: (f?: Record<string, unknown>) => ['attendance-summary', f ?? {}] as const,
@@ -318,6 +322,72 @@ export function useDeleteAttachment(taskId: number) {
         onSuccess: () => {
             void client.invalidateQueries({ queryKey: keys.task(taskId) })
         },
+    })
+}
+
+/* ── Satisfaction (CSAT) ─────────────────────────────────── */
+
+export function useSatisfaction(filters: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: keys.satisfaction(filters),
+        queryFn: async () =>
+            (
+                await api.get<{ data: SatisfactionSurvey[]; meta: { pending: number } }>(
+                    '/satisfaction',
+                    { params: filters },
+                )
+            ).data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useSatisfactionSummary() {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: ['satisfaction-summary'],
+        queryFn: async () => (await api.get<SatisfactionSummary>('/satisfaction/summary')).data,
+        enabled: canDispatch,
+    })
+}
+
+export function useSatisfactionCandidates() {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: ['satisfaction-candidates'],
+        queryFn: async () =>
+            (await api.get<{ data: SatisfactionCandidate[] }>('/satisfaction/candidates')).data.data,
+        enabled: canDispatch,
+    })
+}
+
+function invalidateSatisfaction(client: ReturnType<typeof useQueryClient>): void {
+    for (const key of ['satisfaction', 'satisfaction-summary', 'satisfaction-candidates']) {
+        void client.invalidateQueries({ queryKey: [key] })
+    }
+}
+
+export function useCreateSurvey() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: { task_id: number; rating?: number; comment?: string }) =>
+            (await api.post<{ data: SatisfactionSurvey }>('/satisfaction', payload)).data.data,
+        onSuccess: () => invalidateSatisfaction(client),
+    })
+}
+
+export function useRespondSurvey() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ id, ...payload }: { id: number; rating: number; comment?: string }) =>
+            (await api.post<{ data: SatisfactionSurvey }>(`/satisfaction/${id}/respond`, payload)).data.data,
+        onSuccess: () => invalidateSatisfaction(client),
     })
 }
 

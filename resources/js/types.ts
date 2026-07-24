@@ -1902,6 +1902,38 @@ export interface Employee {
 }
 
 export type LeaveType = 'annual' | 'sick' | 'unpaid'
+export interface SatisfactionSurvey {
+    id: number
+    task_id: number | null
+    task_code: string | null
+    task_title: string | null
+    customer_id: number | null
+    customer: string | null
+    status: 'pending' | 'responded'
+    status_label: string
+    rating: number | null
+    comment: string | null
+    sent_at: string | null
+    responded_at: string | null
+    created_at: string | null
+}
+
+export interface SatisfactionSummary {
+    responses: number
+    pending: number
+    average: number | null
+    response_rate: number | null
+    distribution: Record<string, number>
+}
+
+export interface SatisfactionCandidate {
+    id: number
+    code: string
+    title: string | null
+    customer: string | null
+    completed_at: string | null
+}
+
 export type BatteryStatus = 'active' | 'replaced' | 'faulty'
 
 export interface Battery {

@@ -39,6 +39,7 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\StockController;
 use App\Http\Controllers\Api\PushSubscriptionController;
 use App\Http\Controllers\Api\TaskAttachmentController;
+use App\Http\Controllers\Api\SatisfactionController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\TaskReportController;
 use App\Http\Controllers\Api\TaskStatusController;
@@ -166,6 +167,13 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::delete('batteries/{battery}', [BatteryController::class, 'destroy'])->middleware('can:assets.manage');
 
     Route::get('technicians', [UserController::class, 'technicians']);
+
+    // Customer satisfaction — the rating of a closed job, kept off the task.
+    Route::get('satisfaction/summary', [SatisfactionController::class, 'summary'])->middleware('can:tasks.dispatch');
+    Route::get('satisfaction/candidates', [SatisfactionController::class, 'candidates'])->middleware('can:tasks.dispatch');
+    Route::get('satisfaction', [SatisfactionController::class, 'index'])->middleware('can:tasks.dispatch');
+    Route::post('satisfaction', [SatisfactionController::class, 'store'])->middleware('can:tasks.dispatch');
+    Route::post('satisfaction/{satisfactionSurvey}/respond', [SatisfactionController::class, 'respond'])->middleware('can:tasks.dispatch');
 
     // ── CRM: leads and follow-ups ────────────────────────────
     // The front of the funnel. Winning a lead mints a customer, so the whole
