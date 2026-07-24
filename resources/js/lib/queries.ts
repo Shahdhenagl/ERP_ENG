@@ -75,6 +75,8 @@ import type {
     Contact,
     SupplierQuote,
     Battery,
+    Tender,
+    TenderSummary,
     SiteSurvey,
     SatisfactionSurvey,
     SatisfactionSummary,
@@ -105,6 +107,7 @@ export const keys = {
     employee: (id: number | string) => ['employee', Number(id)] as const,
     contacts: (f?: Record<string, unknown>) => ['contacts', f ?? {}] as const,
     siteSurveys: (f?: Record<string, unknown>) => ['site-surveys', f ?? {}] as const,
+    tenders: (f?: Record<string, unknown>) => ['tenders', f ?? {}] as const,
     batteries: (f?: Record<string, unknown>) => ['batteries', f ?? {}] as const,
     satisfaction: (f?: Record<string, unknown>) => ['satisfaction', f ?? {}] as const,
     leave: (f?: Record<string, unknown>) => ['leave', f ?? {}] as const,
@@ -390,6 +393,50 @@ export function useRespondSurvey() {
         mutationFn: async ({ id, ...payload }: { id: number; rating: number; comment?: string }) =>
             (await api.post<{ data: SatisfactionSurvey }>(`/satisfaction/${id}/respond`, payload)).data.data,
         onSuccess: () => invalidateSatisfaction(client),
+    })
+}
+
+/* ── Tenders ─────────────────────────────────────────────── */
+
+export function useTenders(filters: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: keys.tenders(filters),
+        queryFn: async () =>
+            (await api.get<{ data: Tender[]; meta: TenderSummary }>('/tenders', { params: filters })).data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useSaveTender() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ id, ...payload }: { id?: number } & Record<string, unknown>) =>
+            id
+                ? (await api.put<{ data: Tender }>(`/tenders/${id}`, payload)).data.data
+                : (await api.post<{ data: Tender }>('/tenders', payload)).data.data,
+        onSuccess: () => void client.invalidateQueries({ queryKey: ['tenders'] }),
+    })
+}
+
+/** Submit moves it forward; decide settles it won or lost. */
+export function useTenderAction() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({
+            id,
+            action,
+            payload,
+        }: {
+            id: number
+            action: 'submit' | 'decide'
+            payload?: Record<string, unknown>
+        }) => (await api.post<{ data: Tender }>(`/tenders/${id}/${action}`, payload ?? {})).data.data,
+        onSuccess: () => void client.invalidateQueries({ queryKey: ['tenders'] }),
     })
 }
 

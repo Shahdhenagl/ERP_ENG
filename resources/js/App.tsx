@@ -33,6 +33,7 @@ import { InvoiceDetail } from '@/pages/InvoiceDetail'
 import { InvoiceList } from '@/pages/InvoiceList'
 import { Purchasing } from '@/pages/Purchasing'
 import { SupplierQuotesPage } from '@/pages/SupplierQuotesPage'
+import { TendersPage } from '@/pages/TendersPage'
 import { Sales } from '@/pages/Sales'
 import { Settings } from '@/pages/Settings'
 import { InvoicePrint } from '@/pages/print/InvoicePrint'
@@ -175,6 +176,7 @@ export function App() {
                                         <Route path="purchasing" element={<Purchasing />} />
                                         <Route path="purchasing/:tab" element={<Purchasing />} />
                                         <Route path="supplier-quotes" element={<SupplierQuotesPage />} />
+                                        <Route path="tenders" element={<TendersPage />} />
                                         <Route path="invoices" element={<InvoiceList />} />
                                         <Route path="invoices/:id" element={<InvoiceDetail />} />
                                         <Route path="treasury" element={<TreasuryPage />} />

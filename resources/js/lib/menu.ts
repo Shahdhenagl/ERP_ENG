@@ -126,7 +126,7 @@ export const NAV: NavItem[] = [
             { to: '/sales/returns', permission: 'sales.manage', label: 'مرتجعات المبيعات', icon: ArrowLeftRight },
             { to: '/collections', permission: 'treasury.manage', label: 'التحصيلات', icon: HandCoins },
             { to: '/customer-statement', permission: 'sales.manage', label: 'كشف حساب العميل', icon: FileClock },
-            { to: '/soon/tenders', label: 'المناقصات والعطاءات', icon: FileSignature },
+            { to: '/tenders', permission: 'sales.manage', label: 'المناقصات والعطاءات', icon: FileSignature },
         ],
     },
 

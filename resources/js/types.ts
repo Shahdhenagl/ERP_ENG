@@ -1902,6 +1902,41 @@ export interface Employee {
 }
 
 export type LeaveType = 'annual' | 'sick' | 'unpaid'
+export type TenderStatus = 'registered' | 'submitted' | 'won' | 'lost' | 'cancelled'
+
+export interface Tender {
+    id: number
+    code: string
+    reference_no: string | null
+    entity: string
+    title: string
+    customer_id: number | null
+    customer: string | null
+    announced_on: string | null
+    submission_deadline: string | null
+    opening_date: string | null
+    days_to_deadline: number | null
+    estimated_value: number | null
+    bid_bond: number | null
+    status: TenderStatus
+    status_label: string
+    awarded_value: number | null
+    result_note: string | null
+    decided_on: string | null
+    owner_id: number | null
+    owner: string | null
+    description: string | null
+    notes: string | null
+    created_at: string | null
+}
+
+export interface TenderSummary {
+    open: number
+    won: number
+    lost: number
+    win_rate: number | null
+}
+
 export type SurveyStatus = 'draft' | 'completed' | 'approved'
 
 export interface SiteSurvey {

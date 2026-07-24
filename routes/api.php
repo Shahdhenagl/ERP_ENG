@@ -28,6 +28,7 @@ use App\Http\Controllers\Api\PurchaseOrderController;
 use App\Http\Controllers\Api\SupplierQuoteController;
 use App\Http\Controllers\Api\PurchaseRequestController;
 use App\Http\Controllers\Api\QuotationController;
+use App\Http\Controllers\Api\TenderController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\SalesOrderController;
 use App\Http\Controllers\Api\SalesReturnController;
@@ -366,6 +367,14 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::post('quotations/{quotation}/accept', [QuotationController::class, 'accept'])->middleware('can:sales.manage');
     Route::post('quotations/{quotation}/reject', [QuotationController::class, 'reject'])->middleware('can:sales.manage');
     Route::post('quotations/{quotation}/cancel', [QuotationController::class, 'cancel'])->middleware('can:sales.manage');
+
+    // Tenders — bids to a deadline, won or lost.
+    Route::get('tenders', [TenderController::class, 'index'])->middleware('can:sales.manage');
+    Route::post('tenders', [TenderController::class, 'store'])->middleware('can:sales.manage');
+    Route::get('tenders/{tender}', [TenderController::class, 'show'])->middleware('can:sales.manage');
+    Route::put('tenders/{tender}', [TenderController::class, 'update'])->middleware('can:sales.manage');
+    Route::post('tenders/{tender}/submit', [TenderController::class, 'submit'])->middleware('can:sales.manage');
+    Route::post('tenders/{tender}/decide', [TenderController::class, 'decide'])->middleware('can:sales.manage');
 
     Route::get('sales-orders', [SalesOrderController::class, 'index'])->middleware('can:sales.manage');
     Route::post('sales-orders', [SalesOrderController::class, 'store'])->middleware('can:sales.manage');
