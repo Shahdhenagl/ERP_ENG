@@ -57,6 +57,8 @@ import { MyStock } from '@/pages/MyStock'
 import { ComingSoon } from '@/pages/ComingSoon'
 import { TechniciansPage } from '@/pages/TechniciansPage'
 import { CollectionsPage } from '@/pages/CollectionsPage'
+import { CustomerStatementPage } from '@/pages/CustomerStatementPage'
+import { SupplierStatementPage } from '@/pages/SupplierStatementPage'
 import { Dashboard } from '@/pages/Dashboard'
 import { Login } from '@/pages/Login'
 import { Profile } from '@/pages/Profile'
@@ -165,7 +167,10 @@ export function App() {
                                         <Route path="invoices/:id" element={<InvoiceDetail />} />
                                         <Route path="treasury" element={<TreasuryPage />} />
                                         <Route path="collections" element={<CollectionsPage />} />
+                                        <Route path="customer-statement" element={<CustomerStatementPage />} />
+                                        <Route path="supplier-statement" element={<SupplierStatementPage />} />
                                         <Route path="cheques" element={<ChequesPage />} />
+                                        <Route path="cheques/:view" element={<ChequesPage />} />
                                         <Route path="technicians" element={<TechniciansPage />} />
                                         <Route path="hr" element={<HrPage />} />
                                         <Route path="hr/:tab" element={<HrPage />} />

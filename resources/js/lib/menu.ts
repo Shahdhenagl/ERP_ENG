@@ -125,7 +125,7 @@ export const NAV: NavItem[] = [
             { to: '/invoices', permission: 'invoices.manage', label: 'الفواتير', icon: Receipt },
             { to: '/sales/returns', permission: 'sales.manage', label: 'مرتجعات المبيعات', icon: ArrowLeftRight },
             { to: '/collections', permission: 'treasury.manage', label: 'التحصيلات', icon: HandCoins },
-            { to: '/soon/customer-statement', label: 'كشف حساب العميل', icon: FileClock },
+            { to: '/customer-statement', permission: 'sales.manage', label: 'كشف حساب العميل', icon: FileClock },
             { to: '/soon/tenders', label: 'المناقصات والعطاءات', icon: FileSignature },
         ],
     },
@@ -164,7 +164,7 @@ export const NAV: NavItem[] = [
             { to: '/soon/purchase-receipt', label: 'استلام المشتريات', icon: PackagePlus },
             { to: '/purchasing/invoices', permission: 'purchasing.manage', label: 'فواتير الموردين', icon: Receipt },
             { to: '/purchasing/returns', permission: 'purchasing.manage', label: 'مرتجعات المشتريات', icon: ArrowLeftRight },
-            { to: '/soon/supplier-statement', label: 'كشف حساب المورد', icon: FileClock },
+            { to: '/supplier-statement', permission: 'purchasing.manage', label: 'كشف حساب المورد', icon: FileClock },
         ],
     },
 
@@ -243,8 +243,8 @@ export const NAV: NavItem[] = [
         short: 'بنوك',
         children: [
             { to: '/soon/bank-accounts', label: 'الحسابات البنكية', icon: Landmark },
-            { to: '/cheques', permission: 'cheques.manage', label: 'الشيكات الواردة', icon: Banknote },
-            { to: '/soon/cheques-outgoing', label: 'الشيكات الصادرة', icon: Banknote },
+            { to: '/cheques/incoming', permission: 'cheques.manage', label: 'الشيكات الواردة', icon: Banknote },
+            { to: '/cheques/outgoing', permission: 'cheques.manage', label: 'الشيكات الصادرة', icon: Banknote },
             { to: '/soon/bank-reconciliation', label: 'التسوية البنكية', icon: Scale },
             { to: '/soon/bank-deposits', label: 'الإيداعات والتحويلات', icon: ArrowLeftRight },
         ],

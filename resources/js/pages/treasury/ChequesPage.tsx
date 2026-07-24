@@ -1,6 +1,7 @@
 import clsx from 'clsx'
 import { Banknote, Plus, Search } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { useParams } from 'react-router-dom'
 import { Modal } from '@/components/Modal'
 import { SectionTabs } from '@/components/SectionTabs'
 import { useToast } from '@/components/Toast'
@@ -48,10 +49,21 @@ const FILTERS: Array<[Filter, string]> = [
 ]
 
 export function ChequesPage() {
-    const [filter, setFilter] = useState<Filter>('open')
+    // The sidebar lists واردة and صادرة as separate destinations, so a link can
+    // open straight onto one — /cheques/outgoing lands filtered, the strip still
+    // there to switch. Bare /cheques opens on the open ones as before.
+    const { view } = useParams<{ view: string }>()
+    const initial: Filter = view === 'incoming' || view === 'outgoing' ? view : 'open'
+
+    const [filter, setFilter] = useState<Filter>(initial)
     const [search, setSearch] = useState('')
     const [creating, setCreating] = useState<'incoming' | 'outgoing' | null>(null)
     const [acting, setActing] = useState<{ cheque: Cheque; action: Action } | null>(null)
+
+    // Following the link again after the page is already mounted still switches.
+    useEffect(() => {
+        if (view === 'incoming' || view === 'outgoing') setFilter(view)
+    }, [view])
 
     const { data, isLoading } = useCheques({
         search,
