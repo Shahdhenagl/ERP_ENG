@@ -77,6 +77,8 @@ import type {
     Battery,
     Tender,
     TenderSummary,
+    PpmVisit,
+    PpmSummary,
     SiteSurvey,
     SatisfactionSurvey,
     SatisfactionSummary,
@@ -108,6 +110,7 @@ export const keys = {
     contacts: (f?: Record<string, unknown>) => ['contacts', f ?? {}] as const,
     siteSurveys: (f?: Record<string, unknown>) => ['site-surveys', f ?? {}] as const,
     tenders: (f?: Record<string, unknown>) => ['tenders', f ?? {}] as const,
+    ppmVisits: (f?: Record<string, unknown>) => ['ppm-visits', f ?? {}] as const,
     batteries: (f?: Record<string, unknown>) => ['batteries', f ?? {}] as const,
     satisfaction: (f?: Record<string, unknown>) => ['satisfaction', f ?? {}] as const,
     leave: (f?: Record<string, unknown>) => ['leave', f ?? {}] as const,
@@ -393,6 +396,44 @@ export function useRespondSurvey() {
         mutationFn: async ({ id, ...payload }: { id: number; rating: number; comment?: string }) =>
             (await api.post<{ data: SatisfactionSurvey }>(`/satisfaction/${id}/respond`, payload)).data.data,
         onSuccess: () => invalidateSatisfaction(client),
+    })
+}
+
+/* ── PPM (preventive maintenance) ────────────────────────── */
+
+export function usePpmVisits(filters: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: keys.ppmVisits(filters),
+        queryFn: async () =>
+            (await api.get<{ data: PpmVisit[] }>('/ppm/visits', { params: filters })).data.data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function usePpmSummary() {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: ['ppm-summary'],
+        queryFn: async () => (await api.get<PpmSummary>('/ppm/summary')).data,
+        enabled: canDispatch,
+    })
+}
+
+/** Cut work orders for every visit now inside the horizon. */
+export function useRunPpm() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async () => (await api.post<{ created: number; message: string }>('/ppm/run')).data,
+        onSuccess: () => {
+            for (const key of ['ppm-visits', 'ppm-summary', 'tasks', 'dashboard']) {
+                void client.invalidateQueries({ queryKey: [key] })
+            }
+        },
     })
 }
 

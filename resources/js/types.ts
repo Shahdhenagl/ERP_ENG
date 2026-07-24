@@ -1902,6 +1902,32 @@ export interface Employee {
 }
 
 export type LeaveType = 'annual' | 'sick' | 'unpaid'
+export interface PpmVisit {
+    id: number
+    contract_id: number
+    contract_code: string | null
+    customer: string | null
+    sequence: number
+    planned_for: string | null
+    status: VisitStatus
+    status_label: string
+    is_overdue: boolean
+    task_id: number | null
+    task_code: string | null
+    task_status: string | null
+    task_status_label: string | null
+}
+
+export interface PpmSummary {
+    planned: number
+    scheduled: number
+    done: number
+    skipped: number
+    overdue: number
+    upcoming_30: number
+    compliance: number | null
+}
+
 export type TenderStatus = 'registered' | 'submitted' | 'won' | 'lost' | 'cancelled'
 
 export interface Tender {

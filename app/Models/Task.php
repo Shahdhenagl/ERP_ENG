@@ -156,6 +156,11 @@ class Task extends Model
         return $this->hasOne(SatisfactionSurvey::class);
     }
 
+    public function contractVisit(): HasOne
+    {
+        return $this->hasOne(ContractVisit::class);
+    }
+
     // ── Location helpers ─────────────────────────────────────
 
     /**

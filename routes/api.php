@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\ChequeController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\ContractController;
+use App\Http\Controllers\Api\PpmController;
 use App\Http\Controllers\Api\CustodyController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\EmployeeController;
@@ -278,6 +279,11 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::post('contracts/{contract}/renew', [ContractController::class, 'renew'])->middleware('can:contracts.manage');
     Route::post('contracts/{contract}/cancel', [ContractController::class, 'cancel'])->middleware('can:contracts.manage');
     Route::post('contracts/{contract}/materialise', [ContractController::class, 'materialise'])->middleware('can:contracts.manage');
+
+    // Preventive maintenance — the visit schedule the planner lays out.
+    Route::get('ppm/visits', [PpmController::class, 'visits'])->middleware('can:contracts.manage');
+    Route::get('ppm/summary', [PpmController::class, 'summary'])->middleware('can:contracts.manage');
+    Route::post('ppm/run', [PpmController::class, 'run'])->middleware('can:contracts.manage');
 
     // ── Inventory ────────────────────────────────────────────
     Route::apiResource('items', ItemController::class)->middleware('can:inventory.view');

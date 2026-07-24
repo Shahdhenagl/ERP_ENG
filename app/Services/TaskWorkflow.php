@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\TaskStatus;
+use App\Enums\VisitStatus;
 use App\Models\ActivityLog;
 use App\Models\Task;
 use App\Models\TaskStatusLog;
@@ -78,6 +79,15 @@ class TaskWorkflow
                 description: "{$task->code}: {$from->label()} ← {$to->label()}",
                 properties: ['from' => $from->value, 'to' => $to->value],
             );
+
+            // A completed maintenance visit closes its plan entry, so PPM
+            // compliance counts the visits actually carried out — not just the
+            // ones a work order was cut for.
+            if ($to === TaskStatus::Completed) {
+                $task->contractVisit()
+                    ->where('status', VisitStatus::Scheduled->value)
+                    ->update(['status' => VisitStatus::Done->value]);
+            }
         });
 
         // Outside the transaction and on purpose. On this deployment the queue
