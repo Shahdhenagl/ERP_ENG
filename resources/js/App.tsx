@@ -53,6 +53,7 @@ import { WarrantyRegisterPage } from '@/pages/warranty/WarrantyRegisterPage'
 import { ChequesPage } from '@/pages/treasury/ChequesPage'
 import { TreasuryPage } from '@/pages/treasury/TreasuryPage'
 import { MyStock } from '@/pages/MyStock'
+import { ComingSoon } from '@/pages/ComingSoon'
 import { Dashboard } from '@/pages/Dashboard'
 import { Login } from '@/pages/Login'
 import { Profile } from '@/pages/Profile'
@@ -189,6 +190,11 @@ export function App() {
                                         </Route>
 
                                         <Route path="profile" element={<Profile />} />
+
+                                        {/* Every sidebar screen not yet built lands here
+                                            rather than bouncing to the dashboard — the
+                                            page names what it will become. */}
+                                        <Route path="soon/*" element={<ComingSoon />} />
 
                                         <Route element={<RequireRole roles={['admin']} />}>
                                             <Route path="users" element={<UserList />} />
