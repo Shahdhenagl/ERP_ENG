@@ -124,7 +124,7 @@ export const NAV: NavItem[] = [
             { to: '/soon/delivery-notes', label: 'أذون التسليم', icon: Truck },
             { to: '/invoices', permission: 'invoices.manage', label: 'الفواتير', icon: Receipt },
             { to: '/sales/returns', permission: 'sales.manage', label: 'مرتجعات المبيعات', icon: ArrowLeftRight },
-            { to: '/soon/collections', label: 'التحصيلات', icon: HandCoins },
+            { to: '/collections', permission: 'treasury.manage', label: 'التحصيلات', icon: HandCoins },
             { to: '/soon/customer-statement', label: 'كشف حساب العميل', icon: FileClock },
             { to: '/soon/tenders', label: 'المناقصات والعطاءات', icon: FileSignature },
         ],
@@ -210,7 +210,7 @@ export const NAV: NavItem[] = [
         children: [
             { to: '/tasks', label: 'فتح تذكرة / بلاغ', icon: ClipboardList },
             { to: '/soon/work-orders', label: 'أوامر العمل', icon: ClipboardCheck },
-            { to: '/soon/technicians', label: 'الفنيون', icon: UserCheck },
+            { to: '/technicians', label: 'الفنيون', icon: UserCheck },
             { to: '/soon/service-parts', label: 'قطع الغيار المستخدمة', icon: Wrench },
             { to: '/soon/ppm', label: 'الصيانة الوقائية (PPM)', icon: CalendarDays },
             { to: '/soon/batteries', label: 'إدارة البطاريات', icon: BatteryCharging },
