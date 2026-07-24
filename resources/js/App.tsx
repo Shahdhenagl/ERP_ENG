@@ -22,6 +22,7 @@ import { ContractList } from '@/pages/ContractList'
 import { CustomerList } from '@/pages/CustomerList'
 import { CustomerProfile } from '@/pages/CustomerProfile'
 import { ContactsPage } from '@/pages/ContactsPage'
+import { SiteSurveyPage } from '@/pages/SiteSurveyPage'
 import { CustodyPage } from '@/pages/inventory/CustodyPage'
 import { InventoryLayout } from '@/pages/inventory/InventoryLayout'
 import { ItemsPage } from '@/pages/inventory/ItemsPage'
@@ -146,6 +147,7 @@ export function App() {
                                         <Route path="customers/:id" element={<CustomerProfile />} />
                                         <Route path="crm" element={<CrmPage />} />
                                         <Route path="contacts" element={<ContactsPage />} />
+                                        <Route path="site-surveys" element={<SiteSurveyPage />} />
                                         <Route path="assets" element={<AssetList />} />
                                         <Route path="assets/:id" element={<AssetDetail />} />
                                         <Route path="batteries" element={<BatteriesPage />} />

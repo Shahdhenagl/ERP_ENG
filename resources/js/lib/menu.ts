@@ -106,7 +106,7 @@ export const NAV: NavItem[] = [
             { to: '/soon/crm-quotations', label: 'عروض الأسعار (CRM)', icon: FileText },
             { to: '/soon/customer-followups', label: 'متابعة العملاء', icon: CalendarDays },
             { to: '/soon/customer-ledger', label: 'سجل تعاملات العميل', icon: FileClock },
-            { to: '/soon/site-survey', label: 'معاينة الموقع (Site Survey)', icon: MapPin },
+            { to: '/site-surveys', permission: 'crm.manage', label: 'معاينة الموقع (Site Survey)', icon: MapPin },
         ],
     },
 

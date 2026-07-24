@@ -75,6 +75,7 @@ import type {
     Contact,
     SupplierQuote,
     Battery,
+    SiteSurvey,
     SatisfactionSurvey,
     SatisfactionSummary,
     SatisfactionCandidate,
@@ -103,6 +104,7 @@ export const keys = {
     employees: (f?: Record<string, unknown>) => ['employees', f ?? {}] as const,
     employee: (id: number | string) => ['employee', Number(id)] as const,
     contacts: (f?: Record<string, unknown>) => ['contacts', f ?? {}] as const,
+    siteSurveys: (f?: Record<string, unknown>) => ['site-surveys', f ?? {}] as const,
     batteries: (f?: Record<string, unknown>) => ['batteries', f ?? {}] as const,
     satisfaction: (f?: Record<string, unknown>) => ['satisfaction', f ?? {}] as const,
     leave: (f?: Record<string, unknown>) => ['leave', f ?? {}] as const,
@@ -388,6 +390,42 @@ export function useRespondSurvey() {
         mutationFn: async ({ id, ...payload }: { id: number; rating: number; comment?: string }) =>
             (await api.post<{ data: SatisfactionSurvey }>(`/satisfaction/${id}/respond`, payload)).data.data,
         onSuccess: () => invalidateSatisfaction(client),
+    })
+}
+
+/* ── Site surveys ────────────────────────────────────────── */
+
+export function useSiteSurveys(filters: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: keys.siteSurveys(filters),
+        queryFn: async () =>
+            (await api.get<{ data: SiteSurvey[] }>('/site-surveys', { params: filters })).data.data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useSaveSiteSurvey() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ id, ...payload }: { id?: number } & Record<string, unknown>) =>
+            id
+                ? (await api.put<{ data: SiteSurvey }>(`/site-surveys/${id}`, payload)).data.data
+                : (await api.post<{ data: SiteSurvey }>('/site-surveys', payload)).data.data,
+        onSuccess: () => void client.invalidateQueries({ queryKey: ['site-surveys'] }),
+    })
+}
+
+export function useApproveSiteSurvey() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id: number) =>
+            (await api.post<{ data: SiteSurvey }>(`/site-surveys/${id}/approve`)).data.data,
+        onSuccess: () => void client.invalidateQueries({ queryKey: ['site-surveys'] }),
     })
 }
 

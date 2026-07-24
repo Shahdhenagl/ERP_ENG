@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\FollowUpController;
 use App\Http\Controllers\Api\LeadController;
+use App\Http\Controllers\Api\SiteSurveyController;
 use App\Http\Controllers\Api\LeaveController;
 use App\Http\Controllers\Api\PayrollController;
 use App\Http\Controllers\Api\DashboardController;
@@ -190,6 +191,13 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::put('follow-ups/{followUp}', [FollowUpController::class, 'update'])->middleware('can:crm.manage');
     Route::post('follow-ups/{followUp}/complete', [FollowUpController::class, 'complete'])->middleware('can:crm.manage');
     Route::delete('follow-ups/{followUp}', [FollowUpController::class, 'destroy'])->middleware('can:crm.manage');
+
+    // Site surveys — the visit that prices a quote, tied to the opportunity.
+    Route::get('site-surveys', [SiteSurveyController::class, 'index'])->middleware('can:crm.manage');
+    Route::post('site-surveys', [SiteSurveyController::class, 'store'])->middleware('can:crm.manage');
+    Route::get('site-surveys/{siteSurvey}', [SiteSurveyController::class, 'show'])->middleware('can:crm.manage');
+    Route::put('site-surveys/{siteSurvey}', [SiteSurveyController::class, 'update'])->middleware('can:crm.manage');
+    Route::post('site-surveys/{siteSurvey}/approve', [SiteSurveyController::class, 'approve'])->middleware('can:crm.manage');
 
     // ── Human resources ──────────────────────────────────────
     // Employees and leave under one permission; the money — advances and

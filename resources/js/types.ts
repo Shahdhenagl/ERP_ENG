@@ -1902,6 +1902,39 @@ export interface Employee {
 }
 
 export type LeaveType = 'annual' | 'sick' | 'unpaid'
+export type SurveyStatus = 'draft' | 'completed' | 'approved'
+
+export interface SiteSurvey {
+    id: number
+    code: string
+    lead_id: number | null
+    lead_code: string | null
+    customer_id: number | null
+    customer: string | null
+    branch_id: number | null
+    branch: string | null
+    surveyed_by: number | null
+    surveyor: string | null
+    survey_date: string | null
+    status: SurveyStatus
+    status_label: string
+    contact_name: string | null
+    contact_phone: string | null
+    address: string | null
+    city: string | null
+    load_kva: number | null
+    phase: 'single' | 'three' | null
+    phase_label: string | null
+    backup_minutes: number | null
+    existing_equipment: string | null
+    recommendation: string | null
+    notes: string | null
+    approved_by: number | null
+    approver: string | null
+    approved_at: string | null
+    created_at: string | null
+}
+
 export interface SatisfactionSurvey {
     id: number
     task_id: number | null
