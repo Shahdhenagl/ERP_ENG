@@ -70,6 +70,8 @@ import type {
     WarehouseSummary,
     StocktakeSheet,
     StocktakeSummary,
+    Attendance,
+    AttendanceSummaryRow,
     Task,
     TaskReport,
     TaskStatus,
@@ -95,6 +97,8 @@ export const keys = {
     employees: (f?: Record<string, unknown>) => ['employees', f ?? {}] as const,
     employee: (id: number | string) => ['employee', Number(id)] as const,
     leave: (f?: Record<string, unknown>) => ['leave', f ?? {}] as const,
+    attendance: (f?: Record<string, unknown>) => ['attendance', f ?? {}] as const,
+    attendanceSummary: (f?: Record<string, unknown>) => ['attendance-summary', f ?? {}] as const,
     advances: (f?: Record<string, unknown>) => ['advances', f ?? {}] as const,
     payrollRuns: (f?: Record<string, unknown>) => ['payroll-runs', f ?? {}] as const,
     payrollRun: (id: number | string) => ['payroll-run', Number(id)] as const,
@@ -2293,6 +2297,67 @@ export function useSaveLeave() {
             (await api.post<{ data: LeaveRequest }>('/leave', payload)).data.data,
         onSuccess: () => invalidateHr(client),
     })
+}
+
+/* ── Attendance ──────────────────────────────────────────── */
+
+export function useAttendance(filters: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: keys.attendance(filters),
+        queryFn: async () =>
+            (
+                await api.get<{ data: Attendance[]; meta: { year: number; month: number } }>(
+                    '/attendance',
+                    { params: filters },
+                )
+            ).data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useAttendanceSummary(filters: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: keys.attendanceSummary(filters),
+        queryFn: async () =>
+            (
+                await api.get<{ data: AttendanceSummaryRow[]; meta: { year: number; month: number } }>(
+                    '/attendance/summary',
+                    { params: filters },
+                )
+            ).data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+/** Record or correct a day — the API upserts on employee-and-date. */
+export function useSaveAttendance() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (await api.post<{ data: Attendance }>('/attendance', payload)).data.data,
+        onSuccess: () => invalidateAttendance(client),
+    })
+}
+
+export function useDeleteAttendance() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id: number) => (await api.delete(`/attendance/${id}`)).data,
+        onSuccess: () => invalidateAttendance(client),
+    })
+}
+
+function invalidateAttendance(client: ReturnType<typeof useQueryClient>): void {
+    void client.invalidateQueries({ queryKey: ['attendance'] })
+    void client.invalidateQueries({ queryKey: ['attendance-summary'] })
 }
 
 export function useLeaveAction() {

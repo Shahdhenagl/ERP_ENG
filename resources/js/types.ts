@@ -1902,6 +1902,41 @@ export interface Employee {
 }
 
 export type LeaveType = 'annual' | 'sick' | 'unpaid'
+export type AttendanceStatus = 'present' | 'late' | 'absent' | 'leave' | 'holiday'
+
+export interface Attendance {
+    id: number
+    employee_id: number
+    employee: string | null
+    employee_code: string | null
+    date: string
+    status: AttendanceStatus
+    status_label: string
+    check_in: string | null
+    check_out: string | null
+    late_minutes: number
+    worked_hours: number
+    note: string | null
+    recorded_by: string | null
+    created_at: string | null
+}
+
+/** One employee's month, tallied for the report. */
+export interface AttendanceSummaryRow {
+    employee_id: number
+    employee: string | null
+    employee_code: string | null
+    department: string | null
+    present_days: number
+    late_days: number
+    absent_days: number
+    leave_days: number
+    holiday_days: number
+    attended_days: number
+    late_minutes: number
+    worked_hours: number
+}
+
 export type LeaveStatus = 'pending' | 'approved' | 'rejected' | 'cancelled'
 
 export interface LeaveRequest {

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AccountingController;
 use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AssetController;
+use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\ChequeController;
@@ -174,6 +175,15 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::post('leave', [LeaveController::class, 'store'])->middleware('can:hr.manage');
     Route::post('leave/{leaveRequest}/decide', [LeaveController::class, 'decide'])->middleware('can:hr.manage');
     Route::post('leave/{leaveRequest}/cancel', [LeaveController::class, 'cancel'])->middleware('can:hr.manage');
+
+    // Attendance — the operational who-showed-up, kept beside leave under the
+    // same permission. `summary` is before the {attendance} binding so the
+    // word is not read as a record id.
+    Route::get('attendance/summary', [AttendanceController::class, 'summary'])->middleware('can:hr.manage');
+    Route::get('attendance', [AttendanceController::class, 'index'])->middleware('can:hr.manage');
+    Route::post('attendance', [AttendanceController::class, 'store'])->middleware('can:hr.manage');
+    Route::put('attendance/{attendance}', [AttendanceController::class, 'update'])->middleware('can:hr.manage');
+    Route::delete('attendance/{attendance}', [AttendanceController::class, 'destroy'])->middleware('can:hr.manage');
 
     Route::get('advances', [PayrollController::class, 'advances'])->middleware('can:payroll.manage');
     Route::post('advances', [PayrollController::class, 'storeAdvance'])->middleware('can:payroll.manage');

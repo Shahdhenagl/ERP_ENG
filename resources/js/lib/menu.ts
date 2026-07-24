@@ -274,7 +274,7 @@ export const NAV: NavItem[] = [
         anyPermission: ['hr.manage', 'payroll.manage'],
         children: [
             { to: '/hr/employees', permission: 'hr.manage', label: 'ملف الموظف', icon: Users },
-            { to: '/soon/attendance', label: 'الحضور والغياب', icon: CalendarDays },
+            { to: '/hr/attendance', permission: 'hr.manage', label: 'الحضور والغياب', icon: CalendarDays },
             { to: '/hr/leave', permission: 'hr.manage', label: 'الإجازات', icon: CalendarDays },
             { to: '/hr/payroll', permission: 'payroll.manage', label: 'مسير الرواتب', icon: Banknote },
             { to: '/hr/advances', permission: 'payroll.manage', label: 'الخصومات والمكافآت', icon: Percent },
