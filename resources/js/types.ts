@@ -190,6 +190,34 @@ export interface WarehouseSummary {
     keeper?: string | null
 }
 
+/** One line of a stocktake count sheet: what the book claims for an item. */
+export interface StocktakeSheetLine {
+    item_id: number
+    name: string
+    sku: string | null
+    unit: string | null
+    book_qty: number
+    unit_cost: number
+}
+
+export interface StocktakeSheet {
+    warehouse: { id: number; name: string }
+    items: StocktakeSheetLine[]
+}
+
+/** What a committed stocktake settled: the gap between book and floor. */
+export interface StocktakeSummary {
+    counted: number
+    adjusted: number
+    surplus_qty: number
+    shortage_qty: number
+    net_qty: number
+    surplus_value: number
+    /** The value of what the count came up short — the shrinkage. */
+    shrinkage_value: number
+    net_value: number
+}
+
 /** A device in a technician's hands, out of the registry until handed back. */
 export interface CustodyDevice {
     id: number

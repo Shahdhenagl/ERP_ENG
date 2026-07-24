@@ -68,6 +68,8 @@ import type {
     TreasurySummary,
     VanStockLine,
     WarehouseSummary,
+    StocktakeSheet,
+    StocktakeSummary,
     Task,
     TaskReport,
     TaskStatus,
@@ -644,6 +646,38 @@ function invalidateStock(client: ReturnType<typeof useQueryClient>): void {
     for (const key of ['items', 'warehouses', 'movements', 'stock-summary', 'my-stock']) {
         void client.invalidateQueries({ queryKey: [key] })
     }
+}
+
+/**
+ * The count sheet for a warehouse — every active item with the quantity the
+ * book claims. Held only while a warehouse is chosen; a bare stocktake screen
+ * asks for nothing.
+ */
+export function useStocktakeSheet(warehouseId: number | null) {
+    return useQuery({
+        queryKey: ['stocktake-sheet', warehouseId],
+        queryFn: async () =>
+            (
+                await api.get<StocktakeSheet>('/stock/stocktake', {
+                    params: { warehouse_id: warehouseId },
+                })
+            ).data,
+        enabled: warehouseId !== null,
+    })
+}
+
+/** Commit a count. It writes through the same adjust every balance change uses. */
+export function useStocktakeCommit() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: {
+            warehouse_id: number
+            note?: string
+            counts: Array<{ item_id: number; counted_qty: number }>
+        }) => (await api.post<{ data: StocktakeSummary }>('/stock/stocktake', payload)).data.data,
+        onSuccess: () => invalidateStock(client),
+    })
 }
 
 /* ── Custody: money, stock and devices ───────────────────── */

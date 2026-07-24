@@ -23,6 +23,7 @@ import { CustodyPage } from '@/pages/inventory/CustodyPage'
 import { InventoryLayout } from '@/pages/inventory/InventoryLayout'
 import { ItemsPage } from '@/pages/inventory/ItemsPage'
 import { MovementsPage } from '@/pages/inventory/MovementsPage'
+import { StocktakePage } from '@/pages/inventory/StocktakePage'
 import { WarehousesPage } from '@/pages/inventory/WarehousesPage'
 import { InvoiceDetail } from '@/pages/InvoiceDetail'
 import { InvoiceList } from '@/pages/InvoiceList'
@@ -146,6 +147,7 @@ export function App() {
                                             <Route path="warehouses" element={<WarehousesPage />} />
                                             <Route path="custody" element={<CustodyPage />} />
                                             <Route path="movements" element={<MovementsPage />} />
+                                            <Route path="stocktake" element={<StocktakePage />} />
                                         </Route>
                                         <Route path="warranties" element={<WarrantyLayout />}>
                                             <Route index element={<Navigate to="register" replace />} />

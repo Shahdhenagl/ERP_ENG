@@ -144,7 +144,7 @@ export const NAV: NavItem[] = [
             { to: '/inventory/movements', permission: 'inventory.view', label: 'إذن استلام', icon: PackagePlus },
             { to: '/soon/stock-issue', label: 'إذن صرف', icon: PackageMinus },
             { to: '/soon/stock-transfer', label: 'تحويلات المخازن', icon: ArrowLeftRight },
-            { to: '/soon/stocktake', label: 'الجرد والتسويات', icon: ClipboardCheck },
+            { to: '/inventory/stocktake', permission: 'inventory.manage', label: 'الجرد والتسويات', icon: ClipboardCheck },
             { to: '/soon/serials', label: 'الباركود والأرقام التسلسلية', icon: ListChecks },
         ],
     },
