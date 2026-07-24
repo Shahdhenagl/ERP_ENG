@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\CustomerResource;
 use App\Models\ActivityLog;
 use App\Models\Customer;
+use App\Models\Payment;
+use App\Models\SalesReturn;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -186,5 +188,69 @@ class CustomerController extends Controller
             'notes' => ['nullable', 'string', 'max:2000'],
             'is_active' => ['boolean'],
         ]);
+    }
+
+    /**
+     * One customer's whole dealing history, merged and read down the page.
+     *
+     * Quotes, invoices, receipts, credit notes, contracts and service tickets
+     * are each pulled and folded into one date-sorted stream — the question
+     * "everything we have ever done with them" answered in order, which no
+     * single grouped list on the profile does.
+     */
+    public function timeline(Customer $customer): JsonResponse
+    {
+        $events = collect();
+
+        foreach ($customer->quotations()->get() as $q) {
+            $events->push($this->event($q->issue_date, 'quotation', 'عرض سعر', $q->code, $q->title, (float) $q->total, $q->effectiveStatusLabel()));
+        }
+
+        foreach ($customer->invoices()->where('status', '!=', 'draft')->get() as $i) {
+            $events->push($this->event($i->issue_date, 'invoice', 'فاتورة', $i->code, null, (float) $i->total, $i->paymentStateLabel()));
+        }
+
+        foreach (Payment::where('customer_id', $customer->id)->with('invoice')->get() as $p) {
+            $events->push($this->event($p->paid_at, 'payment', 'تحصيل', $p->code, $p->invoice?->code, (float) $p->amount, null));
+        }
+
+        foreach (SalesReturn::where('customer_id', $customer->id)->posted()->get() as $r) {
+            $events->push($this->event($r->return_date, 'return', 'مرتجع', $r->code, null, (float) $r->total, null));
+        }
+
+        foreach ($customer->contracts()->get() as $c) {
+            $events->push($this->event($c->starts_on, 'contract', 'عقد صيانة', $c->code, $c->label, (float) $c->value, $c->effectiveStatusLabel()));
+        }
+
+        foreach ($customer->tasks()->get() as $t) {
+            $events->push($this->event($t->created_at, 'task', 'تذكرة صيانة', $t->code, $t->title, null, $t->status->label()));
+        }
+
+        $rows = $events
+            ->filter(fn ($e) => $e['date'] !== null)
+            ->sortByDesc('date')
+            ->values();
+
+        return response()->json([
+            'data' => $rows,
+            'meta' => [
+                'customer' => ['id' => $customer->id, 'name' => $customer->name, 'code' => $customer->code],
+                'total' => $rows->count(),
+            ],
+        ]);
+    }
+
+    /** @return array<string, mixed> */
+    protected function event(mixed $date, string $type, string $typeLabel, ?string $code, ?string $title, ?float $amount, ?string $status): array
+    {
+        return [
+            'date' => $date ? (string) (is_string($date) ? substr($date, 0, 10) : $date->toDateString()) : null,
+            'type' => $type,
+            'type_label' => $typeLabel,
+            'code' => $code,
+            'title' => $title,
+            'amount' => $amount,
+            'status' => $status,
+        ];
     }
 }

@@ -54,6 +54,8 @@ import { StockReportPage } from '@/pages/reports/StockReportPage'
 import { WarrantyReportPage } from '@/pages/reports/WarrantyReportPage'
 import { CrmReportPage } from '@/pages/reports/CrmReportPage'
 import { CrmPage } from '@/pages/crm/CrmPage'
+import { FollowUpsPage } from '@/pages/crm/FollowUpsPage'
+import { CustomerLedgerPage } from '@/pages/CustomerLedgerPage'
 import { HrPage } from '@/pages/hr/HrPage'
 import { PayslipPrint } from '@/pages/print/PayslipPrint'
 import { ClaimsPage } from '@/pages/warranty/ClaimsPage'
@@ -149,6 +151,8 @@ export function App() {
                                         <Route path="customers" element={<CustomerList />} />
                                         <Route path="customers/:id" element={<CustomerProfile />} />
                                         <Route path="crm" element={<CrmPage />} />
+                                        <Route path="customer-followups" element={<FollowUpsPage />} />
+                                        <Route path="customer-ledger" element={<CustomerLedgerPage />} />
                                         <Route path="notifications" element={<NotificationsPage />} />
                                         <Route path="contacts" element={<ContactsPage />} />
                                         <Route path="site-surveys" element={<SiteSurveyPage />} />

@@ -595,6 +595,32 @@ export function useReplaceBattery() {
     })
 }
 
+/* ── Customer timeline ───────────────────────────────────── */
+
+export interface TimelineEvent {
+    date: string | null
+    type: 'quotation' | 'invoice' | 'payment' | 'return' | 'contract' | 'task'
+    type_label: string
+    code: string | null
+    title: string | null
+    amount: number | null
+    status: string | null
+}
+
+export function useCustomerTimeline(customerId: number | undefined) {
+    return useQuery({
+        queryKey: ['customer-timeline', customerId ?? 0],
+        queryFn: async () =>
+            (
+                await api.get<{
+                    data: TimelineEvent[]
+                    meta: { customer: { id: number; name: string; code: string }; total: number }
+                }>(`/customers/${customerId}/timeline`)
+            ).data,
+        enabled: Boolean(customerId),
+    })
+}
+
 /* ── Contacts ────────────────────────────────────────────── */
 
 export function useContacts(filters: Record<string, unknown> = {}) {
