@@ -66,6 +66,7 @@ import { TaskDetail } from '@/pages/TaskDetail'
 import { TaskForm } from '@/pages/TaskForm'
 import { TaskList } from '@/pages/TaskList'
 import { AuditLog } from '@/pages/AuditLog'
+import { RolesPage } from '@/pages/RolesPage'
 import { UserList } from '@/pages/UserList'
 import type { Role } from '@/types'
 
@@ -209,6 +210,7 @@ export function App() {
 
                                         <Route element={<RequireRole roles={['admin']} />}>
                                             <Route path="users" element={<UserList />} />
+                                            <Route path="roles" element={<RolesPage />} />
                                             <Route path="audit" element={<AuditLog />} />
                                             <Route path="settings" element={<Settings />} />
                                         </Route>

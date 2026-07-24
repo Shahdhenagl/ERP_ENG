@@ -305,7 +305,7 @@ export const NAV: NavItem[] = [
         short: 'إدارة',
         children: [
             { to: '/users', permission: 'users.manage', label: 'المستخدمون', icon: Users },
-            { to: '/soon/roles', label: 'الأدوار والصلاحيات', icon: ShieldPlus },
+            { to: '/roles', permission: 'users.manage', label: 'الأدوار والصلاحيات', icon: ShieldPlus },
             { to: '/audit', permission: 'audit.view', label: 'سجل العمليات', icon: FileClock },
             { to: '/settings', permission: 'settings.manage', label: 'إعدادات النظام', icon: Settings2 },
         ],
