@@ -52,6 +52,7 @@ import { ClaimsPage } from '@/pages/warranty/ClaimsPage'
 import { WarrantyLayout } from '@/pages/warranty/WarrantyLayout'
 import { WarrantyRegisterPage } from '@/pages/warranty/WarrantyRegisterPage'
 import { ChequesPage } from '@/pages/treasury/ChequesPage'
+import { BanksPage } from '@/pages/treasury/BanksPage'
 import { TreasuryPage } from '@/pages/treasury/TreasuryPage'
 import { MyStock } from '@/pages/MyStock'
 import { ComingSoon } from '@/pages/ComingSoon'
@@ -172,6 +173,8 @@ export function App() {
                                         <Route path="supplier-statement" element={<SupplierStatementPage />} />
                                         <Route path="cheques" element={<ChequesPage />} />
                                         <Route path="cheques/:view" element={<ChequesPage />} />
+                                        <Route path="banks" element={<BanksPage />} />
+                                        <Route path="banks/:view" element={<BanksPage />} />
                                         <Route path="technicians" element={<TechniciansPage />} />
                                         <Route path="hr" element={<HrPage />} />
                                         <Route path="hr/:tab" element={<HrPage />} />

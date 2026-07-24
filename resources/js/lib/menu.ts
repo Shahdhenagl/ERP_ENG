@@ -236,17 +236,17 @@ export const NAV: NavItem[] = [
 
     /* 11 ── البنوك ──────────────────────────────────────────── */
     {
-        to: '/cheques',
+        to: '/banks',
         label: 'البنوك',
         icon: Landmark,
         roles: ['admin', 'manager'],
         short: 'بنوك',
         children: [
-            { to: '/soon/bank-accounts', label: 'الحسابات البنكية', icon: Landmark },
+            { to: '/banks/accounts', permission: 'treasury.manage', label: 'الحسابات البنكية', icon: Landmark },
             { to: '/cheques/incoming', permission: 'cheques.manage', label: 'الشيكات الواردة', icon: Banknote },
             { to: '/cheques/outgoing', permission: 'cheques.manage', label: 'الشيكات الصادرة', icon: Banknote },
-            { to: '/soon/bank-reconciliation', label: 'التسوية البنكية', icon: Scale },
-            { to: '/soon/bank-deposits', label: 'الإيداعات والتحويلات', icon: ArrowLeftRight },
+            { to: '/banks/reconcile', permission: 'cheques.manage', label: 'التسوية البنكية', icon: Scale },
+            { to: '/banks/transfers', permission: 'treasury.manage', label: 'الإيداعات والتحويلات', icon: ArrowLeftRight },
         ],
     },
 
