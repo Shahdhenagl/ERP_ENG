@@ -159,7 +159,7 @@ export const NAV: NavItem[] = [
         children: [
             { to: '/purchasing/suppliers', permission: 'purchasing.manage', label: 'الموردون', icon: Building2 },
             { to: '/purchasing/requests', permission: 'purchasing.manage', label: 'طلبات الشراء', icon: ClipboardList },
-            { to: '/soon/supplier-quotes', label: 'عروض الموردين', icon: FileText },
+            { to: '/supplier-quotes', permission: 'purchasing.manage', label: 'عروض الموردين', icon: FileText },
             { to: '/purchasing/orders', permission: 'purchasing.manage', label: 'أوامر الشراء', icon: Truck },
             { to: '/soon/purchase-receipt', label: 'استلام المشتريات', icon: PackagePlus },
             { to: '/purchasing/invoices', permission: 'purchasing.manage', label: 'فواتير الموردين', icon: Receipt },

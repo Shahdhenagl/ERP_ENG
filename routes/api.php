@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\ItemController;
 use App\Http\Controllers\Api\ItemSerialController;
 use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\PurchaseOrderController;
+use App\Http\Controllers\Api\SupplierQuoteController;
 use App\Http\Controllers\Api\PurchaseRequestController;
 use App\Http\Controllers\Api\QuotationController;
 use App\Http\Controllers\Api\ReportController;
@@ -321,6 +322,15 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::post('purchase-orders/{order}/send', [PurchaseOrderController::class, 'send'])->middleware('can:purchasing.manage');
     Route::post('purchase-orders/{order}/cancel', [PurchaseOrderController::class, 'cancel'])->middleware('can:purchasing.manage');
     Route::post('purchase-orders/{order}/receive', [PurchaseOrderController::class, 'receive'])->middleware('can:purchasing.manage');
+
+    // Supplier quotes — priced before an order, compared, and the chosen one
+    // becomes the order it turns into.
+    Route::get('supplier-quotes', [SupplierQuoteController::class, 'index'])->middleware('can:purchasing.manage');
+    Route::post('supplier-quotes', [SupplierQuoteController::class, 'store'])->middleware('can:purchasing.manage');
+    Route::get('supplier-quotes/{supplierQuote}', [SupplierQuoteController::class, 'show'])->middleware('can:purchasing.manage');
+    Route::put('supplier-quotes/{supplierQuote}', [SupplierQuoteController::class, 'update'])->middleware('can:purchasing.manage');
+    Route::post('supplier-quotes/{supplierQuote}/select', [SupplierQuoteController::class, 'select'])->middleware('can:purchasing.manage');
+    Route::post('supplier-quotes/{supplierQuote}/reject', [SupplierQuoteController::class, 'reject'])->middleware('can:purchasing.manage');
 
     // ── Quotations & sales orders ────────────────────────────
     Route::get('quotations', [QuotationController::class, 'index'])->middleware('can:sales.manage');

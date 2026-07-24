@@ -73,6 +73,7 @@ import type {
     Attendance,
     AttendanceSummaryRow,
     Contact,
+    SupplierQuote,
     Task,
     TaskReport,
     TaskStatus,
@@ -165,6 +166,8 @@ export const keys = {
         ['report', name, params ?? {}] as const,
 
     suppliers: (filters?: Record<string, unknown>) => ['suppliers', filters ?? {}] as const,
+    supplierQuotes: (f?: Record<string, unknown>) => ['supplier-quotes', f ?? {}] as const,
+    supplierQuote: (id: number | string) => ['supplier-quote', Number(id)] as const,
     supplier: (id: number | string) => ['supplier', Number(id)] as const,
     purchaseOrders: (filters?: Record<string, unknown>) => ['purchase-orders', filters ?? {}] as const,
     purchaseOrder: (id: number | string) => ['purchase-order', Number(id)] as const,
@@ -2055,6 +2058,57 @@ export function useSupplierPayment(id: number | string | undefined) {
 }
 
 /* ── Purchase requests ───────────────────────────────────── */
+
+/* ── Supplier quotes ─────────────────────────────────────── */
+
+export function useSupplierQuotes(filters: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: keys.supplierQuotes(filters),
+        queryFn: async () =>
+            (await api.get<{ data: SupplierQuote[] }>('/supplier-quotes', { params: filters })).data.data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useSupplierQuote(id: number | undefined) {
+    return useQuery({
+        queryKey: keys.supplierQuote(id ?? 0),
+        queryFn: async () =>
+            (await api.get<{ data: SupplierQuote }>(`/supplier-quotes/${id}`)).data.data,
+        enabled: Boolean(id),
+    })
+}
+
+export function useSaveSupplierQuote() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ id, ...payload }: { id?: number } & Record<string, unknown>) =>
+            id
+                ? (await api.put<{ data: SupplierQuote }>(`/supplier-quotes/${id}`, payload)).data.data
+                : (await api.post<{ data: SupplierQuote }>('/supplier-quotes', payload)).data.data,
+        onSuccess: () => void client.invalidateQueries({ queryKey: ['supplier-quotes'] }),
+    })
+}
+
+/** Select turns the quote into a draft PO; reject just closes it. */
+export function useSupplierQuoteAction() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ id, action }: { id: number; action: 'select' | 'reject' }) =>
+            (await api.post<{ purchase_order?: { id: number; code: string } }>(
+                `/supplier-quotes/${id}/${action}`,
+            )).data,
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: ['supplier-quotes'] })
+            void client.invalidateQueries({ queryKey: ['purchase-orders'] })
+        },
+    })
+}
 
 export function usePurchaseRequests(filters: Record<string, unknown> = {}) {
     return useQuery({

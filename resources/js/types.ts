@@ -1902,6 +1902,41 @@ export interface Employee {
 }
 
 export type LeaveType = 'annual' | 'sick' | 'unpaid'
+export type SupplierQuoteStatus = 'received' | 'selected' | 'rejected'
+
+export interface SupplierQuoteLine {
+    id: number
+    item_id: number | null
+    item: string | null
+    description: string | null
+    qty: number
+    unit_price: number
+    line_total: number
+}
+
+export interface SupplierQuote {
+    id: number
+    code: string
+    supplier_id: number
+    supplier: string | null
+    purchase_request_id: number | null
+    request_code: string | null
+    quote_date: string | null
+    valid_until: string | null
+    status: SupplierQuoteStatus
+    status_label: string
+    lead_days: number | null
+    tax_rate: number
+    subtotal: number
+    total: number
+    purchase_order_id: number | null
+    order_code: string | null
+    notes: string | null
+    lines_count: number
+    lines?: SupplierQuoteLine[]
+    created_at: string | null
+}
+
 export interface Contact {
     id: number
     code: string
