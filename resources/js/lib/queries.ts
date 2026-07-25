@@ -1163,6 +1163,27 @@ export function useCustodyCash() {
     })
 }
 
+/** One technician's custody in full — cash, stock and devices. */
+export function useCustodyStatement(userId: number | undefined) {
+    return useQuery({
+        queryKey: ['custody-statement', userId ?? 0],
+        queryFn: async () =>
+            (await api.get<{ data: CustodyStatement }>(`/custody/${userId}`)).data.data,
+        enabled: Boolean(userId),
+    })
+}
+
+/** Money the technician spent out of their float — settled against the advance. */
+export function useCustodySpend() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (await api.post('/custody/spend', payload)).data,
+        onSuccess: () => invalidateCustody(client),
+    })
+}
+
 /** Handing a device over, and taking it back. */
 export function useCustodyDevice() {
     const client = useQueryClient()

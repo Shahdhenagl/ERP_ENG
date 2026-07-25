@@ -29,6 +29,8 @@ import { CustomerProfile } from '@/pages/CustomerProfile'
 import { ContactsPage } from '@/pages/ContactsPage'
 import { SiteSurveyPage } from '@/pages/SiteSurveyPage'
 import { CustodyPage } from '@/pages/inventory/CustodyPage'
+import { CustodySettlePage } from '@/pages/inventory/CustodySettlePage'
+import { CustodyStatementPage } from '@/pages/inventory/CustodyStatementPage'
 import { InventoryLayout } from '@/pages/inventory/InventoryLayout'
 import { ItemsPage } from '@/pages/inventory/ItemsPage'
 import { MovementsPage } from '@/pages/inventory/MovementsPage'
@@ -200,6 +202,8 @@ export function App() {
                                         <Route path="inventory/transfers" element={<WarehouseTransferPage />} />
                                         <Route path="inventory/serials" element={<SerialsPage />} />
                                         <Route path="inventory/groups" element={<ItemGroupsPage />} />
+                                        <Route path="custody/settle" element={<CustodySettlePage />} />
+                                        <Route path="custody/statement" element={<CustodyStatementPage />} />
                                         <Route path="warranties" element={<WarrantyLayout />}>
                                             <Route index element={<Navigate to="register" replace />} />
                                             <Route path="register" element={<WarrantyRegisterPage />} />

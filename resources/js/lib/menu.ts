@@ -257,8 +257,8 @@ export const NAV: NavItem[] = [
         short: 'عهد',
         children: [
             { to: '/inventory/custody', permission: 'inventory.manage', label: 'إنشاء وصرف العهدة', icon: HandCoins },
-            { to: '/soon/custody-settle', label: 'تسجيل مصروفات / تسوية', icon: ClipboardCheck },
-            { to: '/soon/custody-statement', label: 'كشف حساب الموظف', icon: FileClock },
+            { to: '/custody/settle', permission: 'inventory.manage', label: 'تسجيل مصروفات / تسوية', icon: ClipboardCheck },
+            { to: '/custody/statement', permission: 'inventory.manage', label: 'كشف حساب الموظف', icon: FileClock },
         ],
     },
 
