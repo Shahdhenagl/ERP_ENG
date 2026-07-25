@@ -277,6 +277,8 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
 
     // ── Maintenance contracts ────────────────────────────────
     Route::get('contracts', [ContractController::class, 'index'])->middleware('can:contracts.manage');
+    // Before {contract} so "activity" is not read as a contract id.
+    Route::get('contracts/activity', [ContractController::class, 'activity'])->middleware('can:contracts.manage');
     Route::post('contracts', [ContractController::class, 'store'])->middleware('can:contracts.manage');
     Route::get('contracts/{contract}', [ContractController::class, 'show'])->middleware('can:contracts.manage');
     Route::put('contracts/{contract}', [ContractController::class, 'update'])->middleware('can:contracts.manage');

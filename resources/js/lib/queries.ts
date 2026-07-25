@@ -832,6 +832,32 @@ export function useContracts(filters: Record<string, unknown> = {}) {
     })
 }
 
+export interface ContractActivity {
+    id: number
+    action: string
+    verb_label: string
+    label: string
+    description: string | null
+    contract_id: number | null
+    user: string | null
+    created_at: string | null
+}
+
+export function useContractActivity(contractId?: number) {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: ['contract-activity', contractId ?? 0],
+        queryFn: async () =>
+            (
+                await api.get<{ data: ContractActivity[] }>('/contracts/activity', {
+                    params: contractId ? { contract_id: contractId } : {},
+                })
+            ).data.data,
+        enabled: canDispatch,
+    })
+}
+
 export function useContract(id: number | string | undefined) {
     return useQuery({
         queryKey: keys.contract(id ?? 0),

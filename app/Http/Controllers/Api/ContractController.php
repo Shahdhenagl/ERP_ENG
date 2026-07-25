@@ -35,6 +35,37 @@ class ContractController extends Controller
         return ContractResource::collection($contracts);
     }
 
+    /**
+     * The amendment log — who did what to the contracts and when. Reads off the
+     * same activity trail the audit log does, narrowed to contract actions and
+     * opened to whoever manages contracts, not only an auditor.
+     */
+    public function activity(Request $request): JsonResponse
+    {
+        $logs = ActivityLog::query()
+            ->where('action', 'like', 'contract.%')
+            ->when(
+                $request->integer('contract_id'),
+                fn ($q, $id) => $q->where('subject_type', Contract::class)->where('subject_id', $id),
+            )
+            ->with('user')
+            ->orderByDesc('id')
+            ->limit(200)
+            ->get()
+            ->map(fn (ActivityLog $log) => [
+                'id' => $log->id,
+                'action' => $log->action,
+                'verb_label' => $log->verbLabel(),
+                'label' => $log->label(),
+                'description' => $log->description,
+                'contract_id' => $log->subject_id,
+                'user' => $log->user?->name,
+                'created_at' => $log->created_at?->toIso8601String(),
+            ]);
+
+        return response()->json(['data' => $logs]);
+    }
+
     public function store(Request $request): JsonResponse
     {
         $data = $this->validated($request);

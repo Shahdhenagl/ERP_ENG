@@ -176,10 +176,9 @@ export const NAV: NavItem[] = [
         roles: ['admin', 'manager'],
         short: 'عقود',
         children: [
-            { to: '/contracts', permission: 'contracts.manage', label: 'عقود العملاء', icon: ScrollText },
-            { to: '/soon/amc-contracts', label: 'عقود الصيانة (AMC)', icon: FileSignature },
-            { to: '/soon/contract-renewals', label: 'التنبيهات والتجديدات', icon: Repeat },
-            { to: '/soon/contract-history', label: 'سجل تعديلات العقد', icon: FileClock },
+            { to: '/contracts', permission: 'contracts.manage', label: 'عقود الصيانة (AMC)', icon: ScrollText },
+            { to: '/contracts/renewals', permission: 'contracts.manage', label: 'التنبيهات والتجديدات', icon: Repeat },
+            { to: '/contracts/history', permission: 'contracts.manage', label: 'سجل تعديلات العقد', icon: FileClock },
         ],
     },
 

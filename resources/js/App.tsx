@@ -21,6 +21,8 @@ import { PpmPage } from '@/pages/PpmPage'
 import { NotificationsPage } from '@/pages/NotificationsPage'
 import { ContractDetail } from '@/pages/ContractDetail'
 import { ContractList } from '@/pages/ContractList'
+import { ContractRenewalsPage } from '@/pages/ContractRenewalsPage'
+import { ContractHistoryPage } from '@/pages/ContractHistoryPage'
 import { CustomerList } from '@/pages/CustomerList'
 import { CustomerProfile } from '@/pages/CustomerProfile'
 import { ContactsPage } from '@/pages/ContactsPage'
@@ -169,6 +171,8 @@ export function App() {
                                         <Route path="satisfaction" element={<SatisfactionPage />} />
                                         <Route path="ppm" element={<PpmPage />} />
                                         <Route path="contracts" element={<ContractList />} />
+                                        <Route path="contracts/renewals" element={<ContractRenewalsPage />} />
+                                        <Route path="contracts/history" element={<ContractHistoryPage />} />
                                         <Route path="contracts/:id" element={<ContractDetail />} />
                                         {/* Sections rather than tabs, so the
                                             sidebar can link straight into one. */}
