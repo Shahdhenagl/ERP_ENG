@@ -275,6 +275,38 @@ export type ContractStatus = 'draft' | 'active' | 'cancelled'
 /** Includes the two states derived from today's date. */
 export type ContractEffectiveStatus = ContractStatus | 'expired' | 'scheduled'
 
+export interface ItemGroup {
+    id: number
+    name: string
+    slug: string | null
+    colour: string | null
+    chip: string
+    sort: number
+    is_active: boolean
+    items_count: number
+    is_system: boolean
+}
+
+export interface SerialUnit {
+    id: number
+    serial: string
+    status: string
+    status_label: string
+    is_available: boolean
+    item_id: number
+    item: string | null
+    item_code: string | null
+    warehouse: string | null
+    asset_id: number | null
+    asset: string | null
+    issued_on_task: string | null
+    note: string | null
+    received_at?: string | null
+    received_from?: string | null
+    issued_at?: string | null
+    created_at: string | null
+}
+
 export interface FileAttachment {
     id: number
     url: string

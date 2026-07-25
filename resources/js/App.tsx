@@ -30,6 +30,10 @@ import { InventoryLayout } from '@/pages/inventory/InventoryLayout'
 import { ItemsPage } from '@/pages/inventory/ItemsPage'
 import { MovementsPage } from '@/pages/inventory/MovementsPage'
 import { StocktakePage } from '@/pages/inventory/StocktakePage'
+import { StockIssuePage } from '@/pages/inventory/StockIssuePage'
+import { WarehouseTransferPage } from '@/pages/inventory/WarehouseTransferPage'
+import { SerialsPage } from '@/pages/inventory/SerialsPage'
+import { ItemGroupsPage } from '@/pages/inventory/ItemGroupsPage'
 import { WarehousesPage } from '@/pages/inventory/WarehousesPage'
 import { InvoiceDetail } from '@/pages/InvoiceDetail'
 import { InvoiceList } from '@/pages/InvoiceList'
@@ -175,6 +179,14 @@ export function App() {
                                             <Route path="movements" element={<MovementsPage />} />
                                             <Route path="stocktake" element={<StocktakePage />} />
                                         </Route>
+
+                                        {/* Standalone inventory screens — own header,
+                                            reached from the sidebar, not folded into
+                                            the inventory shell's tabs. */}
+                                        <Route path="inventory/issue" element={<StockIssuePage />} />
+                                        <Route path="inventory/transfers" element={<WarehouseTransferPage />} />
+                                        <Route path="inventory/serials" element={<SerialsPage />} />
+                                        <Route path="inventory/groups" element={<ItemGroupsPage />} />
                                         <Route path="warranties" element={<WarrantyLayout />}>
                                             <Route index element={<Navigate to="register" replace />} />
                                             <Route path="register" element={<WarrantyRegisterPage />} />

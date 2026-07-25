@@ -139,13 +139,13 @@ export const NAV: NavItem[] = [
         short: 'مخزون',
         children: [
             { to: '/inventory/items', permission: 'inventory.view', label: 'الأصناف', icon: Boxes },
-            { to: '/soon/item-brands', label: 'المجموعات / الماركات', icon: BoxesIcon },
+            { to: '/inventory/groups', permission: 'inventory.manage', label: 'المجموعات / الماركات', icon: BoxesIcon },
             { to: '/inventory/warehouses', permission: 'inventory.view', label: 'المخازن', icon: Warehouse },
             { to: '/inventory/movements', permission: 'inventory.view', label: 'إذن استلام', icon: PackagePlus },
-            { to: '/soon/stock-issue', label: 'إذن صرف', icon: PackageMinus },
-            { to: '/soon/stock-transfer', label: 'تحويلات المخازن', icon: ArrowLeftRight },
+            { to: '/inventory/issue', permission: 'inventory.manage', label: 'إذن صرف', icon: PackageMinus },
+            { to: '/inventory/transfers', permission: 'inventory.manage', label: 'تحويلات المخازن', icon: ArrowLeftRight },
             { to: '/inventory/stocktake', permission: 'inventory.manage', label: 'الجرد والتسويات', icon: ClipboardCheck },
-            { to: '/soon/serials', label: 'الباركود والأرقام التسلسلية', icon: ListChecks },
+            { to: '/inventory/serials', permission: 'inventory.view', label: 'الباركود والأرقام التسلسلية', icon: ListChecks },
         ],
     },
 

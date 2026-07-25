@@ -206,6 +206,35 @@ class StockLedger
     }
 
     /**
+     * A plain stock-out — consumption, damage, or a sample given away — with a
+     * reason rather than a job behind it. Costed at the average in force, the
+     * same as an issue to a task, so the value leaving is what it was worth.
+     */
+    public function issue(
+        Item $item,
+        Warehouse $from,
+        float $qty,
+        User $actor,
+        ?string $note = null,
+        array $serials = [],
+    ): StockMovement {
+        $this->assertPositive($qty);
+
+        return DB::transaction(function () use ($item, $from, $qty, $actor, $note, $serials) {
+            $this->subtract($item, $from, $qty);
+
+            $movement = $this->log($item, MovementType::Issue, $qty, (float) $item->avg_cost, $actor, [
+                'from_warehouse_id' => $from->id,
+                'note' => $note,
+            ]);
+
+            $this->serials->issue($item, $serials, $movement, $qty);
+
+            return $movement;
+        });
+    }
+
+    /**
      * Stocktake correction. `qty` is the counted figure, not the difference —
      * asking a storekeeper for a delta is how sign errors get in.
      */

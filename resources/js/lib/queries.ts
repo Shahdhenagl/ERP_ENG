@@ -80,6 +80,8 @@ import type {
     PpmVisit,
     PpmSummary,
     FileAttachment,
+    ItemGroup,
+    SerialUnit,
     SiteSurvey,
     SatisfactionSurvey,
     SatisfactionSummary,
@@ -984,13 +986,59 @@ export function useStockSummary() {
 }
 
 /** Receipt, transfer and stocktake all move balances, so all three refresh the same views. */
-export function useStockOperation(operation: 'receive' | 'transfer' | 'adjust') {
+export function useStockOperation(
+    operation: 'receive' | 'transfer' | 'adjust' | 'warehouse-transfer' | 'issue',
+) {
     const client = useQueryClient()
 
     return useMutation({
         mutationFn: async (payload: Record<string, unknown>) =>
             (await api.post<StockMovement>(`/stock/${operation}`, payload)).data,
         onSuccess: () => invalidateStock(client),
+    })
+}
+
+/* ── Item groups & serials ───────────────────────────────── */
+
+export function useItemGroups() {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: ['item-groups'],
+        queryFn: async () =>
+            (await api.get<{ data: ItemGroup[] }>('/item-categories')).data.data,
+        enabled: canDispatch,
+    })
+}
+
+export function useSaveItemGroup() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ id, ...payload }: { id?: number } & Record<string, unknown>) =>
+            id
+                ? (await api.put<{ data: ItemGroup }>(`/item-categories/${id}`, payload)).data.data
+                : (await api.post<{ data: ItemGroup }>('/item-categories', payload)).data.data,
+        onSuccess: () => void client.invalidateQueries({ queryKey: ['item-groups'] }),
+    })
+}
+
+export function useDeleteItemGroup() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id: number) => (await api.delete(`/item-categories/${id}`)).data,
+        onSuccess: () => void client.invalidateQueries({ queryKey: ['item-groups'] }),
+    })
+}
+
+export function useSerialLookup(serial: string) {
+    return useQuery({
+        queryKey: ['serial-lookup', serial],
+        queryFn: async () =>
+            (await api.get<{ data: SerialUnit }>('/serials/lookup', { params: { serial } })).data.data,
+        enabled: serial.trim().length > 0,
+        retry: false,
     })
 }
 
@@ -2506,6 +2554,7 @@ export function useScrapSerial() {
         onSuccess: () => {
             void client.invalidateQueries({ queryKey: ['item-serials'] })
             void client.invalidateQueries({ queryKey: ['items'] })
+            void client.invalidateQueries({ queryKey: ['serial-lookup'] })
         },
     })
 }

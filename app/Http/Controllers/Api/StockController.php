@@ -178,6 +178,59 @@ class StockController extends Controller
     }
 
     /** Stocktake: the counted figure replaces the book figure. */
+    /** Move stock between two warehouses (store ↔ store), not a custody hand-out. */
+    public function warehouseTransfer(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'item_id' => ['required', 'exists:items,id'],
+            'from_warehouse_id' => ['required', 'exists:warehouses,id'],
+            'to_warehouse_id' => ['required', 'different:from_warehouse_id', 'exists:warehouses,id'],
+            'qty' => ['required', 'numeric', 'gt:0'],
+            'note' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $movement = $this->ledger->transfer(
+            Item::findOrFail($data['item_id']),
+            Warehouse::findOrFail($data['from_warehouse_id']),
+            Warehouse::findOrFail($data['to_warehouse_id']),
+            (float) $data['qty'],
+            $request->user(),
+            $data['note'] ?? null,
+        );
+
+        return response()->json(
+            new StockMovementResource($movement->load(['item', 'from', 'to', 'actor'])),
+            201,
+        );
+    }
+
+    /** Take stock out for a reason — consumption, damage, a sample. */
+    public function issue(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'item_id' => ['required', 'exists:items,id'],
+            'warehouse_id' => ['required', 'exists:warehouses,id'],
+            'qty' => ['required', 'numeric', 'gt:0'],
+            'note' => ['nullable', 'string', 'max:1000'],
+            'serials' => ['nullable', 'array'],
+            'serials.*' => ['string', 'max:64'],
+        ]);
+
+        $movement = $this->ledger->issue(
+            Item::findOrFail($data['item_id']),
+            Warehouse::findOrFail($data['warehouse_id']),
+            (float) $data['qty'],
+            $request->user(),
+            $data['note'] ?? null,
+            $data['serials'] ?? [],
+        );
+
+        return response()->json(
+            new StockMovementResource($movement->load(['item', 'from', 'actor'])),
+            201,
+        );
+    }
+
     public function adjust(Request $request): JsonResponse
     {
         $data = $request->validate([
