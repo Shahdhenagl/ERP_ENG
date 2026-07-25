@@ -305,13 +305,47 @@ export const DEVICE_CONDITION: Record<DeviceCondition, { label: string; chip: st
     faulty: { label: 'معطلة', chip: 'bg-red-50 text-red-700 ring-1 ring-red-200' },
 }
 
-/** Labels for the readings captured on a technician's report. */
+/**
+ * Mains voltage is read per phase — the paper sheet writes three numbers. L1 is
+ * the original single column; L2/L3 are filled only on three-phase units.
+ */
+export const PHASE_READINGS = [
+    {
+        label: 'جهد الدخول',
+        keys: ['input_voltage', 'input_voltage_l2', 'input_voltage_l3'],
+    },
+    {
+        label: 'جهد الخروج',
+        keys: ['output_voltage', 'output_voltage_l2', 'output_voltage_l3'],
+    },
+] as const
+
+/** The single-value readings, beside the per-phase voltages above. */
 export const READING_FIELDS = [
-    { key: 'input_voltage', label: 'جهد الدخول', unit: 'فولت', step: '0.1' },
-    { key: 'output_voltage', label: 'جهد الخروج', unit: 'فولت', step: '0.1' },
     { key: 'frequency', label: 'التردد', unit: 'هرتز', step: '0.1' },
     { key: 'load_percent', label: 'نسبة التحميل', unit: '%', step: '0.1' },
     { key: 'battery_voltage', label: 'جهد البطاريات', unit: 'فولت', step: '0.1' },
     { key: 'temperature', label: 'درجة الحرارة', unit: '°م', step: '0.1' },
     { key: 'backup_minutes', label: 'زمن الـ Backup', unit: 'دقيقة', step: '1' },
 ] as const
+
+/** Every numeric reading key, for building and posting the report form. */
+export const ALL_READING_KEYS = [
+    'input_voltage', 'input_voltage_l2', 'input_voltage_l3',
+    'output_voltage', 'output_voltage_l2', 'output_voltage_l3',
+    'frequency', 'load_percent', 'battery_voltage', 'temperature', 'backup_minutes',
+] as const
+
+/** The site-inspection checklist, in the order it appears on the paper sheet. */
+export const SITE_CHECKS = [
+    { key: 'earthing', label: 'التأريض' },
+    { key: 'environment', label: 'البيئة المحيطة' },
+    { key: 'charger', label: 'جهد الشاحن' },
+    { key: 'accessories', label: 'المراوح والفلاتر والإنذارات' },
+] as const
+
+export const SITE_CHECK_OPTIONS: Record<'ok' | 'issue' | 'na', { label: string; chip: string }> = {
+    ok: { label: 'سليم', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
+    issue: { label: 'يحتاج انتباه', chip: 'bg-red-50 text-red-700 ring-1 ring-red-200' },
+    na: { label: 'لا ينطبق', chip: 'bg-navy-100 text-navy-500 ring-1 ring-navy-200' },
+}

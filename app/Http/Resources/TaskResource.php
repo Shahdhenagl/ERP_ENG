@@ -14,9 +14,21 @@ class TaskResource extends JsonResource
     {
         $whatsapp = app(WhatsAppLinkBuilder::class);
 
+        // Time on site: the diagnosis report is filed on arrival, the completion
+        // report on the way out — so the two stamps bound the visit.
+        $reports = $this->relationLoaded('reports') ? $this->reports : collect();
+        $timeIn = $reports->firstWhere('type', 'diagnosis')?->created_at;
+        $timeOut = $reports->firstWhere('type', 'completion')?->created_at;
+
         return [
             'id' => $this->id,
             'code' => $this->code,
+            'service_report_no' => $this->service_report_no,
+            'visit' => [
+                'time_in' => $timeIn?->toIso8601String(),
+                'time_out' => $timeOut?->toIso8601String(),
+                'duration_minutes' => $timeIn && $timeOut ? (int) round($timeIn->diffInMinutes($timeOut)) : null,
+            ],
             'title' => $this->title,
             'description' => $this->description,
 

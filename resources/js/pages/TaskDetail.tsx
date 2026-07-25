@@ -32,6 +32,8 @@ import {
     DEFAULT_TAX_RATE,
     DEVICE_CONDITION,
     PRIORITY,
+    SITE_CHECKS,
+    SITE_CHECK_OPTIONS,
     STATUS,
     TASK_TYPE,
     warrantyChip,
@@ -416,11 +418,15 @@ export function TaskDetail() {
                             </p>
                         ) : (
                             <div className="space-y-4">
+                                <VisitMeta task={task} />
+                                {diagnosisReport && completionReport && (
+                                    <BeforeAfter before={diagnosisReport} after={completionReport} />
+                                )}
                                 {diagnosisReport && (
-                                    <ReportBlock title="تقرير التشخيص" report={diagnosisReport} />
+                                    <ReportBlock title="القراءات قبل العمل (التشخيص)" report={diagnosisReport} />
                                 )}
                                 {completionReport && (
-                                    <ReportBlock title="تقرير الإنهاء" report={completionReport} />
+                                    <ReportBlock title="القراءات بعد العمل (الإنهاء)" report={completionReport} />
                                 )}
                             </div>
                         )}
@@ -680,7 +686,11 @@ function ReportBlock({ title, report }: { title: string; report: TaskReport }) {
                     {readings.map(([key, value]) => {
                         const labels: Record<string, string> = {
                             input_voltage: 'جهد الدخول',
+                            input_voltage_l2: 'دخول L2',
+                            input_voltage_l3: 'دخول L3',
                             output_voltage: 'جهد الخروج',
+                            output_voltage_l2: 'خروج L2',
+                            output_voltage_l3: 'خروج L3',
                             frequency: 'التردد',
                             load_percent: 'التحميل %',
                             battery_voltage: 'جهد البطاريات',
@@ -699,6 +709,8 @@ function ReportBlock({ title, report }: { title: string; report: TaskReport }) {
                     })}
                 </div>
             )}
+
+            <SiteCheckRow checks={report.site_checks} />
 
             <dl className="space-y-2 text-sm">
                 {report.findings && <Narrative label="ما تم رصده" value={report.findings} />}
@@ -743,6 +755,113 @@ function Narrative({ label, value }: { label: string; value: string }) {
         <div>
             <dt className="text-xs font-semibold text-navy-400">{label}</dt>
             <dd className="mt-0.5 leading-relaxed text-navy-700">{value}</dd>
+        </div>
+    )
+}
+
+function SiteCheckRow({ checks }: { checks: TaskReport['site_checks'] }) {
+    const marked = SITE_CHECKS.filter((c) => checks[c.key])
+    if (marked.length === 0) return null
+
+    return (
+        <div className="mb-3 flex flex-wrap gap-1.5">
+            {marked.map((c) => {
+                const verdict = checks[c.key] as 'ok' | 'issue' | 'na'
+
+                return (
+                    <span
+                        key={c.key}
+                        className={`badge ${SITE_CHECK_OPTIONS[verdict].chip}`}
+                    >
+                        {c.label}: {SITE_CHECK_OPTIONS[verdict].label}
+                    </span>
+                )
+            })}
+        </div>
+    )
+}
+
+/** Report number and time on site, above the reports. */
+function VisitMeta({ task }: { task: Task }) {
+    const visit = task.visit
+    const duration = visit?.duration_minutes
+
+    if (!task.service_report_no && !visit?.time_in) return null
+
+    return (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl bg-navy-50 px-4 py-2.5 text-xs">
+            {task.service_report_no && (
+                <span className="font-bold text-navy-700">
+                    رقم التقرير <span className="tabular">{task.service_report_no}</span>
+                </span>
+            )}
+            {visit?.time_in && (
+                <span className="text-navy-500">دخول {formatDateTime(visit.time_in)}</span>
+            )}
+            {visit?.time_out && (
+                <span className="text-navy-500">خروج {formatDateTime(visit.time_out)}</span>
+            )}
+            {typeof duration === 'number' && (
+                <span className="font-semibold text-brand-600">
+                    مدة الزيارة {Math.floor(duration / 60) ? `${Math.floor(duration / 60)}س ` : ''}
+                    {duration % 60}د
+                </span>
+            )}
+        </div>
+    )
+}
+
+/** Readings before the work against readings after — the proof the fix took. */
+function BeforeAfter({ before, after }: { before: TaskReport; after: TaskReport }) {
+    const labels: Record<string, string> = {
+        input_voltage: 'جهد الدخول L1',
+        input_voltage_l2: 'جهد الدخول L2',
+        input_voltage_l3: 'جهد الدخول L3',
+        output_voltage: 'جهد الخروج L1',
+        output_voltage_l2: 'جهد الخروج L2',
+        output_voltage_l3: 'جهد الخروج L3',
+        frequency: 'التردد',
+        load_percent: 'التحميل %',
+        battery_voltage: 'جهد البطاريات',
+        temperature: 'الحرارة',
+        backup_minutes: 'Backup (د)',
+    }
+
+    const rows = Object.keys(labels).filter((key) => {
+        const b = before.readings[key as keyof TaskReport['readings']]
+        const a = after.readings[key as keyof TaskReport['readings']]
+        return b !== null || a !== null
+    })
+
+    if (rows.length === 0) return null
+
+    return (
+        <div className="overflow-hidden rounded-2xl border border-navy-100">
+            <table className="w-full text-sm">
+                <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
+                    <tr>
+                        <th className="px-3 py-2 text-right">القراءة</th>
+                        <th className="px-3 py-2 text-center">قبل</th>
+                        <th className="px-3 py-2 text-center">بعد</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows.map((key) => {
+                        const b = before.readings[key as keyof TaskReport['readings']]
+                        const a = after.readings[key as keyof TaskReport['readings']]
+
+                        return (
+                            <tr key={key} className="border-t border-navy-100">
+                                <td className="px-3 py-2 font-semibold text-navy-700">{labels[key]}</td>
+                                <td className="tabular px-3 py-2 text-center text-navy-500">{b ?? '—'}</td>
+                                <td className="tabular px-3 py-2 text-center font-bold text-navy-900">
+                                    {a ?? '—'}
+                                </td>
+                            </tr>
+                        )
+                    })}
+                </tbody>
+            </table>
         </div>
     )
 }

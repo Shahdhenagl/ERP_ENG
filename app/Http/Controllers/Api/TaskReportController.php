@@ -40,7 +40,11 @@ class TaskReportController extends Controller
             'type' => ['required', 'in:diagnosis,completion'],
 
             'input_voltage' => ['nullable', 'numeric', 'between:0,999999'],
+            'input_voltage_l2' => ['nullable', 'numeric', 'between:0,999999'],
+            'input_voltage_l3' => ['nullable', 'numeric', 'between:0,999999'],
             'output_voltage' => ['nullable', 'numeric', 'between:0,999999'],
+            'output_voltage_l2' => ['nullable', 'numeric', 'between:0,999999'],
+            'output_voltage_l3' => ['nullable', 'numeric', 'between:0,999999'],
             'frequency' => ['nullable', 'numeric', 'between:0,9999'],
             'load_percent' => ['nullable', 'numeric', 'between:0,999'],
             'battery_voltage' => ['nullable', 'numeric', 'between:0,999999'],
@@ -49,6 +53,12 @@ class TaskReportController extends Controller
 
             'device_condition' => ['nullable', 'in:good,fair,poor,faulty'],
             'batteries_need_replacement' => ['boolean'],
+
+            // Site inspection — each item ok, an issue, or not applicable.
+            'check_earthing' => ['nullable', 'in:ok,issue,na'],
+            'check_environment' => ['nullable', 'in:ok,issue,na'],
+            'check_charger' => ['nullable', 'in:ok,issue,na'],
+            'check_accessories' => ['nullable', 'in:ok,issue,na'],
 
             'findings' => ['nullable', 'string', 'max:5000'],
             'actions_taken' => ['nullable', 'string', 'max:5000'],
@@ -68,6 +78,12 @@ class TaskReportController extends Controller
         ]);
 
         $data['user_id'] = $user->id;
+
+        // One report number per visit — the paper's "No. 07720". Stamped on the
+        // task when its first report is filed, and never reused.
+        if (! $task->service_report_no) {
+            $task->forceFill(['service_report_no' => $this->nextReportNo()])->save();
+        }
 
         if ($signature = $data['signature'] ?? null) {
             $data['signature_path'] = $this->storeSignature($task, $signature);
@@ -110,6 +126,17 @@ class TaskReportController extends Controller
             new TaskReportResource($report->load('author', 'attachments')),
             201,
         );
+    }
+
+    /** The next service-report number for this year — SR-2026-00001, in order. */
+    protected function nextReportNo(): string
+    {
+        $year = now()->year;
+        $prefix = "SR-{$year}-";
+
+        $seq = Task::where('service_report_no', 'like', $prefix.'%')->count() + 1;
+
+        return $prefix.str_pad((string) $seq, 5, '0', STR_PAD_LEFT);
     }
 
     /** Decode a `data:image/png;base64,...` payload into the public disk. */

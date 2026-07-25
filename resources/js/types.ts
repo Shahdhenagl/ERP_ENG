@@ -11,6 +11,9 @@ export type TaskStatus =
 export type TaskType = 'installation' | 'maintenance' | 'repair' | 'inspection' | 'delivery'
 export type TaskPriority = 'low' | 'normal' | 'high' | 'urgent'
 export type ReportType = 'diagnosis' | 'completion'
+
+/** A site-inspection verdict: ok, a flagged issue, or not applicable. */
+export type SiteCheck = 'ok' | 'issue' | 'na' | null
 export type AttachmentKind = 'before' | 'after' | 'document' | 'signature'
 export type DeviceCondition = 'good' | 'fair' | 'poor' | 'faulty'
 
@@ -840,12 +843,22 @@ export interface TaskReport {
     type: ReportType
     readings: {
         input_voltage: number | null
+        input_voltage_l2: number | null
+        input_voltage_l3: number | null
         output_voltage: number | null
+        output_voltage_l2: number | null
+        output_voltage_l3: number | null
         frequency: number | null
         load_percent: number | null
         battery_voltage: number | null
         temperature: number | null
         backup_minutes: number | null
+    }
+    site_checks: {
+        earthing: SiteCheck
+        environment: SiteCheck
+        charger: SiteCheck
+        accessories: SiteCheck
     }
     device_condition: DeviceCondition | null
     batteries_need_replacement: boolean
@@ -877,6 +890,12 @@ export interface TaskAttachment {
 export interface Task {
     id: number
     code: string
+    service_report_no: string | null
+    visit?: {
+        time_in: string | null
+        time_out: string | null
+        duration_minutes: number | null
+    }
     title: string
     description: string | null
 

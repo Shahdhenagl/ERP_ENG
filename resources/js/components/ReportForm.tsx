@@ -5,9 +5,19 @@ import { SignaturePad } from '@/components/SignaturePad'
 import { Button, Field, Input, Select, Textarea } from '@/components/ui'
 import { useToast } from '@/components/Toast'
 import { errorMessage } from '@/lib/api'
-import { DEVICE_CONDITION, READING_FIELDS } from '@/lib/domain'
+import clsx from 'clsx'
+import {
+    ALL_READING_KEYS,
+    DEVICE_CONDITION,
+    PHASE_READINGS,
+    READING_FIELDS,
+    SITE_CHECKS,
+    SITE_CHECK_OPTIONS,
+} from '@/lib/domain'
 import { useMyStock, useSaveReport } from '@/lib/queries'
 import type { ReportType, Task, TaskReport } from '@/types'
+
+type CheckKey = (typeof SITE_CHECKS)[number]['key']
 
 interface ReportFormProps {
     open: boolean
@@ -32,11 +42,16 @@ export function ReportForm({ open, onClose, task, type, existing, onSaved }: Rep
 
     const [readings, setReadings] = useState<Record<string, string>>(() =>
         Object.fromEntries(
-            READING_FIELDS.map((field) => [
-                field.key,
-                existing?.readings[field.key as keyof TaskReport['readings']]?.toString() ?? '',
+            ALL_READING_KEYS.map((key) => [
+                key,
+                existing?.readings[key as keyof TaskReport['readings']]?.toString() ?? '',
             ]),
         ),
+    )
+    const [checks, setChecks] = useState<Record<CheckKey, string>>(() =>
+        Object.fromEntries(
+            SITE_CHECKS.map((c) => [c.key, existing?.site_checks?.[c.key] ?? '']),
+        ) as Record<CheckKey, string>,
     )
     const [condition, setCondition] = useState(existing?.device_condition ?? '')
     const [batteriesFlag, setBatteriesFlag] = useState(existing?.batteries_need_replacement ?? false)
@@ -68,6 +83,10 @@ export function ReportForm({ open, onClose, task, type, existing, onSaved }: Rep
             await save.mutateAsync({
                 type,
                 ...numericReadings,
+                check_earthing: checks.earthing || null,
+                check_environment: checks.environment || null,
+                check_charger: checks.charger || null,
+                check_accessories: checks.accessories || null,
                 device_condition: condition || null,
                 batteries_need_replacement: batteriesFlag,
                 findings: findings || null,
@@ -122,7 +141,37 @@ export function ReportForm({ open, onClose, task, type, existing, onSaved }: Rep
                 {/* ── Readings ───────────────────────────────── */}
                 <section>
                     <h3 className="mb-3 text-sm font-bold text-navy-800">قراءات الجهاز</h3>
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+
+                    {/* Voltage per phase — fill L1 for a single-phase unit, all
+                        three for a three-phase one. */}
+                    <div className="space-y-3">
+                        {PHASE_READINGS.map((phase) => (
+                            <Field key={phase.label} label={`${phase.label} (فولت)`}>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {phase.keys.map((key, index) => (
+                                        <Input
+                                            key={key}
+                                            type="number"
+                                            inputMode="decimal"
+                                            step="0.1"
+                                            value={readings[key] ?? ''}
+                                            onChange={(event) =>
+                                                setReadings((current) => ({
+                                                    ...current,
+                                                    [key]: event.target.value,
+                                                }))
+                                            }
+                                            placeholder={`L${index + 1}`}
+                                            dir="ltr"
+                                            className="text-center"
+                                        />
+                                    ))}
+                                </div>
+                            </Field>
+                        ))}
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
                         {READING_FIELDS.map((field) => (
                             <Field key={field.key} label={`${field.label} (${field.unit})`}>
                                 <Input
@@ -141,6 +190,47 @@ export function ReportForm({ open, onClose, task, type, existing, onSaved }: Rep
                                     className="text-left"
                                 />
                             </Field>
+                        ))}
+                    </div>
+                </section>
+
+                {/* ── Site inspection ────────────────────────── */}
+                <section>
+                    <h3 className="mb-3 text-sm font-bold text-navy-800">فحص الموقع</h3>
+                    <div className="space-y-2">
+                        {SITE_CHECKS.map((check) => (
+                            <div
+                                key={check.key}
+                                className="flex items-center justify-between gap-3 rounded-xl border border-navy-200 bg-white px-3 py-2"
+                            >
+                                <span className="text-sm font-semibold text-navy-700">{check.label}</span>
+                                <div className="flex shrink-0 gap-1">
+                                    {(['ok', 'issue', 'na'] as const).map((value) => {
+                                        const active = checks[check.key] === value
+
+                                        return (
+                                            <button
+                                                key={value}
+                                                type="button"
+                                                onClick={() =>
+                                                    setChecks((current) => ({
+                                                        ...current,
+                                                        [check.key]: active ? '' : value,
+                                                    }))
+                                                }
+                                                className={clsx(
+                                                    'tap rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition',
+                                                    active
+                                                        ? SITE_CHECK_OPTIONS[value].chip
+                                                        : 'bg-navy-50 text-navy-400',
+                                                )}
+                                            >
+                                                {SITE_CHECK_OPTIONS[value].label}
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+                            </div>
                         ))}
                     </div>
                 </section>

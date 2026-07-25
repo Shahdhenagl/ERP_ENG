@@ -1,19 +1,35 @@
 import { useParams } from 'react-router-dom'
 import { DocumentParty, DocumentShell, DocumentSignatures } from '@/components/DocumentShell'
 import { ErrorState, PageLoader } from '@/components/ui'
-import { DEVICE_CONDITION, READING_FIELDS } from '@/lib/domain'
+import { DEVICE_CONDITION, SITE_CHECKS, SITE_CHECK_OPTIONS } from '@/lib/domain'
 import { formatDateTime } from '@/lib/format'
 import { useTask } from '@/lib/queries'
 import type { TaskReport } from '@/types'
 
 /**
- * What the technician leaves with the customer: the readings taken, the work
- * done, the parts fitted, and a signature.
+ * What the technician leaves with the customer: the readings taken before and
+ * after the work, the site checks, the parts fitted, and a signature.
  *
- * The completion report is the one that gets signed; a diagnosis report is
- * printed too when that is all there is, since a customer who declined the
- * repair still wants the findings in writing.
+ * When both a diagnosis and a completion report exist the readings are shown
+ * before-and-after, so the sheet itself shows the visit made a difference. A
+ * lone diagnosis is printed too — a customer who declined the repair still
+ * wants the findings in writing.
  */
+
+const READING_LABELS: Record<string, string> = {
+    input_voltage: 'جهد الدخول L1',
+    input_voltage_l2: 'جهد الدخول L2',
+    input_voltage_l3: 'جهد الدخول L3',
+    output_voltage: 'جهد الخروج L1',
+    output_voltage_l2: 'جهد الخروج L2',
+    output_voltage_l3: 'جهد الخروج L3',
+    frequency: 'التردد',
+    load_percent: 'التحميل %',
+    battery_voltage: 'جهد البطاريات',
+    temperature: 'الحرارة',
+    backup_minutes: 'Backup (د)',
+}
+
 export function ServiceReportPrint() {
     const { id } = useParams<{ id: string }>()
     const { data: task, isLoading, isError, refetch } = useTask(id)
@@ -21,15 +37,14 @@ export function ServiceReportPrint() {
     if (isError) return <ErrorState message="تعذّر تحميل المهمة." onRetry={() => void refetch()} />
     if (isLoading || !task) return <PageLoader />
 
-    // `reports` only comes back on the detail endpoint. Guarding on it rather
-    // than on `task` alone stops a half-loaded record rendering an empty sheet.
-
-    const report =
-        task.reports?.find((r) => r.type === 'completion') ??
-        task.reports?.find((r) => r.type === 'diagnosis')
+    const diagnosis = task.reports?.find((r) => r.type === 'diagnosis')
+    const completion = task.reports?.find((r) => r.type === 'completion')
+    // The completion report is the signed one; fall back to the diagnosis.
+    const primary = completion ?? diagnosis
+    const duration = task.visit?.duration_minutes
 
     return (
-        <DocumentShell title="تقرير زيارة فنية" subtitle={task.code}>
+        <DocumentShell title="تقرير زيارة فنية" subtitle={task.service_report_no ?? task.code}>
             <div className="grid grid-cols-2 gap-4">
                 <DocumentParty
                     heading="العميل"
@@ -44,11 +59,18 @@ export function ServiceReportPrint() {
                 <DocumentParty
                     heading="الزيارة"
                     rows={[
+                        ['رقم التقرير', task.service_report_no],
                         ['أمر الشغل', task.code],
                         ['النوع', task.type_label],
                         ['الفني', task.technician?.name],
-                        ['التاريخ', task.completed_at ? formatDateTime(task.completed_at) : null],
-                        ['الحالة', task.status_label],
+                        ['الدخول', task.visit?.time_in ? formatDateTime(task.visit.time_in) : null],
+                        ['الخروج', task.visit?.time_out ? formatDateTime(task.visit.time_out) : null],
+                        [
+                            'مدة الزيارة',
+                            typeof duration === 'number'
+                                ? `${Math.floor(duration / 60) ? `${Math.floor(duration / 60)}س ` : ''}${duration % 60}د`
+                                : null,
+                        ],
                     ]}
                 />
             </div>
@@ -72,12 +94,69 @@ export function ServiceReportPrint() {
                 <p className="mt-1 text-[12px] leading-relaxed text-navy-600">{task.description}</p>
             )}
 
-            {report ? (
-                <ReportBody report={report} />
-            ) : (
+            {!primary ? (
                 <p className="doc-keep mt-6 rounded-lg bg-navy-50 p-4 text-center text-[13px] text-navy-400">
                     لم يُرفع تقرير فني لهذه الزيارة بعد.
                 </p>
+            ) : (
+                <>
+                    {diagnosis && completion ? (
+                        <BeforeAfterReadings before={diagnosis} after={completion} />
+                    ) : (
+                        <SingleReadings report={primary} />
+                    )}
+
+                    <SiteChecks report={primary} />
+
+                    <div className="doc-keep mt-4 flex flex-wrap gap-4 text-[12px]">
+                        {primary.device_condition && (
+                            <p>
+                                <span className="text-navy-400">حالة الجهاز: </span>
+                                <span className="font-bold text-navy-900">
+                                    {DEVICE_CONDITION[primary.device_condition].label}
+                                </span>
+                            </p>
+                        )}
+                        {primary.batteries_need_replacement && (
+                            <p className="font-bold text-red-700">⚠ البطاريات تحتاج إلى استبدال</p>
+                        )}
+                    </div>
+
+                    {primary.findings && <Narrative title="ما تم فحصه" body={primary.findings} />}
+                    {primary.actions_taken && <Narrative title="الأعمال المنفذة" body={primary.actions_taken} />}
+                    {primary.recommendations && <Narrative title="التوصيات" body={primary.recommendations} />}
+
+                    {primary.parts_used.length > 0 && (
+                        <section className="doc-keep mt-4">
+                            <h2 className="mb-2 text-[13px] font-bold text-navy-800">قطع الغيار المستخدمة</h2>
+                            <table className="doc-table">
+                                <thead>
+                                    <tr>
+                                        <th>الصنف</th>
+                                        <th className="w-24 text-center">الكمية</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {primary.parts_used.map((part, index) => (
+                                        <tr key={index}>
+                                            <td>{part.name}</td>
+                                            <td className="tabular text-center">{part.qty ?? 1}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </section>
+                    )}
+
+                    {primary.signature_url && (
+                        <div className="doc-keep mt-5">
+                            <p className="mb-1 text-[11px] text-navy-400">
+                                توقيع العميل{primary.signed_by_name && ` — ${primary.signed_by_name}`}
+                            </p>
+                            <img src={primary.signature_url} alt="توقيع العميل" className="h-20 object-contain" />
+                        </div>
+                    )}
+                </>
             )}
 
             <DocumentSignatures labels={['الفني', 'استلم العميل']} />
@@ -85,97 +164,89 @@ export function ServiceReportPrint() {
     )
 }
 
-function ReportBody({ report }: { report: TaskReport }) {
-    // A blank column of dashes says nothing; only what was actually measured
-    // belongs on a document the customer keeps.
-    const readings = READING_FIELDS.filter(
-        (field) => report.readings[field.key as keyof TaskReport['readings']] !== null,
+/** One reading per column — used when there's only a single report. */
+function SingleReadings({ report }: { report: TaskReport }) {
+    const rows = Object.keys(READING_LABELS).filter(
+        (key) => report.readings[key as keyof TaskReport['readings']] !== null,
     )
 
+    if (rows.length === 0) return null
+
     return (
-        <>
-            {readings.length > 0 && (
-                <section className="doc-keep mt-5">
-                    <h2 className="mb-2 text-[13px] font-bold text-navy-800">القراءات الفنية</h2>
-                    <table className="doc-table">
-                        <thead>
-                            <tr>
-                                {readings.map((field) => (
-                                    <th key={field.key} className="text-center">
-                                        {field.label}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                {readings.map((field) => (
-                                    <td key={field.key} className="tabular text-center font-bold">
-                                        {report.readings[field.key as keyof TaskReport['readings']]}
-                                        <span className="mr-1 text-[10px] font-normal text-navy-400">
-                                            {field.unit}
-                                        </span>
-                                    </td>
-                                ))}
-                            </tr>
-                        </tbody>
-                    </table>
-                </section>
-            )}
+        <section className="doc-keep mt-5">
+            <h2 className="mb-2 text-[13px] font-bold text-navy-800">القراءات الفنية</h2>
+            <table className="doc-table">
+                <tbody>
+                    {rows.map((key) => (
+                        <tr key={key}>
+                            <td>{READING_LABELS[key]}</td>
+                            <td className="tabular w-32 text-center font-bold">
+                                {report.readings[key as keyof TaskReport['readings']]}
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </section>
+    )
+}
 
-            <div className="doc-keep mt-4 flex flex-wrap gap-4 text-[12px]">
-                {report.device_condition && (
-                    <p>
-                        <span className="text-navy-400">حالة الجهاز: </span>
-                        <span className="font-bold text-navy-900">
-                            {DEVICE_CONDITION[report.device_condition].label}
-                        </span>
-                    </p>
-                )}
-                {report.batteries_need_replacement && (
-                    <p className="font-bold text-red-700">⚠ البطاريات تحتاج إلى استبدال</p>
-                )}
-            </div>
+/** Before against after — proof on the sheet that the visit changed something. */
+function BeforeAfterReadings({ before, after }: { before: TaskReport; after: TaskReport }) {
+    const rows = Object.keys(READING_LABELS).filter((key) => {
+        const b = before.readings[key as keyof TaskReport['readings']]
+        const a = after.readings[key as keyof TaskReport['readings']]
+        return b !== null || a !== null
+    })
 
-            {report.findings && <Narrative title="ما تم فحصه" body={report.findings} />}
-            {report.actions_taken && <Narrative title="الأعمال المنفذة" body={report.actions_taken} />}
-            {report.recommendations && <Narrative title="التوصيات" body={report.recommendations} />}
+    if (rows.length === 0) return null
 
-            {report.parts_used.length > 0 && (
-                <section className="doc-keep mt-4">
-                    <h2 className="mb-2 text-[13px] font-bold text-navy-800">قطع الغيار المستخدمة</h2>
-                    <table className="doc-table">
-                        <thead>
-                            <tr>
-                                <th>الصنف</th>
-                                <th className="w-24 text-center">الكمية</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {report.parts_used.map((part, index) => (
-                                <tr key={index}>
-                                    <td>{part.name}</td>
-                                    <td className="tabular text-center">{part.qty ?? 1}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </section>
-            )}
+    return (
+        <section className="doc-keep mt-5">
+            <h2 className="mb-2 text-[13px] font-bold text-navy-800">القراءات الفنية — قبل وبعد</h2>
+            <table className="doc-table">
+                <thead>
+                    <tr>
+                        <th>القراءة</th>
+                        <th className="w-28 text-center">قبل</th>
+                        <th className="w-28 text-center">بعد</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows.map((key) => (
+                        <tr key={key}>
+                            <td>{READING_LABELS[key]}</td>
+                            <td className="tabular text-center">
+                                {before.readings[key as keyof TaskReport['readings']] ?? '—'}
+                            </td>
+                            <td className="tabular text-center font-bold">
+                                {after.readings[key as keyof TaskReport['readings']] ?? '—'}
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </section>
+    )
+}
 
-            {report.signature_url && (
-                <div className="doc-keep mt-5">
-                    <p className="mb-1 text-[11px] text-navy-400">
-                        توقيع العميل{report.signed_by_name && ` — ${report.signed_by_name}`}
-                    </p>
-                    <img
-                        src={report.signature_url}
-                        alt="توقيع العميل"
-                        className="h-20 object-contain"
-                    />
-                </div>
-            )}
-        </>
+function SiteChecks({ report }: { report: TaskReport }) {
+    const marked = SITE_CHECKS.filter((c) => report.site_checks[c.key])
+    if (marked.length === 0) return null
+
+    return (
+        <div className="doc-keep mt-4 flex flex-wrap gap-x-5 gap-y-1 text-[12px]">
+            {marked.map((c) => {
+                const verdict = report.site_checks[c.key] as 'ok' | 'issue' | 'na'
+
+                return (
+                    <span key={c.key}>
+                        <span className="text-navy-400">{c.label}: </span>
+                        <span className="font-bold text-navy-900">{SITE_CHECK_OPTIONS[verdict].label}</span>
+                    </span>
+                )
+            })}
+        </div>
     )
 }
 
