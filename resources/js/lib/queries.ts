@@ -1024,6 +1024,40 @@ export function useStockOperation(
     })
 }
 
+/* ── Parts used (maintenance consumption) ────────────────── */
+
+export interface PartUsed {
+    id: number
+    item: string | null
+    item_code: string | null
+    qty: number
+    unit: string | null
+    unit_cost: number
+    value: number
+    task_id: number | null
+    task_code: string | null
+    customer: string | null
+    technician: string | null
+    date: string | null
+}
+
+export function usePartsUsed(filters: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: ['parts-used', filters],
+        queryFn: async () =>
+            (
+                await api.get<{ data: PartUsed[]; meta: { total_qty: number; total_value: number } }>(
+                    '/stock/parts-used',
+                    { params: filters },
+                )
+            ).data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
 /* ── Item groups & serials ───────────────────────────────── */
 
 export function useItemGroups() {

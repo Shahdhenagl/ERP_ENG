@@ -18,6 +18,7 @@ import { AssetList } from '@/pages/AssetList'
 import { BatteriesPage } from '@/pages/BatteriesPage'
 import { SatisfactionPage } from '@/pages/SatisfactionPage'
 import { PpmPage } from '@/pages/PpmPage'
+import { PartsUsedPage } from '@/pages/PartsUsedPage'
 import { NotificationsPage } from '@/pages/NotificationsPage'
 import { ContractDetail } from '@/pages/ContractDetail'
 import { ContractList } from '@/pages/ContractList'
@@ -173,6 +174,7 @@ export function App() {
                                         <Route path="batteries" element={<BatteriesPage />} />
                                         <Route path="satisfaction" element={<SatisfactionPage />} />
                                         <Route path="ppm" element={<PpmPage />} />
+                                        <Route path="parts-used" element={<PartsUsedPage />} />
                                         <Route path="contracts" element={<ContractList />} />
                                         <Route path="contracts/renewals" element={<ContractRenewalsPage />} />
                                         <Route path="contracts/history" element={<ContractHistoryPage />} />

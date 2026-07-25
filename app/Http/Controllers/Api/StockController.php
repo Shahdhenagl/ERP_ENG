@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\MovementType;
 use App\Enums\WarehouseType;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\StockMovementResource;
@@ -97,6 +98,53 @@ class StockController extends Controller
             ->paginate($request->integer('per_page', 30));
 
         return StockMovementResource::collection($movements);
+    }
+
+    /**
+     * Spare parts consumed on jobs — every issue tied to a work order, costed
+     * at the average in force when it left. This is the maintenance side of the
+     * stock ledger: what the field actually used, and what it was worth.
+     */
+    public function partsUsed(Request $request): JsonResponse
+    {
+        $request->validate([
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date'],
+            'item_id' => ['nullable', 'exists:items,id'],
+        ]);
+
+        $rows = StockMovement::query()
+            ->where('type', MovementType::Issue->value)
+            ->whereNotNull('task_id')
+            ->when($request->integer('item_id'), fn ($q, $id) => $q->where('item_id', $id))
+            ->when($request->date('from'), fn ($q, $from) => $q->whereDate('created_at', '>=', $from))
+            ->when($request->date('to'), fn ($q, $to) => $q->whereDate('created_at', '<=', $to))
+            ->with(['item', 'task.customer', 'actor'])
+            ->orderByDesc('id')
+            ->limit(300)
+            ->get()
+            ->map(fn (StockMovement $m) => [
+                'id' => $m->id,
+                'item' => $m->item?->name,
+                'item_code' => $m->item?->code,
+                'qty' => (float) $m->qty,
+                'unit' => $m->item?->unit,
+                'unit_cost' => (float) $m->unit_cost,
+                'value' => round((float) $m->qty * (float) $m->unit_cost, 2),
+                'task_id' => $m->task_id,
+                'task_code' => $m->task?->code,
+                'customer' => $m->task?->customer?->name,
+                'technician' => $m->actor?->name,
+                'date' => $m->created_at?->toDateString(),
+            ]);
+
+        return response()->json([
+            'data' => $rows,
+            'meta' => [
+                'total_qty' => round($rows->sum('qty'), 3),
+                'total_value' => round($rows->sum('value'), 2),
+            ],
+        ]);
     }
 
     /**

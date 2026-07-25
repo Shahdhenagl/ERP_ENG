@@ -207,10 +207,9 @@ export const NAV: NavItem[] = [
         roles: ['admin', 'manager'],
         short: 'صيانة',
         children: [
-            { to: '/tasks', label: 'فتح تذكرة / بلاغ', icon: ClipboardList },
-            { to: '/soon/work-orders', label: 'أوامر العمل', icon: ClipboardCheck },
+            { to: '/tasks', label: 'التذاكر وأوامر العمل', icon: ClipboardList },
             { to: '/technicians', label: 'الفنيون', icon: UserCheck },
-            { to: '/soon/service-parts', label: 'قطع الغيار المستخدمة', icon: Wrench },
+            { to: '/parts-used', permission: 'inventory.manage', label: 'قطع الغيار المستخدمة', icon: Wrench },
             { to: '/ppm', permission: 'contracts.manage', label: 'الصيانة الوقائية (PPM)', icon: CalendarDays },
             { to: '/batteries', permission: 'assets.manage', label: 'إدارة البطاريات', icon: BatteryCharging },
             { to: '/satisfaction', permission: 'tasks.dispatch', label: 'رضا العملاء (CSAT)', icon: Smile },

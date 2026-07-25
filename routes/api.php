@@ -317,6 +317,7 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::post('custody/devices/{custody}/return', [CustodyController::class, 'returnDevice'])->middleware('can:inventory.manage');
 
     Route::get('stock/summary', [StockController::class, 'summary'])->middleware('can:inventory.manage');
+    Route::get('stock/parts-used', [StockController::class, 'partsUsed'])->middleware('can:inventory.manage');
     Route::post('stock/receive', [StockController::class, 'receive'])->middleware('can:inventory.manage');
     Route::post('stock/transfer', [StockController::class, 'transfer'])->middleware('can:inventory.manage');
     Route::post('stock/warehouse-transfer', [StockController::class, 'warehouseTransfer'])->middleware('can:inventory.manage');
