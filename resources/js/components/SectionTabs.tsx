@@ -12,10 +12,10 @@ import { useArea } from '@/lib/nav'
  * every width, because a manager never gets a sidebar at all.
  *
  * `always` is for a module whose sections the sidebar does *not* list. The
- * accounting module has seven and the sidebar shows three; the warranty module
- * has two and the sidebar shows none, because it is itself nested one level
- * down. Hiding the strip there does not fall back to the sidebar — it removes
- * the only way in, which is exactly the regression this flag exists to stop.
+ * warranty module, for one, has two sections and the sidebar shows none,
+ * because it is itself nested one level down. Hiding the strip there does not
+ * fall back to the sidebar — it removes the only way in, which is exactly the
+ * regression this flag exists to stop.
  */
 export function SectionTabs({
     sections,
