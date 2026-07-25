@@ -195,7 +195,14 @@ class LedgerPoster
         return $this->ledger->postFor($run, 'approved', function () use ($run) {
             $slips = $run->payslips;
 
-            $earned = round($slips->sum(fn (Payslip $s) => $s->earnedPay()), 2);
+            // Earned pay plus any bonus is what the company spent on wages this
+            // month, and it is what the salaries expense is debited with. The
+            // bonus must sit on the debit side: it lifts the net (a credit to
+            // accrued salaries), so leaving it off here would tip the whole
+            // entry out of balance and the posting would be refused.
+            $earned = round($slips->sum(
+                fn (Payslip $s) => $s->earnedPay() + (float) $s->additions_total,
+            ), 2);
             $net = round($slips->sum('net'), 2);
             $advances = round($slips->sum('advance_recovery'), 2);
             $insurance = round($slips->sum('insurance'), 2);

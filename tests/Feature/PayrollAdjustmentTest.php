@@ -1,13 +1,23 @@
 <?php
 
+use App\Models\Account;
 use App\Models\CashBox;
 use App\Models\CashMovement;
 use App\Models\Employee;
 use App\Models\PayrollAdjustment;
 use App\Models\User;
+use App\Services\ChartOfAccounts;
 use App\Services\PayrollService;
 
 use function Pest\Laravel\actingAs;
+
+/** An account's balance straight off the journal. */
+function adjustmentAcct(string $key): float
+{
+    app(ChartOfAccounts::class)->ensure();
+
+    return round(Account::key($key)->balance(), 2);
+}
 
 beforeEach(function () {
     $this->payroll = app(PayrollService::class);
@@ -84,6 +94,30 @@ it('ignores an adjustment booked for another month', function () {
 
     expect((float) $slip->additions_total)->toBe(0.0)
         ->and((float) $slip->net)->toBe(6000.0);
+});
+
+/* ── The bonus must balance the run's journal entry ──────── */
+
+it('posts a balanced entry when an approved run carries a bonus', function () {
+    // The regression this guards: a bonus lifts the net (a credit) but must
+    // also lift the salaries debit, or the entry will not balance and the
+    // posting is silently swallowed — leaving the whole month off the books.
+    $employee = Employee::factory()->create([
+        'status' => 'active', 'basic_salary' => 6000, 'allowances' => null,
+        'insurance_rate' => 0, 'tax_rate' => 0,
+    ]);
+
+    PayrollAdjustment::create(['employee_id' => $employee->id, 'type' => 'bonus', 'amount' => 700, 'year' => 2026, 'month' => 8]);
+    PayrollAdjustment::create(['employee_id' => $employee->id, 'type' => 'deduction', 'amount' => 200, 'year' => 2026, 'month' => 8]);
+
+    $run = $this->payroll->open(2026, 8, $this->manager);
+    $this->payroll->approve($run, $this->manager);
+
+    // Salaries expense carries earned pay plus the bonus; the net (6,500) is
+    // accrued; the deduction (200) sits in accrued expenses. Debits = credits.
+    expect(adjustmentAcct('salaries'))->toBe(6700.0)
+        ->and(adjustmentAcct('accrued_salaries'))->toBe(6500.0)
+        ->and(adjustmentAcct('accrued_expenses'))->toBe(200.0);
 });
 
 /* ── Through the API ─────────────────────────────────────── */

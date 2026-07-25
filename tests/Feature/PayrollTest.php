@@ -335,10 +335,14 @@ it('runs the payroll month end to end through the API', function () {
 
 it('keeps someone without the payroll permission out', function () {
     // hr and payroll are separate permissions: seeing staff is not paying them.
+    // The register is read by whoever manages it OR only approves it, so both
+    // must go to lock a manager out of it.
     $hrOnly = User::factory()->manager()->create();
-    \App\Models\UserPermission::create([
-        'user_id' => $hrOnly->id, 'permission' => 'payroll.manage', 'granted' => false,
-    ]);
+    foreach (['payroll.manage', 'payroll.approve'] as $permission) {
+        \App\Models\UserPermission::create([
+            'user_id' => $hrOnly->id, 'permission' => $permission, 'granted' => false,
+        ]);
+    }
 
     actingAs($hrOnly)->getJson('/api/payroll')->assertForbidden();
     // But the employee register is still theirs.

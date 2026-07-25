@@ -546,6 +546,27 @@ class ReportService
     {
         $employees = Employee::query()->get();
         $active = $employees->where('status', 'active');
+        $ids = $employees->pluck('id');
+
+        // Outstanding advances across the whole workforce, in two grouped
+        // queries rather than a pair per employee: what was advanced, less what
+        // payslips have recovered, floored at zero per person.
+        $advanced = DB::table('salary_advances')
+            ->whereIn('employee_id', $ids)
+            ->groupBy('employee_id')
+            ->selectRaw('employee_id, coalesce(sum(amount), 0) as total')
+            ->pluck('total', 'employee_id');
+
+        $recovered = DB::table('payslips')
+            ->whereIn('employee_id', $ids)
+            ->groupBy('employee_id')
+            ->selectRaw('employee_id, coalesce(sum(advance_recovery), 0) as total')
+            ->pluck('total', 'employee_id');
+
+        $advancesOutstanding = 0.0;
+        foreach ($advanced as $employeeId => $amount) {
+            $advancesOutstanding += max(0.0, (float) $amount - (float) ($recovered[$employeeId] ?? 0));
+        }
 
         $byDepartment = $active
             ->groupBy(fn (Employee $e) => $e->department ?: 'غير محدد')
@@ -605,10 +626,7 @@ class ReportService
                 ->when($to, fn ($q) => $q->whereDate('hired_on', '<=', $to))
                 ->count(),
             'monthly_gross' => round($active->sum(fn (Employee $e) => $e->grossSalary()), 2),
-            'advances_outstanding' => round(
-                $employees->sum(fn (Employee $e) => max(0.0, $e->outstandingAdvances())),
-                2,
-            ),
+            'advances_outstanding' => round($advancesOutstanding, 2),
             'by_department' => $byDepartment,
             'payroll' => [
                 'runs' => $runs->count(),

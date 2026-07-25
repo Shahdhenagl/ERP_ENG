@@ -63,6 +63,22 @@ it('lets a clerk open a payroll run but not approve it once payroll.approve is r
     actingAs($clerk)->postJson("/api/payroll/{$runId}/approve")->assertForbidden();
 });
 
+it('lets a pure approver load the queue they must sign off', function () {
+    // Only the sign-off, not the module: strip every .manage but keep the
+    // .approve permissions the manager role grants, then the read endpoints
+    // must still admit them — solely through the approve widening.
+    $approver = User::factory()->manager()->create();
+
+    foreach (['payroll.manage', 'sales.manage', 'warranties.manage', 'hr.manage'] as $permission) {
+        UserPermission::create(['user_id' => $approver->id, 'permission' => $permission, 'granted' => false]);
+    }
+
+    actingAs($approver)->getJson('/api/payroll')->assertOk();
+    actingAs($approver)->getJson('/api/quotations?pending_approval=1')->assertOk();
+    actingAs($approver)->getJson('/api/warranty-claims')->assertOk();
+    actingAs($approver)->getJson('/api/leave')->assertOk();
+});
+
 /* ── But nothing moves by default ────────────────────────── */
 
 it('still lets a plain manager approve, by role default', function () {

@@ -135,7 +135,9 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::delete('tasks/{task}', [TaskController::class, 'destroy'])->middleware('can:tasks.dispatch');
     Route::post('tasks/{task}/assign', [TaskController::class, 'assign'])->middleware('can:tasks.dispatch');
 
-    Route::get('customers/{customer}/statement', StatementController::class)->middleware('can:customers.manage');
+    // A customer's account is on the sales menu too, so a salesperson can read
+    // it without managing the customer record.
+    Route::get('customers/{customer}/statement', StatementController::class)->middleware('can:customers.manage,sales.manage');
     Route::get('customers/{customer}/profile', [CustomerController::class, 'profile'])->middleware('can:customers.manage');
     Route::get('customers/{customer}/timeline', [CustomerController::class, 'timeline'])->middleware('can:customers.manage');
 
@@ -215,7 +217,9 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     // payroll — under another, because paying salaries is a treasury act.
     Route::apiResource('employees', EmployeeController::class)->middleware('can:hr.manage');
 
-    Route::get('leave', [LeaveController::class, 'index'])->middleware('can:hr.manage');
+    // Readable by whoever manages leave OR only approves it — an approver has
+    // to load the queue to act on it.
+    Route::get('leave', [LeaveController::class, 'index'])->middleware('can:hr.manage,leave.approve');
     Route::post('leave', [LeaveController::class, 'store'])->middleware('can:hr.manage');
     Route::post('leave/{leaveRequest}/decide', [LeaveController::class, 'decide'])->middleware('can:leave.approve');
     Route::post('leave/{leaveRequest}/cancel', [LeaveController::class, 'cancel'])->middleware('can:hr.manage');
@@ -236,9 +240,9 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::post('payroll-adjustments', [PayrollController::class, 'storeAdjustment'])->middleware('can:payroll.manage');
     Route::delete('payroll-adjustments/{payrollAdjustment}', [PayrollController::class, 'deleteAdjustment'])->middleware('can:payroll.manage');
 
-    Route::get('payroll', [PayrollController::class, 'index'])->middleware('can:payroll.manage');
+    Route::get('payroll', [PayrollController::class, 'index'])->middleware('can:payroll.manage,payroll.approve');
     Route::post('payroll', [PayrollController::class, 'open'])->middleware('can:payroll.manage');
-    Route::get('payroll/{payrollRun}', [PayrollController::class, 'show'])->middleware('can:payroll.manage');
+    Route::get('payroll/{payrollRun}', [PayrollController::class, 'show'])->middleware('can:payroll.manage,payroll.approve');
     Route::post('payroll/{payrollRun}/approve', [PayrollController::class, 'approve'])->middleware('can:payroll.approve');
     Route::post('payroll/{payrollRun}/pay', [PayrollController::class, 'pay'])->middleware('can:payroll.manage');
 
@@ -280,9 +284,9 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     // «تاريخ الجهاز» — cover, claims and the repair orders they produced.
     Route::get('assets/{asset}/history', [WarrantyController::class, 'history'])->middleware('can:warranties.manage');
 
-    Route::get('warranty-claims', [WarrantyController::class, 'claims'])->middleware('can:warranties.manage');
+    Route::get('warranty-claims', [WarrantyController::class, 'claims'])->middleware('can:warranties.manage,warranties.approve');
     Route::post('warranty-claims', [WarrantyController::class, 'storeClaim'])->middleware('can:warranties.manage');
-    Route::get('warranty-claims/{claim}', [WarrantyController::class, 'showClaim'])->middleware('can:warranties.manage');
+    Route::get('warranty-claims/{claim}', [WarrantyController::class, 'showClaim'])->middleware('can:warranties.manage,warranties.approve');
     Route::post('warranty-claims/{claim}/decide', [WarrantyController::class, 'decide'])->middleware('can:warranties.approve');
     Route::post('warranty-claims/{claim}/repair-order', [WarrantyController::class, 'repairOrder'])->middleware('can:warranties.manage');
 
@@ -309,7 +313,7 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
 
     // ── Inventory ────────────────────────────────────────────
     Route::apiResource('items', ItemController::class)->middleware('can:inventory.view');
-    Route::apiResource('item-categories', ItemCategoryController::class)->except(['show']);
+    Route::apiResource('item-categories', ItemCategoryController::class)->except(['show'])->middleware('can:inventory.manage');
     Route::get('items/{item}/serials', [ItemSerialController::class, 'index'])->middleware('can:inventory.manage');
     Route::post('serials/{serial}/scrap', [ItemSerialController::class, 'scrap'])->middleware('can:inventory.manage');
 
@@ -389,7 +393,7 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::post('supplier-quotes/{supplierQuote}/reject', [SupplierQuoteController::class, 'reject'])->middleware('can:purchasing.manage');
 
     // ── Quotations & sales orders ────────────────────────────
-    Route::get('quotations', [QuotationController::class, 'index'])->middleware('can:sales.manage');
+    Route::get('quotations', [QuotationController::class, 'index'])->middleware('can:sales.manage,sales.approve');
     Route::post('quotations', [QuotationController::class, 'store'])->middleware('can:sales.manage');
     Route::get('quotations/{quotation}', [QuotationController::class, 'show'])->middleware('can:sales.manage');
     Route::put('quotations/{quotation}', [QuotationController::class, 'update'])->middleware('can:sales.manage');

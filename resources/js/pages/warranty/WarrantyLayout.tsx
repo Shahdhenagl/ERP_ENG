@@ -53,7 +53,7 @@ export function WarrantyLayout() {
                 }
             />
 
-            <SectionTabs sections={SECTIONS} always />
+            <SectionTabs sections={SECTIONS} />
 
             <Outlet
                 context={

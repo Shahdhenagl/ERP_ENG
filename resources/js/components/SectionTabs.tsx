@@ -9,20 +9,14 @@ import { useArea } from '@/lib/nav'
  * The bottom bar carries top-level destinations alone, so without this strip a
  * nested section would be unreachable. It hides only where the sidebar is
  * genuinely there to replace it — an admin above `lg`; a manager keeps it at
- * every width, because a manager never gets a sidebar at all.
- *
- * `always` is for a module whose sections the sidebar does *not* list. The
- * warranty module, for one, has two sections and the sidebar shows none,
- * because it is itself nested one level down. Hiding the strip there does not
- * fall back to the sidebar — it removes the only way in, which is exactly the
- * regression this flag exists to stop.
+ * every width, because a manager never gets a sidebar at all. Every module now
+ * lists its sections in the sidebar, so the strip is purely the small-screen
+ * and manager fallback.
  */
 export function SectionTabs({
     sections,
-    always = false,
 }: {
     sections: ReadonlyArray<readonly [string, string]>
-    always?: boolean
 }) {
     const { path } = useArea()
     const { user } = useAuth()
@@ -31,7 +25,7 @@ export function SectionTabs({
         <div
             className={clsx(
                 'mb-4 flex gap-1 overflow-x-auto rounded-xl bg-navy-100 p-1',
-                ! always && user?.role === 'admin' && 'lg:hidden',
+                user?.role === 'admin' && 'lg:hidden',
             )}
         >
             {sections.map(([to, label]) => (
