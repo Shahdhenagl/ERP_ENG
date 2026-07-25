@@ -77,6 +77,9 @@ import { WarrantyLifecyclePage } from '@/pages/warranty/WarrantyLifecyclePage'
 import { ChequesPage } from '@/pages/treasury/ChequesPage'
 import { BanksPage } from '@/pages/treasury/BanksPage'
 import { TreasuryPage } from '@/pages/treasury/TreasuryPage'
+import { DaybookPage } from '@/pages/treasury/DaybookPage'
+import { PaymentsOutPage } from '@/pages/treasury/PaymentsOutPage'
+import { CashOperationsPage } from '@/pages/treasury/CashOperationsPage'
 import { MyStock } from '@/pages/MyStock'
 import { ComingSoon } from '@/pages/ComingSoon'
 import { TechniciansPage } from '@/pages/TechniciansPage'
@@ -221,6 +224,9 @@ export function App() {
                                         <Route path="invoices" element={<InvoiceList />} />
                                         <Route path="invoices/:id" element={<InvoiceDetail />} />
                                         <Route path="treasury" element={<TreasuryPage />} />
+                                        <Route path="treasury/daybook" element={<DaybookPage />} />
+                                        <Route path="treasury/payments-out" element={<PaymentsOutPage />} />
+                                        <Route path="treasury/operations" element={<CashOperationsPage />} />
                                         <Route path="collections" element={<CollectionsPage />} />
                                         <Route path="customer-statement" element={<CustomerStatementPage />} />
                                         <Route path="supplier-statement" element={<SupplierStatementPage />} />

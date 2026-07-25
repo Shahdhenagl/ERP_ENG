@@ -225,10 +225,10 @@ export const NAV: NavItem[] = [
         short: 'خزينة',
         children: [
             { to: '/treasury', permission: 'treasury.manage', label: 'الخزائن', icon: Wallet },
-            { to: '/soon/receipt-voucher', label: 'سند قبض', icon: HandCoins },
-            { to: '/soon/payment-voucher', label: 'سند صرف', icon: Banknote },
-            { to: '/soon/treasury-expense', label: 'تحويل خزنة / المصروفات', icon: ArrowLeftRight },
-            { to: '/soon/treasury-daybook', label: 'حركة الخزينة اليومية', icon: FileClock },
+            { to: '/collections', permission: 'treasury.manage', label: 'سند قبض', icon: HandCoins },
+            { to: '/treasury/payments-out', permission: 'treasury.manage', label: 'سند صرف', icon: Banknote },
+            { to: '/treasury/operations', permission: 'treasury.manage', label: 'تحويل خزنة / المصروفات', icon: ArrowLeftRight },
+            { to: '/treasury/daybook', permission: 'treasury.manage', label: 'حركة الخزينة اليومية', icon: FileClock },
         ],
     },
 
