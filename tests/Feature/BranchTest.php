@@ -147,6 +147,65 @@ it('keeps the branch label readable in a picker', function () {
         ->toBe('فرع المعادي — بنك القاهرة');
 });
 
+/* ── خط السير — the trip and its cost ────────────────────── */
+
+it('sums a branch route into the expected float', function () {
+    $branch = branchFor($this->customer, [
+        'route' => [
+            'legs' => [
+                ['label' => 'إلى رمسيس', 'cost' => 20],
+                ['label' => 'إلى الفرع', 'cost' => 30],
+            ],
+            'allowance' => 120,
+            'lodging' => 0,
+        ],
+    ]);
+
+    // 20 + 30 + 120 allowance.
+    expect($branch->routeTotal())->toBe(170.0);
+});
+
+it('saves a branch route through the API and returns its total', function () {
+    $response = actingAs($this->manager)
+        ->postJson("/api/customers/{$this->customer->id}/branches", [
+            'name' => 'فرع أسوان',
+            'route' => [
+                'legs' => [['label' => 'إلى أسوان', 'cost' => 230]],
+                'allowance' => 250,
+                'lodging' => 850,
+            ],
+        ])
+        ->assertCreated();
+
+    expect($response->json('data.route_total'))->toEqual(1330)
+        ->and($response->json('data.route.legs.0.label'))->toBe('إلى أسوان');
+});
+
+it('carries the route to the task so the technician sees the itinerary', function () {
+    $branch = branchFor($this->customer, [
+        'route' => ['legs' => [['label' => 'إلى الفرع', 'cost' => 40]], 'allowance' => 60],
+    ]);
+
+    $task = Task::factory()->create([
+        'customer_id' => $this->customer->id,
+        'branch_id' => $branch->id,
+    ]);
+
+    $data = actingAs($this->manager)->getJson("/api/tasks/{$task->id}")->assertOk()->json('data');
+
+    expect($data['branch']['route_total'])->toEqual(100)
+        ->and($data['branch']['route']['legs'][0]['label'])->toBe('إلى الفرع');
+});
+
+it('rejects a route leg with no label', function () {
+    actingAs($this->manager)
+        ->postJson("/api/customers/{$this->customer->id}/branches", [
+            'name' => 'فرع',
+            'route' => ['legs' => [['cost' => 20]]],
+        ])
+        ->assertStatus(422);
+});
+
 /* ── Access ──────────────────────────────────────────────── */
 
 it('lets a manager add a branch to a customer', function () {

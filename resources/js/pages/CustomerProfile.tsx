@@ -17,6 +17,7 @@ import { Button, EmptyState, ErrorState, PageLoader } from '@/components/ui'
 import { formatMoney } from '@/lib/domain'
 import { formatDate, telLink } from '@/lib/format'
 import { useArea } from '@/lib/nav'
+import { BranchesSection } from '@/components/BranchesSection'
 import { useCustomer, useCustomerProfile } from '@/lib/queries'
 
 const CONTRACT_CHIP: Record<string, string> = {
@@ -218,6 +219,9 @@ export function CustomerProfile() {
                     </div>
                 )}
             </Section>
+
+            {/* ── Branches / sites ───────────────────────── */}
+            <BranchesSection customerId={c.id} />
 
             {editing && customer && (
                 <CustomerForm open customer={customer} onClose={() => setEditing(false)} />

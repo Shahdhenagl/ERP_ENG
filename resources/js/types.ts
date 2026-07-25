@@ -409,11 +409,21 @@ export interface Branch {
     contact_number: string | null
 
     working_hours: string | null
+    route: BranchRoute | null
+    route_total?: number
     notes: string | null
     is_active: boolean
 
     assets_count?: number | null
     tasks_count?: number | null
+}
+
+/** خط السير: the legs of the trip to a site and their fares, plus extras. */
+export interface BranchRoute {
+    legs: Array<{ label: string; cost: number | null }>
+    allowance?: number | null
+    lodging?: number | null
+    note?: string | null
 }
 
 /** One line of a customer account — an invoice raised or money received. */
@@ -937,9 +947,12 @@ export interface Task {
         id: number
         name: string
         address: string | null
+        maps_url: string | null
         contact_name: string | null
         contact_number: string | null
         working_hours: string | null
+        route: BranchRoute | null
+        route_total: number
     } | null
 
     asset_id: number | null

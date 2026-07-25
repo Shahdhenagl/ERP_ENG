@@ -21,7 +21,7 @@ class Branch extends Model
         'code', 'customer_id', 'name', 'customer_ref',
         'address', 'city', 'lat', 'lng', 'map_url',
         'contact_name', 'contact_phone', 'contact_whatsapp',
-        'working_hours', 'notes', 'is_active', 'created_by',
+        'working_hours', 'route', 'notes', 'is_active', 'created_by',
     ];
 
     protected function casts(): array
@@ -29,8 +29,22 @@ class Branch extends Model
         return [
             'lat' => 'float',
             'lng' => 'float',
+            'route' => 'array',
             'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * The expected float for a trip to this site: every leg's fare, plus the
+     * allowance and any lodging. Zero when no route has been set.
+     */
+    public function routeTotal(): float
+    {
+        $route = $this->route ?? [];
+
+        $legs = collect($route['legs'] ?? [])->sum(fn ($leg) => (float) ($leg['cost'] ?? 0));
+
+        return round($legs + (float) ($route['allowance'] ?? 0) + (float) ($route['lodging'] ?? 0), 2);
     }
 
     protected static function booted(): void

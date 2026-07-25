@@ -13,6 +13,7 @@ import {
     Pencil,
     Phone,
     Printer,
+    Route,
     Store,
     Receipt,
     Trash2,
@@ -31,6 +32,7 @@ import { useAuth } from '@/lib/auth'
 import {
     DEFAULT_TAX_RATE,
     DEVICE_CONDITION,
+    formatMoney,
     PRIORITY,
     SITE_CHECKS,
     SITE_CHECK_OPTIONS,
@@ -306,6 +308,8 @@ export function TaskDetail() {
                                         )}
                                     </div>
                                 )}
+
+                                {task.branch?.route && <RouteBlock branch={task.branch} />}
 
                                 {task.effective_address && (
                                     <p className="flex items-start gap-2 text-sm text-navy-600">
@@ -777,6 +781,60 @@ function SiteCheckRow({ checks }: { checks: TaskReport['site_checks'] }) {
                     </span>
                 )
             })}
+        </div>
+    )
+}
+
+/** خط السير to the site: the legs, their fares, and the float they add up to. */
+function RouteBlock({ branch }: { branch: NonNullable<Task['branch']> }) {
+    const route = branch.route
+    if (!route) return null
+
+    const legs = route.legs ?? []
+
+    return (
+        <div className="rounded-xl border border-brand-100 bg-brand-50/40 p-3">
+            <div className="mb-2 flex items-center gap-1.5">
+                <Route className="size-4 text-brand-500" />
+                <p className="text-sm font-bold text-navy-800">خط السير</p>
+            </div>
+
+            {legs.length > 0 && (
+                <div className="space-y-1">
+                    {legs.map((leg, index) => (
+                        <div key={index} className="flex items-center justify-between text-xs text-navy-600">
+                            <span className="truncate">{leg.label}</span>
+                            <span className="tabular shrink-0 font-semibold text-navy-800">
+                                {leg.cost != null ? formatMoney(leg.cost) : '—'}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {(route.allowance || route.lodging) && (
+                <div className="mt-1 space-y-1 border-t border-brand-100 pt-1">
+                    {route.allowance ? (
+                        <div className="flex items-center justify-between text-xs text-navy-600">
+                            <span>بدل</span>
+                            <span className="tabular font-semibold text-navy-800">{formatMoney(route.allowance)}</span>
+                        </div>
+                    ) : null}
+                    {route.lodging ? (
+                        <div className="flex items-center justify-between text-xs text-navy-600">
+                            <span>مبيت</span>
+                            <span className="tabular font-semibold text-navy-800">{formatMoney(route.lodging)}</span>
+                        </div>
+                    ) : null}
+                </div>
+            )}
+
+            <div className="mt-2 flex items-center justify-between rounded-lg bg-brand-100/60 px-3 py-1.5">
+                <span className="text-[11px] font-bold text-brand-700">قيمة العهدة المتوقعة</span>
+                <span className="tabular text-sm font-extrabold text-brand-800">
+                    {formatMoney(branch.route_total)}
+                </span>
+            </div>
         </div>
     )
 }

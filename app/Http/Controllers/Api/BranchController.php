@@ -117,6 +117,8 @@ class BranchController extends Controller
             'contact_number' => $branch->contactNumber(),
 
             'working_hours' => $branch->working_hours,
+            'route' => $branch->route,
+            'route_total' => $branch->routeTotal(),
             'notes' => $branch->notes,
             'is_active' => $branch->is_active,
 
@@ -140,6 +142,15 @@ class BranchController extends Controller
             'contact_phone' => ['nullable', 'string', 'max:32'],
             'contact_whatsapp' => ['nullable', 'string', 'max:32'],
             'working_hours' => ['nullable', 'string', 'max:120'],
+            // خط السير: the legs of the trip and their fares, plus allowance
+            // and lodging. Validated shape so the total can always be summed.
+            'route' => ['nullable', 'array'],
+            'route.legs' => ['nullable', 'array'],
+            'route.legs.*.label' => ['required_with:route.legs', 'string', 'max:160'],
+            'route.legs.*.cost' => ['nullable', 'numeric', 'min:0'],
+            'route.allowance' => ['nullable', 'numeric', 'min:0'],
+            'route.lodging' => ['nullable', 'numeric', 'min:0'],
+            'route.note' => ['nullable', 'string', 'max:500'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'is_active' => ['boolean'],
         ]);

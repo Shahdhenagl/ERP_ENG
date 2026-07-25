@@ -60,9 +60,13 @@ class TaskResource extends JsonResource
                     'id' => $this->branch->id,
                     'name' => $this->branch->name,
                     'address' => $this->branch->address,
+                    'maps_url' => $this->branch->mapsUrl(),
                     'contact_name' => $this->branch->contact_name,
                     'contact_number' => $this->branch->contactNumber(),
                     'working_hours' => $this->branch->working_hours,
+                    // خط السير to reach this site, and the float it implies.
+                    'route' => $this->branch->route,
+                    'route_total' => $this->branch->routeTotal(),
                 ]
                 : null,
 
