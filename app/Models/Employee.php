@@ -83,6 +83,11 @@ class Employee extends Model
         return $this->hasMany(Payslip::class);
     }
 
+    public function payrollAdjustments(): HasMany
+    {
+        return $this->hasMany(PayrollAdjustment::class);
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

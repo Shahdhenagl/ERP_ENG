@@ -2235,6 +2235,21 @@ export interface SalaryAdvance {
     box: string | null
 }
 
+export type PayrollAdjustmentType = 'deduction' | 'bonus'
+
+export interface PayrollAdjustment {
+    id: number
+    employee_id: number
+    employee: string | null
+    employee_code: string | null
+    type: PayrollAdjustmentType
+    type_label: string
+    amount: number
+    reason: string | null
+    year: number
+    month: number
+}
+
 export type PayrollStatus = 'draft' | 'approved' | 'paid'
 
 export interface Payslip {
@@ -2250,6 +2265,7 @@ export interface Payslip {
     basic_salary: number
     allowances: Allowance[]
     allowances_total: number
+    additions_total: number
     gross: number
 
     unpaid_days: number

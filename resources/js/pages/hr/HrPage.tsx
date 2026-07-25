@@ -2,6 +2,7 @@ import { Navigate, useParams } from 'react-router-dom'
 import { SectionTabs } from '@/components/SectionTabs'
 import { PageHeader } from '@/components/ui'
 import { useAuth } from '@/lib/auth'
+import { AdjustmentsTab } from '@/pages/hr/AdjustmentsTab'
 import { AdvancesTab } from '@/pages/hr/AdvancesTab'
 import { AttendanceTab } from '@/pages/hr/AttendanceTab'
 import { EmployeesTab } from '@/pages/hr/EmployeesTab'
@@ -18,13 +19,14 @@ import { PayrollTab } from '@/pages/hr/PayrollTab'
  * two and lands on them. The section strip stays only where there is no sidebar
  * to carry it — a manager on a phone — and hides for the admin who has one.
  */
-type Key = 'employees' | 'attendance' | 'leave' | 'advances' | 'payroll'
+type Key = 'employees' | 'attendance' | 'leave' | 'advances' | 'adjustments' | 'payroll'
 
 const TABS: Array<{ key: Key; label: string; permission: string; to: string }> = [
     { key: 'employees', label: 'الموظفون', permission: 'hr.manage', to: '/hr/employees' },
     { key: 'attendance', label: 'الحضور والغياب', permission: 'hr.manage', to: '/hr/attendance' },
     { key: 'leave', label: 'الإجازات', permission: 'hr.manage', to: '/hr/leave' },
     { key: 'advances', label: 'السلف', permission: 'payroll.manage', to: '/hr/advances' },
+    { key: 'adjustments', label: 'الخصومات والمكافآت', permission: 'payroll.manage', to: '/hr/adjustments' },
     { key: 'payroll', label: 'الرواتب', permission: 'payroll.manage', to: '/hr/payroll' },
 ]
 
@@ -49,6 +51,7 @@ export function HrPage() {
             {active.key === 'attendance' && <AttendanceTab />}
             {active.key === 'leave' && <LeaveTab />}
             {active.key === 'advances' && <AdvancesTab />}
+            {active.key === 'adjustments' && <AdjustmentsTab />}
             {active.key === 'payroll' && <PayrollTab />}
         </>
     )

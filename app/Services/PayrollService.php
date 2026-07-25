@@ -151,8 +151,13 @@ class PayrollService
         $earnedBeforeAdvance = $gross - $unpaidDeduction - $insurance - $tax;
         $advanceRecovery = round(min($installment, $outstanding, max(0.0, $earnedBeforeAdvance)), 2);
 
+        // One-off deductions and bonuses booked for this month. Bonuses lift the
+        // net; penalties join the other deductions. With none booked, both are
+        // zero and the slip is exactly what it was before adjustments existed.
+        [$bonuses, $otherDeductions, $adjustmentNote] = $this->monthlyAdjustments($employee, $run);
+
         $deductions = round(
-            $unpaidDeduction + $advanceRecovery + $insurance + $tax,
+            $unpaidDeduction + $advanceRecovery + $insurance + $tax + $otherDeductions,
             2,
         );
 
@@ -161,18 +166,47 @@ class PayrollService
             [
                 'basic_salary' => $basic,
                 'allowances_total' => $allowances,
+                'additions_total' => $bonuses,
                 'allowances' => $employee->allowances,
                 'unpaid_days' => $unpaidDays,
                 'unpaid_deduction' => $unpaidDeduction,
                 'advance_recovery' => $advanceRecovery,
                 'insurance' => $insurance,
                 'tax' => $tax,
-                'other_deductions' => 0,
+                'other_deductions' => $otherDeductions,
+                'other_note' => $adjustmentNote,
                 'gross' => $gross,
                 'total_deductions' => $deductions,
-                'net' => round($gross - $deductions, 2),
+                'net' => round($gross + $bonuses - $deductions, 2),
             ],
         );
+    }
+
+    /**
+     * Sum the deductions and bonuses booked for an employee in a run's month.
+     *
+     * @return array{0: float, 1: float, 2: ?string} bonuses, deductions, note
+     */
+    private function monthlyAdjustments(Employee $employee, PayrollRun $run): array
+    {
+        $adjustments = $employee->payrollAdjustments()
+            ->where('year', $run->year)
+            ->where('month', $run->month)
+            ->get();
+
+        if ($adjustments->isEmpty()) {
+            return [0.0, 0.0, null];
+        }
+
+        $bonuses = round((float) $adjustments->where('type', 'bonus')->sum('amount'), 2);
+        $deductions = round((float) $adjustments->where('type', 'deduction')->sum('amount'), 2);
+
+        $note = $adjustments
+            ->map(fn ($a) => ($a->type === 'bonus' ? 'مكافأة' : 'خصم').' '.number_format((float) $a->amount, 2)
+                .($a->reason ? " — {$a->reason}" : ''))
+            ->implode('، ');
+
+        return [$bonuses, $deductions, $note ?: null];
     }
 
     /**
@@ -203,7 +237,7 @@ class PayrollService
             'other_deductions' => $other,
             'other_note' => $data['other_note'] ?? $slip->other_note,
             'total_deductions' => $deductions,
-            'net' => round((float) $slip->gross - $deductions, 2),
+            'net' => round((float) $slip->gross + (float) $slip->additions_total - $deductions, 2),
         ])->save();
 
         return $slip->fresh();

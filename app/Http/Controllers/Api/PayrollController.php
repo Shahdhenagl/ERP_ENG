@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\CashBox;
 use App\Models\Employee;
+use App\Models\PayrollAdjustment;
 use App\Models\Payslip;
 use App\Models\PayrollRun;
 use App\Models\SalaryAdvance;
@@ -67,6 +68,70 @@ class PayrollController extends Controller
             'code' => $advance->code,
             'amount' => (float) $advance->amount,
         ]], 201);
+    }
+
+    /* ── Deductions & bonuses ────────────────────────────── */
+
+    public function adjustments(Request $request): JsonResponse
+    {
+        $adjustments = PayrollAdjustment::query()
+            ->when($request->integer('employee_id'), fn ($q, $id) => $q->where('employee_id', $id))
+            ->when($request->integer('year'), fn ($q, $y) => $q->where('year', $y))
+            ->when($request->integer('month'), fn ($q, $m) => $q->where('month', $m))
+            ->with('employee:id,name,code')
+            ->orderByDesc('year')
+            ->orderByDesc('month')
+            ->orderByDesc('id')
+            ->paginate($request->integer('per_page', 40));
+
+        return response()->json([
+            'data' => $adjustments->through(fn (PayrollAdjustment $a) => [
+                'id' => $a->id,
+                'employee_id' => $a->employee_id,
+                'employee' => $a->employee?->name,
+                'employee_code' => $a->employee?->code,
+                'type' => $a->type,
+                'type_label' => $a->type === 'bonus' ? 'مكافأة' : 'خصم',
+                'amount' => (float) $a->amount,
+                'reason' => $a->reason,
+                'year' => $a->year,
+                'month' => $a->month,
+            ])->items(),
+            'meta' => ['total' => $adjustments->total(), 'last_page' => $adjustments->lastPage()],
+        ]);
+    }
+
+    public function storeAdjustment(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'employee_id' => ['required', 'exists:employees,id'],
+            'type' => ['required', 'in:deduction,bonus'],
+            'amount' => ['required', 'numeric', 'gt:0'],
+            'reason' => ['nullable', 'string', 'max:300'],
+            'year' => ['required', 'integer', 'min:2020', 'max:2100'],
+            'month' => ['required', 'integer', 'min:1', 'max:12'],
+        ]);
+
+        $adjustment = PayrollAdjustment::create([
+            ...$data,
+            'created_by' => $request->user()->id,
+        ]);
+
+        $label = $data['type'] === 'bonus' ? 'مكافأة' : 'خصم';
+        ActivityLog::record(
+            'payroll.adjustment.created',
+            $adjustment,
+            "{$label} ".number_format((float) $adjustment->amount, 2)." — {$adjustment->employee?->name}",
+        );
+
+        return response()->json(['data' => ['id' => $adjustment->id]], 201);
+    }
+
+    public function deleteAdjustment(PayrollAdjustment $payrollAdjustment): JsonResponse
+    {
+        $payrollAdjustment->delete();
+
+        return response()->json(['deleted' => true]);
     }
 
     /* ── Runs ────────────────────────────────────────────── */
@@ -224,6 +289,7 @@ class PayrollController extends Controller
             'basic_salary' => (float) $slip->basic_salary,
             'allowances' => $slip->allowances ?? [],
             'allowances_total' => (float) $slip->allowances_total,
+            'additions_total' => (float) $slip->additions_total,
             'gross' => (float) $slip->gross,
 
             'unpaid_days' => $slip->unpaid_days,

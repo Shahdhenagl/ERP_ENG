@@ -10,6 +10,7 @@ import type {
     Employee,
     LeaveRequest,
     SalaryAdvance,
+    PayrollAdjustment,
     PayrollRun,
     Payslip,
     Lead,
@@ -120,6 +121,7 @@ export const keys = {
     attendance: (f?: Record<string, unknown>) => ['attendance', f ?? {}] as const,
     attendanceSummary: (f?: Record<string, unknown>) => ['attendance-summary', f ?? {}] as const,
     advances: (f?: Record<string, unknown>) => ['advances', f ?? {}] as const,
+    payrollAdjustments: (f?: Record<string, unknown>) => ['payroll-adjustments', f ?? {}] as const,
     payrollRuns: (f?: Record<string, unknown>) => ['payroll-runs', f ?? {}] as const,
     payrollRun: (id: number | string) => ['payroll-run', Number(id)] as const,
     payslip: (id: number | string) => ['payslip', Number(id)] as const,
@@ -2927,6 +2929,36 @@ export function useSaveAdvance() {
     return useMutation({
         mutationFn: async (payload: Record<string, unknown>) =>
             (await api.post('/advances', payload)).data,
+        onSuccess: () => invalidateHr(client),
+    })
+}
+
+export function usePayrollAdjustments(filters: Record<string, unknown> = {}) {
+    return useQuery({
+        queryKey: keys.payrollAdjustments(filters),
+        queryFn: async () =>
+            (await api.get<{ data: PayrollAdjustment[]; meta: { total: number } }>('/payroll-adjustments', {
+                params: filters,
+            })).data,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useSavePayrollAdjustment() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (await api.post('/payroll-adjustments', payload)).data,
+        onSuccess: () => invalidateHr(client),
+    })
+}
+
+export function useDeletePayrollAdjustment() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id: number) => (await api.delete(`/payroll-adjustments/${id}`)).data,
         onSuccess: () => invalidateHr(client),
     })
 }

@@ -16,7 +16,7 @@ class Payslip extends Model
 
     protected $fillable = [
         'payroll_run_id', 'employee_id',
-        'basic_salary', 'allowances_total', 'allowances',
+        'basic_salary', 'allowances_total', 'additions_total', 'allowances',
         'unpaid_days', 'unpaid_deduction', 'advance_recovery',
         'insurance', 'tax', 'other_deductions', 'other_note',
         'gross', 'total_deductions', 'net',
@@ -29,6 +29,7 @@ class Payslip extends Model
             'allowances' => 'array',
             'basic_salary' => 'decimal:2',
             'allowances_total' => 'decimal:2',
+            'additions_total' => 'decimal:2',
             'unpaid_deduction' => 'decimal:2',
             'advance_recovery' => 'decimal:2',
             'insurance' => 'decimal:2',

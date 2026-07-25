@@ -69,6 +69,16 @@ export function PayslipPrint() {
                 </div>
             </div>
 
+            {slip.additions_total > 0 && (
+                <div className="doc-keep mt-4">
+                    <p className="mb-1.5 text-[11px] font-bold text-navy-400">مكافآت وإضافات</p>
+                    <div className="flex justify-between rounded-lg bg-emerald-50 p-3 text-[13px] font-bold text-emerald-700">
+                        <span>مكافآت</span>
+                        <span className="tabular">{formatMoney(slip.additions_total)}</span>
+                    </div>
+                </div>
+            )}
+
             {deductionRows.length > 0 && (
                 <DocumentTotals
                     rows={deductionRows}
