@@ -161,7 +161,7 @@ export const NAV: NavItem[] = [
             { to: '/purchasing/requests', permission: 'purchasing.manage', label: 'طلبات الشراء', icon: ClipboardList },
             { to: '/supplier-quotes', permission: 'purchasing.manage', label: 'عروض الموردين', icon: FileText },
             { to: '/purchasing/orders', permission: 'purchasing.manage', label: 'أوامر الشراء', icon: Truck },
-            { to: '/soon/purchase-receipt', label: 'استلام المشتريات', icon: PackagePlus },
+            { to: '/purchasing/receiving', permission: 'purchasing.manage', label: 'استلام المشتريات', icon: PackagePlus },
             { to: '/purchasing/invoices', permission: 'purchasing.manage', label: 'فواتير الموردين', icon: Receipt },
             { to: '/purchasing/returns', permission: 'purchasing.manage', label: 'مرتجعات المشتريات', icon: ArrowLeftRight },
             { to: '/supplier-statement', permission: 'purchasing.manage', label: 'كشف حساب المورد', icon: FileClock },

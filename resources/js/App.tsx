@@ -38,6 +38,7 @@ import { WarehousesPage } from '@/pages/inventory/WarehousesPage'
 import { InvoiceDetail } from '@/pages/InvoiceDetail'
 import { InvoiceList } from '@/pages/InvoiceList'
 import { Purchasing } from '@/pages/Purchasing'
+import { PurchaseReceivingPage } from '@/pages/purchasing/PurchaseReceivingPage'
 import { SupplierQuotesPage } from '@/pages/SupplierQuotesPage'
 import { TendersPage } from '@/pages/TendersPage'
 import { Sales } from '@/pages/Sales'
@@ -198,6 +199,7 @@ export function App() {
                                         <Route path="sales/deliveries" element={<DeliveryNotesPage />} />
                                         <Route path="sales/:tab" element={<Sales />} />
                                         <Route path="purchasing" element={<Purchasing />} />
+                                        <Route path="purchasing/receiving" element={<PurchaseReceivingPage />} />
                                         <Route path="purchasing/:tab" element={<Purchasing />} />
                                         <Route path="supplier-quotes" element={<SupplierQuotesPage />} />
                                         <Route path="tenders" element={<TendersPage />} />
