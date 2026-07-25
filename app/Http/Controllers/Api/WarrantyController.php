@@ -160,6 +160,8 @@ class WarrantyController extends Controller
             ->when($request->integer('warranty_id'), fn ($q, $id) => $q->where('warranty_id', $id))
             ->when($request->string('status')->toString(), fn ($q, $s) => $q->where('status', $s))
             ->when($request->boolean('open'), fn ($q) => $q->whereIn('status', ['open', 'approved']))
+            // Claims that got as far as a repair order — the أوامر الإصلاح list.
+            ->when($request->boolean('has_repair'), fn ($q) => $q->whereNotNull('task_id'))
             ->with(['warranty', 'asset.customer', 'task', 'replacement'])
             ->orderByDesc('id')
             ->paginate($request->integer('per_page', 30));

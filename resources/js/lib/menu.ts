@@ -191,10 +191,10 @@ export const NAV: NavItem[] = [
         short: 'ضمانات',
         children: [
             { to: '/warranties/register', permission: 'warranties.manage', label: 'تسجيل ضمان', icon: ShieldCheck },
-            { to: '/soon/warranty-certificate', label: 'شهادة ضمان', icon: FileSignature },
+            { to: '/warranties/certificate', permission: 'warranties.manage', label: 'شهادة ضمان', icon: FileSignature },
             { to: '/warranties/claims', permission: 'warranties.manage', label: 'مطالبات الضمان', icon: ClipboardList },
-            { to: '/soon/repair-orders', label: 'أوامر الإصلاح', icon: Wrench },
-            { to: '/soon/warranty-extend', label: 'استبدال / تمديد ضمان', icon: ShieldPlus },
+            { to: '/warranties/repair-orders', permission: 'warranties.manage', label: 'أوامر الإصلاح', icon: Wrench },
+            { to: '/warranties/lifecycle', permission: 'warranties.manage', label: 'استبدال / تمديد ضمان', icon: ShieldPlus },
             { to: '/assets', permission: 'assets.manage', label: 'تاريخ الجهاز', icon: HardDrive },
         ],
     },

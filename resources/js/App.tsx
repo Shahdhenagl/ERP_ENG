@@ -70,6 +70,9 @@ import { PayslipPrint } from '@/pages/print/PayslipPrint'
 import { ClaimsPage } from '@/pages/warranty/ClaimsPage'
 import { WarrantyLayout } from '@/pages/warranty/WarrantyLayout'
 import { WarrantyRegisterPage } from '@/pages/warranty/WarrantyRegisterPage'
+import { WarrantyCertificatePage } from '@/pages/warranty/WarrantyCertificatePage'
+import { RepairOrdersPage } from '@/pages/warranty/RepairOrdersPage'
+import { WarrantyLifecyclePage } from '@/pages/warranty/WarrantyLifecyclePage'
 import { ChequesPage } from '@/pages/treasury/ChequesPage'
 import { BanksPage } from '@/pages/treasury/BanksPage'
 import { TreasuryPage } from '@/pages/treasury/TreasuryPage'
@@ -197,6 +200,12 @@ export function App() {
                                             <Route path="register" element={<WarrantyRegisterPage />} />
                                             <Route path="claims" element={<ClaimsPage />} />
                                         </Route>
+
+                                        {/* Standalone warranty screens — own header,
+                                            reached from the sidebar. */}
+                                        <Route path="warranties/certificate" element={<WarrantyCertificatePage />} />
+                                        <Route path="warranties/repair-orders" element={<RepairOrdersPage />} />
+                                        <Route path="warranties/lifecycle" element={<WarrantyLifecyclePage />} />
 
                                         <Route path="sales" element={<Sales />} />
                                         <Route path="sales/approvals" element={<QuoteApprovalsPage />} />
