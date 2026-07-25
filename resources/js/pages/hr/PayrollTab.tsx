@@ -6,6 +6,7 @@ import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, EmptyState, Field, Input, Select, SkeletonCard } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
+import { useAuth } from '@/lib/auth'
 import { formatMoney } from '@/lib/domain'
 import { useArea } from '@/lib/nav'
 import {
@@ -184,6 +185,7 @@ const MONTHS = [
 
 function RunDetail({ id, onBack }: { id: number; onBack: () => void }) {
     const toast = useToast()
+    const { can } = useAuth()
     const { data: run, isLoading } = usePayrollRun(id)
     const act = usePayrollAction(id)
     const [payOpen, setPayOpen] = useState<'run' | Payslip | null>(null)
@@ -228,7 +230,7 @@ function RunDetail({ id, onBack }: { id: number; onBack: () => void }) {
                             </div>
 
                             <div className="flex gap-2">
-                                {run.status === 'draft' && (
+                                {run.status === 'draft' && can('payroll.approve') && (
                                     <Button
                                         icon={BadgeCheck}
                                         loading={act.isPending}

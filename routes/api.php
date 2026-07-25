@@ -217,7 +217,7 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
 
     Route::get('leave', [LeaveController::class, 'index'])->middleware('can:hr.manage');
     Route::post('leave', [LeaveController::class, 'store'])->middleware('can:hr.manage');
-    Route::post('leave/{leaveRequest}/decide', [LeaveController::class, 'decide'])->middleware('can:hr.manage');
+    Route::post('leave/{leaveRequest}/decide', [LeaveController::class, 'decide'])->middleware('can:leave.approve');
     Route::post('leave/{leaveRequest}/cancel', [LeaveController::class, 'cancel'])->middleware('can:hr.manage');
 
     // Attendance — the operational who-showed-up, kept beside leave under the
@@ -239,7 +239,7 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::get('payroll', [PayrollController::class, 'index'])->middleware('can:payroll.manage');
     Route::post('payroll', [PayrollController::class, 'open'])->middleware('can:payroll.manage');
     Route::get('payroll/{payrollRun}', [PayrollController::class, 'show'])->middleware('can:payroll.manage');
-    Route::post('payroll/{payrollRun}/approve', [PayrollController::class, 'approve'])->middleware('can:payroll.manage');
+    Route::post('payroll/{payrollRun}/approve', [PayrollController::class, 'approve'])->middleware('can:payroll.approve');
     Route::post('payroll/{payrollRun}/pay', [PayrollController::class, 'pay'])->middleware('can:payroll.manage');
 
     Route::get('payslips/{payslip}', [PayrollController::class, 'slip'])->middleware('can:payroll.manage');
@@ -276,7 +276,7 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::get('warranty-claims', [WarrantyController::class, 'claims'])->middleware('can:warranties.manage');
     Route::post('warranty-claims', [WarrantyController::class, 'storeClaim'])->middleware('can:warranties.manage');
     Route::get('warranty-claims/{claim}', [WarrantyController::class, 'showClaim'])->middleware('can:warranties.manage');
-    Route::post('warranty-claims/{claim}/decide', [WarrantyController::class, 'decide'])->middleware('can:warranties.manage');
+    Route::post('warranty-claims/{claim}/decide', [WarrantyController::class, 'decide'])->middleware('can:warranties.approve');
     Route::post('warranty-claims/{claim}/repair-order', [WarrantyController::class, 'repairOrder'])->middleware('can:warranties.manage');
 
     // ── Maintenance contracts ────────────────────────────────
@@ -388,8 +388,8 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::put('quotations/{quotation}', [QuotationController::class, 'update'])->middleware('can:sales.manage');
     Route::delete('quotations/{quotation}', [QuotationController::class, 'destroy'])->middleware('can:sales.manage');
     Route::post('quotations/{quotation}/submit', [QuotationController::class, 'submit'])->middleware('can:sales.manage');
-    Route::post('quotations/{quotation}/approve', [QuotationController::class, 'approveQuote'])->middleware('can:sales.manage');
-    Route::post('quotations/{quotation}/reject-approval', [QuotationController::class, 'rejectApproval'])->middleware('can:sales.manage');
+    Route::post('quotations/{quotation}/approve', [QuotationController::class, 'approveQuote'])->middleware('can:sales.approve');
+    Route::post('quotations/{quotation}/reject-approval', [QuotationController::class, 'rejectApproval'])->middleware('can:sales.approve');
     Route::post('quotations/{quotation}/send', [QuotationController::class, 'send'])->middleware('can:sales.manage');
     Route::post('quotations/{quotation}/accept', [QuotationController::class, 'accept'])->middleware('can:sales.manage');
     Route::post('quotations/{quotation}/reject', [QuotationController::class, 'reject'])->middleware('can:sales.manage');
@@ -401,7 +401,7 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::get('tenders/{tender}', [TenderController::class, 'show'])->middleware('can:sales.manage');
     Route::put('tenders/{tender}', [TenderController::class, 'update'])->middleware('can:sales.manage');
     Route::post('tenders/{tender}/submit', [TenderController::class, 'submit'])->middleware('can:sales.manage');
-    Route::post('tenders/{tender}/decide', [TenderController::class, 'decide'])->middleware('can:sales.manage');
+    Route::post('tenders/{tender}/decide', [TenderController::class, 'decide'])->middleware('can:sales.approve');
 
     Route::get('sales-orders', [SalesOrderController::class, 'index'])->middleware('can:sales.manage');
     Route::post('sales-orders', [SalesOrderController::class, 'store'])->middleware('can:sales.manage');

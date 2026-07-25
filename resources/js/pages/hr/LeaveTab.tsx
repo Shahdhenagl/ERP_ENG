@@ -5,6 +5,7 @@ import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, EmptyState, Field, Input, Select, SkeletonCard, Textarea } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
+import { useAuth } from '@/lib/auth'
 import { formatDate } from '@/lib/format'
 import { useEmployees, useLeave, useLeaveAction, useSaveLeave } from '@/lib/queries'
 import type { LeaveStatus } from '@/types'
@@ -18,6 +19,7 @@ const STATUS: Record<LeaveStatus, string> = {
 
 export function LeaveTab() {
     const toast = useToast()
+    const { can } = useAuth()
     const decide = useLeaveAction()
     const [creating, setCreating] = useState(false)
     const [pendingOnly, setPendingOnly] = useState(false)
@@ -101,7 +103,7 @@ export function LeaveTab() {
                                 )}
                             </div>
 
-                            {leave.status === 'pending' && (
+                            {leave.status === 'pending' && can('leave.approve') && (
                                 <div className="mt-3 flex gap-2 border-t border-navy-100 pt-3">
                                     <button
                                         onClick={() => act(leave.id, 'approve')}

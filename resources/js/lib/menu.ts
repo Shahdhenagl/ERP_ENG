@@ -121,7 +121,7 @@ export const NAV: NavItem[] = [
         short: 'بيع',
         children: [
             { to: '/sales/quotations', permission: 'sales.manage', label: 'عروض الأسعار', icon: FileText },
-            { to: '/sales/approvals', permission: 'sales.manage', label: 'اعتماد عروض الأسعار', icon: ClipboardCheck },
+            { to: '/sales/approvals', permission: 'sales.approve', label: 'اعتماد عروض الأسعار', icon: ClipboardCheck },
             { to: '/sales/orders', permission: 'sales.manage', label: 'أوامر البيع', icon: Receipt },
             { to: '/sales/deliveries', permission: 'sales.manage', label: 'أذون التسليم', icon: Truck },
             { to: '/invoices', permission: 'invoices.manage', label: 'الفواتير', icon: Receipt },

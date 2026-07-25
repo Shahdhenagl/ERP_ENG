@@ -6,6 +6,7 @@ import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, EmptyState, Field, Input, Select, SkeletonCard, Textarea } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
+import { useAuth } from '@/lib/auth'
 import { CLAIM_STATUS } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
 import { useArea } from '@/lib/nav'
@@ -23,6 +24,7 @@ type Filter = 'open' | 'all'
 
 export function ClaimsPage() {
     const { path } = useArea()
+    const { can } = useAuth()
     const [filter, setFilter] = useState<Filter>('open')
     const [filing, setFiling] = useState(false)
     const [deciding, setDeciding] = useState<{ claim: WarrantyClaim; action: Action } | null>(null)
@@ -132,7 +134,7 @@ export function ClaimsPage() {
 
                                 {!claim.is_final && (
                                     <div className="mt-3 flex flex-wrap gap-2 border-t border-navy-100 pt-3">
-                                        {claim.status === 'open' && (
+                                        {claim.status === 'open' && can('warranties.approve') && (
                                             <>
                                                 <Action
                                                     icon={Check}

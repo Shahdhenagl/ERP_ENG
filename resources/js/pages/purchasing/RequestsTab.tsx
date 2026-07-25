@@ -27,7 +27,8 @@ const STATUS_CHIP: Record<string, string> = {
 
 export function RequestsTab() {
     const toast = useToast()
-    const { user, canDispatch } = useAuth()
+    const { user, canDispatch, can } = useAuth()
+    const canDecide = can('requests.decide')
     const act = usePurchaseRequestAction()
 
     const [awaiting, setAwaiting] = useState(false)
@@ -174,7 +175,7 @@ export function RequestsTab() {
 
                                     {/* Approving is a separate act by someone else — the
                                         whole reason the document exists. */}
-                                    {canDispatch && row.status === 'submitted' && !mine && (
+                                    {canDecide && row.status === 'submitted' && !mine && (
                                         <>
                                             <button
                                                 onClick={() => setDeciding({ row, approve: true })}
@@ -193,13 +194,13 @@ export function RequestsTab() {
                                         </>
                                     )}
 
-                                    {canDispatch && row.status === 'submitted' && mine && (
+                                    {canDecide && row.status === 'submitted' && mine && (
                                         <span className="rounded-lg bg-navy-50 px-3 py-1.5 text-xs font-bold text-navy-400">
                                             لا يمكنك اعتماد طلبك بنفسك
                                         </span>
                                     )}
 
-                                    {canDispatch && row.status === 'approved' && (
+                                    {canDecide && row.status === 'approved' && (
                                         <button
                                             onClick={() => setOrdering(row)}
                                             className="tap inline-flex items-center gap-1.5 rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-700"

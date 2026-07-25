@@ -44,7 +44,6 @@ class PermissionRegistry
 
         // ── Buying and selling ───────────────────────────────
         'purchasing.manage' => ['الموردون وأوامر الشراء', 'المشتريات'],
-        'requests.decide' => ['اعتماد طلبات الشراء', 'المشتريات'],
         'sales.manage' => ['عروض الأسعار وأوامر البيع', 'المبيعات'],
 
         // ── Money ────────────────────────────────────────────
@@ -53,6 +52,18 @@ class PermissionRegistry
         'cheques.manage' => ['الشيكات والتسوية البنكية', 'المالية'],
         'accounting.view' => ['عرض الحسابات والقوائم', 'المالية'],
         'accounting.manage' => ['القيود اليدوية ودليل الحسابات', 'المالية'],
+
+        // ── Approvals ────────────────────────────────────────
+        // Held apart from the module permissions on purpose. Preparing a
+        // document and signing it off are two different authorities, and the
+        // separation of duties only means anything if one can be granted
+        // without the other — a salesperson who drafts a quote but cannot
+        // approve it, a clerk who opens the payroll run but cannot commit it.
+        'requests.decide' => ['اعتماد طلبات الشراء', 'الاعتمادات'],
+        'sales.approve' => ['اعتماد عروض الأسعار والمناقصات', 'الاعتمادات'],
+        'payroll.approve' => ['اعتماد مسير الرواتب', 'الاعتمادات'],
+        'leave.approve' => ['اعتماد الإجازات', 'الاعتمادات'],
+        'warranties.approve' => ['البتّ في مطالبات الضمان', 'الاعتمادات'],
 
         // ── People ───────────────────────────────────────────
         'hr.manage' => ['الموظفون والإجازات', 'الموارد البشرية'],
@@ -84,7 +95,6 @@ class PermissionRegistry
             'inventory.view',
             'inventory.manage',
             'purchasing.manage',
-            'requests.decide',
             'sales.manage',
             'invoices.manage',
             'treasury.manage',
@@ -94,6 +104,14 @@ class PermissionRegistry
             // A manager could read the books but never write a manual entry.
             'accounting.view',
             'reports.view',
+            // Every sign-off a manager could already give: the split into
+            // separate permissions must not move anyone's access on the day it
+            // ships, only make each one revocable on its own afterwards.
+            'requests.decide',
+            'sales.approve',
+            'payroll.approve',
+            'leave.approve',
+            'warranties.approve',
         ],
 
         // A technician's own screens are reached through routes open to every

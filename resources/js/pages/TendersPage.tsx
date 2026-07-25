@@ -15,6 +15,7 @@ import {
     Textarea,
 } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
+import { useAuth } from '@/lib/auth'
 import { formatMoney } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
 import { useCustomers, useSaveTender, useTenderAction, useTenders } from '@/lib/queries'
@@ -150,9 +151,11 @@ function TenderRow({
     onDecide: () => void
 }) {
     const toast = useToast()
+    const { can } = useAuth()
     const action = useTenderAction()
     const days = tender.days_to_deadline
     const open = tender.status === 'registered' || tender.status === 'submitted'
+    const canDecide = can('sales.approve')
 
     return (
         <div className="card p-3.5">
@@ -207,13 +210,15 @@ function TenderRow({
                             تسجيل التقديم
                         </button>
                     )}
-                    <button
-                        onClick={onDecide}
-                        className="tap inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700"
-                    >
-                        <Trophy className="size-3.5" />
-                        تسجيل النتيجة
-                    </button>
+                    {canDecide && (
+                        <button
+                            onClick={onDecide}
+                            className="tap inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700"
+                        >
+                            <Trophy className="size-3.5" />
+                            تسجيل النتيجة
+                        </button>
+                    )}
                 </div>
             )}
         </div>
