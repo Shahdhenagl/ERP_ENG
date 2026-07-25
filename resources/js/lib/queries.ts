@@ -61,6 +61,9 @@ import type {
     ContractReport,
     WarrantyReport,
     CrmReport,
+    HrReport,
+    MaintenanceReport,
+    DatasetOption,
     StockMovement,
     DeviceHistory,
     Warranty,
@@ -2363,6 +2366,45 @@ export const useWarrantyReport = (days = 60) => useReport<WarrantyReport>('warra
 
 export const useCrmReport = (range: Record<string, unknown> = {}) =>
     useReport<CrmReport>('crm', range)
+
+export const useHrReport = (range: Record<string, unknown> = {}) =>
+    useReport<HrReport>('hr', range)
+
+export const useMaintenanceReport = (range: Record<string, unknown> = {}) =>
+    useReport<MaintenanceReport>('maintenance', range)
+
+/** The datasets a custom export can pull — the picker on the custom page. */
+export function useDatasets() {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: ['report-datasets'] as const,
+        queryFn: async () =>
+            (await api.get<{ data: DatasetOption[] }>('/reports/datasets')).data.data,
+        enabled: canDispatch,
+        staleTime: Infinity,
+    })
+}
+
+/** Pull one dataset's raw rows as a spreadsheet — «التقارير المخصصة». */
+export async function downloadCustomExport(
+    dataset: string,
+    params: Record<string, unknown> = {},
+): Promise<void> {
+    const response = await api.get(`/reports/custom/${dataset}/export`, {
+        params: pruneRange(params),
+        responseType: 'blob',
+    })
+
+    const url = URL.createObjectURL(response.data as Blob)
+    const link = document.createElement('a')
+
+    link.href = url
+    link.download = `${dataset}.csv`
+    link.click()
+
+    URL.revokeObjectURL(url)
+}
 
 /**
  * Pull a report's rows as a spreadsheet.

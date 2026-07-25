@@ -4,14 +4,17 @@ use App\Models\Asset;
 use App\Models\CashBox;
 use App\Models\Contract;
 use App\Models\Customer;
+use App\Models\Employee;
 use App\Models\Invoice;
 use App\Models\Item;
+use App\Models\LeaveRequest;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\Warehouse;
 use App\Services\BillingService;
 use App\Services\CustodyService;
 use App\Services\FinancialReports;
+use App\Services\PayrollService;
 use App\Services\ReportService;
 use App\Services\StockLedger;
 use App\Services\WarrantyService;
@@ -321,10 +324,125 @@ it('groups claims by the model that keeps failing', function () {
         ->and($byModel[0]['claims'])->toBe(2);
 });
 
+/* ── HR ──────────────────────────────────────────────────── */
+
+it('counts the workforce by department and totals its payroll cost', function () {
+    Employee::factory()->create(['status' => 'active', 'department' => 'الفنيون', 'basic_salary' => 5000, 'allowances' => null]);
+    Employee::factory()->create(['status' => 'active', 'department' => 'الفنيون', 'basic_salary' => 3000, 'allowances' => null]);
+    Employee::factory()->create(['status' => 'terminated', 'department' => 'الإدارة']);
+
+    $report = $this->reports->hr();
+
+    expect($report['headcount'])->toBe(2);
+
+    $dept = collect($report['by_department'])->firstWhere('department', 'الفنيون');
+    expect($dept['count'])->toBe(2)
+        ->and($dept['payroll'])->toBe(8000.0);
+});
+
+it('sums a window\'s payroll off the frozen slips, not the salaries', function () {
+    Employee::factory()->create([
+        'status' => 'active', 'basic_salary' => 6000, 'allowances' => null,
+        'insurance_rate' => 0, 'tax_rate' => 0,
+    ]);
+
+    app(PayrollService::class)->open(2026, 8, $this->manager);
+
+    $report = $this->reports->hr('2026-08-01', '2026-08-31');
+
+    expect($report['payroll']['runs'])->toBe(1)
+        ->and($report['payroll']['net'])->toBe(6000.0);
+});
+
+it('leaves a run in another month out of the window', function () {
+    Employee::factory()->create(['status' => 'active', 'basic_salary' => 6000, 'allowances' => null]);
+    app(PayrollService::class)->open(2026, 8, $this->manager);
+
+    expect($this->reports->hr('2026-09-01', '2026-09-30')['payroll']['runs'])->toBe(0);
+});
+
+it('summarises approved leave in the window by type', function () {
+    $employee = Employee::factory()->create();
+
+    LeaveRequest::create([
+        'employee_id' => $employee->id, 'type' => 'annual',
+        'from_date' => '2026-08-04', 'to_date' => '2026-08-06', 'days' => 3, 'status' => 'approved',
+    ]);
+    // Pending leave is not counted — it has not been granted.
+    LeaveRequest::create([
+        'employee_id' => $employee->id, 'type' => 'sick',
+        'from_date' => '2026-08-10', 'to_date' => '2026-08-11', 'days' => 2, 'status' => 'pending',
+    ]);
+
+    $leave = collect($this->reports->hr('2026-08-01', '2026-08-31')['leave']);
+
+    expect($leave->firstWhere('type', 'annual')['days'])->toBe(3)
+        ->and($leave->firstWhere('type', 'sick'))->toBeNull();
+});
+
+/* ── Maintenance ─────────────────────────────────────────── */
+
+it('counts work orders by status', function () {
+    Task::factory()->create(['customer_id' => $this->customer->id, 'status' => 'pending']);
+    Task::factory()->create(['customer_id' => $this->customer->id, 'status' => 'completed', 'completed_at' => now()]);
+
+    $report = $this->reports->maintenance();
+
+    expect($report['tasks']['total'])->toBe(2)
+        ->and($report['tasks']['open'])->toBe(1);
+
+    $completed = collect($report['tasks']['by_status'])->firstWhere('status', 'completed');
+    expect($completed['count'])->toBe(1);
+});
+
+it('flags planned visits that are past due', function () {
+    $contract = Contract::factory()->create([
+        'customer_id' => $this->customer->id, 'status' => 'active',
+        'starts_on' => now()->subMonths(6), 'ends_on' => now()->addMonths(6),
+    ]);
+
+    $contract->visits()->create(['sequence' => 1, 'planned_for' => now()->subMonth(), 'status' => 'planned']);
+    $contract->visits()->create(['sequence' => 2, 'planned_for' => now()->subMonths(2), 'status' => 'done']);
+
+    $ppm = $this->reports->maintenance()['ppm'];
+
+    expect($ppm['visits_overdue'])->toBe(1)
+        ->and($ppm['visits_done'])->toBe(1);
+});
+
+/* ── Custom reports: raw dataset export ──────────────────── */
+
+it('lists the datasets a custom export can pull', function () {
+    $rows = actingAs($this->manager)->getJson('/api/reports/datasets')->assertOk()->json('data');
+
+    expect(collect($rows)->pluck('key'))->toContain('customers', 'invoices', 'employees');
+});
+
+it('exports a dataset\'s raw rows as a spreadsheet', function () {
+    $response = actingAs($this->manager)
+        ->get('/api/reports/custom/customers/export')
+        ->assertOk()
+        ->assertHeader('content-type', 'text/csv; charset=UTF-8');
+
+    $body = $response->streamedContent();
+
+    expect($body)->toStartWith("\xEF\xBB\xBF")
+        ->and($body)->toContain('بنك القاهرة');
+});
+
+it('refuses to export an unknown dataset', function () {
+    actingAs($this->manager)->get('/api/reports/custom/nonsense/export')->assertNotFound();
+});
+
+it('keeps a technician out of the custom export', function () {
+    actingAs($this->technician)->getJson('/api/reports/datasets')->assertForbidden();
+    actingAs($this->technician)->get('/api/reports/custom/customers/export')->assertForbidden();
+});
+
 /* ── Through the API ─────────────────────────────────────── */
 
 it('serves every report to a manager', function () {
-    foreach (['sales', 'profitability', 'stock', 'custody', 'contracts', 'warranties'] as $report) {
+    foreach (['sales', 'profitability', 'stock', 'custody', 'contracts', 'warranties', 'hr', 'maintenance'] as $report) {
         actingAs($this->manager)->getJson("/api/reports/{$report}")->assertOk();
     }
 });
@@ -360,7 +478,7 @@ it('refuses to export a report that does not exist', function () {
 });
 
 it('keeps a technician out of the reports', function () {
-    foreach (['sales', 'profitability', 'stock', 'custody', 'contracts', 'warranties'] as $report) {
+    foreach (['sales', 'profitability', 'stock', 'custody', 'contracts', 'warranties', 'hr', 'maintenance'] as $report) {
         actingAs($this->technician)->getJson("/api/reports/{$report}")->assertForbidden();
     }
 });

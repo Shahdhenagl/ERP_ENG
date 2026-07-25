@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\CustomReportService;
 use App\Services\ReportService;
 use App\Services\TreasuryReport;
 use Illuminate\Http\JsonResponse;
@@ -14,6 +15,7 @@ class ReportController extends Controller
     public function __construct(
         protected ReportService $reports,
         protected TreasuryReport $treasury,
+        protected CustomReportService $custom,
     ) {}
 
     public function sales(Request $request): JsonResponse
@@ -69,6 +71,20 @@ class ReportController extends Controller
         return response()->json(['data' => $this->reports->crm($from, $to)]);
     }
 
+    public function hr(Request $request): JsonResponse
+    {
+        [$from, $to] = $this->window($request);
+
+        return response()->json(['data' => $this->reports->hr($from, $to)]);
+    }
+
+    public function maintenance(Request $request): JsonResponse
+    {
+        [$from, $to] = $this->window($request);
+
+        return response()->json(['data' => $this->reports->maintenance($from, $to)]);
+    }
+
     /**
      * Any report's own table, as a spreadsheet.
      *
@@ -89,9 +105,46 @@ class ReportController extends Controller
             'contracts' => $this->contractRows($request->integer('days') ?: 60),
             'warranties' => $this->warrantyRows($request->integer('days') ?: 60),
             'crm' => $this->crmRows($from, $to),
+            'hr' => $this->hrRows($from, $to),
+            'maintenance' => $this->maintenanceRows($from, $to),
             default => abort(404, 'تقرير غير معروف.'),
         };
 
+        return $this->stream($name, $headings, $rows);
+    }
+
+    /* ── Custom reports: raw rows of a dataset ───────────── */
+
+    /** The datasets a custom export can pull, for the picker. */
+    public function datasets(): JsonResponse
+    {
+        return response()->json(['data' => CustomReportService::catalogue()]);
+    }
+
+    /**
+     * Any whitelisted dataset's records, filtered to a window, as a spreadsheet.
+     *
+     * This is «التقارير المخصصة» made concrete: not a query builder, but the raw
+     * rows of a known table handed over to be cut however the reader needs.
+     */
+    public function customExport(Request $request, string $dataset): StreamedResponse
+    {
+        abort_unless(CustomReportService::exists($dataset), 404, 'مجموعة بيانات غير معروفة.');
+
+        [$from, $to] = $this->window($request);
+        [$name, $headings, $rows] = $this->custom->rows($dataset, $from, $to);
+
+        return $this->stream($name, $headings, $rows);
+    }
+
+    /**
+     * Stream rows as a BOM-prefixed CSV Excel opens without mangling Arabic.
+     *
+     * @param  array<int, string>  $headings
+     * @param  iterable<int, array<int, mixed>>  $rows
+     */
+    protected function stream(string $name, array $headings, iterable $rows): StreamedResponse
+    {
         return response()->streamDownload(function () use ($headings, $rows) {
             $handle = fopen('php://output', 'w');
 
@@ -213,6 +266,34 @@ class ReportController extends Controller
             ['المصدر', 'إجمالي العملاء المحتملين', 'المكسوبون', 'نسبة التحويل %'],
             collect($report['by_source'])->map(fn ($row) => [
                 $row['label'], $row['total'], $row['won'], $row['conversion_pct'],
+            ]),
+        ];
+    }
+
+    /** @return array{0: string, 1: array<int, string>, 2: iterable<int, array<int, mixed>>} */
+    protected function hrRows(?string $from, ?string $to): array
+    {
+        $report = $this->reports->hr($from, $to);
+
+        return [
+            'hr-'.($from ?? 'all').'.csv',
+            ['القسم', 'عدد الموظفين', 'إجمالي الرواتب'],
+            collect($report['by_department'])->map(fn ($row) => [
+                $row['department'], $row['count'], $row['payroll'],
+            ]),
+        ];
+    }
+
+    /** @return array{0: string, 1: array<int, string>, 2: iterable<int, array<int, mixed>>} */
+    protected function maintenanceRows(?string $from, ?string $to): array
+    {
+        $report = $this->reports->maintenance($from, $to);
+
+        return [
+            'maintenance-'.($from ?? 'all').'.csv',
+            ['الحالة', 'عدد أوامر العمل'],
+            collect($report['tasks']['by_status'])->map(fn ($row) => [
+                $row['label'], $row['count'],
             ]),
         ];
     }

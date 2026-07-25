@@ -59,6 +59,9 @@ import { PaymentVoucherPrint } from '@/pages/print/PaymentVoucherPrint'
 import { WarrantyCertificate } from '@/pages/print/WarrantyCertificate'
 import { ContractReportPage } from '@/pages/reports/ContractReportPage'
 import { CustodyReportPage } from '@/pages/reports/CustodyReportPage'
+import { CustomExportPage } from '@/pages/reports/CustomExportPage'
+import { HrReportPage } from '@/pages/reports/HrReportPage'
+import { MaintenanceReportPage } from '@/pages/reports/MaintenanceReportPage'
 import { ProfitReportPage } from '@/pages/reports/ProfitReportPage'
 import { ReportsLayout } from '@/pages/reports/ReportsLayout'
 import { SalesReportPage } from '@/pages/reports/SalesReportPage'
@@ -265,6 +268,9 @@ export function App() {
                                             <Route path="contracts" element={<ContractReportPage />} />
                                             <Route path="warranties" element={<WarrantyReportPage />} />
                                             <Route path="crm" element={<CrmReportPage />} />
+                                            <Route path="hr" element={<HrReportPage />} />
+                                            <Route path="maintenance" element={<MaintenanceReportPage />} />
+                                            <Route path="custom" element={<CustomExportPage />} />
                                         </Route>
 
                                         <Route path="profile" element={<Profile />} />

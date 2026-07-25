@@ -37,6 +37,9 @@ const SECTIONS = [
     ['/reports/contracts', 'العقود'],
     ['/reports/warranties', 'الضمانات'],
     ['/reports/crm', 'العملاء المحتملون'],
+    ['/reports/hr', 'الموارد البشرية'],
+    ['/reports/maintenance', 'الصيانة'],
+    ['/reports/custom', 'مخصّص'],
 ] as const
 
 /** Which report the current URL is on, and whether a period applies to it. */
@@ -48,6 +51,8 @@ const REPORT_BY_PATH: Record<string, { name: string; periodic: boolean }> = {
     contracts: { name: 'contracts', periodic: false },
     warranties: { name: 'warranties', periodic: false },
     crm: { name: 'crm', periodic: true },
+    hr: { name: 'hr', periodic: true },
+    maintenance: { name: 'maintenance', periodic: true },
 }
 
 export function ReportsLayout() {
@@ -57,6 +62,9 @@ export function ReportsLayout() {
     const [exporting, setExporting] = useState(false)
 
     const section = location.pathname.split('/').pop() ?? 'sales'
+    // The custom page carries its own dataset picker, window and export button,
+    // so the shared header export and period picker do not apply to it.
+    const isCustom = section === 'custom'
     const report = REPORT_BY_PATH[section] ?? REPORT_BY_PATH.sales
 
     return (
@@ -65,33 +73,35 @@ export function ReportsLayout() {
                 title="التقارير"
                 subtitle="كل رقم هنا مقروء من الموديول صاحبه، لا محسوب مرة ثانية"
                 actions={
-                    <Button
-                        variant="secondary"
-                        icon={Download}
-                        loading={exporting}
-                        onClick={async () => {
-                            setExporting(true)
+                    isCustom ? undefined : (
+                        <Button
+                            variant="secondary"
+                            icon={Download}
+                            loading={exporting}
+                            onClick={async () => {
+                                setExporting(true)
 
-                            try {
-                                await downloadReport(
-                                    report.name,
-                                    report.periodic ? period.range : {},
-                                )
-                            } catch (caught) {
-                                toast.error(errorMessage(caught, 'تعذّر تصدير التقرير.'))
-                            } finally {
-                                setExporting(false)
-                            }
-                        }}
-                    >
-                        تصدير Excel
-                    </Button>
+                                try {
+                                    await downloadReport(
+                                        report.name,
+                                        report.periodic ? period.range : {},
+                                    )
+                                } catch (caught) {
+                                    toast.error(errorMessage(caught, 'تعذّر تصدير التقرير.'))
+                                } finally {
+                                    setExporting(false)
+                                }
+                            }}
+                        >
+                            تصدير Excel
+                        </Button>
+                    )
                 }
             />
 
-            <SectionTabs sections={SECTIONS} always />
+            <SectionTabs sections={SECTIONS} />
 
-            {report.periodic && (
+            {!isCustom && report.periodic && (
                 <PeriodPicker period={period} presets={['month', 'quarter', 'year', 'all']} />
             )}
 

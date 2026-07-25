@@ -257,6 +257,13 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::get('reports/contracts', [ReportController::class, 'contracts'])->middleware('can:reports.view');
     Route::get('reports/warranties', [ReportController::class, 'warranties'])->middleware('can:reports.view');
     Route::get('reports/crm', [ReportController::class, 'crm'])->middleware('can:reports.view');
+    Route::get('reports/hr', [ReportController::class, 'hr'])->middleware('can:reports.view');
+    Route::get('reports/maintenance', [ReportController::class, 'maintenance'])->middleware('can:reports.view');
+
+    // Custom reports resolve to the raw rows of a whitelisted dataset.
+    Route::get('reports/datasets', [ReportController::class, 'datasets'])->middleware('can:reports.view');
+    Route::get('reports/custom/{dataset}/export', [ReportController::class, 'customExport'])->middleware('can:reports.view');
+
     Route::get('reports/{report}/export', [ReportController::class, 'export'])->middleware('can:reports.view');
 
     // ── Warranties & claims ──────────────────────────────────

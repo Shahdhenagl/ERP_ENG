@@ -4,11 +4,17 @@ namespace App\Services;
 
 use App\Enums\InvoiceStatus;
 use App\Enums\TaskStatus;
+use App\Enums\VisitStatus;
+use App\Models\Attendance;
 use App\Models\Contract;
+use App\Models\ContractVisit;
+use App\Models\Employee;
 use App\Models\FollowUp;
 use App\Models\Invoice;
 use App\Models\Item;
 use App\Models\Lead;
+use App\Models\LeaveRequest;
+use App\Models\PayrollRun;
 use App\Models\StockMovement;
 use App\Models\Task;
 use App\Models\Warranty;
@@ -522,6 +528,171 @@ class ReportService
 
             'follow_ups_open' => FollowUp::query()->open()->count(),
             'follow_ups_overdue' => FollowUp::query()->due()->count(),
+        ];
+    }
+
+    /* ── People ──────────────────────────────────────────── */
+
+    /**
+     * The workforce and what it costs: who is on the books, the payroll that
+     * ran over the window, and the leave and attendance behind those numbers.
+     *
+     * Payroll figures are summed off the slips already frozen on each run, not
+     * recomputed from salaries — the run is the record, this only totals it.
+     *
+     * @return array<string, mixed>
+     */
+    public function hr(?string $from = null, ?string $to = null): array
+    {
+        $employees = Employee::query()->get();
+        $active = $employees->where('status', 'active');
+
+        $byDepartment = $active
+            ->groupBy(fn (Employee $e) => $e->department ?: 'غير محدد')
+            ->map(fn ($group, $dept) => [
+                'department' => $dept,
+                'count' => $group->count(),
+                'payroll' => round($group->sum(fn (Employee $e) => $e->grossSalary()), 2),
+            ])
+            ->sortByDesc('count')
+            ->values();
+
+        // Runs whose month falls inside the window — 'YYYY-MM' compares in order.
+        $fromYm = $from ? substr($from, 0, 7) : null;
+        $toYm = $to ? substr($to, 0, 7) : null;
+
+        $runs = PayrollRun::query()->with('payslips')->get()
+            ->filter(function (PayrollRun $run) use ($fromYm, $toYm) {
+                $ym = sprintf('%04d-%02d', $run->year, $run->month);
+
+                return (! $fromYm || $ym >= $fromYm) && (! $toYm || $ym <= $toYm);
+            });
+
+        $leaveLabels = ['annual' => 'اعتيادية', 'sick' => 'مرضية', 'unpaid' => 'بدون أجر'];
+
+        $leave = LeaveRequest::query()
+            ->where('status', 'approved')
+            ->when($from, fn ($q) => $q->whereDate('from_date', '>=', $from))
+            ->when($to, fn ($q) => $q->whereDate('from_date', '<=', $to))
+            ->selectRaw('type, count(*) as requests, coalesce(sum(days), 0) as days')
+            ->groupBy('type')
+            ->get()
+            ->map(fn ($row) => [
+                'type' => $row->type,
+                'label' => $leaveLabels[$row->type] ?? $row->type,
+                'requests' => (int) $row->requests,
+                'days' => (int) $row->days,
+            ]);
+
+        $attendance = Attendance::query()
+            ->when($from, fn ($q) => $q->whereDate('date', '>=', $from))
+            ->when($to, fn ($q) => $q->whereDate('date', '<=', $to))
+            ->selectRaw('status, count(*) as n')
+            ->groupBy('status')
+            ->get()
+            ->map(fn (Attendance $row) => [
+                'status' => $row->status->value,
+                'label' => $row->status->label(),
+                'count' => (int) $row->n,
+            ]);
+
+        return [
+            'period' => ['from' => $from, 'to' => $to],
+            'headcount' => $active->count(),
+            'total_on_book' => $employees->count(),
+            'new_hires' => Employee::query()
+                ->when($from, fn ($q) => $q->whereDate('hired_on', '>=', $from))
+                ->when($to, fn ($q) => $q->whereDate('hired_on', '<=', $to))
+                ->count(),
+            'monthly_gross' => round($active->sum(fn (Employee $e) => $e->grossSalary()), 2),
+            'advances_outstanding' => round(
+                $employees->sum(fn (Employee $e) => max(0.0, $e->outstandingAdvances())),
+                2,
+            ),
+            'by_department' => $byDepartment,
+            'payroll' => [
+                'runs' => $runs->count(),
+                'gross' => round($runs->sum(fn (PayrollRun $r) => $r->payslips->sum('gross')), 2),
+                'deductions' => round($runs->sum(fn (PayrollRun $r) => $r->payslips->sum('total_deductions')), 2),
+                'net' => round($runs->sum(fn (PayrollRun $r) => $r->payslips->sum('net')), 2),
+            ],
+            'leave' => $leave,
+            'attendance' => $attendance,
+        ];
+    }
+
+    /* ── Maintenance ─────────────────────────────────────── */
+
+    /**
+     * The service side: work orders and how they close, the planned-maintenance
+     * visits and whether they land on time, and what the warranty repairs cost.
+     *
+     * Warranty figures are read from `warranties()` so the two reports can never
+     * put a different number on the same repair.
+     *
+     * @return array<string, mixed>
+     */
+    public function maintenance(?string $from = null, ?string $to = null): array
+    {
+        $byStatus = Task::query()
+            ->selectRaw('status, count(*) as n')
+            ->groupBy('status')
+            ->get()
+            ->map(fn (Task $row) => [
+                'status' => $row->status->value,
+                'label' => $row->status->label(),
+                'count' => (int) $row->n,
+            ]);
+
+        $completed = Task::query()
+            ->where('status', TaskStatus::Completed->value)
+            ->when($from, fn ($q) => $q->whereDate('completed_at', '>=', $from))
+            ->when($to, fn ($q) => $q->whereDate('completed_at', '<=', $to))
+            ->count();
+
+        $today = now()->toDateString();
+        $openVisit = [VisitStatus::Planned->value, VisitStatus::Scheduled->value];
+
+        $visitsDone = ContractVisit::query()
+            ->where('status', VisitStatus::Done->value)
+            ->when($from, fn ($q) => $q->whereDate('planned_for', '>=', $from))
+            ->when($to, fn ($q) => $q->whereDate('planned_for', '<=', $to))
+            ->count();
+
+        $visitsOverdue = ContractVisit::query()
+            ->whereIn('status', $openVisit)
+            ->whereDate('planned_for', '<', $today)
+            ->count();
+
+        $visitsUpcoming = ContractVisit::query()
+            ->whereIn('status', $openVisit)
+            ->whereDate('planned_for', '>=', $today)
+            ->whereDate('planned_for', '<=', now()->addDays(30)->toDateString())
+            ->count();
+
+        $warranty = $this->warranties();
+
+        return [
+            'period' => ['from' => $from, 'to' => $to],
+            'tasks' => [
+                'total' => (int) $byStatus->sum('count'),
+                'open' => Task::query()->open()->count(),
+                'completed_in_window' => $completed,
+                'sla_breaches' => Task::query()->slaBreached()->count(),
+                'by_status' => $byStatus,
+            ],
+            'ppm' => [
+                'visits_done' => $visitsDone,
+                'visits_overdue' => $visitsOverdue,
+                'visits_upcoming' => $visitsUpcoming,
+            ],
+            'warranty' => [
+                'claims_open' => $warranty['claims_open'],
+                'repairs' => $warranty['repairs'],
+                'replacements' => $warranty['replacements'],
+                'repair_cost' => $warranty['repair_cost'],
+                'by_model' => $warranty['by_model'],
+            ],
         ];
     }
 

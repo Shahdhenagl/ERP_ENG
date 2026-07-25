@@ -1596,6 +1596,44 @@ export interface CrmReport {
     follow_ups_overdue: number
 }
 
+export interface HrReport {
+    period: { from: string | null; to: string | null }
+    headcount: number
+    total_on_book: number
+    new_hires: number
+    monthly_gross: number
+    advances_outstanding: number
+    by_department: Array<{ department: string; count: number; payroll: number }>
+    payroll: { runs: number; gross: number; deductions: number; net: number }
+    leave: Array<{ type: string; label: string; requests: number; days: number }>
+    attendance: Array<{ status: string; label: string; count: number }>
+}
+
+export interface MaintenanceReport {
+    period: { from: string | null; to: string | null }
+    tasks: {
+        total: number
+        open: number
+        completed_in_window: number
+        sla_breaches: number
+        by_status: Array<{ status: string; label: string; count: number }>
+    }
+    ppm: { visits_done: number; visits_overdue: number; visits_upcoming: number }
+    warranty: {
+        claims_open: number
+        repairs: number
+        replacements: number
+        repair_cost: number
+        by_model: Array<{ model: string; claims: number }>
+    }
+}
+
+/** A dataset a custom export can pull the raw rows of. */
+export interface DatasetOption {
+    key: string
+    label: string
+}
+
 /* ── Sales returns (credit notes) ────────────────────────── */
 
 export interface SalesReturnLine {
