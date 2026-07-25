@@ -54,6 +54,15 @@ class SalesService
             ]);
         }
 
+        // Once a quote has been put up for internal sign-off, it cannot go to
+        // the customer until that sign-off is given. A draft nobody submitted
+        // still sends straight through — approval is opt-in.
+        if ($quotation->isPendingApproval()) {
+            throw ValidationException::withMessages([
+                'status' => 'العرض بانتظار الاعتماد الداخلي قبل إرساله للعميل.',
+            ]);
+        }
+
         if ($quotation->lines()->count() === 0) {
             throw ValidationException::withMessages([
                 'lines' => 'لا يمكن إرسال عرض سعر بدون بنود.',

@@ -72,6 +72,24 @@ it('sends a quote back for edits with a note, leaving the queue', function () {
         ->and($fresh->approval_note)->toBe('راجع السعر');
 });
 
+it('blocks sending a quote that is pending approval', function () {
+    $quote = draftQuote();
+    $quote->lines()->create(['description' => 'بند', 'qty' => 1, 'unit_price' => 100, 'line_total' => 100, 'sort' => 0]);
+    actingAs($this->manager)->postJson("/api/quotations/{$quote->id}/submit")->assertOk();
+
+    actingAs($this->manager)->postJson("/api/quotations/{$quote->id}/send")->assertStatus(422);
+});
+
+it('lets an approved quote be sent', function () {
+    $quote = draftQuote();
+    $quote->lines()->create(['description' => 'بند', 'qty' => 1, 'unit_price' => 100, 'line_total' => 100, 'sort' => 0]);
+    actingAs($this->manager)->postJson("/api/quotations/{$quote->id}/submit")->assertOk();
+    actingAs($this->manager)->postJson("/api/quotations/{$quote->id}/approve")->assertOk();
+
+    $response = actingAs($this->manager)->postJson("/api/quotations/{$quote->id}/send")->assertOk();
+    expect($response->json('data.status'))->toBe('sent');
+});
+
 it('refuses to approve a quote that was never submitted', function () {
     $quote = draftQuote();
 

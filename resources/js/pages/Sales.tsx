@@ -363,6 +363,7 @@ function QuotationDetail({
                                         تقديم للاعتماد
                                     </Button>
                                 )}
+                                {!quotation.is_pending_approval && (
                                 <Button
                                     icon={Send}
                                     className="text-xs"
@@ -371,6 +372,7 @@ function QuotationDetail({
                                 >
                                     إرسال للعميل
                                 </Button>
+                                )}
                             </>
                         )}
 
