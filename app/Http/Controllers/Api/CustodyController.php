@@ -22,15 +22,54 @@ class CustodyController extends Controller
         return response()->json(['data' => $this->custody->allStatements()]);
     }
 
-    /** One technician, with the movements behind their stock. */
+    /** One technician, with the movements and expenses behind their custody. */
     public function show(User $user): JsonResponse
     {
         return response()->json([
             'data' => [
                 ...$this->custody->statementFor($user),
                 'stock_history' => $this->custody->stockHistoryFor($user),
+                'expenses' => $this->custody->expensesFor($user),
             ],
         ]);
+    }
+
+    /* ── The technician's own custody (self-serve) ───────── */
+
+    /** The signed-in technician's own custody and recent expenses. */
+    public function mine(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        return response()->json([
+            'data' => [
+                ...$this->custody->statementFor($user),
+                'expenses' => $this->custody->expensesFor($user),
+            ],
+        ]);
+    }
+
+    /** The technician records something they paid for out of their own float. */
+    public function spendMine(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'amount' => ['required', 'numeric', 'gt:0'],
+            'category' => ['nullable', 'string', 'max:64'],
+            'note' => ['nullable', 'string', 'max:1000'],
+            'receipt' => ['nullable', 'file', 'image', 'max:8192'],
+        ]);
+
+        $user = $request->user();
+        $data['receipt_path'] = $this->storeReceipt($request);
+
+        $this->custody->spendFromCustody($user, (float) $data['amount'], $user, $data);
+
+        return response()->json([
+            'data' => [
+                ...$this->custody->statementFor($user),
+                'expenses' => $this->custody->expensesFor($user),
+            ],
+        ], 201);
     }
 
     /* ── Money ───────────────────────────────────────────── */
@@ -73,13 +112,23 @@ class CustodyController extends Controller
             'amount' => ['required', 'numeric', 'gt:0'],
             'category' => ['nullable', 'string', 'max:64'],
             'note' => ['nullable', 'string', 'max:1000'],
+            'receipt' => ['nullable', 'file', 'image', 'max:8192'],
         ]);
 
         $technician = User::findOrFail($data['user_id']);
+        $data['receipt_path'] = $this->storeReceipt($request);
 
         $this->custody->spendFromCustody($technician, (float) $data['amount'], $request->user(), $data);
 
         return response()->json(['data' => $this->custody->statementFor($technician)], 201);
+    }
+
+    /** Save an uploaded receipt photo to the public disk, if one was sent. */
+    protected function storeReceipt(Request $request): ?string
+    {
+        return $request->hasFile('receipt')
+            ? $request->file('receipt')->store('receipts', 'public')
+            : null;
     }
 
     /* ── Devices ─────────────────────────────────────────── */

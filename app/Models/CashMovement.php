@@ -30,6 +30,7 @@ class CashMovement extends Model
         'account_id',
         'cost_center_id',
         'note',
+        'receipt_path',
         'reconciled_at',
         'reconciled_by',
         'user_id',
@@ -84,5 +85,13 @@ class CashMovement extends Model
     public function signedAmount(): float
     {
         return $this->direction === 'in' ? (float) $this->amount : -(float) $this->amount;
+    }
+
+    /** Public URL of the receipt photo, when one was attached. */
+    public function receiptUrl(): ?string
+    {
+        return $this->receipt_path
+            ? \Illuminate\Support\Facades\Storage::disk('public')->url($this->receipt_path)
+            : null;
     }
 }

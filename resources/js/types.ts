@@ -261,6 +261,19 @@ export interface CustodyStatement {
     devices: CustodyDevice[]
     /** Cash plus stock — one figure for how exposed the company is. */
     total_value: number
+    /** Present on the single-technician and my-custody views, not the overview. */
+    expenses?: CustodyExpense[]
+}
+
+/** One thing a technician paid for out of their float. */
+export interface CustodyExpense {
+    id: number
+    amount: number
+    category: string | null
+    note: string | null
+    receipt_url: string | null
+    by: string | null
+    created_at: string
 }
 
 /** A line in the technician's van, offered by the report's part picker. */

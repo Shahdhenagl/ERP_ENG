@@ -1,4 +1,4 @@
-import { HardDrive, Package, Users, Wallet } from 'lucide-react'
+import { HardDrive, Package, Receipt, Users, Wallet } from 'lucide-react'
 import { useState } from 'react'
 import { EmptyState, Field, PageHeader, Select, SkeletonCard } from '@/components/ui'
 import { formatMoney, formatQty } from '@/lib/domain'
@@ -97,6 +97,53 @@ export function CustodyStatementPage() {
                                             {device.customer && ` · ${device.customer}`}
                                             {device.taken_at && ` · منذ ${formatDate(device.taken_at)}`}
                                             {typeof device.days_held === 'number' && ` · ${device.days_held} يوم`}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
+                    {Boolean(data.expenses?.length) && (
+                        <section>
+                            <p className="mb-2 text-xs font-extrabold text-navy-400">مصروفات العهدة</p>
+                            <div className="space-y-2">
+                                {data.expenses!.map((expense) => (
+                                    <div
+                                        key={expense.id}
+                                        className="card flex items-center justify-between gap-3 p-3"
+                                    >
+                                        <div className="flex min-w-0 items-center gap-3">
+                                            {expense.receipt_url ? (
+                                                <a
+                                                    href={expense.receipt_url}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="shrink-0"
+                                                >
+                                                    <img
+                                                        src={expense.receipt_url}
+                                                        alt="إيصال"
+                                                        className="size-12 rounded-lg border border-navy-200 object-cover"
+                                                    />
+                                                </a>
+                                            ) : (
+                                                <div className="grid size-12 shrink-0 place-items-center rounded-lg bg-navy-50 text-navy-300">
+                                                    <Receipt className="size-5" />
+                                                </div>
+                                            )}
+                                            <div className="min-w-0">
+                                                <p className="truncate text-sm font-bold text-navy-900">
+                                                    {expense.category ?? 'مصروف'}
+                                                </p>
+                                                <p className="truncate text-[11px] text-navy-400">
+                                                    {formatDate(expense.created_at)}
+                                                    {expense.note && ` · ${expense.note}`}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <p className="tabular shrink-0 font-extrabold text-navy-900">
+                                            {formatMoney(expense.amount)}
                                         </p>
                                     </div>
                                 ))}

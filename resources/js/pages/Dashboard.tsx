@@ -6,18 +6,24 @@ import {
     CalendarClock,
     ClipboardList,
     Inbox,
+    Plus,
+    Receipt,
     TrendingUp,
     UserX,
     Users,
+    Wallet,
     type LucideIcon,
 } from 'lucide-react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { CustodyExpenseModal } from '@/components/CustodyExpenseModal'
 import { TaskCard } from '@/components/TaskCard'
-import { EmptyState, ErrorState, PageHeader, SkeletonCard } from '@/components/ui'
+import { Button, EmptyState, ErrorState, PageHeader, SkeletonCard } from '@/components/ui'
 import { useAuth } from '@/lib/auth'
-import { STATUS, STATUS_FLOW } from '@/lib/domain'
+import { formatMoney, STATUS, STATUS_FLOW } from '@/lib/domain'
+import { formatDate } from '@/lib/format'
 import { useArea } from '@/lib/nav'
-import { useDashboard } from '@/lib/queries'
+import { useDashboard, useMyCustody } from '@/lib/queries'
 
 export function Dashboard() {
     const { user, canDispatch, can } = useAuth()
@@ -83,6 +89,9 @@ export function Dashboard() {
                     />
                 )}
             </div>
+
+            {/* ── My custody (technicians) ───────────────────── */}
+            {!canDispatch && <MyCustodyCard />}
 
             {/* ── Status breakdown ───────────────────────────── */}
             <section className="mt-6">
@@ -317,6 +326,72 @@ const TONES = {
     amber: 'from-amber-500 to-amber-600 text-white shadow-amber-500/25',
     navy: 'from-navy-700 to-navy-900 text-white shadow-navy-700/25',
     slate: 'from-navy-100 to-navy-200 text-navy-500 shadow-navy-200/40',
+}
+
+/** The technician's own float: balance up front, a way to log an expense, and
+ *  the last few they recorded. */
+function MyCustodyCard() {
+    const { data, isLoading } = useMyCustody()
+    const [spending, setSpending] = useState(false)
+
+    if (isLoading || !data) return <div className="mt-6 shimmer h-24 rounded-2xl" />
+
+    const balance = data.cash.balance
+    const expenses = data.expenses ?? []
+
+    return (
+        <section className="mt-6">
+            <div className="card p-5">
+                <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                        <div className="grid size-11 place-items-center rounded-xl bg-brand-50 text-brand-600">
+                            <Wallet className="size-5" />
+                        </div>
+                        <div>
+                            <p className="text-[11px] font-bold text-navy-400">رصيد العهدة النقدية</p>
+                            <p className="tabular text-2xl font-extrabold text-navy-900">
+                                {formatMoney(balance)}
+                            </p>
+                        </div>
+                    </div>
+
+                    <Button icon={Plus} onClick={() => setSpending(true)} disabled={balance <= 0}>
+                        تسجيل مصروف
+                    </Button>
+                </div>
+
+                {balance <= 0 && (
+                    <p className="mt-3 rounded-xl bg-navy-50 px-3 py-2 text-[11px] text-navy-400">
+                        لا يوجد رصيد في عهدتك حاليًا. تُصرف العهدة من الإدارة.
+                    </p>
+                )}
+
+                {expenses.length > 0 && (
+                    <div className="mt-4 border-t border-navy-100 pt-3">
+                        <p className="mb-2 text-[11px] font-bold text-navy-400">آخر المصروفات</p>
+                        <div className="space-y-1.5">
+                            {expenses.slice(0, 4).map((expense) => (
+                                <div key={expense.id} className="flex items-center justify-between gap-3 text-sm">
+                                    <span className="flex min-w-0 items-center gap-2 text-navy-700">
+                                        <Receipt className="size-3.5 shrink-0 text-navy-300" />
+                                        <span className="truncate">{expense.category ?? 'مصروف'}</span>
+                                        <span className="tabular shrink-0 text-[10px] text-navy-400">
+                                            {formatDate(expense.created_at)}
+                                        </span>
+                                    </span>
+                                    <span className="tabular shrink-0 font-bold text-navy-900">
+                                        {formatMoney(expense.amount)}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {spending && <CustodyExpenseModal balance={balance} onClose={() => setSpending(false)} />}
+        </section>
+    )
 }
 
 interface StatTileProps {

@@ -1189,6 +1189,47 @@ export function useCustodySpend() {
     })
 }
 
+/** The signed-in technician's own custody — balance, stock, devices, expenses. */
+export function useMyCustody() {
+    const { isTechnician } = useAuth()
+
+    return useQuery({
+        queryKey: ['my-custody'] as const,
+        queryFn: async () =>
+            (await api.get<{ data: CustodyStatement }>('/custody/mine')).data.data,
+        enabled: isTechnician,
+    })
+}
+
+/**
+ * The technician logs an expense out of their own float, with a receipt photo.
+ * Sent as multipart so the image rides along with the amount and heading.
+ */
+export function useSpendMine() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (input: {
+            amount: number
+            category?: string | null
+            note?: string | null
+            receipt?: File | null
+        }) => {
+            const form = new FormData()
+            form.append('amount', String(input.amount))
+            if (input.category) form.append('category', input.category)
+            if (input.note) form.append('note', input.note)
+            if (input.receipt) form.append('receipt', input.receipt)
+
+            return (await api.post('/custody/mine/spend', form)).data
+        },
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: ['my-custody'] })
+            invalidateCustody(client)
+        },
+    })
+}
+
 /** Handing a device over, and taking it back. */
 export function useCustodyDevice() {
     const client = useQueryClient()

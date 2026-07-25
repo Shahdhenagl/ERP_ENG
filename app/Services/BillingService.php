@@ -196,6 +196,7 @@ class BillingService
             'source' => 'expense',
             'category' => $context['category'] ?? null,
             'note' => $context['note'] ?? null,
+            'receipt_path' => $context['receipt_path'] ?? null,
             'user_id' => $actor->id,
         ]);
     }

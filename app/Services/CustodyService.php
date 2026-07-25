@@ -256,6 +256,40 @@ class CustodyService
             ->all();
     }
 
+    /**
+     * What a technician spent out of their float — the expenses behind the
+     * balance, each with the receipt photographed against it.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function expensesFor(User $technician, int $limit = 50): array
+    {
+        $box = CashBox::where('user_id', $technician->id)->first();
+
+        if (! $box) {
+            return [];
+        }
+
+        return CashMovement::query()
+            ->where('cash_box_id', $box->id)
+            ->where('direction', 'out')
+            ->where('source', 'expense')
+            ->with('actor')
+            ->latest('id')
+            ->limit($limit)
+            ->get()
+            ->map(fn (CashMovement $movement) => [
+                'id' => $movement->id,
+                'amount' => (float) $movement->amount,
+                'category' => $movement->category,
+                'note' => $movement->note,
+                'receipt_url' => $movement->receiptUrl(),
+                'by' => $movement->actor?->name,
+                'created_at' => $movement->created_at?->toIso8601String(),
+            ])
+            ->all();
+    }
+
     /* ── Stores ──────────────────────────────────────────── */
 
     /** Open another company store. */

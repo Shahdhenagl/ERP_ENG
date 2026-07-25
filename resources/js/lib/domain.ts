@@ -336,6 +336,9 @@ export const ALL_READING_KEYS = [
     'frequency', 'load_percent', 'battery_voltage', 'temperature', 'backup_minutes',
 ] as const
 
+/** Expense headings a technician picks from when spending out of their float. */
+export const EXPENSE_CATEGORIES = ['وقود', 'مواصلات', 'قطع غيار', 'ضيافة', 'أخرى'] as const
+
 /** The site-inspection checklist, in the order it appears on the paper sheet. */
 export const SITE_CHECKS = [
     { key: 'earthing', label: 'التأريض' },

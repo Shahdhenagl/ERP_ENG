@@ -122,6 +122,11 @@ Route::middleware(['auth:sanctum', 'role'])->group(function () {
     Route::get('stock/mine', [StockController::class, 'myStock']);
     Route::get('stock/warehouses', [StockController::class, 'warehouses']);
     Route::get('stock/movements', [StockController::class, 'movements']);
+
+    // A technician's own custody — their float and the expenses against it.
+    // Scoped to the caller, so no inventory-management permission is needed.
+    Route::get('custody/mine', [CustodyController::class, 'mine']);
+    Route::post('custody/mine/spend', [CustodyController::class, 'spendMine']);
 });
 
 /*
