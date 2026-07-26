@@ -355,6 +355,14 @@ export const UPS_PHASES: Record<string, string> = {
 /** Communication ports a UPS commonly exposes. */
 export const COMM_PORTS = ['USB', 'RS232', 'SNMP', 'USB + RS232', 'USB + SNMP'] as const
 
+/** Battery chemistry / construction. */
+export const BATTERY_TYPES: Record<string, string> = {
+    vrla: 'VRLA',
+    agm: 'AGM',
+    gel: 'Gel',
+    lithium_ion: 'Lithium-Ion',
+}
+
 /** Egypt's 27 governorates, for the site's region — picked, not typed. */
 export const EGYPT_GOVERNORATES = [
     'القاهرة', 'الجيزة', 'الإسكندرية', 'القليوبية', 'الشرقية', 'الدقهلية',

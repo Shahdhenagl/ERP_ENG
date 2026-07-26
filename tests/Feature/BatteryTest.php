@@ -32,6 +32,43 @@ it('registers a battery, inherits the owner, and derives the due date', function
         ->and($response->json('data.status'))->toBe('active');
 });
 
+it('records the battery nameplate, specs and price', function () {
+    $response = actingAs($this->manager)->postJson('/api/batteries', [
+        'asset_id' => $this->asset->id,
+        'name' => 'بنك بطاريات الطابق الأول',
+        'asset_tag' => 'BAT-77',
+        'barcode' => 'QR-9001',
+        'brand' => 'CSB',
+        'model' => 'HRL12200W',
+        'battery_type' => 'agm',
+        'size' => '12V-100Ah',
+        'capacity_ah' => 100,
+        'voltage' => 12,
+        'energy_wh' => '1200Wh',
+        'terminal_type' => 'F12',
+        'internal_resistance' => '5.2 mΩ',
+        'weight' => '28 kg',
+        'dimensions' => '260×168×208mm',
+        'operating_temperature' => '-15°C ~ 50°C',
+        'unit_cost' => 900,
+        'sell_price' => 1400,
+        'installed_on' => '2026-01-10',
+        'life_months' => 36,
+    ])->assertCreated();
+
+    expect($response->json('data.battery_type'))->toBe('agm')
+        ->and($response->json('data.energy_wh'))->toBe('1200Wh')
+        ->and($response->json('data.unit_cost'))->toEqual(900)
+        ->and($response->json('data.sell_price'))->toEqual(1400)
+        ->and($response->json('data.dimensions'))->toBe('260×168×208mm');
+});
+
+it('rejects an unknown battery type', function () {
+    actingAs($this->manager)->postJson('/api/batteries', [
+        'asset_id' => $this->asset->id, 'battery_type' => 'plasma',
+    ])->assertStatus(422)->assertJsonValidationErrors('battery_type');
+});
+
 it('lists the banks due within a window, overdue included', function () {
     // Due long ago.
     Battery::create([

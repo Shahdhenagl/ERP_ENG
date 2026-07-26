@@ -23,7 +23,11 @@ class Battery extends Model
 
     protected $fillable = [
         'code', 'asset_id', 'customer_id',
-        'serial_number', 'brand', 'model', 'capacity_ah', 'voltage', 'count',
+        'serial_number', 'name', 'asset_tag', 'barcode',
+        'brand', 'model', 'battery_type', 'size',
+        'capacity_ah', 'voltage', 'energy_wh', 'count',
+        'terminal_type', 'internal_resistance', 'weight', 'dimensions', 'operating_temperature',
+        'unit_cost', 'sell_price',
         'installed_on', 'life_months', 'warranty_months',
         'status', 'replaced_by_id', 'replaced_on', 'notes', 'created_by',
     ];
@@ -36,6 +40,8 @@ class Battery extends Model
             'status' => BatteryStatus::class,
             'capacity_ah' => 'decimal:2',
             'voltage' => 'decimal:2',
+            'unit_cost' => 'decimal:2',
+            'sell_price' => 'decimal:2',
             'count' => 'integer',
             'life_months' => 'integer',
             'warranty_months' => 'integer',

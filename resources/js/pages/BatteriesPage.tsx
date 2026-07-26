@@ -15,6 +15,7 @@ import {
     Textarea,
 } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
+import { BATTERY_TYPES } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
 import { useAssets, useBatteries, useReplaceBattery, useSaveBattery } from '@/lib/queries'
 import type { Battery, BatteryStatus } from '@/types'
@@ -206,11 +207,24 @@ function BatteryForm({ onClose }: { onClose: () => void }) {
     const [form, setForm] = useState({
         asset_id: '',
         serial_number: '',
+        name: '',
+        asset_tag: '',
+        barcode: '',
         brand: '',
         model: '',
+        battery_type: '',
+        size: '',
         capacity_ah: '',
         voltage: '',
+        energy_wh: '',
         count: '1',
+        terminal_type: '',
+        internal_resistance: '',
+        weight: '',
+        dimensions: '',
+        operating_temperature: '',
+        unit_cost: '',
+        sell_price: '',
         installed_on: new Date().toISOString().slice(0, 10),
         life_months: '24',
         warranty_months: '',
@@ -239,11 +253,24 @@ function BatteryForm({ onClose }: { onClose: () => void }) {
                                 await save.mutateAsync({
                                     asset_id: form.asset_id ? Number(form.asset_id) : null,
                                     serial_number: form.serial_number || null,
+                                    name: form.name || null,
+                                    asset_tag: form.asset_tag || null,
+                                    barcode: form.barcode || null,
                                     brand: form.brand || null,
                                     model: form.model || null,
+                                    battery_type: form.battery_type || null,
+                                    size: form.size || null,
                                     capacity_ah: form.capacity_ah ? Number(form.capacity_ah) : null,
                                     voltage: form.voltage ? Number(form.voltage) : null,
+                                    energy_wh: form.energy_wh || null,
                                     count: Number(form.count) || 1,
+                                    terminal_type: form.terminal_type || null,
+                                    internal_resistance: form.internal_resistance || null,
+                                    weight: form.weight || null,
+                                    dimensions: form.dimensions || null,
+                                    operating_temperature: form.operating_temperature || null,
+                                    unit_cost: form.unit_cost ? Number(form.unit_cost) : null,
+                                    sell_price: form.sell_price ? Number(form.sell_price) : null,
                                     installed_on: form.installed_on,
                                     life_months: Number(form.life_months) || 24,
                                     warranty_months: form.warranty_months
@@ -310,9 +337,68 @@ function BatteryForm({ onClose }: { onClose: () => void }) {
                     </Field>
                 </div>
 
-                <Field label="الرقم التسلسلي" error={errors.serial_number}>
-                    <Input value={form.serial_number} onChange={(e) => set('serial_number')(e.target.value)} dir="ltr" className="text-left" />
-                </Field>
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label="اسم البطارية" error={errors.name}>
+                        <Input value={form.name} onChange={(e) => set('name')(e.target.value)} />
+                    </Field>
+                    <Field label="نوع البطارية" error={errors.battery_type}>
+                        <Select value={form.battery_type} onChange={(e) => set('battery_type')(e.target.value)}>
+                            <option value="">— غير محدد —</option>
+                            {Object.entries(BATTERY_TYPES).map(([value, label]) => (
+                                <option key={value} value={value}>
+                                    {label}
+                                </option>
+                            ))}
+                        </Select>
+                    </Field>
+                    <Field label="الرقم التسلسلي" error={errors.serial_number}>
+                        <Input value={form.serial_number} onChange={(e) => set('serial_number')(e.target.value)} dir="ltr" className="text-left" />
+                    </Field>
+                    <Field label="رقم الأصل" error={errors.asset_tag}>
+                        <Input value={form.asset_tag} onChange={(e) => set('asset_tag')(e.target.value)} dir="ltr" className="text-left" />
+                    </Field>
+                    <Field label="الباركود / QR" error={errors.barcode}>
+                        <Input value={form.barcode} onChange={(e) => set('barcode')(e.target.value)} dir="ltr" className="text-left" />
+                    </Field>
+                    <Field label="المقاس" error={errors.size}>
+                        <Input value={form.size} onChange={(e) => set('size')(e.target.value)} />
+                    </Field>
+                </div>
+
+                {/* ── Technical specifications ─────────────── */}
+                <div className="rounded-2xl bg-navy-50 p-4">
+                    <p className="mb-3 text-xs font-bold text-navy-500">المواصفات الفنية</p>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <Field label="الطاقة (Wh)" error={errors.energy_wh}>
+                            <Input value={form.energy_wh} onChange={(e) => set('energy_wh')(e.target.value)} dir="ltr" className="text-left" placeholder="1200Wh" />
+                        </Field>
+                        <Field label="نوع الطرف" error={errors.terminal_type}>
+                            <Input value={form.terminal_type} onChange={(e) => set('terminal_type')(e.target.value)} />
+                        </Field>
+                        <Field label="المقاومة الداخلية" error={errors.internal_resistance}>
+                            <Input value={form.internal_resistance} onChange={(e) => set('internal_resistance')(e.target.value)} dir="ltr" className="text-left" placeholder="5.2 mΩ" />
+                        </Field>
+                        <Field label="الوزن" error={errors.weight}>
+                            <Input value={form.weight} onChange={(e) => set('weight')(e.target.value)} dir="ltr" className="text-left" placeholder="12 kg" />
+                        </Field>
+                        <Field label="الأبعاد" error={errors.dimensions}>
+                            <Input value={form.dimensions} onChange={(e) => set('dimensions')(e.target.value)} dir="ltr" className="text-left" placeholder="165×175×350mm" />
+                        </Field>
+                        <Field label="درجة حرارة التشغيل" error={errors.operating_temperature}>
+                            <Input value={form.operating_temperature} onChange={(e) => set('operating_temperature')(e.target.value)} dir="ltr" className="text-left" placeholder="-15°C ~ 50°C" />
+                        </Field>
+                    </div>
+                </div>
+
+                {/* ── Pricing ──────────────────────────────── */}
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label="التكلفة" error={errors.unit_cost}>
+                        <Input type="number" min={0} step="0.01" value={form.unit_cost} onChange={(e) => set('unit_cost')(e.target.value)} dir="ltr" className="text-left" />
+                    </Field>
+                    <Field label="سعر البيع" error={errors.sell_price}>
+                        <Input type="number" min={0} step="0.01" value={form.sell_price} onChange={(e) => set('sell_price')(e.target.value)} dir="ltr" className="text-left" />
+                    </Field>
+                </div>
 
                 <Field label="ملاحظات" error={errors.notes}>
                     <Textarea value={form.notes} onChange={(e) => set('notes')(e.target.value)} />

@@ -2240,11 +2240,24 @@ export interface Battery {
     customer_id: number | null
     customer: string | null
     serial_number: string | null
+    name: string | null
+    asset_tag: string | null
+    barcode: string | null
     brand: string | null
     model: string | null
+    battery_type: string | null
+    size: string | null
     capacity_ah: number | null
     voltage: number | null
+    energy_wh: string | null
     count: number
+    terminal_type: string | null
+    internal_resistance: string | null
+    weight: string | null
+    dimensions: string | null
+    operating_temperature: string | null
+    unit_cost: number | null
+    sell_price: number | null
     installed_on: string | null
     life_months: number
     warranty_months: number | null
