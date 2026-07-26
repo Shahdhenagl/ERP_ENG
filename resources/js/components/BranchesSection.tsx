@@ -7,11 +7,12 @@ import {
     EmptyState,
     Field,
     Input,
+    Select,
     SkeletonCard,
     Textarea,
 } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
-import { formatMoney } from '@/lib/domain'
+import { EGYPT_GOVERNORATES, formatMoney } from '@/lib/domain'
 import { useCustomerBranches, useDeleteBranch, useSaveBranch } from '@/lib/queries'
 import type { Branch } from '@/types'
 
@@ -249,8 +250,20 @@ function BranchForm({
                     <Field label="مرجع العميل" error={errors.customer_ref} hint="رقم الفرع لدى العميل">
                         <Input value={form.customer_ref} onChange={(e) => set('customer_ref')(e.target.value)} />
                     </Field>
-                    <Field label="المدينة / المحافظة" error={errors.city}>
-                        <Input value={form.city} onChange={(e) => set('city')(e.target.value)} placeholder="القاهرة" />
+                    <Field label="المحافظة" error={errors.city}>
+                        <Select value={form.city} onChange={(e) => set('city')(e.target.value)}>
+                            <option value="">— اختر المحافظة —</option>
+                            {/* Keep an old free-text value selectable so editing
+                                never silently drops it. */}
+                            {form.city && !EGYPT_GOVERNORATES.includes(form.city as never) && (
+                                <option value={form.city}>{form.city}</option>
+                            )}
+                            {EGYPT_GOVERNORATES.map((gov) => (
+                                <option key={gov} value={gov}>
+                                    {gov}
+                                </option>
+                            ))}
+                        </Select>
                     </Field>
                     <Field label="ساعات العمل" error={errors.working_hours} hint="٩ص - ٥م، الجمعة مغلق">
                         <Input value={form.working_hours} onChange={(e) => set('working_hours')(e.target.value)} />

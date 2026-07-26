@@ -339,6 +339,15 @@ export const ALL_READING_KEYS = [
 /** Expense headings a technician picks from when spending out of their float. */
 export const EXPENSE_CATEGORIES = ['وقود', 'مواصلات', 'قطع غيار', 'ضيافة', 'أخرى'] as const
 
+/** Egypt's 27 governorates, for the site's region — picked, not typed. */
+export const EGYPT_GOVERNORATES = [
+    'القاهرة', 'الجيزة', 'الإسكندرية', 'القليوبية', 'الشرقية', 'الدقهلية',
+    'البحيرة', 'الغربية', 'المنوفية', 'كفر الشيخ', 'دمياط', 'بورسعيد',
+    'الإسماعيلية', 'السويس', 'الفيوم', 'بني سويف', 'المنيا', 'أسيوط',
+    'سوهاج', 'قنا', 'الأقصر', 'أسوان', 'البحر الأحمر', 'الوادي الجديد',
+    'مطروح', 'شمال سيناء', 'جنوب سيناء',
+] as const
+
 /** The site-inspection checklist, in the order it appears on the paper sheet. */
 export const SITE_CHECKS = [
     { key: 'earthing', label: 'التأريض' },
