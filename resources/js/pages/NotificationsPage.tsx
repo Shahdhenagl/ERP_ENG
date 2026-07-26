@@ -113,6 +113,11 @@ export function NotificationsPage() {
                                             )}
                                             {notification.data.title ?? 'إشعار'}
                                         </p>
+                                        {notification.data.body && (
+                                            <p className="mt-0.5 text-xs text-navy-600">
+                                                {notification.data.body}
+                                            </p>
+                                        )}
                                         {notification.data.actor && (
                                             <p className="mt-0.5 text-xs text-navy-500">
                                                 بواسطة {notification.data.actor}

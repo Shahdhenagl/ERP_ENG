@@ -1080,6 +1080,7 @@ export interface AppNotification {
         task_id?: number
         code?: string
         title?: string
+        body?: string
         actor?: string
         url?: string
         [key: string]: unknown

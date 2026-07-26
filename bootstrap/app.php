@@ -16,6 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // Early enough that a due follow-up is on the person's screen before
         // the working day starts, once per day so it never turns into noise.
         $schedule->command('follow-ups:remind')->dailyAt('07:30');
+
+        // The operations sweep — faults, due maintenance, expiring warranties,
+        // overdue invoices, low parts — once a day, deduplicated so a standing
+        // condition alerts once, not every morning.
+        $schedule->command('alerts:sweep')->dailyAt('07:00');
     })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
