@@ -38,6 +38,8 @@ export interface User {
     email: string
     role: Role
     role_label: string
+    position: string | null
+    position_label: string | null
     phone: string | null
     whatsapp: string | null
     whatsapp_number: string | null

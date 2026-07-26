@@ -8,6 +8,7 @@ import { SectionTabs } from '@/components/SectionTabs'
 import { Button, EmptyState, ErrorState, Field, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
 import { ADMIN_SECTIONS } from '@/lib/sections'
 import { errorMessage, fieldErrors } from '@/lib/api'
+import { POSITIONS } from '@/lib/domain'
 import { useAuth } from '@/lib/auth'
 import { useDeleteUser, useSaveUser, useUsers } from '@/lib/queries'
 import type { Role, User } from '@/types'
@@ -109,7 +110,7 @@ export function UserList() {
                                 <div className="flex flex-wrap items-center gap-2">
                                     <h3 className="truncate text-sm font-bold text-navy-900">{user.name}</h3>
                                     <span className={clsx('badge', ROLE_STYLES[user.role])}>
-                                        {user.role_label}
+                                        {user.position_label ?? user.role_label}
                                     </span>
                                     {!user.is_active && (
                                         <span className="badge bg-red-50 text-red-600">موقوف</span>
@@ -219,7 +220,7 @@ function UserFormDialog({
         name: user?.name ?? '',
         email: user?.email ?? '',
         password: '',
-        role: (user?.role ?? 'technician') as Role,
+        position: user?.position ?? '',
         phone: user?.phone ?? '',
         whatsapp: user?.whatsapp ?? '',
         job_title: user?.job_title ?? '',
@@ -301,18 +302,26 @@ function UserFormDialog({
                         />
                     </Field>
 
-                    <Field label="الدور" required error={errors.role}>
+                    <Field
+                        label="المسمى الوظيفي"
+                        required
+                        error={errors.position ?? errors.role}
+                        hint="يحدد صلاحيات المستخدم الافتراضية"
+                    >
                         <Select
-                            value={form.role}
-                            onChange={(event) => set('role', event.target.value as Role)}
+                            value={form.position}
+                            onChange={(event) => set('position', event.target.value)}
                         >
-                            <option value="technician">فني</option>
-                            <option value="manager">مدير</option>
-                            <option value="admin">مدير النظام</option>
+                            <option value="">— اختر المسمى —</option>
+                            {Object.entries(POSITIONS).map(([value, label]) => (
+                                <option key={value} value={value}>
+                                    {label}
+                                </option>
+                            ))}
                         </Select>
                     </Field>
 
-                    <Field label="المسمى الوظيفي" error={errors.job_title}>
+                    <Field label="مسمى إضافي (اختياري)" error={errors.job_title}>
                         <Input
                             value={form.job_title}
                             onChange={(event) => set('job_title', event.target.value)}

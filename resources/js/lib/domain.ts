@@ -355,6 +355,21 @@ export const UPS_PHASES: Record<string, string> = {
 /** Communication ports a UPS commonly exposes. */
 export const COMM_PORTS = ['USB', 'RS232', 'SNMP', 'USB + RS232', 'USB + SNMP'] as const
 
+/**
+ * Job positions — each sets the base role (app) and a default permission set.
+ * Keys must match app/Services/PositionRegistry.php.
+ */
+export const POSITIONS: Record<string, string> = {
+    company_manager: 'مدير الشركة',
+    maintenance_engineer: 'مهندس صيانة',
+    secretary: 'السكرتارية',
+    accountant: 'المحاسب',
+    administrative: 'إداري',
+    treasurer: 'أمين الخزنة',
+    customer_service: 'خدمة عملاء',
+    maintenance_technician: 'فني صيانة',
+}
+
 /** Battery chemistry / construction. */
 export const BATTERY_TYPES: Record<string, string> = {
     vrla: 'VRLA',

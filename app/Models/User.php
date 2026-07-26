@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\UserRole;
 use App\Services\PermissionRegistry;
+use App\Services\PositionRegistry;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -24,6 +25,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'position',
         'phone',
         'whatsapp',
         'job_title',
@@ -112,11 +114,7 @@ class User extends Authenticatable
 
         $override = $this->permissionMap()[$permission] ?? null;
 
-        return $override ?? in_array(
-            $permission,
-            PermissionRegistry::defaultsFor($this->role),
-            true,
-        );
+        return $override ?? in_array($permission, $this->defaultPermissions(), true);
     }
 
     /** Everything this user may do, defaults and overrides folded together. */
@@ -127,11 +125,12 @@ class User extends Authenticatable
         }
 
         $overrides = $this->permissionMap();
+        $defaults = $this->defaultPermissions();
 
         return array_values(array_filter(
             PermissionRegistry::keys(),
             fn (string $key) => $overrides[$key]
-                ?? in_array($key, PermissionRegistry::defaultsFor($this->role), true),
+                ?? in_array($key, $defaults, true),
         ));
     }
 
@@ -149,6 +148,21 @@ class User extends Authenticatable
             ->pluck('granted', 'permission')
             ->map(fn ($granted) => (bool) $granted)
             ->all();
+    }
+
+    /**
+     * The permissions the account starts with before any per-user override: the
+     * job position's preset when one is set, otherwise the plain role defaults.
+     *
+     * @return array<int, string>
+     */
+    public function defaultPermissions(): array
+    {
+        if ($this->position && PositionRegistry::exists($this->position)) {
+            return PositionRegistry::permissionsFor($this->position);
+        }
+
+        return PermissionRegistry::defaultsFor($this->role);
     }
 
     /** WhatsApp number falls back to the plain phone when not set separately. */

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Models\ActivityLog;
 use App\Models\User;
+use App\Services\PositionRegistry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -52,12 +53,15 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:120'],
             'email' => ['required', 'email', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8'],
-            'role' => ['required', Rule::enum(UserRole::class)],
+            'position' => ['nullable', Rule::in(PositionRegistry::keys())],
+            'role' => ['required_without:position', Rule::enum(UserRole::class)],
             'phone' => ['nullable', 'string', 'max:32'],
             'whatsapp' => ['nullable', 'string', 'max:32'],
             'job_title' => ['nullable', 'string', 'max:120'],
             'is_active' => ['boolean'],
         ]);
+
+        $data = $this->applyPosition($data);
 
         $user = User::create($data);
 
@@ -79,7 +83,8 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:120'],
             'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
             'password' => ['nullable', 'string', 'min:8'],
-            'role' => ['required', Rule::enum(UserRole::class)],
+            'position' => ['nullable', Rule::in(PositionRegistry::keys())],
+            'role' => ['required_without:position', Rule::enum(UserRole::class)],
             'phone' => ['nullable', 'string', 'max:32'],
             'whatsapp' => ['nullable', 'string', 'max:32'],
             'job_title' => ['nullable', 'string', 'max:120'],
@@ -90,11 +95,29 @@ class UserController extends Controller
             unset($data['password']);
         }
 
+        $data = $this->applyPosition($data);
+
         $user->update($data);
 
         ActivityLog::record('user.updated', $user, "تم تعديل المستخدم {$user->name}");
 
         return new UserResource($user->fresh());
+    }
+
+    /**
+     * A position dictates the application (role), so when one is chosen the role
+     * follows it — a user's position and the app they get can never disagree.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function applyPosition(array $data): array
+    {
+        if (! empty($data['position'])) {
+            $data['role'] = PositionRegistry::roleFor($data['position'])->value;
+        }
+
+        return $data;
     }
 
     public function destroy(Request $request, User $user): JsonResponse

@@ -39,7 +39,9 @@ class PermissionController extends Controller
     {
         return response()->json([
             'user' => ['id' => $user->id, 'name' => $user->name, 'role' => $user->role->value],
-            'defaults' => PermissionRegistry::defaultsFor($user->role),
+            // The baseline the overrides are measured against: the position's
+            // preset when one is set, otherwise the plain role defaults.
+            'defaults' => $user->defaultPermissions(),
             'overrides' => $user->permissionOverrides()
                 ->pluck('granted', 'permission')
                 ->map(fn ($granted) => (bool) $granted),
@@ -69,7 +71,7 @@ class PermissionController extends Controller
             }
         }
 
-        $defaults = PermissionRegistry::defaultsFor($user->role);
+        $defaults = $user->defaultPermissions();
 
         DB::transaction(function () use ($data, $user, $defaults, $request) {
             foreach ($data['permissions'] as $permission => $granted) {
