@@ -17,9 +17,11 @@ import { Link } from 'react-router-dom'
 import { BranchForm } from '@/components/BranchForm'
 import { CustomerForm } from '@/components/CustomerForm'
 import { ConfirmDialog } from '@/components/Modal'
+import { StatStrip } from '@/components/StatStrip'
 import { useToast } from '@/components/Toast'
 import { Button, EmptyState, ErrorState, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
 import { errorMessage } from '@/lib/api'
+import { formatMoney } from '@/lib/domain'
 import { telLink } from '@/lib/format'
 import { useArea } from '@/lib/nav'
 import { useCustomerBranches, useCustomers, useDeleteBranch, useDeleteCustomer } from '@/lib/queries'
@@ -118,6 +120,20 @@ export function CustomerList() {
                     <option value="0">غير النشطين</option>
                 </Select>
             </div>
+
+            {data?.summary && (
+                <StatStrip
+                    items={[
+                        { label: 'إجمالي العملاء', value: data.summary.total, tone: 'brand' },
+                        { label: 'نشط', value: data.summary.active, tone: 'up' },
+                        {
+                            label: 'مستحقات',
+                            value: formatMoney(data.summary.outstanding),
+                            tone: data.summary.outstanding > 0 ? 'down' : 'slate',
+                        },
+                    ]}
+                />
+            )}
 
             {isError ? (
                 <ErrorState message="تعذّر تحميل العملاء." onRetry={() => void refetch()} />

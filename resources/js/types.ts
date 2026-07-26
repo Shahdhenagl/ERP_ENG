@@ -1094,6 +1094,8 @@ export interface Paginated<T> {
         per_page?: number
         unread_count?: number
     }
+    /** A module list's headline figures, shown as a strip above the list. */
+    summary?: Record<string, number>
 }
 
 /* ── Accounting ──────────────────────────────────────────── */

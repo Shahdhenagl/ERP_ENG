@@ -4,12 +4,13 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ContractForm } from '@/components/ContractForm'
 import { ConfirmDialog } from '@/components/Modal'
+import { StatStrip } from '@/components/StatStrip'
 import { useToast } from '@/components/Toast'
 import { SectionTabs } from '@/components/SectionTabs'
 import { Button, EmptyState, ErrorState, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
 import { DEVICE_SECTIONS } from '@/lib/sections'
 import { errorMessage } from '@/lib/api'
-import { CONTRACT_STATUS, expiryChip } from '@/lib/domain'
+import { CONTRACT_STATUS, expiryChip, formatMoney } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
 import { useArea } from '@/lib/nav'
 import { useContracts, useDeleteContract } from '@/lib/queries'
@@ -110,6 +111,20 @@ export function ContractList() {
                     </button>
                 </div>
             </div>
+
+            {data?.summary && (
+                <StatStrip
+                    items={[
+                        { label: 'عقود سارية', value: data.summary.active, tone: 'up' },
+                        {
+                            label: 'قاربت على الانتهاء',
+                            value: data.summary.expiring,
+                            tone: data.summary.expiring > 0 ? 'warn' : 'slate',
+                        },
+                        { label: 'القيمة السنوية', value: formatMoney(data.summary.annual_value), tone: 'brand' },
+                    ]}
+                />
+            )}
 
             {isError ? (
                 <ErrorState message="تعذّر تحميل العقود." onRetry={() => void refetch()} />

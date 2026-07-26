@@ -36,7 +36,17 @@ class CustomerController extends Controller
             ->orderByDesc('id')
             ->paginate($request->integer('per_page', 25));
 
-        return CustomerResource::collection($customers);
+        return CustomerResource::collection($customers)->additional([
+            'summary' => [
+                'total' => Customer::count(),
+                'active' => Customer::query()->active()->count(),
+                'outstanding' => round(
+                    (float) \App\Models\Invoice::where('status', 'issued')->sum('total')
+                    - (float) \Illuminate\Support\Facades\DB::table('payments')->sum('amount'),
+                    2,
+                ),
+            ],
+        ]);
     }
 
     public function store(Request $request): JsonResponse

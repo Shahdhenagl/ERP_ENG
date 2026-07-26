@@ -32,7 +32,13 @@ class ContractController extends Controller
             ->orderByDesc('id')
             ->paginate($request->integer('per_page', 25));
 
-        return ContractResource::collection($contracts);
+        return ContractResource::collection($contracts)->additional([
+            'summary' => [
+                'active' => Contract::query()->where('status', 'active')->count(),
+                'expiring' => Contract::query()->expiringWithin(60)->count(),
+                'annual_value' => round((float) Contract::query()->where('status', 'active')->sum('value'), 2),
+            ],
+        ]);
     }
 
     /**
