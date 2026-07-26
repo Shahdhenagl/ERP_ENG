@@ -349,20 +349,20 @@ function MyCustodyCard() {
                         </div>
                         <div>
                             <p className="text-[11px] font-bold text-navy-400">رصيد العهدة النقدية</p>
-                            <p className="tabular text-2xl font-extrabold text-navy-900">
+                            <p className={clsx('tabular text-2xl font-extrabold', balance < 0 ? 'text-red-700' : 'text-navy-900')}>
                                 {formatMoney(balance)}
                             </p>
                         </div>
                     </div>
 
-                    <Button icon={Plus} onClick={() => setSpending(true)} disabled={balance <= 0}>
+                    <Button icon={Plus} onClick={() => setSpending(true)}>
                         تسجيل مصروف
                     </Button>
                 </div>
 
-                {balance <= 0 && (
-                    <p className="mt-3 rounded-xl bg-navy-50 px-3 py-2 text-[11px] text-navy-400">
-                        لا يوجد رصيد في عهدتك حاليًا. تُصرف العهدة من الإدارة.
+                {balance < 0 && (
+                    <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-[11px] font-semibold text-red-700">
+                        عهدتك بالسالب {formatMoney(balance)} — صرفت أكثر من عهدتك، والفرق مستحق لك من الإدارة.
                     </p>
                 )}
 

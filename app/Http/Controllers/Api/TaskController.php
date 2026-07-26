@@ -122,6 +122,7 @@ class TaskController extends Controller
             'reports.author',
             'reports.attachments',
             'attachments.uploader',
+            'expenses.actor',
         ]));
     }
 

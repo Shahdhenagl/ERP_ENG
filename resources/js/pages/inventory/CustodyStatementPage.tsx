@@ -1,9 +1,18 @@
 import { HardDrive, Package, Receipt, Users, Wallet } from 'lucide-react'
 import { useState } from 'react'
-import { EmptyState, Field, PageHeader, Select, SkeletonCard } from '@/components/ui'
+import { Modal } from '@/components/Modal'
+import { useToast } from '@/components/Toast'
+import { Button, EmptyState, Field, PageHeader, Select, SkeletonCard } from '@/components/ui'
+import { errorMessage } from '@/lib/api'
 import { formatMoney, formatQty } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
-import { useCustody, useCustodyStatement } from '@/lib/queries'
+import {
+    useCashBoxes,
+    useCustody,
+    useCustodySettle,
+    useCustodyStatement,
+    useCustodyWaive,
+} from '@/lib/queries'
 
 /**
  * One employee's whole custody account: the cash float, the stock in their van,
@@ -58,6 +67,10 @@ export function CustodyStatementPage() {
                             {formatMoney(data.total_value)}
                         </span>
                     </div>
+
+                    {Boolean(data.shortfall && data.shortfall > 0) && (
+                        <ShortfallBanner userId={userId!} shortfall={data.shortfall!} />
+                    )}
 
                     {Boolean(data.stock.lines.length) && (
                         <section>
@@ -138,6 +151,7 @@ export function CustodyStatementPage() {
                                                 </p>
                                                 <p className="truncate text-[11px] text-navy-400">
                                                     {formatDate(expense.created_at)}
+                                                    {expense.task_code && ` · ${expense.task_code}`}
                                                     {expense.note && ` · ${expense.note}`}
                                                 </p>
                                             </div>
@@ -153,6 +167,91 @@ export function CustodyStatementPage() {
                 </div>
             )}
         </>
+    )
+}
+
+/** The overspend a technician fronted, with the two ways to close it. */
+function ShortfallBanner({ userId, shortfall }: { userId: number; shortfall: number }) {
+    const toast = useToast()
+    const settle = useCustodySettle()
+    const waive = useCustodyWaive()
+    const { data: boxes } = useCashBoxes()
+    const [settling, setSettling] = useState(false)
+    const [boxId, setBoxId] = useState('')
+
+    return (
+        <div className="rounded-2xl bg-red-50 p-4 ring-1 ring-red-200">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <p className="text-xs font-bold text-red-700">فرق مستحق للفني (صرف زيادة عن عهدته)</p>
+                    <p className="tabular text-lg font-extrabold text-red-800">{formatMoney(shortfall)}</p>
+                </div>
+                <div className="flex gap-2">
+                    <Button className="text-xs" onClick={() => setSettling(true)}>
+                        صرف الفرق
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        className="text-xs"
+                        loading={waive.isPending}
+                        onClick={async () => {
+                            if (!confirm('تجاوز الفرق دون صرفه للفني؟')) return
+                            try {
+                                await waive.mutateAsync(userId)
+                                toast.success('تم تجاوز الفرق.')
+                            } catch (caught) {
+                                toast.error(errorMessage(caught, 'تعذّر التنفيذ.'))
+                            }
+                        }}
+                    >
+                        تجاوز (بدون صرف)
+                    </Button>
+                </div>
+            </div>
+
+            {settling && (
+                <Modal
+                    open
+                    onClose={() => setSettling(false)}
+                    title="صرف فرق العهدة"
+                    description={`سيُصرف ${formatMoney(shortfall)} للفني من الخزينة المختارة.`}
+                    size="sm"
+                    footer={
+                        <>
+                            <Button variant="secondary" onClick={() => setSettling(false)} disabled={settle.isPending}>
+                                إلغاء
+                            </Button>
+                            <Button
+                                loading={settle.isPending}
+                                disabled={!boxId}
+                                onClick={async () => {
+                                    try {
+                                        await settle.mutateAsync({ user_id: userId, cash_box_id: Number(boxId) })
+                                        toast.success('تم صرف الفرق.')
+                                        setSettling(false)
+                                    } catch (caught) {
+                                        toast.error(errorMessage(caught, 'تعذّر الصرف.'))
+                                    }
+                                }}
+                            >
+                                صرف
+                            </Button>
+                        </>
+                    }
+                >
+                    <Field label="من خزينة" required>
+                        <Select value={boxId} onChange={(e) => setBoxId(e.target.value)}>
+                            <option value="">— اختر —</option>
+                            {boxes?.map((box) => (
+                                <option key={box.id} value={box.id}>
+                                    {box.name} ({formatMoney(box.balance)})
+                                </option>
+                            ))}
+                        </Select>
+                    </Field>
+                </Modal>
+            )}
+        </div>
     )
 }
 

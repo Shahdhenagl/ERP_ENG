@@ -96,12 +96,120 @@ class CustodyService
         User $actor,
         array $context = [],
     ): CashMovement {
+        // Overdraw is allowed: a technician may spend past their float on the
+        // road, and the box goes negative to record what the company owes them.
         return $this->billing->recordExpense(
             $this->cashBoxFor($technician),
             $amount,
             $actor,
             $context,
+            allowOverdraw: true,
         );
+    }
+
+    /**
+     * The shortfall on a technician's float — what they have spent beyond what
+     * was advanced, and so what the company owes them. Zero when in credit.
+     */
+    public function shortfallFor(User $technician): float
+    {
+        $box = CashBox::where('user_id', $technician->id)->first();
+
+        return $box ? round(max(0.0, -$box->balance()), 2) : 0.0;
+    }
+
+    /**
+     * Pay the technician the difference: a real advance out of a company box,
+     * bringing their float back to zero. This is money out — the expense they
+     * fronted is reimbursed.
+     */
+    public function settleShortfall(User $technician, CashBox $from, User $actor): float
+    {
+        $shortfall = $this->shortfallFor($technician);
+
+        if ($shortfall <= 0) {
+            throw ValidationException::withMessages(['amount' => 'لا يوجد فرق مستحق على العهدة.']);
+        }
+
+        $this->advanceCash($technician, $shortfall, $from, $actor, 'صرف فرق العهدة');
+
+        return $shortfall;
+    }
+
+    /**
+     * Write the difference off instead of paying it: the technician bears the
+     * cost. A non-cash entry zeroes the float and reverses the expense the
+     * company will not carry, so nothing appears from nowhere.
+     */
+    public function waiveShortfall(User $technician, User $actor): float
+    {
+        $box = $this->cashBoxFor($technician);
+        $shortfall = round(max(0.0, -$box->balance()), 2);
+
+        if ($shortfall <= 0) {
+            throw ValidationException::withMessages(['amount' => 'لا يوجد فرق على العهدة.']);
+        }
+
+        CashMovement::create([
+            'cash_box_id' => $box->id,
+            'direction' => 'in',
+            'amount' => $shortfall,
+            'source' => 'custody_waive',
+            'note' => 'تجاوز فرق العهدة — لا يُصرف للفني',
+            'user_id' => $actor->id,
+        ]);
+
+        return $shortfall;
+    }
+
+    /**
+     * The float's ledger: every advance in, expense out and settlement, newest
+     * first — so the technician sees how much was handed to them and where it
+     * went.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function ledgerFor(User $technician, int $limit = 60): array
+    {
+        $box = CashBox::where('user_id', $technician->id)->first();
+
+        if (! $box) {
+            return [];
+        }
+
+        return CashMovement::query()
+            ->where('cash_box_id', $box->id)
+            ->with(['actor', 'task'])
+            ->latest('id')
+            ->limit($limit)
+            ->get()
+            ->map(fn (CashMovement $m) => [
+                'id' => $m->id,
+                'direction' => $m->direction,
+                'amount' => (float) $m->amount,
+                'source' => $m->source,
+                'label' => $this->movementLabel($m),
+                'category' => $m->category,
+                'note' => $m->note,
+                'task_id' => $m->task_id,
+                'task_code' => $m->task?->code,
+                'receipt_url' => $m->receiptUrl(),
+                'by' => $m->actor?->name,
+                'created_at' => $m->created_at?->toIso8601String(),
+            ])
+            ->all();
+    }
+
+    /** A short human label for a custody-box movement. */
+    protected function movementLabel(CashMovement $movement): string
+    {
+        return match ($movement->source) {
+            'custody_advance' => 'عهدة مصروفة',
+            'custody_settle' => 'ردّ عهدة',
+            'custody_waive' => 'تجاوز فرق',
+            'expense' => $movement->category ?: 'مصروف',
+            default => $movement->category ?: 'حركة',
+        };
     }
 
     /* ── Devices ─────────────────────────────────────────── */
@@ -274,7 +382,7 @@ class CustodyService
             ->where('cash_box_id', $box->id)
             ->where('direction', 'out')
             ->where('source', 'expense')
-            ->with('actor')
+            ->with(['actor', 'task'])
             ->latest('id')
             ->limit($limit)
             ->get()
@@ -283,6 +391,8 @@ class CustodyService
                 'amount' => (float) $movement->amount,
                 'category' => $movement->category,
                 'note' => $movement->note,
+                'task_id' => $movement->task_id,
+                'task_code' => $movement->task?->code,
                 'receipt_url' => $movement->receiptUrl(),
                 'by' => $movement->actor?->name,
                 'created_at' => $movement->created_at?->toIso8601String(),

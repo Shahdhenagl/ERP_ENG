@@ -477,7 +477,7 @@ class LedgerPoster
             'payment' => 'payment',
             'supplier_payment' => 'supplier_payment',
             'transfer' => 'transfer',
-            'custody_advance', 'custody_settle' => 'custody',
+            'custody_advance', 'custody_settle', 'custody_waive' => 'custody',
             'opening' => 'opening',
             default => 'expense',
         };

@@ -1215,20 +1215,44 @@ export function useSpendMine() {
             amount: number
             category?: string | null
             note?: string | null
+            task_id?: number | null
             receipt?: File | null
         }) => {
             const form = new FormData()
             form.append('amount', String(input.amount))
             if (input.category) form.append('category', input.category)
             if (input.note) form.append('note', input.note)
+            if (input.task_id) form.append('task_id', String(input.task_id))
             if (input.receipt) form.append('receipt', input.receipt)
 
             return (await api.post('/custody/mine/spend', form)).data
         },
         onSuccess: () => {
             void client.invalidateQueries({ queryKey: ['my-custody'] })
+            void client.invalidateQueries({ queryKey: ['task'] })
             invalidateCustody(client)
         },
+    })
+}
+
+/** Manager: pay a technician the difference they fronted, or write it off. */
+export function useCustodySettle() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: { user_id: number; cash_box_id: number }) =>
+            (await api.post('/custody/settle', payload)).data,
+        onSuccess: () => invalidateCustody(client),
+    })
+}
+
+export function useCustodyWaive() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (userId: number) =>
+            (await api.post('/custody/waive', { user_id: userId })).data,
+        onSuccess: () => invalidateCustody(client),
     })
 }
 

@@ -28,6 +28,7 @@ class CustodyController extends Controller
         return response()->json([
             'data' => [
                 ...$this->custody->statementFor($user),
+                'shortfall' => $this->custody->shortfallFor($user),
                 'stock_history' => $this->custody->stockHistoryFor($user),
                 'expenses' => $this->custody->expensesFor($user),
             ],
@@ -36,40 +37,53 @@ class CustodyController extends Controller
 
     /* ── The technician's own custody (self-serve) ───────── */
 
-    /** The signed-in technician's own custody and recent expenses. */
+    /** The signed-in technician's own custody, its ledger and recent expenses. */
     public function mine(Request $request): JsonResponse
     {
         $user = $request->user();
 
-        return response()->json([
-            'data' => [
-                ...$this->custody->statementFor($user),
-                'expenses' => $this->custody->expensesFor($user),
-            ],
-        ]);
+        return response()->json(['data' => $this->mineData($user)]);
     }
 
-    /** The technician records something they paid for out of their own float. */
+    /**
+     * The technician records something they paid for out of their own float —
+     * optionally against a job. They may spend past their balance; the float
+     * simply goes negative and the difference becomes owed to them.
+     */
     public function spendMine(Request $request): JsonResponse
     {
         $data = $request->validate([
             'amount' => ['required', 'numeric', 'gt:0'],
             'category' => ['nullable', 'string', 'max:64'],
             'note' => ['nullable', 'string', 'max:1000'],
+            'task_id' => ['nullable', 'exists:tasks,id'],
             'receipt' => ['nullable', 'file', 'image', 'max:8192'],
         ]);
 
         $user = $request->user();
+
+        // A technician may only bill a job that is theirs.
+        if (! empty($data['task_id'])) {
+            $owned = \App\Models\Task::whereKey($data['task_id'])->value('assigned_to');
+            abort_if($user->isTechnician() && (int) $owned !== $user->id, 403, 'هذه المهمة غير مسندة إليك.');
+        }
+
         $data['receipt_path'] = $this->storeReceipt($request);
 
         $this->custody->spendFromCustody($user, (float) $data['amount'], $user, $data);
 
-        return response()->json([
-            'data' => [
-                ...$this->custody->statementFor($user),
-                'expenses' => $this->custody->expensesFor($user),
-            ],
-        ], 201);
+        return response()->json(['data' => $this->mineData($user)], 201);
+    }
+
+    /** @return array<string, mixed> */
+    protected function mineData(User $user): array
+    {
+        return [
+            ...$this->custody->statementFor($user),
+            'shortfall' => $this->custody->shortfallFor($user),
+            'ledger' => $this->custody->ledgerFor($user),
+            'expenses' => $this->custody->expensesFor($user),
+        ];
     }
 
     /* ── Money ───────────────────────────────────────────── */
@@ -121,6 +135,47 @@ class CustodyController extends Controller
         $this->custody->spendFromCustody($technician, (float) $data['amount'], $request->user(), $data);
 
         return response()->json(['data' => $this->custody->statementFor($technician)], 201);
+    }
+
+    /** Pay a technician the difference they fronted — real money out of a box. */
+    public function settle(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'user_id' => ['required', 'exists:users,id'],
+            'cash_box_id' => ['required', 'exists:cash_boxes,id'],
+        ]);
+
+        $technician = User::findOrFail($data['user_id']);
+        $amount = $this->custody->settleShortfall(
+            $technician,
+            CashBox::findOrFail($data['cash_box_id']),
+            $request->user(),
+        );
+
+        ActivityLog::record(
+            'custody.settled',
+            $technician,
+            "صرف فرق العهدة لـ {$technician->name} بمبلغ ".number_format($amount, 2),
+        );
+
+        return response()->json(['data' => $this->custody->statementFor($technician)]);
+    }
+
+    /** Write the difference off — the technician bears it, no cash paid. */
+    public function waive(Request $request): JsonResponse
+    {
+        $data = $request->validate(['user_id' => ['required', 'exists:users,id']]);
+
+        $technician = User::findOrFail($data['user_id']);
+        $amount = $this->custody->waiveShortfall($technician, $request->user());
+
+        ActivityLog::record(
+            'custody.waived',
+            $technician,
+            "تجاوز فرق عهدة {$technician->name} بمبلغ ".number_format($amount, 2),
+        );
+
+        return response()->json(['data' => $this->custody->statementFor($technician)]);
     }
 
     /** Save an uploaded receipt photo to the public disk, if one was sent. */

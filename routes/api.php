@@ -350,6 +350,8 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::get('custody/{user}', [CustodyController::class, 'show'])->middleware('can:inventory.manage');
     Route::post('custody/cash', [CustodyController::class, 'cash'])->middleware('can:inventory.manage');
     Route::post('custody/spend', [CustodyController::class, 'spend'])->middleware('can:inventory.manage');
+    Route::post('custody/settle', [CustodyController::class, 'settle'])->middleware('can:inventory.manage');
+    Route::post('custody/waive', [CustodyController::class, 'waive'])->middleware('can:inventory.manage');
     Route::post('custody/devices', [CustodyController::class, 'takeDevice'])->middleware('can:inventory.manage');
     Route::post('custody/devices/{custody}/return', [CustodyController::class, 'returnDevice'])->middleware('can:inventory.manage');
 

@@ -146,6 +146,12 @@ class Task extends Model
         return $this->hasOne(TaskReport::class)->where('type', 'completion');
     }
 
+    /** Cash the technician spent on this job out of their float. */
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(CashMovement::class)->where('source', 'expense')->latest('id');
+    }
+
     public function attachments(): HasMany
     {
         return $this->hasMany(TaskAttachment::class);

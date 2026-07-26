@@ -283,6 +283,10 @@ export interface CustodyStatement {
     total_value: number
     /** Present on the single-technician and my-custody views, not the overview. */
     expenses?: CustodyExpense[]
+    /** What the technician has overspent — the company owes it. Zero in credit. */
+    shortfall?: number
+    /** The float's movements — advances in, expenses out, settlements. */
+    ledger?: CustodyLedgerEntry[]
 }
 
 /** One thing a technician paid for out of their float. */
@@ -291,6 +295,24 @@ export interface CustodyExpense {
     amount: number
     category: string | null
     note: string | null
+    task_id?: number | null
+    task_code?: string | null
+    receipt_url: string | null
+    by: string | null
+    created_at: string
+}
+
+/** One line of the float's ledger. */
+export interface CustodyLedgerEntry {
+    id: number
+    direction: 'in' | 'out'
+    amount: number
+    source: string
+    label: string
+    category: string | null
+    note: string | null
+    task_id: number | null
+    task_code: string | null
     receipt_url: string | null
     by: string | null
     created_at: string
@@ -1036,6 +1058,8 @@ export interface Task {
     status_logs?: TaskStatusLog[]
     reports?: TaskReport[]
     attachments?: TaskAttachment[]
+    expenses?: CustodyExpense[] | null
+    expenses_total?: number | null
 
     created_at: string
     updated_at: string

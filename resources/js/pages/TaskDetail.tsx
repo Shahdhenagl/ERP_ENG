@@ -12,6 +12,7 @@ import {
     Navigation,
     Pencil,
     Phone,
+    Plus,
     Printer,
     Route,
     Store,
@@ -23,6 +24,7 @@ import {
 import { useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ConfirmDialog, Modal } from '@/components/Modal'
+import { CustodyExpenseModal } from '@/components/CustodyExpenseModal'
 import { ReportForm } from '@/components/ReportForm'
 import { StatusRail } from '@/components/StatusRail'
 import { useToast } from '@/components/Toast'
@@ -48,6 +50,7 @@ import {
     useDeleteAttachment,
     useDeleteTask,
     useInvoiceAction,
+    useMyCustody,
     useTask,
     useTechnicians,
     useUploadAttachments,
@@ -427,14 +430,25 @@ export function TaskDetail() {
                                     <BeforeAfter before={diagnosisReport} after={completionReport} />
                                 )}
                                 {diagnosisReport && (
-                                    <ReportBlock title="القراءات قبل العمل (التشخيص)" report={diagnosisReport} />
+                                    <ReportBlock
+                                        title="تقرير التشخيص (قبل العمل)"
+                                        report={diagnosisReport}
+                                        hideReadings={Boolean(diagnosisReport && completionReport)}
+                                    />
                                 )}
                                 {completionReport && (
-                                    <ReportBlock title="القراءات بعد العمل (الإنهاء)" report={completionReport} />
+                                    <ReportBlock
+                                        title="تقرير الإنهاء (بعد العمل)"
+                                        report={completionReport}
+                                        hideReadings={Boolean(diagnosisReport && completionReport)}
+                                    />
                                 )}
                             </div>
                         )}
                     </section>
+
+                    {/* ── Trip expenses ──────────────────────── */}
+                    <TaskExpenses task={task} canAdd={canDrive} />
 
                     {/* ── Photos ─────────────────────────────── */}
                     <AttachmentsSection task={task} canEdit={canDrive} />
@@ -663,8 +677,20 @@ function Detail({ label, value, mono }: { label: string; value?: string | null; 
     )
 }
 
-function ReportBlock({ title, report }: { title: string; report: TaskReport }) {
-    const readings = Object.entries(report.readings).filter(([, value]) => value !== null)
+function ReportBlock({
+    title,
+    report,
+    hideReadings = false,
+}: {
+    title: string
+    report: TaskReport
+    /** True when a before/after table already shows the numbers, so the block
+     *  need not repeat them. */
+    hideReadings?: boolean
+}) {
+    const readings = hideReadings
+        ? []
+        : Object.entries(report.readings).filter(([, value]) => value !== null)
     const condition = report.device_condition ? DEVICE_CONDITION[report.device_condition] : null
 
     return (
@@ -813,6 +839,80 @@ function SiteCheckRow({ checks }: { checks: TaskReport['site_checks'] }) {
                 )
             })}
         </div>
+    )
+}
+
+/** What the technician spent on this job, and — for them — a way to add more. */
+function TaskExpenses({ task, canAdd }: { task: Task; canAdd: boolean }) {
+    const { data: mine } = useMyCustody()
+    const [adding, setAdding] = useState(false)
+
+    const expenses = task.expenses ?? []
+    const total = task.expenses_total ?? 0
+
+    return (
+        <section className="card p-5">
+            <div className="mb-3 flex items-center justify-between">
+                <h2 className="flex items-center gap-2 text-sm font-bold text-navy-800">
+                    <Receipt className="size-4 text-navy-300" />
+                    مصاريف المهمة
+                    {total > 0 && (
+                        <span className="tabular text-xs font-extrabold text-navy-900">
+                            {formatMoney(total)}
+                        </span>
+                    )}
+                </h2>
+                {canAdd && (
+                    <Button variant="ghost" icon={Plus} className="text-xs" onClick={() => setAdding(true)}>
+                        أضف مصروف
+                    </Button>
+                )}
+            </div>
+
+            {expenses.length === 0 ? (
+                <p className="rounded-xl bg-navy-50 px-4 py-4 text-center text-xs text-navy-400">
+                    لا مصاريف مسجّلة على هذه المهمة.
+                </p>
+            ) : (
+                <div className="space-y-2">
+                    {expenses.map((expense) => (
+                        <div key={expense.id} className="flex items-center justify-between gap-3">
+                            <div className="flex min-w-0 items-center gap-2">
+                                {expense.receipt_url ? (
+                                    <a href={expense.receipt_url} target="_blank" rel="noreferrer" className="shrink-0">
+                                        <img src={expense.receipt_url} alt="إيصال" className="size-10 rounded-lg border border-navy-200 object-cover" />
+                                    </a>
+                                ) : (
+                                    <div className="grid size-10 shrink-0 place-items-center rounded-lg bg-navy-50 text-navy-300">
+                                        <Receipt className="size-4" />
+                                    </div>
+                                )}
+                                <div className="min-w-0">
+                                    <p className="truncate text-sm font-bold text-navy-900">
+                                        {expense.category ?? 'مصروف'}
+                                    </p>
+                                    {expense.note && (
+                                        <p className="truncate text-[11px] text-navy-400">{expense.note}</p>
+                                    )}
+                                </div>
+                            </div>
+                            <span className="tabular shrink-0 font-extrabold text-navy-900">
+                                {formatMoney(expense.amount)}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {adding && (
+                <CustodyExpenseModal
+                    balance={mine?.cash.balance ?? 0}
+                    taskId={task.id}
+                    taskCode={task.code}
+                    onClose={() => setAdding(false)}
+                />
+            )}
+        </section>
     )
 }
 

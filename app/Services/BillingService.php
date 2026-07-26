@@ -175,15 +175,23 @@ class BillingService
     }
 
     /** Money leaving a box — wages, fuel, a supplier paid in cash. */
-    public function recordExpense(CashBox $box, float $amount, User $actor, array $context = []): CashMovement
-    {
+    public function recordExpense(
+        CashBox $box,
+        float $amount,
+        User $actor,
+        array $context = [],
+        bool $allowOverdraw = false,
+    ): CashMovement {
         $amount = round($amount, 2);
 
         if ($amount <= 0) {
             throw ValidationException::withMessages(['amount' => 'المبلغ يجب أن يكون أكبر من صفر.']);
         }
 
-        if ($amount > $box->balance() + 0.005) {
+        // A company box cannot spend what it does not hold. A technician's float
+        // may: they front their own money on the road, and the box going
+        // negative is exactly how the company learns it owes them the difference.
+        if (! $allowOverdraw && $amount > $box->balance() + 0.005) {
             throw ValidationException::withMessages([
                 'amount' => 'رصيد «'.$box->name.'» لا يكفي ('.number_format($box->balance(), 2).').',
             ]);
@@ -191,6 +199,7 @@ class BillingService
 
         return CashMovement::create([
             'cash_box_id' => $box->id,
+            'task_id' => $context['task_id'] ?? null,
             'direction' => 'out',
             'amount' => $amount,
             'source' => 'expense',

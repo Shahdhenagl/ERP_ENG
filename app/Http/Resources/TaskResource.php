@@ -139,6 +139,22 @@ class TaskResource extends JsonResource
                 ),
             ],
 
+            // What the technician spent on this job out of their float.
+            'expenses' => $this->relationLoaded('expenses')
+                ? $this->expenses->map(fn ($m) => [
+                    'id' => $m->id,
+                    'amount' => (float) $m->amount,
+                    'category' => $m->category,
+                    'note' => $m->note,
+                    'receipt_url' => $m->receiptUrl(),
+                    'by' => $m->actor?->name,
+                    'created_at' => $m->created_at?->toIso8601String(),
+                ])->values()
+                : null,
+            'expenses_total' => $this->relationLoaded('expenses')
+                ? round((float) $this->expenses->sum('amount'), 2)
+                : null,
+
             'status_logs' => TaskStatusLogResource::collection($this->whenLoaded('statusLogs')),
             'reports' => TaskReportResource::collection($this->whenLoaded('reports')),
             'attachments' => TaskAttachmentResource::collection($this->whenLoaded('attachments')),

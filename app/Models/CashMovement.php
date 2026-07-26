@@ -16,6 +16,7 @@ class CashMovement extends Model
 
     protected $fillable = [
         'cash_box_id',
+        'task_id',
         'direction',
         'amount',
         'source',
@@ -47,6 +48,12 @@ class CashMovement extends Model
     public function box(): BelongsTo
     {
         return $this->belongsTo(CashBox::class, 'cash_box_id');
+    }
+
+    /** The job a custody expense was spent on, when it names one. */
+    public function task(): BelongsTo
+    {
+        return $this->belongsTo(Task::class);
     }
 
     public function payment(): BelongsTo

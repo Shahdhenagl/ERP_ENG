@@ -1,7 +1,9 @@
 <?php
 
+use App\Enums\TaskStatus;
 use App\Models\CashBox;
 use App\Models\CashMovement;
+use App\Models\Task;
 use App\Models\User;
 use App\Services\CustodyService;
 use Illuminate\Http\UploadedFile;
@@ -55,10 +57,14 @@ it('logs an expense with a receipt and takes it off the balance', function () {
     Storage::disk('public')->assertExists($expense->receipt_path);
 });
 
-it('refuses an expense larger than the float', function () {
+it('allows an expense larger than the float, owing the technician the rest', function () {
+    // Overspend is deliberate now: the technician fronts the money and the
+    // company owes the difference, so this is accepted, not refused.
     actingAs($this->technician)
         ->postJson('/api/custody/mine/spend', ['amount' => 5000])
-        ->assertStatus(422);
+        ->assertCreated();
+
+    expect($this->custody->shortfallFor($this->technician))->toBe(4000.0);
 });
 
 it('serves the expense back with a receipt url', function () {
@@ -87,6 +93,69 @@ it('lets the manager see the technician expenses on the statement', function () 
     expect($data['expenses'])->toHaveCount(1)
         ->and($data['expenses'][0]['category'])->toBe('قطع غيار')
         ->and($data['expenses'][0]['amount'])->toEqual(120);
+});
+
+/* ── Overspend, task expenses, settle and waive ──────────── */
+
+it('lets a technician spend past their float, dropping it negative', function () {
+    // Float is 1,000; spending 1,500 leaves it at -500 owed to them.
+    actingAs($this->technician)->postJson('/api/custody/mine/spend', ['amount' => 1500])
+        ->assertCreated();
+
+    $data = actingAs($this->technician)->getJson('/api/custody/mine')->assertOk()->json('data');
+
+    expect($data['cash']['balance'])->toEqual(-500)
+        ->and($data['shortfall'])->toEqual(500);
+});
+
+it('bills an expense to a job and shows it on that task', function () {
+    $task = Task::factory()->create([
+        'assigned_to' => $this->technician->id, 'status' => TaskStatus::InProgress,
+    ]);
+
+    actingAs($this->technician)->post('/api/custody/mine/spend', [
+        'amount' => 100, 'category' => 'وقود', 'note' => 'بنزين الطريق', 'task_id' => $task->id,
+    ])->assertCreated();
+
+    $data = actingAs($this->manager)->getJson("/api/tasks/{$task->id}")->assertOk()->json('data');
+
+    expect($data['expenses_total'])->toEqual(100)
+        ->and($data['expenses'][0]['note'])->toBe('بنزين الطريق');
+});
+
+it('refuses to bill a job that is not the technician\'s', function () {
+    $other = Task::factory()->create([
+        'assigned_to' => User::factory()->technician()->create()->id,
+        'status' => TaskStatus::InProgress,
+    ]);
+
+    actingAs($this->technician)->postJson('/api/custody/mine/spend', [
+        'amount' => 50, 'task_id' => $other->id,
+    ])->assertForbidden();
+});
+
+it('settles a shortfall by paying the technician from a company box', function () {
+    $this->custody->spendFromCustody($this->technician, 1500, $this->manager);   // float -500
+    $boxBefore = CashBox::default()->fresh()->balance();
+
+    actingAs($this->manager)->postJson('/api/custody/settle', [
+        'user_id' => $this->technician->id, 'cash_box_id' => CashBox::default()->id,
+    ])->assertOk();
+
+    expect($this->custody->shortfallFor($this->technician))->toBe(0.0)
+        // Real money left the company box to reimburse them.
+        ->and(CashBox::default()->fresh()->balance())->toBe(round($boxBefore - 500, 2));
+});
+
+it('waives a shortfall without paying, leaving the company box untouched', function () {
+    $this->custody->spendFromCustody($this->technician, 1500, $this->manager);   // float -500
+    $boxBefore = CashBox::default()->fresh()->balance();
+
+    actingAs($this->manager)->postJson('/api/custody/waive', ['user_id' => $this->technician->id])
+        ->assertOk();
+
+    expect($this->custody->shortfallFor($this->technician))->toBe(0.0)
+        ->and(CashBox::default()->fresh()->balance())->toBe($boxBefore);
 });
 
 it('keeps a technician out of another technician custody', function () {

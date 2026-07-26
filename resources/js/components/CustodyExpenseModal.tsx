@@ -12,7 +12,18 @@ import { useSpendMine } from '@/lib/queries'
  * amount, and a photo of the receipt. The spend leaves their custody the moment
  * it is saved, so the balance on the home screen reflects it at once.
  */
-export function CustodyExpenseModal({ balance, onClose }: { balance: number; onClose: () => void }) {
+export function CustodyExpenseModal({
+    balance,
+    taskId,
+    taskCode,
+    onClose,
+}: {
+    balance: number
+    /** When set, the expense is billed to this job. */
+    taskId?: number
+    taskCode?: string
+    onClose: () => void
+}) {
     const toast = useToast()
     const spend = useSpendMine()
     const fileInput = useRef<HTMLInputElement>(null)
@@ -31,6 +42,7 @@ export function CustodyExpenseModal({ balance, onClose }: { balance: number; onC
                 amount: Number(amount),
                 category,
                 note: note || null,
+                task_id: taskId ?? null,
                 receipt,
             })
             toast.success('تم تسجيل المصروف وخصمه من عهدتك.')
@@ -45,8 +57,12 @@ export function CustodyExpenseModal({ balance, onClose }: { balance: number; onC
         <Modal
             open
             onClose={onClose}
-            title="تسجيل مصروف"
-            description={`رصيد عهدتك الحالي ${formatMoney(balance)}`}
+            title={taskCode ? `مصروف على المهمة ${taskCode}` : 'تسجيل مصروف'}
+            description={
+                balance < 0
+                    ? `عهدتك بالسالب ${formatMoney(balance)} — مستحق لك، أي مصروف يزيد الفرق`
+                    : `رصيد عهدتك الحالي ${formatMoney(balance)}`
+            }
             size="sm"
             footer={
                 <>
