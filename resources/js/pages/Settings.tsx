@@ -2,6 +2,7 @@ import { Save } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useToast } from '@/components/Toast'
 import { SectionTabs } from '@/components/SectionTabs'
+import { ChecklistEditor } from '@/components/ChecklistEditor'
 import { Button, Field, Input, PageHeader, PageLoader, Textarea } from '@/components/ui'
 import { ADMIN_SECTIONS } from '@/lib/sections'
 import { errorMessage, fieldErrors } from '@/lib/api'
@@ -42,6 +43,7 @@ export function Settings() {
     }
 
     return (
+        <>
         <form onSubmit={handleSubmit}>
             <PageHeader
                 title="بيانات الشركة"
@@ -177,5 +179,10 @@ export function Settings() {
                 </section>
             </div>
         </form>
+
+        <div className="mt-5">
+            <ChecklistEditor />
+        </div>
+        </>
     )
 }

@@ -60,6 +60,12 @@ class TaskReportController extends Controller
             'check_charger' => ['nullable', 'in:ok,issue,na'],
             'check_accessories' => ['nullable', 'in:ok,issue,na'],
 
+            // The periodic-maintenance checklist, snapshotted with its answers.
+            'ppm_checklist' => ['nullable', 'array'],
+            'ppm_checklist.*.label' => ['required_with:ppm_checklist', 'string', 'max:200'],
+            'ppm_checklist.*.status' => ['nullable', 'in:ok,issue,na'],
+            'ppm_checklist.*.note' => ['nullable', 'string', 'max:500'],
+
             'findings' => ['nullable', 'string', 'max:5000'],
             'actions_taken' => ['nullable', 'string', 'max:5000'],
             'recommendations' => ['nullable', 'string', 'max:5000'],

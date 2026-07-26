@@ -14,8 +14,8 @@ import {
     SITE_CHECKS,
     SITE_CHECK_OPTIONS,
 } from '@/lib/domain'
-import { useMyStock, useSaveReport } from '@/lib/queries'
-import type { ReportType, Task, TaskReport } from '@/types'
+import { useChecklistItems, useMyStock, useSaveReport } from '@/lib/queries'
+import type { ChecklistAnswer, ReportType, Task, TaskReport } from '@/types'
 
 type CheckKey = (typeof SITE_CHECKS)[number]['key']
 
@@ -53,6 +53,19 @@ export function ReportForm({ open, onClose, task, type, existing, onSaved }: Rep
             SITE_CHECKS.map((c) => [c.key, existing?.site_checks?.[c.key] ?? '']),
         ) as Record<CheckKey, string>,
     )
+
+    // The fixed periodic-maintenance checklist — only on a maintenance visit.
+    const isPeriodic = task.type === 'maintenance'
+    const { data: checklistItems = [] } = useChecklistItems()
+    const [ppm, setPpm] = useState<Record<string, { status: string; note: string }>>(() =>
+        Object.fromEntries(
+            (existing?.ppm_checklist ?? []).map((answer) => [
+                answer.label,
+                { status: answer.status ?? '', note: answer.note ?? '' },
+            ]),
+        ),
+    )
+
     const [condition, setCondition] = useState(existing?.device_condition ?? '')
     const [batteriesFlag, setBatteriesFlag] = useState(existing?.batteries_need_replacement ?? false)
     const [findings, setFindings] = useState(existing?.findings ?? '')
@@ -87,6 +100,14 @@ export function ReportForm({ open, onClose, task, type, existing, onSaved }: Rep
                 check_environment: checks.environment || null,
                 check_charger: checks.charger || null,
                 check_accessories: checks.accessories || null,
+                ppm_checklist:
+                    isPeriodic && checklistItems.length
+                        ? checklistItems.map((item): ChecklistAnswer => ({
+                              label: item.label,
+                              status: (ppm[item.label]?.status || null) as ChecklistAnswer['status'],
+                              note: ppm[item.label]?.note || null,
+                          }))
+                        : null,
                 device_condition: condition || null,
                 batteries_need_replacement: batteriesFlag,
                 findings: findings || null,
@@ -260,6 +281,77 @@ export function ReportForm({ open, onClose, task, type, existing, onSaved }: Rep
                         </span>
                     </label>
                 </section>
+
+                {/* ── Periodic checklist (maintenance visits) ── */}
+                {isPeriodic && checklistItems.length > 0 && (
+                    <section>
+                        <h3 className="mb-3 text-sm font-bold text-navy-800">قائمة الفحص الدوري</h3>
+                        <div className="space-y-2">
+                            {checklistItems.map((item) => {
+                                const answer = ppm[item.label] ?? { status: '', note: '' }
+
+                                return (
+                                    <div
+                                        key={item.id}
+                                        className="rounded-xl border border-navy-200 bg-white px-3 py-2"
+                                    >
+                                        <div className="flex items-center justify-between gap-3">
+                                            <span className="min-w-0 text-sm font-semibold text-navy-700">
+                                                {item.label}
+                                            </span>
+                                            <div className="flex shrink-0 gap-1">
+                                                {(['ok', 'issue', 'na'] as const).map((value) => {
+                                                    const active = answer.status === value
+
+                                                    return (
+                                                        <button
+                                                            key={value}
+                                                            type="button"
+                                                            onClick={() =>
+                                                                setPpm((current) => ({
+                                                                    ...current,
+                                                                    [item.label]: {
+                                                                        status: active ? '' : value,
+                                                                        note: current[item.label]?.note ?? '',
+                                                                    },
+                                                                }))
+                                                            }
+                                                            className={clsx(
+                                                                'tap rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition',
+                                                                active
+                                                                    ? SITE_CHECK_OPTIONS[value].chip
+                                                                    : 'bg-navy-50 text-navy-400',
+                                                            )}
+                                                        >
+                                                            {SITE_CHECK_OPTIONS[value].label}
+                                                        </button>
+                                                    )
+                                                })}
+                                            </div>
+                                        </div>
+
+                                        {answer.status === 'issue' && (
+                                            <Input
+                                                value={answer.note}
+                                                onChange={(e) =>
+                                                    setPpm((current) => ({
+                                                        ...current,
+                                                        [item.label]: {
+                                                            status: current[item.label]?.status ?? 'issue',
+                                                            note: e.target.value,
+                                                        },
+                                                    }))
+                                                }
+                                                placeholder="ملاحظة عن الملاحظة…"
+                                                className="mt-2"
+                                            />
+                                        )}
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </section>
+                )}
 
                 {/* ── Narrative ──────────────────────────────── */}
                 <section className="space-y-3">

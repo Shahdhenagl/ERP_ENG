@@ -32,6 +32,7 @@ class TaskReport extends Model
         'check_environment',
         'check_charger',
         'check_accessories',
+        'ppm_checklist',
         'findings',
         'actions_taken',
         'recommendations',
@@ -57,6 +58,7 @@ class TaskReport extends Model
             'backup_minutes' => 'integer',
             'batteries_need_replacement' => 'boolean',
             'parts_used' => 'array',
+            'ppm_checklist' => 'array',
             'signed_at' => 'datetime',
         ];
     }

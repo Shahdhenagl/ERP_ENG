@@ -34,6 +34,7 @@ use App\Http\Controllers\Api\TenderController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\SalesOrderController;
 use App\Http\Controllers\Api\SalesReturnController;
+use App\Http\Controllers\Api\ChecklistController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\StatementController;
 use App\Http\Controllers\Api\SupplierController;
@@ -127,6 +128,10 @@ Route::middleware(['auth:sanctum', 'role'])->group(function () {
     // Scoped to the caller, so no inventory-management permission is needed.
     Route::get('custody/mine', [CustodyController::class, 'mine']);
     Route::post('custody/mine/spend', [CustodyController::class, 'spendMine']);
+
+    // The periodic-maintenance checklist a technician fills on a visit — read
+    // by any signed-in user; only the manager edits it (below).
+    Route::get('checklist-items', [ChecklistController::class, 'index']);
 });
 
 /*
@@ -508,6 +513,11 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('activity/filters', [ActivityLogController::class, 'filters'])->middleware('can:audit.view');
 
     Route::put('settings', [SettingController::class, 'update'])->middleware('can:settings.manage');
+
+    // The periodic-maintenance checklist template — the manager's to define.
+    Route::post('checklist-items', [ChecklistController::class, 'store'])->middleware('can:settings.manage');
+    Route::put('checklist-items/{checklistItem}', [ChecklistController::class, 'update'])->middleware('can:settings.manage');
+    Route::delete('checklist-items/{checklistItem}', [ChecklistController::class, 'destroy'])->middleware('can:settings.manage');
     Route::apiResource('users', UserController::class)->middleware('can:users.manage');
 
     // ── Permissions ──────────────────────────────────────────

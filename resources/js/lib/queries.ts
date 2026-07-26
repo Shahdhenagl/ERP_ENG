@@ -64,6 +64,7 @@ import type {
     HrReport,
     MaintenanceReport,
     DatasetOption,
+    ChecklistItem,
     StockMovement,
     DeviceHistory,
     Warranty,
@@ -1346,6 +1347,40 @@ function invalidateBranches(client: ReturnType<typeof useQueryClient>): void {
     for (const key of ['branches', 'customer-branches', 'customers', 'assets', 'tasks']) {
         void client.invalidateQueries({ queryKey: [key] })
     }
+}
+
+/* ── Periodic-maintenance checklist template ─────────────── */
+
+/** The checklist a technician fills on a periodic visit. Read by everyone. */
+export function useChecklistItems(all = false) {
+    return useQuery({
+        queryKey: ['checklist-items', all] as const,
+        queryFn: async () =>
+            (await api.get<{ data: ChecklistItem[] }>('/checklist-items', { params: { all: all ? 1 : undefined } })).data.data,
+    })
+}
+
+export function useSaveChecklistItem(id?: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (
+                await (id
+                    ? api.put(`/checklist-items/${id}`, payload)
+                    : api.post('/checklist-items', payload))
+            ).data,
+        onSuccess: () => void client.invalidateQueries({ queryKey: ['checklist-items'] }),
+    })
+}
+
+export function useDeleteChecklistItem() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id: number) => (await api.delete(`/checklist-items/${id}`)).data,
+        onSuccess: () => void client.invalidateQueries({ queryKey: ['checklist-items'] }),
+    })
 }
 
 /* ── Company settings & statements ───────────────────────── */

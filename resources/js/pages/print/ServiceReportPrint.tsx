@@ -107,6 +107,7 @@ export function ServiceReportPrint() {
                     )}
 
                     <SiteChecks report={primary} />
+                    <PpmChecklist report={primary} />
 
                     <div className="doc-keep mt-4 flex flex-wrap gap-4 text-[12px]">
                         {primary.device_condition && (
@@ -247,6 +248,36 @@ function SiteChecks({ report }: { report: TaskReport }) {
                 )
             })}
         </div>
+    )
+}
+
+function PpmChecklist({ report }: { report: TaskReport }) {
+    const filled = (report.ppm_checklist ?? []).filter((a) => a.status)
+    if (filled.length === 0) return null
+
+    const label = { ok: 'سليم', issue: 'يحتاج انتباه', na: 'لا ينطبق' }
+
+    return (
+        <section className="doc-keep mt-4">
+            <h2 className="mb-2 text-[13px] font-bold text-navy-800">قائمة الفحص الدوري</h2>
+            <table className="doc-table">
+                <tbody>
+                    {filled.map((answer, index) => (
+                        <tr key={index}>
+                            <td>
+                                {answer.label}
+                                {answer.note && (
+                                    <span className="text-[11px] text-navy-400"> — {answer.note}</span>
+                                )}
+                            </td>
+                            <td className="w-28 text-center font-bold">
+                                {label[answer.status as 'ok' | 'issue' | 'na']}
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </section>
     )
 }
 

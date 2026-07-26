@@ -14,6 +14,21 @@ export type ReportType = 'diagnosis' | 'completion'
 
 /** A site-inspection verdict: ok, a flagged issue, or not applicable. */
 export type SiteCheck = 'ok' | 'issue' | 'na' | null
+
+/** One point on the periodic-maintenance checklist the manager maintains. */
+export interface ChecklistItem {
+    id: number
+    label: string
+    sort_order: number
+    is_active: boolean
+}
+
+/** A technician's answer against a checklist point, snapshotted on a report. */
+export interface ChecklistAnswer {
+    label: string
+    status: 'ok' | 'issue' | 'na' | null
+    note?: string | null
+}
 export type AttachmentKind = 'before' | 'after' | 'document' | 'signature'
 export type DeviceCondition = 'good' | 'fair' | 'poor' | 'faulty'
 
@@ -883,6 +898,7 @@ export interface TaskReport {
         charger: SiteCheck
         accessories: SiteCheck
     }
+    ppm_checklist: ChecklistAnswer[]
     device_condition: DeviceCondition | null
     batteries_need_replacement: boolean
     findings: string | null

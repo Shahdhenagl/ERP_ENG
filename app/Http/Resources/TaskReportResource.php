@@ -34,6 +34,7 @@ class TaskReportResource extends JsonResource
                 'charger' => $this->check_charger,
                 'accessories' => $this->check_accessories,
             ],
+            'ppm_checklist' => $this->ppm_checklist ?? [],
             'device_condition' => $this->device_condition,
             'batteries_need_replacement' => $this->batteries_need_replacement,
             'findings' => $this->findings,

@@ -715,6 +715,7 @@ function ReportBlock({ title, report }: { title: string; report: TaskReport }) {
             )}
 
             <SiteCheckRow checks={report.site_checks} />
+            <PpmChecklistView answers={report.ppm_checklist} />
 
             <dl className="space-y-2 text-sm">
                 {report.findings && <Narrative label="ما تم رصده" value={report.findings} />}
@@ -759,6 +760,36 @@ function Narrative({ label, value }: { label: string; value: string }) {
         <div>
             <dt className="text-xs font-semibold text-navy-400">{label}</dt>
             <dd className="mt-0.5 leading-relaxed text-navy-700">{value}</dd>
+        </div>
+    )
+}
+
+function PpmChecklistView({ answers }: { answers: TaskReport['ppm_checklist'] }) {
+    const filled = (answers ?? []).filter((a) => a.status)
+    if (filled.length === 0) return null
+
+    return (
+        <div className="mb-3">
+            <p className="mb-1.5 text-xs font-semibold text-navy-400">قائمة الفحص الدوري</p>
+            <div className="space-y-1">
+                {filled.map((answer, index) => {
+                    const verdict = answer.status as 'ok' | 'issue' | 'na'
+
+                    return (
+                        <div key={index} className="flex items-center justify-between gap-3 text-xs">
+                            <span className="min-w-0 truncate text-navy-700">
+                                {answer.label}
+                                {answer.note && (
+                                    <span className="mr-1.5 text-[10px] text-navy-400">— {answer.note}</span>
+                                )}
+                            </span>
+                            <span className={`badge shrink-0 ${SITE_CHECK_OPTIONS[verdict].chip}`}>
+                                {SITE_CHECK_OPTIONS[verdict].label}
+                            </span>
+                        </div>
+                    )
+                })}
+            </div>
         </div>
     )
 }
