@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Task;
 use App\Models\User;
 use App\Services\MaintenancePlanner;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
 
 use function Pest\Laravel\actingAs;
@@ -38,6 +39,26 @@ it('lays out the whole term as visits, not as work orders', function () {
     // The point of the whole design: a signed contract must not drop a year of
     // jobs into the dispatcher's queue.
     expect(Task::query()->where('contract_id', $contract->id)->count())->toBe(0);
+});
+
+it('keeps planned visits off weekends and official holidays', function () {
+    // Mark an official holiday inside the term.
+    \App\Models\Holiday::create(['date' => now()->addDays(40)->toDateString(), 'name' => 'عيد']);
+    $holidays = \App\Models\Holiday::pluck('date')->map->toDateString()->all();
+
+    $contract = Contract::factory()->for($this->customer)->create([
+        'starts_on' => now()->toDateString(),
+        'ends_on' => now()->addYear()->subDay()->toDateString(),
+        'visits_per_year' => 24,
+    ]);
+
+    $this->planner->plan($contract);
+
+    foreach ($contract->visits as $visit) {
+        expect($visit->planned_for->dayOfWeek)->not->toBe(CarbonImmutable::FRIDAY)
+            ->and($visit->planned_for->dayOfWeek)->not->toBe(CarbonImmutable::SATURDAY)
+            ->and(in_array($visit->planned_for->toDateString(), $holidays, true))->toBeFalse();
+    }
 });
 
 it('only cuts work orders for visits inside the horizon', function () {

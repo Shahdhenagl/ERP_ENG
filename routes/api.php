@@ -35,6 +35,7 @@ use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\SalesOrderController;
 use App\Http\Controllers\Api\SalesReturnController;
 use App\Http\Controllers\Api\ChecklistController;
+use App\Http\Controllers\Api\HolidayController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\StatementController;
 use App\Http\Controllers\Api\SupplierController;
@@ -132,6 +133,9 @@ Route::middleware(['auth:sanctum', 'role'])->group(function () {
     // The periodic-maintenance checklist a technician fills on a visit — read
     // by any signed-in user; only the manager edits it (below).
     Route::get('checklist-items', [ChecklistController::class, 'index']);
+
+    // The official-holiday calendar — read by anyone, edited by the admin.
+    Route::get('holidays', [HolidayController::class, 'index']);
 });
 
 /*
@@ -519,6 +523,10 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::post('checklist-items', [ChecklistController::class, 'store'])->middleware('can:settings.manage');
     Route::put('checklist-items/{checklistItem}', [ChecklistController::class, 'update'])->middleware('can:settings.manage');
     Route::delete('checklist-items/{checklistItem}', [ChecklistController::class, 'destroy'])->middleware('can:settings.manage');
+
+    // Official-holiday calendar — the planner steps maintenance visits over it.
+    Route::post('holidays', [HolidayController::class, 'store'])->middleware('can:settings.manage');
+    Route::delete('holidays/{holiday}', [HolidayController::class, 'destroy'])->middleware('can:settings.manage');
     Route::apiResource('users', UserController::class)->middleware('can:users.manage');
 
     // ── Permissions ──────────────────────────────────────────

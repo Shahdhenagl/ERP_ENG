@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useToast } from '@/components/Toast'
 import { SectionTabs } from '@/components/SectionTabs'
 import { ChecklistEditor } from '@/components/ChecklistEditor'
+import { HolidaysEditor } from '@/components/HolidaysEditor'
 import { Button, Field, Input, PageHeader, PageLoader, Textarea } from '@/components/ui'
 import { ADMIN_SECTIONS } from '@/lib/sections'
 import { errorMessage, fieldErrors } from '@/lib/api'
@@ -180,8 +181,9 @@ export function Settings() {
             </div>
         </form>
 
-        <div className="mt-5">
+        <div className="mt-5 grid gap-5 lg:grid-cols-2">
             <ChecklistEditor />
+            <HolidaysEditor />
         </div>
         </>
     )

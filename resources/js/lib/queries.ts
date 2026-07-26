@@ -1384,6 +1384,35 @@ export function useDeleteChecklistItem() {
     })
 }
 
+/* ── Official holidays (maintenance planner steps over them) ── */
+
+export function useHolidays() {
+    return useQuery({
+        queryKey: ['holidays'] as const,
+        queryFn: async () =>
+            (await api.get<{ data: Array<{ id: number; date: string; name: string | null }> }>('/holidays')).data.data,
+    })
+}
+
+export function useAddHoliday() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: { date: string; name?: string | null }) =>
+            (await api.post('/holidays', payload)).data,
+        onSuccess: () => void client.invalidateQueries({ queryKey: ['holidays'] }),
+    })
+}
+
+export function useDeleteHoliday() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id: number) => (await api.delete(`/holidays/${id}`)).data,
+        onSuccess: () => void client.invalidateQueries({ queryKey: ['holidays'] }),
+    })
+}
+
 /* ── Company settings & statements ───────────────────────── */
 
 /**

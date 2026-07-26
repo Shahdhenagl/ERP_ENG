@@ -39,6 +39,9 @@ class MaintenancePlanner
 
     protected const THROTTLE_MINUTES = 15;
 
+    /** Official-holiday dates, loaded once per run. @var array<string, true>|null */
+    protected ?array $holidayCache = null;
+
     public function __construct(protected TaskWorkflow $workflow) {}
 
     // ── Entry point ──────────────────────────────────────────
@@ -153,7 +156,7 @@ class MaintenancePlanner
         for ($i = 0; $i < $count; $i++) {
             $offset = (int) round($days * (2 * $i + 1) / (2 * $count));
 
-            $dates[] = $this->nudgeOffWeekend($from->startOfDay()->addDays($offset));
+            $dates[] = $this->nudgeToWorkingDay($from->startOfDay()->addDays($offset));
         }
 
         return $dates;
@@ -172,14 +175,36 @@ class MaintenancePlanner
         return max(1, (int) round($contract->visits_per_year * ($days / 365.25)));
     }
 
-    /** Friday and Saturday are the weekend here; push into Sunday. */
-    protected function nudgeOffWeekend(CarbonImmutable $date): CarbonImmutable
+    /**
+     * Step a visit onto a working day: Friday and Saturday are the weekend
+     * here, and an admin-marked official holiday is a closed office too. Walk
+     * forward until the date is neither.
+     */
+    protected function nudgeToWorkingDay(CarbonImmutable $date): CarbonImmutable
     {
-        return match ($date->dayOfWeek) {
-            CarbonImmutable::FRIDAY => $date->addDays(2),
-            CarbonImmutable::SATURDAY => $date->addDay(),
-            default => $date,
-        };
+        $holidays = $this->holidays();
+
+        while (
+            in_array($date->dayOfWeek, [CarbonImmutable::FRIDAY, CarbonImmutable::SATURDAY], true)
+            || isset($holidays[$date->toDateString()])
+        ) {
+            $date = $date->addDay();
+        }
+
+        return $date;
+    }
+
+    /**
+     * The official holidays as a date-keyed set, loaded once per planner run.
+     *
+     * @return array<string, true>
+     */
+    protected function holidays(): array
+    {
+        return $this->holidayCache ??= \App\Models\Holiday::query()
+            ->pluck('date')
+            ->mapWithKeys(fn ($date) => [$date->toDateString() => true])
+            ->all();
     }
 
     /** @param  \Illuminate\Support\Collection<int, ContractVisit>  $locked */
