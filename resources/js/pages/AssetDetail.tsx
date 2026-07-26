@@ -7,9 +7,10 @@ import { TaskCard } from '@/components/TaskCard'
 import { EmptyState, ErrorState, PageLoader } from '@/components/ui'
 import { DeviceWarrantyBlock } from '@/pages/warranty/DeviceWarrantyBlock'
 import { useAuth } from '@/lib/auth'
-import { ASSET_STATUS } from '@/lib/domain'
+import { ASSET_STATUS, UPS_PHASES, UPS_TYPES } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
 import { useAsset } from '@/lib/queries'
+import type { Asset } from '@/types'
 
 export function AssetDetail() {
     const { id } = useParams<{ id: string }>()
@@ -86,6 +87,8 @@ export function AssetDetail() {
                 )}
             </div>
 
+            <AssetSpecs asset={asset} />
+
             {/* ══ Warranty and what has been claimed on it ══════ */}
             {/* Dispatchers only: the history endpoint is theirs, and a
                 technician standing at the unit sees its cover on the job. */}
@@ -119,6 +122,40 @@ export function AssetDetail() {
                 <AssetForm open={editing} onClose={() => setEditing(false)} asset={asset} />
             )}
         </>
+    )
+}
+
+/** The UPS nameplate and specs — only the fields that were filled. */
+function AssetSpecs({ asset }: { asset: Asset }) {
+    const specs: Array<[string, string | null]> = [
+        ['الشركة المصنّعة', asset.brand],
+        ['الموديل', asset.model],
+        ['النوع', asset.ups_type ? UPS_TYPES[asset.ups_type] ?? asset.ups_type : null],
+        ['عدد الأوجه', asset.phase ? UPS_PHASES[asset.phase] ?? asset.phase : null],
+        ['رقم الأصل', asset.asset_number],
+        ['الباركود / QR', asset.barcode],
+        ['جهد الإدخال', asset.input_voltage],
+        ['جهد الخرج', asset.output_voltage],
+        ['التردد', asset.frequency],
+        ['الكفاءة', asset.efficiency],
+        ['معامل القدرة', asset.power_factor],
+        ['جهد البطارية', asset.battery_voltage],
+        ['عدد البطاريات', asset.battery_count != null ? String(asset.battery_count) : null],
+        ['مدة التشغيل', asset.backup_minutes != null ? `${asset.backup_minutes} دقيقة` : null],
+        ['منفذ الاتصال', asset.comm_port],
+    ].filter(([, value]) => value) as Array<[string, string]>
+
+    if (specs.length === 0) return null
+
+    return (
+        <section className="card mt-4 p-5">
+            <h2 className="mb-3 text-sm font-bold text-navy-800">المواصفات الفنية</h2>
+            <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {specs.map(([label, value]) => (
+                    <Detail key={label} label={label} value={value} />
+                ))}
+            </dl>
+        </section>
     )
 }
 

@@ -91,6 +91,44 @@ it('refuses a duplicate serial', function () {
         ->assertJsonValidationErrors('serial');
 });
 
+it('records the UPS nameplate and specifications', function () {
+    $response = actingAs($this->manager)
+        ->postJson('/api/assets', [
+            'customer_id' => $this->customer->id,
+            'name' => 'UPS غرفة السيرفر',
+            'asset_number' => 'AST-100',
+            'barcode' => 'QR-778',
+            'brand' => 'APC',
+            'model' => 'Symmetra LX',
+            'ups_type' => 'online',
+            'phase' => 'three',
+            'capacity' => '20 kVA',
+            'input_voltage' => '380V',
+            'output_voltage' => '220V',
+            'frequency' => '50Hz',
+            'efficiency' => '95%',
+            'power_factor' => '0.9',
+            'battery_voltage' => '240V',
+            'battery_count' => 40,
+            'backup_minutes' => 15,
+            'comm_port' => 'SNMP',
+        ])
+        ->assertCreated();
+
+    expect($response->json('name'))->toBe('UPS غرفة السيرفر')
+        ->and($response->json('ups_type'))->toBe('online')
+        ->and($response->json('phase'))->toBe('three')
+        ->and($response->json('battery_count'))->toBe(40)
+        ->and($response->json('comm_port'))->toBe('SNMP');
+});
+
+it('rejects an unknown UPS type', function () {
+    actingAs($this->manager)
+        ->postJson('/api/assets', ['customer_id' => $this->customer->id, 'ups_type' => 'quantum'])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('ups_type');
+});
+
 it('allows several devices with no serial yet', function () {
     // Unique columns treat NULL as distinct, but this is worth pinning: a batch
     // arriving before anyone records serials must not collide.

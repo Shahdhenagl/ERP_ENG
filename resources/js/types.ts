@@ -835,10 +835,26 @@ export interface Asset {
     id: number
     code: string
     serial: string | null
+    name: string | null
+    asset_number: string | null
+    barcode: string | null
 
     brand: string | null
     model: string | null
+    ups_type: string | null
+    phase: string | null
     capacity: string | null
+
+    input_voltage: string | null
+    output_voltage: string | null
+    frequency: string | null
+    efficiency: string | null
+    power_factor: string | null
+    battery_voltage: string | null
+    battery_count: number | null
+    backup_minutes: number | null
+    comm_port: string | null
+
     /** Best available human label — brand+model, else serial, else code. */
     label: string
 

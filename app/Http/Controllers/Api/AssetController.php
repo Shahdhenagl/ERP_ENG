@@ -97,9 +97,27 @@ class AssetController extends Controller
             ],
             'customer_id' => ['required', 'exists:customers,id'],
             'branch_id' => ['nullable', 'exists:branches,id'],
+            'name' => ['nullable', 'string', 'max:160'],
+            'asset_number' => ['nullable', 'string', 'max:64'],
+            'barcode' => ['nullable', 'string', 'max:120'],
             'brand' => ['nullable', 'string', 'max:120'],
             'model' => ['nullable', 'string', 'max:120'],
+            'ups_type' => ['nullable', 'in:online,offline,line_interactive'],
+            'phase' => ['nullable', 'in:single,three'],
             'capacity' => ['nullable', 'string', 'max:64'],
+
+            // Technical specifications — the nameplate, kept as text so a range
+            // like "160–290V" survives as written.
+            'input_voltage' => ['nullable', 'string', 'max:60'],
+            'output_voltage' => ['nullable', 'string', 'max:60'],
+            'frequency' => ['nullable', 'string', 'max:40'],
+            'efficiency' => ['nullable', 'string', 'max:40'],
+            'power_factor' => ['nullable', 'string', 'max:20'],
+            'battery_voltage' => ['nullable', 'string', 'max:40'],
+            'battery_count' => ['nullable', 'integer', 'min:0', 'max:100000'],
+            'backup_minutes' => ['nullable', 'integer', 'min:0', 'max:100000'],
+            'comm_port' => ['nullable', 'string', 'max:60'],
+
             'site_address' => ['nullable', 'string', 'max:500'],
             'site_lat' => ['nullable', 'numeric', 'between:-90,90'],
             'site_lng' => ['nullable', 'numeric', 'between:-180,180'],

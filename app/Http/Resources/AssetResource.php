@@ -15,10 +15,25 @@ class AssetResource extends JsonResource
             'id' => $this->id,
             'code' => $this->code,
             'serial' => $this->serial,
+            'name' => $this->name,
+            'asset_number' => $this->asset_number,
+            'barcode' => $this->barcode,
 
             'brand' => $this->brand,
             'model' => $this->model,
+            'ups_type' => $this->ups_type,
+            'phase' => $this->phase,
             'capacity' => $this->capacity,
+
+            'input_voltage' => $this->input_voltage,
+            'output_voltage' => $this->output_voltage,
+            'frequency' => $this->frequency,
+            'efficiency' => $this->efficiency,
+            'power_factor' => $this->power_factor,
+            'battery_voltage' => $this->battery_voltage,
+            'battery_count' => $this->battery_count,
+            'backup_minutes' => $this->backup_minutes,
+            'comm_port' => $this->comm_port,
             // One definition, on the model — this used to be spelled out here
             // and again in MaintenancePlanner, and they had already drifted.
             'label' => $this->label(),

@@ -339,6 +339,22 @@ export const ALL_READING_KEYS = [
 /** Expense headings a technician picks from when spending out of their float. */
 export const EXPENSE_CATEGORIES = ['وقود', 'مواصلات', 'قطع غيار', 'ضيافة', 'أخرى'] as const
 
+/** UPS topology, on the device nameplate. */
+export const UPS_TYPES: Record<string, string> = {
+    online: 'Online (تحويل مزدوج)',
+    offline: 'Offline (احتياطي)',
+    line_interactive: 'Line Interactive',
+}
+
+/** Single- or three-phase. */
+export const UPS_PHASES: Record<string, string> = {
+    single: 'أحادي الوجه',
+    three: 'ثلاثي الأوجه',
+}
+
+/** Communication ports a UPS commonly exposes. */
+export const COMM_PORTS = ['USB', 'RS232', 'SNMP', 'USB + RS232', 'USB + SNMP'] as const
+
 /** Egypt's 27 governorates, for the site's region — picked, not typed. */
 export const EGYPT_GOVERNORATES = [
     'القاهرة', 'الجيزة', 'الإسكندرية', 'القليوبية', 'الشرقية', 'الدقهلية',
