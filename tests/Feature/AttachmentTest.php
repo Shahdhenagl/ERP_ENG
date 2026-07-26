@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\Attachment;
+use App\Models\Contract;
+use App\Models\Customer;
 use App\Models\SiteSurvey;
 use App\Models\Tender;
 use App\Models\User;
@@ -29,6 +31,20 @@ it('uploads a photo and links it to the record', function () {
         ->and($this->survey->attachments()->count())->toBe(1);
 
     Storage::disk('public')->assertExists($this->survey->attachments()->first()->path);
+});
+
+it('attaches the signed contract document to a contract', function () {
+    $contract = Contract::factory()->create(['customer_id' => Customer::factory()]);
+
+    actingAs($this->manager)
+        ->post("/api/attachments/contracts/{$contract->id}", [
+            'files' => [UploadedFile::fake()->create('contract.pdf', 200, 'application/pdf')],
+            'caption' => 'العقد الموقّع',
+        ])
+        ->assertCreated();
+
+    expect($contract->attachments()->count())->toBe(1)
+        ->and($contract->attachments()->first()->caption)->toBe('العقد الموقّع');
 });
 
 it('lists the files on a record', function () {

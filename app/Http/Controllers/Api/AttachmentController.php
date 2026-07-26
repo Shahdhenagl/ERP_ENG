@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Attachment;
 use App\Models\Battery;
+use App\Models\Contract;
 use App\Models\SiteSurvey;
 use App\Models\Tender;
 use Illuminate\Database\Eloquent\Model;
@@ -31,6 +32,7 @@ class AttachmentController extends Controller
         'site-surveys' => [SiteSurvey::class, 'crm.manage'],
         'batteries' => [Battery::class, 'assets.manage'],
         'tenders' => [Tender::class, 'sales.manage'],
+        'contracts' => [Contract::class, 'contracts.manage'],
     ];
 
     public function index(Request $request, string $type, int $id): JsonResponse

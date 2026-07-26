@@ -23,6 +23,7 @@ import { errorMessage, fieldErrors } from '@/lib/api'
 import { CONTRACT_STATUS, VISIT_STATUS, expiryChip } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
 import { useArea } from '@/lib/nav'
+import { Attachments } from '@/components/Attachments'
 import { useContract, useContractAction, useRenewContract } from '@/lib/queries'
 import type { Contract } from '@/types'
 import type { ContractVisit } from '@/types'
@@ -257,6 +258,10 @@ export function ContractDetail() {
                         </section>
                     )}
                 </div>
+            </div>
+
+            <div className="mt-5">
+                <Attachments type="contracts" id={contract.id} label="ملف العقد والمستندات" />
             </div>
 
             {editOpen && (

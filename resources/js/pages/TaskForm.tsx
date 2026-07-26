@@ -236,23 +236,35 @@ export function TaskForm() {
                             </div>
                         </Field>
 
-                        {/* Only worth asking when there is a choice to make.
-                            An account with one site has nothing to pick. */}
-                        {branches.length > 1 && (
+                        {/* Pick the site and its address comes with it: a job
+                            sent to a bank needs to say which branch, and the
+                            technician needs that branch's address, not the
+                            account's head office. */}
+                        {branches.length > 0 && (
                             <Field
-                                label="الفرع"
+                                label="الموقع / الفرع"
                                 error={errors.branch_id}
-                                hint="يحدد وجهة الفني ومسئول الموقع"
+                                hint="اختيار الموقع يملأ عنوانه تلقائيًا"
                             >
                                 <Select
                                     value={form.branch_id}
-                                    onChange={(event) => set('branch_id')(event.target.value)}
+                                    onChange={(event) => {
+                                        const id = event.target.value
+                                        const picked = branches.find((b) => String(b.id) === id)
+                                        setForm((current) => ({
+                                            ...current,
+                                            branch_id: id,
+                                            // Fill the address from the site so the dispatcher
+                                            // sees where it goes; still editable for a one-off.
+                                            site_address: picked?.address ?? current.site_address,
+                                        }))
+                                    }}
                                 >
-                                    <option value="">— بدون فرع محدد —</option>
+                                    <option value="">— بدون موقع محدد —</option>
                                     {branches.map((branch) => (
                                         <option key={branch.id} value={branch.id}>
                                             {branch.name}
-                                            {branch.address ? ` — ${branch.address}` : ''}
+                                            {branch.city ? ` — ${branch.city}` : ''}
                                         </option>
                                     ))}
                                 </Select>
@@ -261,7 +273,7 @@ export function TaskForm() {
 
                         <Field
                             label="عنوان الموقع"
-                            hint="اتركه فارغًا لاستخدام عنوان الفرع أو العميل."
+                            hint="يُملأ من الموقع المختار، أو اكتب عنوانًا مختلفًا."
                             error={errors.site_address}
                         >
                             <Textarea
