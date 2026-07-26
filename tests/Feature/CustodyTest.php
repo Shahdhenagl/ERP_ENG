@@ -103,12 +103,15 @@ it('takes what the technician spent out of their float', function () {
     expect($this->custody->cashBoxFor($this->technician)->balance())->toBe(1820.0);
 });
 
-it('refuses to spend more than the technician holds', function () {
+it('lets a technician spend past their float, owing them the difference', function () {
+    // The float is a working budget, not a hard ceiling: a technician fronts
+    // their own money on the road and the box goes negative to record the debt.
     fundTreasury(5000);
     $this->custody->advanceCash($this->technician, 500, $this->treasury, $this->manager);
 
-    expect(fn () => $this->custody->spendFromCustody($this->technician, 900, $this->technician))
-        ->toThrow(ValidationException::class);
+    $this->custody->spendFromCustody($this->technician, 900, $this->technician);
+
+    expect($this->custody->shortfallFor($this->technician))->toBe(400.0);
 });
 
 it('returns the unspent balance to the treasury', function () {
