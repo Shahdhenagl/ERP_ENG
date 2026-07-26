@@ -131,6 +131,17 @@ Route::middleware(['auth:sanctum', 'role'])->group(function () {
     Route::get('custody/mine', [CustodyController::class, 'mine']);
     Route::post('custody/mine/spend', [CustodyController::class, 'spendMine']);
 
+    // A technician's own leave — file a request and watch for the decision.
+    // Creation always lands pending; only a manager approves it (below).
+    Route::get('leave/mine', [LeaveController::class, 'mine']);
+    Route::post('leave/mine', [LeaveController::class, 'storeMine']);
+
+    // Self check-in / check-out from the field, stamping where. Scoped to the
+    // caller; the manager register and corrections stay behind hr.manage (below).
+    Route::get('attendance/mine/today', [AttendanceController::class, 'mineToday']);
+    Route::post('attendance/check-in', [AttendanceController::class, 'checkIn']);
+    Route::post('attendance/check-out', [AttendanceController::class, 'checkOut']);
+
     // The periodic-maintenance checklist a technician fills on a visit — read
     // by any signed-in user; only the manager edits it (below).
     Route::get('checklist-items', [ChecklistController::class, 'index']);
@@ -190,6 +201,10 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::delete('batteries/{battery}', [BatteryController::class, 'destroy'])->middleware('can:assets.manage');
 
     Route::get('technicians', [UserController::class, 'technicians']);
+    // The full monthly read on one technician — carries the salary, so it sits
+    // behind the same permission as the rest of HR.
+    Route::get('technicians/{user}/profile', [UserController::class, 'technicianProfile'])
+        ->middleware('can:hr.manage');
 
     // Attachments — files on any record that owns them (site surveys, tenders,
     // batteries). The kind of record carries its own permission, checked in

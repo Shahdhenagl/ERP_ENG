@@ -56,6 +56,28 @@ class Employee extends Model
         return 'EMP-'.str_pad((string) ($last + 1), 4, '0', STR_PAD_LEFT);
     }
 
+    /**
+     * The HR file for a login, opening a bare one the first time it is needed.
+     *
+     * A technician who checks in or files leave before anyone set up their file
+     * should not be turned away — attendance and leave need an employee to hang
+     * off. The salary stays at zero until the manager fills it in; the record
+     * exists so the self-service works and the profile has something to show.
+     */
+    public static function forUser(User $user): self
+    {
+        return static::firstOrCreate(
+            ['user_id' => $user->id],
+            [
+                'name' => $user->name,
+                'phone' => $user->phone,
+                'job_title' => $user->job_title,
+                'status' => 'active',
+                'created_by' => $user->id,
+            ],
+        );
+    }
+
     // ── Relations ────────────────────────────────────────────
 
     public function user(): BelongsTo

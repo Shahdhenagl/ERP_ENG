@@ -5,7 +5,11 @@ import {
     CalendarCheck,
     CalendarClock,
     ClipboardList,
+    Clock,
     Inbox,
+    LogIn,
+    LogOut,
+    MapPin,
     Plus,
     Receipt,
     TrendingUp,
@@ -18,12 +22,33 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CustodyExpenseModal } from '@/components/CustodyExpenseModal'
 import { TaskCard } from '@/components/TaskCard'
+import { useToast } from '@/components/Toast'
 import { Button, EmptyState, ErrorState, PageHeader, SkeletonCard } from '@/components/ui'
+import { errorMessage } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import { formatMoney, STATUS, STATUS_FLOW } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
 import { useArea } from '@/lib/nav'
-import { useDashboard, useMyCustody } from '@/lib/queries'
+import {
+    useAttendancePunch,
+    useDashboard,
+    useMyAttendanceToday,
+    useMyCustody,
+} from '@/lib/queries'
+import type { DashboardData } from '@/types'
+
+/** Best-effort GPS stamp; never blocks the punch. */
+async function currentPosition(): Promise<{ lat?: number; lng?: number }> {
+    if (!navigator.geolocation) return {}
+
+    return new Promise((resolve) => {
+        navigator.geolocation.getCurrentPosition(
+            (position) => resolve({ lat: position.coords.latitude, lng: position.coords.longitude }),
+            () => resolve({}),
+            { timeout: 4000, maximumAge: 60_000 },
+        )
+    })
+}
 
 export function Dashboard() {
     const { user, canDispatch, can } = useAuth()
@@ -90,8 +115,14 @@ export function Dashboard() {
                 )}
             </div>
 
-            {/* ── My custody (technicians) ───────────────────── */}
+            {/* ── Attendance & custody (technicians) ─────────── */}
+            {!canDispatch && <AttendanceCard />}
             {!canDispatch && <MyCustodyCard />}
+
+            {/* ── Field attendance today (dispatchers) ───────── */}
+            {canDispatch && Boolean(data?.attendance_today?.length) && (
+                <AttendanceToday rows={data!.attendance_today!} stats={stats} />
+            )}
 
             {/* ── Status breakdown ───────────────────────────── */}
             <section className="mt-6">
@@ -390,6 +421,132 @@ function MyCustodyCard() {
             </div>
 
             {spending && <CustodyExpenseModal balance={balance} onClose={() => setSpending(false)} />}
+        </section>
+    )
+}
+
+/** The technician's own punch clock: check in on arrival, out when done. */
+function AttendanceCard() {
+    const toast = useToast()
+    const { data: today, isLoading } = useMyAttendanceToday()
+    const checkIn = useAttendancePunch('check-in')
+    const checkOut = useAttendancePunch('check-out')
+
+    if (isLoading) return <div className="mt-6 shimmer h-24 rounded-2xl" />
+
+    const checkedIn = Boolean(today?.check_in)
+    const checkedOut = Boolean(today?.check_out)
+
+    const punch = async (direction: 'check-in' | 'check-out') => {
+        const location = await currentPosition()
+        try {
+            await (direction === 'check-in' ? checkIn : checkOut).mutateAsync(location)
+            toast.success(direction === 'check-in' ? 'تم تسجيل حضورك.' : 'تم تسجيل انصرافك.')
+        } catch (caught) {
+            toast.error(errorMessage(caught, 'تعذّر التنفيذ.'))
+        }
+    }
+
+    return (
+        <section className="mt-6">
+            <div className="card p-5">
+                <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                        <div className="grid size-11 place-items-center rounded-xl bg-brand-50 text-brand-600">
+                            <Clock className="size-5" />
+                        </div>
+                        <div>
+                            <p className="text-[11px] font-bold text-navy-400">الحضور اليوم</p>
+                            <p className="tabular text-sm font-extrabold text-navy-900">
+                                {checkedIn ? (
+                                    <>
+                                        حضور {today!.check_in}
+                                        {checkedOut && ` · انصراف ${today!.check_out}`}
+                                    </>
+                                ) : (
+                                    'لم تسجّل حضورك بعد'
+                                )}
+                            </p>
+                            {checkedOut && (
+                                <p className="text-[11px] text-navy-400">
+                                    ساعات العمل: {today!.worked_hours}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+
+                    {!checkedIn ? (
+                        <Button icon={LogIn} loading={checkIn.isPending} onClick={() => punch('check-in')}>
+                            تسجيل حضور
+                        </Button>
+                    ) : !checkedOut ? (
+                        <Button
+                            icon={LogOut}
+                            variant="secondary"
+                            loading={checkOut.isPending}
+                            onClick={() => punch('check-out')}
+                        >
+                            تسجيل انصراف
+                        </Button>
+                    ) : (
+                        <span className="badge bg-emerald-50 text-emerald-700">اكتمل اليوم</span>
+                    )}
+                </div>
+            </div>
+        </section>
+    )
+}
+
+/** Today's field attendance for a dispatcher — who is in, and from where. */
+function AttendanceToday({
+    rows,
+    stats,
+}: {
+    rows: NonNullable<DashboardData['attendance_today']>
+    stats?: DashboardData['stats']
+}) {
+    return (
+        <section className="mt-6">
+            <div className="mb-3 flex items-center gap-2">
+                <Clock className="size-4 text-brand-600" />
+                <h2 className="text-sm font-bold text-navy-700">حضور الفنيين اليوم</h2>
+                <span className="tabular text-[11px] font-semibold text-navy-400">
+                    {stats?.on_site_now ?? 0} في الموقع · {stats?.checked_in_today ?? 0} حضروا
+                </span>
+            </div>
+
+            <div className="card divide-y divide-navy-100">
+                {rows.map((row) => (
+                    <div key={row.id} className="flex items-center gap-3 p-3.5">
+                        <span
+                            className={clsx(
+                                'size-2.5 shrink-0 rounded-full',
+                                row.check_out ? 'bg-navy-300' : 'bg-emerald-500',
+                            )}
+                            title={row.check_out ? 'انصرف' : 'في الموقع'}
+                        />
+                        <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-bold text-navy-900">{row.employee}</p>
+                            <p className="tabular text-[11px] text-navy-400">
+                                حضور {row.check_in ?? '—'}
+                                {row.check_out && ` · انصراف ${row.check_out}`}
+                                {row.check_out && ` · ${row.worked_hours} ساعة`}
+                            </p>
+                        </div>
+                        {row.check_in_location && (
+                            <a
+                                href={`https://maps.google.com/?q=${row.check_in_location.lat},${row.check_in_location.lng}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="tap grid size-9 shrink-0 place-items-center rounded-lg bg-navy-50 text-navy-500 hover:text-brand-600"
+                                aria-label="موقع الحضور"
+                            >
+                                <MapPin className="size-4" />
+                            </a>
+                        )}
+                    </div>
+                ))}
+            </div>
         </section>
     )
 }

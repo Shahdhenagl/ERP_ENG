@@ -1123,6 +1123,9 @@ export interface DashboardData {
         contracts_active?: number
         contracts_expiring?: number
         follow_ups_due?: number
+        /** Technicians who have checked in today, and how many are still on site. */
+        checked_in_today?: number
+        on_site_now?: number
         technician_load?: Array<{
             id: number
             name: string
@@ -1132,6 +1135,18 @@ export interface DashboardData {
         }>
     }
     upcoming: Task[]
+    /** Dispatcher-only: today's field attendance, off the technicians' check-ins. */
+    attendance_today?: Array<{
+        id: number
+        employee: string | null
+        employee_code: string | null
+        check_in: string | null
+        check_out: string | null
+        status: AttendanceStatus
+        status_label: string
+        worked_hours: number
+        check_in_location: { lat: number; lng: number } | null
+    }>
     /** Dispatcher-only: the visits that need someone put on them. */
     maintenance_due?: Task[]
     contracts_expiring?: Contract[]
@@ -2406,6 +2421,10 @@ export interface Attendance {
     status_label: string
     check_in: string | null
     check_out: string | null
+    check_in_lat?: number | null
+    check_in_lng?: number | null
+    check_out_lat?: number | null
+    check_out_lng?: number | null
     late_minutes: number
     worked_hours: number
     note: string | null
@@ -2451,6 +2470,82 @@ export interface LeaveRequest {
     /** The balance as it stands, for an approver weighing an annual request. */
     annual_remaining: number | null
     created_at: string | null
+}
+
+/** The manager's full monthly read on one technician. */
+export interface TechnicianProfile {
+    technician: {
+        id: number
+        name: string
+        phone: string | null
+        job_title: string | null
+        open_tasks: number
+    }
+    month: { year: number; month: number }
+    employee: {
+        id: number
+        code: string
+        status: string
+        status_label: string
+        basic_salary: number
+        allowances_total: number
+        gross_salary: number
+        annual_leave_days: number
+        annual_leave_taken: number
+        annual_leave_remaining: number
+        outstanding_advances: number
+    } | null
+    tasks: {
+        total: number
+        completed: number
+        rows: Array<{
+            id: number
+            code: string
+            date: string | null
+            title: string | null
+            type_label: string
+            status: TaskStatus
+            status_label: string
+            customer: string | null
+            branch: string | null
+        }>
+    }
+    attendance: {
+        present_days: number
+        late_days: number
+        absent_days: number
+        leave_days: number
+        attended_days: number
+        worked_hours: number
+        rows: Array<{
+            id: number
+            date: string | null
+            status: AttendanceStatus
+            status_label: string
+            check_in: string | null
+            check_out: string | null
+            worked_hours: number
+            check_in_location: { lat: number; lng: number } | null
+        }>
+    }
+    leave: Array<{
+        id: number
+        code: string
+        type_label: string
+        from_date: string | null
+        to_date: string | null
+        days: number
+        status: LeaveStatus
+        status_label: string
+    }>
+    payslip: {
+        id: number
+        month_label: string | null
+        gross: number
+        total_deductions: number
+        net: number
+        paid_on: string | null
+    } | null
 }
 
 export interface SalaryAdvance {

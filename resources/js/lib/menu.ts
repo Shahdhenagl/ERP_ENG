@@ -343,6 +343,7 @@ export const NAV: NavItem[] = [
     { to: '/', label: 'الرئيسية', icon: LayoutDashboard, roles: ['technician'] },
     { to: '/tasks', label: 'المهام', icon: ClipboardList, roles: ['technician'] },
     { to: '/stock', label: 'عهدتي', icon: Package, roles: ['technician'] },
+    { to: '/leave', label: 'الإجازات', icon: CalendarDays, roles: ['technician'] },
 ]
 
 /** Star icons the "new" screens keep for their own labels, unused elsewhere. */

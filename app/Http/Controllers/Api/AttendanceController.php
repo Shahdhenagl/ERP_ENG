@@ -10,6 +10,7 @@ use App\Models\Employee;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\ValidationException;
 
 class AttendanceController extends Controller
 {
@@ -71,6 +72,91 @@ class AttendanceController extends Controller
         $attendance->delete();
 
         return response()->json(['data' => true]);
+    }
+
+    /* ── Technician self-service ─────────────────────────────── */
+
+    /** The signed-in technician's record for today, or null before they punch. */
+    public function mineToday(Request $request): JsonResponse
+    {
+        $employee = Employee::firstWhere('user_id', $request->user()->id);
+
+        $record = $employee
+            ? Attendance::where('employee_id', $employee->id)->whereDate('date', today())->first()
+            : null;
+
+        return response()->json(['data' => $record ? $this->present($record) : null]);
+    }
+
+    /**
+     * Punch in from the field, stamping where. One check-in a day — a second is
+     * refused rather than overwriting the first, which is the honest time.
+     */
+    public function checkIn(Request $request): JsonResponse
+    {
+        $data = $this->locationRules($request);
+        $employee = Employee::forUser($request->user());
+        $today = now()->toDateString();
+
+        $existing = Attendance::where('employee_id', $employee->id)->whereDate('date', $today)->first();
+
+        if ($existing && $existing->check_in) {
+            throw ValidationException::withMessages(['check_in' => 'تم تسجيل حضورك اليوم بالفعل.']);
+        }
+
+        $attendance = Attendance::updateOrCreate(
+            ['employee_id' => $employee->id, 'date' => $today],
+            [
+                'status' => 'present',
+                'check_in' => now()->format('H:i'),
+                'check_in_lat' => $data['lat'] ?? null,
+                'check_in_lng' => $data['lng'] ?? null,
+                'recorded_by' => $request->user()->id,
+            ],
+        );
+
+        ActivityLog::record('attendance.check_in', $attendance, "تسجيل حضور {$employee->name}");
+
+        return response()->json(['data' => $this->present($attendance)], 201);
+    }
+
+    /** Punch out, stamping where. Refused until they have punched in. */
+    public function checkOut(Request $request): JsonResponse
+    {
+        $data = $this->locationRules($request);
+        $employee = Employee::forUser($request->user());
+
+        $attendance = Attendance::where('employee_id', $employee->id)
+            ->whereDate('date', now()->toDateString())
+            ->first();
+
+        if (! $attendance || ! $attendance->check_in) {
+            throw ValidationException::withMessages(['check_out' => 'سجّل حضورك أولًا قبل الانصراف.']);
+        }
+
+        if ($attendance->check_out) {
+            throw ValidationException::withMessages(['check_out' => 'تم تسجيل انصرافك اليوم بالفعل.']);
+        }
+
+        $attendance->update([
+            'check_out' => now()->format('H:i'),
+            'check_out_lat' => $data['lat'] ?? null,
+            'check_out_lng' => $data['lng'] ?? null,
+            'recorded_by' => $request->user()->id,
+        ]);
+
+        ActivityLog::record('attendance.check_out', $attendance, "تسجيل انصراف {$employee->name}");
+
+        return response()->json(['data' => $this->present($attendance->fresh())]);
+    }
+
+    /** @return array<string, mixed> */
+    protected function locationRules(Request $request): array
+    {
+        return $request->validate([
+            'lat' => ['nullable', 'numeric', 'between:-90,90'],
+            'lng' => ['nullable', 'numeric', 'between:-180,180'],
+        ]);
     }
 
     /**
@@ -147,6 +233,10 @@ class AttendanceController extends Controller
 
             'check_in' => $a->check_in ? substr((string) $a->check_in, 0, 5) : null,
             'check_out' => $a->check_out ? substr((string) $a->check_out, 0, 5) : null,
+            'check_in_lat' => $a->check_in_lat,
+            'check_in_lng' => $a->check_in_lng,
+            'check_out_lat' => $a->check_out_lat,
+            'check_out_lng' => $a->check_out_lng,
             'late_minutes' => (int) $a->late_minutes,
             'worked_hours' => (float) $a->worked_hours,
 

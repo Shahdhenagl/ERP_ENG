@@ -97,6 +97,7 @@ import type {
     Task,
     TaskReport,
     TaskStatus,
+    TechnicianProfile,
     User,
 } from '@/types'
 
@@ -770,6 +771,23 @@ export function useTechnicians() {
     })
 }
 
+/** A manager's full monthly read on one technician — tasks, attendance, pay. */
+export function useTechnicianProfile(
+    id: number | string | undefined,
+    month: { year?: number; month?: number } = {},
+) {
+    return useQuery({
+        queryKey: ['technician-profile', Number(id ?? 0), month],
+        queryFn: async () =>
+            (
+                await api.get<{ data: TechnicianProfile }>(`/technicians/${id}/profile`, {
+                    params: month,
+                })
+            ).data.data,
+        enabled: Boolean(id),
+    })
+}
+
 export function useSaveUser(id?: number) {
     const client = useQueryClient()
 
@@ -1228,6 +1246,53 @@ export function useMyCustody() {
         queryFn: async () =>
             (await api.get<{ data: CustodyStatement }>('/custody/mine')).data.data,
         enabled: isTechnician,
+    })
+}
+
+/* ── Technician self-service: leave & attendance ─────────── */
+
+export function useMyLeave() {
+    const { isTechnician } = useAuth()
+
+    return useQuery({
+        queryKey: ['my-leave'] as const,
+        queryFn: async () => (await api.get<{ data: LeaveRequest[] }>('/leave/mine')).data.data,
+        enabled: isTechnician,
+    })
+}
+
+export function useSubmitLeave() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (await api.post<{ data: LeaveRequest }>('/leave/mine', payload)).data.data,
+        onSuccess: () => void client.invalidateQueries({ queryKey: ['my-leave'] }),
+    })
+}
+
+export function useMyAttendanceToday() {
+    const { isTechnician } = useAuth()
+
+    return useQuery({
+        queryKey: ['my-attendance-today'] as const,
+        queryFn: async () =>
+            (await api.get<{ data: Attendance | null }>('/attendance/mine/today')).data.data,
+        enabled: isTechnician,
+    })
+}
+
+/** A field punch, in or out, carrying an optional GPS stamp. */
+export function useAttendancePunch(direction: 'check-in' | 'check-out') {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: { lat?: number; lng?: number }) =>
+            (await api.post<{ data: Attendance }>(`/attendance/${direction}`, payload)).data.data,
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: ['my-attendance-today'] })
+            void client.invalidateQueries({ queryKey: keys.dashboard })
+        },
     })
 }
 

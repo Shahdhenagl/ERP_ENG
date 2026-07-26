@@ -89,6 +89,8 @@ import { CashOperationsPage } from '@/pages/treasury/CashOperationsPage'
 import { MyStock } from '@/pages/MyStock'
 import { ComingSoon } from '@/pages/ComingSoon'
 import { TechniciansPage } from '@/pages/TechniciansPage'
+import { TechnicianProfile } from '@/pages/TechnicianProfile'
+import { TechLeavePage } from '@/pages/TechLeavePage'
 import { CollectionsPage } from '@/pages/CollectionsPage'
 import { CustomerStatementPage } from '@/pages/CustomerStatementPage'
 import { SupplierStatementPage } from '@/pages/SupplierStatementPage'
@@ -162,6 +164,7 @@ export function App() {
                                         <Route path="assets/:id" element={<AssetDetail />} />
                                         {/* Read-only view of what they are carrying. */}
                                         <Route path="stock" element={<MyStock />} />
+                                        <Route path="leave" element={<TechLeavePage />} />
                                         <Route path="profile" element={<Profile />} />
                                     </Route>
 
@@ -246,6 +249,7 @@ export function App() {
                                         <Route path="banks" element={<BanksPage />} />
                                         <Route path="banks/:view" element={<BanksPage />} />
                                         <Route path="technicians" element={<TechniciansPage />} />
+                                        <Route path="technicians/:id" element={<TechnicianProfile />} />
                                         <Route path="hr" element={<HrPage />} />
                                         <Route path="hr/:tab" element={<HrPage />} />
 

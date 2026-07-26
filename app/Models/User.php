@@ -9,6 +9,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -61,6 +62,12 @@ class User extends Authenticatable
     public function createdTasks(): HasMany
     {
         return $this->hasMany(Task::class, 'created_by');
+    }
+
+    /** The HR file behind this login, when one has been opened. */
+    public function employee(): HasOne
+    {
+        return $this->hasOne(Employee::class);
     }
 
     /** @var array<string, bool>|null */

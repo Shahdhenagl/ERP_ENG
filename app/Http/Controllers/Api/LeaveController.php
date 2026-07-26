@@ -50,6 +50,44 @@ class LeaveController extends Controller
         return response()->json(['data' => $this->present($leave->load('employee'))], 201);
     }
 
+    /** A technician's own leave requests, newest first — their self-service list. */
+    public function mine(Request $request): JsonResponse
+    {
+        $employee = \App\Models\Employee::firstWhere('user_id', $request->user()->id);
+
+        $requests = $employee
+            ? $employee->leaveRequests()->with('decider')->orderByDesc('id')->get()
+            : collect();
+
+        return response()->json([
+            'data' => $requests->map(fn (LeaveRequest $l) => $this->present($l))->values(),
+        ]);
+    }
+
+    /**
+     * File one's own request. It always lands pending — the technician cannot
+     * approve it, only a manager can, through decide(). The employee file is
+     * opened on first use if it does not exist yet.
+     */
+    public function storeMine(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'type' => ['required', 'in:annual,sick,unpaid'],
+            'from_date' => ['required', 'date'],
+            'to_date' => ['required', 'date'],
+            'reason' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $employee = \App\Models\Employee::forUser($request->user());
+        $data['employee_id'] = $employee->id;
+
+        $leave = $this->leave->request($data, $request->user());
+
+        ActivityLog::record('leave.created', $leave, "طلب إجازة {$leave->code}");
+
+        return response()->json(['data' => $this->present($leave->load('employee'))], 201);
+    }
+
     public function decide(Request $request, LeaveRequest $leaveRequest): JsonResponse
     {
         $data = $request->validate([

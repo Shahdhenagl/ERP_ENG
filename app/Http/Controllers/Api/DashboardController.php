@@ -191,6 +191,34 @@ class DashboardController extends Controller
                 ])->values();
             }
 
+            // Today's field attendance, straight off the technicians' own
+            // check-ins — who is in, when they punched, and from where.
+            $attendanceToday = \App\Models\Attendance::query()
+                ->whereDate('date', today())
+                ->whereNotNull('check_in')
+                ->with('employee:id,name,code')
+                ->orderByDesc('check_out')
+                ->orderBy('check_in')
+                ->get();
+
+            $stats['checked_in_today'] = $attendanceToday->count();
+            $stats['on_site_now'] = $attendanceToday->whereNull('check_out')->count();
+
+            $payload['attendance_today'] = $attendanceToday->map(fn (\App\Models\Attendance $a) => [
+                'id' => $a->id,
+                'employee' => $a->employee?->name,
+                'employee_code' => $a->employee?->code,
+                'check_in' => $a->check_in ? substr((string) $a->check_in, 0, 5) : null,
+                'check_out' => $a->check_out ? substr((string) $a->check_out, 0, 5) : null,
+                'status' => $a->status->value,
+                'status_label' => $a->statusLabel(),
+                'worked_hours' => (float) $a->worked_hours,
+                // A map link the dispatcher can open, only when a stamp carried one.
+                'check_in_location' => $a->check_in_lat !== null
+                    ? ['lat' => (float) $a->check_in_lat, 'lng' => (float) $a->check_in_lng]
+                    : null,
+            ])->values();
+
             $payload['stats'] = $stats;
         }
 

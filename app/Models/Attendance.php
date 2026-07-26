@@ -23,6 +23,7 @@ class Attendance extends Model
     protected $fillable = [
         'employee_id', 'date', 'status',
         'check_in', 'check_out', 'late_minutes', 'worked_hours',
+        'check_in_lat', 'check_in_lng', 'check_out_lat', 'check_out_lng',
         'note', 'recorded_by',
     ];
 
@@ -33,6 +34,10 @@ class Attendance extends Model
             'status' => AttendanceStatus::class,
             'late_minutes' => 'integer',
             'worked_hours' => 'decimal:2',
+            'check_in_lat' => 'float',
+            'check_in_lng' => 'float',
+            'check_out_lat' => 'float',
+            'check_out_lng' => 'float',
         ];
     }
 

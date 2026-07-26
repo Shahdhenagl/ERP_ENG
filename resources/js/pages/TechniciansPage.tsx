@@ -1,6 +1,8 @@
 import { HardHat, Phone, Search, Wrench } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { EmptyState, Input, PageHeader, SkeletonCard } from '@/components/ui'
+import { useArea } from '@/lib/nav'
 import { useTechnicians } from '@/lib/queries'
 
 /**
@@ -12,6 +14,7 @@ import { useTechnicians } from '@/lib/queries'
  * roster the service desk reads before it hands out the next job.
  */
 export function TechniciansPage() {
+    const { path } = useArea()
     const { data: technicians, isLoading } = useTechnicians()
     const [search, setSearch] = useState('')
 
@@ -57,7 +60,11 @@ export function TechniciansPage() {
             ) : (
                 <div className="space-y-2">
                     {rows.map((tech) => (
-                        <div key={tech.id} className="card flex items-center gap-3 p-3.5">
+                        <Link
+                            key={tech.id}
+                            to={path(`/technicians/${tech.id}`)}
+                            className="card-interactive flex items-center gap-3 p-3.5"
+                        >
                             <span className="grid size-11 shrink-0 place-items-center rounded-full bg-brand-50 text-sm font-bold text-brand-700">
                                 {tech.name.charAt(0)}
                             </span>
@@ -85,7 +92,7 @@ export function TechniciansPage() {
                                 <Wrench className="size-3.5" />
                                 {tech.open_tasks_count ?? 0} مهمة
                             </span>
-                        </div>
+                        </Link>
                     ))}
                 </div>
             )}
