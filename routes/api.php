@@ -154,6 +154,7 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     // it without managing the customer record.
     Route::get('customers/{customer}/statement', StatementController::class)->middleware('can:customers.manage,sales.manage');
     Route::get('customers/{customer}/profile', [CustomerController::class, 'profile'])->middleware('can:customers.manage');
+    Route::get('customers/{customer}/tasks', [CustomerController::class, 'tasks'])->middleware('can:customers.manage');
     Route::get('customers/{customer}/timeline', [CustomerController::class, 'timeline'])->middleware('can:customers.manage');
 
     // ── Customer branches ────────────────────────────────────

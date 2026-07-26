@@ -2,23 +2,35 @@ import clsx from 'clsx'
 import {
     ArrowRight,
     Boxes,
+    ClipboardList,
     FileText,
     HardDrive,
     MapPin,
     MessageCircle,
     Pencil,
     Phone,
+    Printer,
     ScrollText,
 } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { CustomerForm } from '@/components/CustomerForm'
-import { Button, EmptyState, ErrorState, PageLoader } from '@/components/ui'
+import { Button, EmptyState, ErrorState, Field, Input, PageLoader, SkeletonCard } from '@/components/ui'
 import { formatMoney } from '@/lib/domain'
 import { formatDate, telLink } from '@/lib/format'
 import { useArea } from '@/lib/nav'
 import { BranchesSection } from '@/components/BranchesSection'
-import { useCustomer, useCustomerProfile } from '@/lib/queries'
+import { useCustomer, useCustomerProfile, useCustomerTasks } from '@/lib/queries'
+
+/** Job-status colours for the history rows and chips. */
+const TASK_STATUS_CHIP: Record<string, string> = {
+    pending: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200',
+    accepted: 'bg-sky-50 text-sky-700 ring-1 ring-sky-200',
+    on_the_way: 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200',
+    in_progress: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
+    completed: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
+    cancelled: 'bg-red-50 text-red-700 ring-1 ring-red-200',
+}
 
 const CONTRACT_CHIP: Record<string, string> = {
     active: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
@@ -220,6 +232,9 @@ export function CustomerProfile() {
                 )}
             </Section>
 
+            {/* ── Task / maintenance history ─────────────── */}
+            <CustomerTasksSection customerId={c.id} />
+
             {/* ── Branches / sites ───────────────────────── */}
             <BranchesSection customerId={c.id} />
 
@@ -227,6 +242,146 @@ export function CustomerProfile() {
                 <CustomerForm open customer={customer} onClose={() => setEditing(false)} />
             )}
         </>
+    )
+}
+
+/**
+ * Every job for this customer, filtered by a date window and printable.
+ *
+ * Fetches on its own so changing the dates re-queries without reloading the
+ * whole profile; the print link hands the same window to the report sheet.
+ */
+function CustomerTasksSection({ customerId }: { customerId: number }) {
+    const { path } = useArea()
+    const [from, setFrom] = useState('')
+    const [to, setTo] = useState('')
+
+    const { data, isLoading } = useCustomerTasks(customerId, {
+        from: from || undefined,
+        to: to || undefined,
+    })
+
+    const printHref = path(
+        `/print/customer-tasks/${customerId}?${new URLSearchParams({
+            ...(from ? { from } : {}),
+            ...(to ? { to } : {}),
+        }).toString()}`,
+    )
+
+    return (
+        <section className="mt-6">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                    <ClipboardList className="size-4 text-navy-400" />
+                    <h2 className="text-sm font-bold text-navy-800">حركات المهام</h2>
+                    {data && (
+                        <span className="tabular text-[11px] font-semibold text-navy-400">
+                            {data.meta.total}
+                        </span>
+                    )}
+                </div>
+                <a
+                    href={data?.data.length ? printHref : undefined}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={clsx(
+                        'btn-secondary py-2 text-xs',
+                        !data?.data.length && 'pointer-events-none opacity-40',
+                    )}
+                >
+                    <Printer className="size-3.5" />
+                    طباعة تقرير
+                </a>
+            </div>
+
+            <div className="mb-3 grid gap-3 sm:grid-cols-2">
+                <Field label="من تاريخ">
+                    <Input type="date" value={from} onChange={(event) => setFrom(event.target.value)} />
+                </Field>
+                <Field label="إلى تاريخ">
+                    <Input type="date" value={to} onChange={(event) => setTo(event.target.value)} />
+                </Field>
+            </div>
+
+            {isLoading ? (
+                <SkeletonCard />
+            ) : !data?.data.length ? (
+                <EmptyState icon={ClipboardList} title="لا توجد مهام في هذه الفترة" />
+            ) : (
+                <>
+                    <div className="mb-3 grid grid-cols-3 gap-2 text-center">
+                        <MiniStat label="الإجمالي" value={String(data.meta.total)} />
+                        <MiniStat label="منتهية" value={String(data.meta.completed)} tone="ok" />
+                        <MiniStat label="مفتوحة" value={String(data.meta.open)} tone="warn" />
+                    </div>
+
+                    <div className="overflow-x-auto rounded-2xl border border-navy-100">
+                        <table className="w-full min-w-[620px] text-sm">
+                            <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
+                                <tr>
+                                    <th className="px-3 py-2 text-right">التاريخ</th>
+                                    <th className="px-3 py-2 text-right">المهمة</th>
+                                    <th className="px-3 py-2 text-right">النوع</th>
+                                    <th className="px-3 py-2 text-right">الفني</th>
+                                    <th className="px-3 py-2 text-right">الحالة</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {data.data.map((task) => (
+                                    <tr key={task.id} className="border-t border-navy-100 align-top">
+                                        <td className="tabular px-3 py-2.5 text-navy-500">
+                                            {task.date ? formatDate(task.date) : '—'}
+                                        </td>
+                                        <td className="px-3 py-2.5">
+                                            <span className="tabular text-[11px] font-bold text-brand-600">
+                                                {task.code}
+                                            </span>
+                                            {task.title && (
+                                                <span className="block text-navy-700">{task.title}</span>
+                                            )}
+                                            {(task.branch || task.asset) && (
+                                                <span className="block text-[11px] text-navy-400">
+                                                    {[task.branch, task.asset].filter(Boolean).join(' · ')}
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-3 py-2.5 text-navy-600">{task.type_label}</td>
+                                        <td className="px-3 py-2.5 text-navy-600">{task.technician ?? '—'}</td>
+                                        <td className="px-3 py-2.5">
+                                            <span
+                                                className={clsx(
+                                                    'badge',
+                                                    TASK_STATUS_CHIP[task.status] ??
+                                                        'bg-navy-100 text-navy-500',
+                                                )}
+                                            >
+                                                {task.status_label}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </>
+            )}
+        </section>
+    )
+}
+
+function MiniStat({ label, value, tone }: { label: string; value: string; tone?: 'ok' | 'warn' }) {
+    return (
+        <div className="rounded-xl bg-navy-50 px-3 py-2">
+            <p className="text-[10px] font-bold text-navy-400">{label}</p>
+            <p
+                className={clsx(
+                    'tabular text-sm font-extrabold',
+                    tone === 'ok' ? 'text-emerald-600' : tone === 'warn' ? 'text-amber-600' : 'text-navy-900',
+                )}
+            >
+                {value}
+            </p>
+        </div>
     )
 }
 

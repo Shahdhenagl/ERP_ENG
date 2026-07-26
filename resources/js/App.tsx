@@ -54,6 +54,7 @@ import { InvoicePrint } from '@/pages/print/InvoicePrint'
 import { QuotationPrint } from '@/pages/print/QuotationPrint'
 import { ServiceReportPrint } from '@/pages/print/ServiceReportPrint'
 import { StatementPrint } from '@/pages/print/StatementPrint'
+import { CustomerTasksPrint } from '@/pages/print/CustomerTasksPrint'
 import { DeliveryNotePrint } from '@/pages/print/DeliveryNotePrint'
 import { PaymentVoucherPrint } from '@/pages/print/PaymentVoucherPrint'
 import { WarrantyCertificate } from '@/pages/print/WarrantyCertificate'
@@ -138,6 +139,7 @@ export function App() {
                                     <Route path="invoices/:id" element={<InvoicePrint />} />
                                     <Route path="quotations/:id" element={<QuotationPrint />} />
                                     <Route path="statements/:id" element={<StatementPrint />} />
+                                    <Route path="customer-tasks/:id" element={<CustomerTasksPrint />} />
                                     <Route path="warranty/:id" element={<WarrantyCertificate />} />
                                     <Route path="delivery/:id" element={<DeliveryNotePrint />} />
                                     <Route path="vouchers/:id" element={<PaymentVoucherPrint />} />

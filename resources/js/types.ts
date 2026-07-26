@@ -503,6 +503,40 @@ export interface StatementMeta {
     balance: number
 }
 
+/** One job in a customer's maintenance history, for the profile and print. */
+export interface CustomerTaskRow {
+    id: number
+    code: string
+    date: string | null
+    title: string | null
+    description: string | null
+    type: TaskType
+    type_label: string
+    status: TaskStatus
+    status_label: string
+    priority_label: string
+    technician: string | null
+    branch: string | null
+    asset: string | null
+    completed_at: string | null
+}
+
+export interface CustomerTasksMeta {
+    customer: {
+        id: number
+        code: string
+        name: string
+        company: string | null
+        phone: string | null
+        address: string | null
+    }
+    from: string | null
+    to: string | null
+    total: number
+    completed: number
+    open: number
+}
+
 /** What an operator set. `effective_status` is what you show. */
 export type QuotationStatus = 'draft' | 'sent' | 'accepted' | 'rejected' | 'cancelled'
 /** Includes the lapse the server derives from today's date. */

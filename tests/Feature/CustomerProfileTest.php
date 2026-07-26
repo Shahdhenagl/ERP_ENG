@@ -1,7 +1,9 @@
 <?php
 
+use App\Enums\TaskStatus;
 use App\Models\Contract;
 use App\Models\Customer;
+use App\Models\Task;
 use App\Models\User;
 
 use function Pest\Laravel\actingAs;
@@ -171,5 +173,80 @@ it('bars a technician from the profile', function () {
 
     actingAs(User::factory()->technician()->create())
         ->getJson("/api/customers/{$customer->id}/profile")
+        ->assertForbidden();
+});
+
+/* ── Task history ────────────────────────────────────────── */
+
+it('lists a customer job history with a summary', function () {
+    $customer = Customer::factory()->create();
+    Task::factory()->for($customer)->create(['status' => TaskStatus::Completed, 'scheduled_at' => now()->subDays(3)]);
+    Task::factory()->for($customer)->create(['status' => TaskStatus::InProgress, 'scheduled_at' => now()->subDay()]);
+    Task::factory()->create(['scheduled_at' => now()]);   // another customer's job
+
+    $body = actingAs($this->manager)
+        ->getJson("/api/customers/{$customer->id}/tasks")
+        ->assertOk()
+        ->json();
+
+    expect($body['data'])->toHaveCount(2)
+        ->and($body['meta']['total'])->toBe(2)
+        ->and($body['meta']['completed'])->toBe(1)
+        ->and($body['meta']['open'])->toBe(1)
+        ->and($body['meta']['customer']['id'])->toBe($customer->id);
+});
+
+it('orders the history newest first by the effective date', function () {
+    $customer = Customer::factory()->create();
+    Task::factory()->for($customer)->create(['title' => 'أقدم', 'scheduled_at' => now()->subDays(10)]);
+    Task::factory()->for($customer)->create(['title' => 'أحدث', 'scheduled_at' => now()->subDay()]);
+
+    $titles = actingAs($this->manager)
+        ->getJson("/api/customers/{$customer->id}/tasks")
+        ->json('data.*.title');
+
+    expect($titles)->toBe(['أحدث', 'أقدم']);
+});
+
+it('filters the history to a date window', function () {
+    $customer = Customer::factory()->create();
+    Task::factory()->for($customer)->create(['title' => 'داخل', 'scheduled_at' => '2026-03-15 10:00']);
+    Task::factory()->for($customer)->create(['title' => 'قبل', 'scheduled_at' => '2026-01-01 10:00']);
+    Task::factory()->for($customer)->create(['title' => 'بعد', 'scheduled_at' => '2026-06-01 10:00']);
+
+    $titles = actingAs($this->manager)
+        ->getJson("/api/customers/{$customer->id}/tasks?from=2026-03-01&to=2026-03-31")
+        ->assertOk()
+        ->json('data.*.title');
+
+    expect($titles)->toBe(['داخل']);
+});
+
+it('includes a job with no schedule by its creation date', function () {
+    // An unscheduled job still belongs in the history — filed under when it was raised.
+    $customer = Customer::factory()->create();
+    Task::factory()->for($customer)->create(['title' => 'بلا موعد', 'scheduled_at' => null]);
+
+    $titles = actingAs($this->manager)
+        ->getJson("/api/customers/{$customer->id}/tasks")
+        ->json('data.*.title');
+
+    expect($titles)->toContain('بلا موعد');
+});
+
+it('rejects a to-date before the from-date', function () {
+    $customer = Customer::factory()->create();
+
+    actingAs($this->manager)
+        ->getJson("/api/customers/{$customer->id}/tasks?from=2026-05-01&to=2026-04-01")
+        ->assertStatus(422)
+        ->assertJsonValidationErrorFor('to');
+});
+
+it('bars a technician from the job history', function () {
+    $customer = Customer::factory()->create();
+
+    actingAs(User::factory()->technician()->create())
+        ->getJson("/api/customers/{$customer->id}/tasks")
         ->assertForbidden();
 });

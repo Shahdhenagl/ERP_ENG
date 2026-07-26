@@ -29,6 +29,8 @@ import type {
     CustodyStatement,
     Customer,
     CustomerProfile,
+    CustomerTaskRow,
+    CustomerTasksMeta,
     DashboardData,
     CashBoxSummary,
     CashMovementRow,
@@ -695,6 +697,24 @@ export function useCustomerProfile(id: number | string | undefined) {
         queryKey: ['customer-profile', Number(id ?? 0)],
         queryFn: async () =>
             (await api.get<{ data: CustomerProfile }>(`/customers/${id}/profile`)).data.data,
+        enabled: Boolean(id),
+    })
+}
+
+/** A customer's job history over a date window — for the profile and the print. */
+export function useCustomerTasks(
+    id: number | string | undefined,
+    range: { from?: string; to?: string } = {},
+) {
+    return useQuery({
+        queryKey: ['customer-tasks', Number(id ?? 0), range],
+        queryFn: async () =>
+            (
+                await api.get<{ data: CustomerTaskRow[]; meta: CustomerTasksMeta }>(
+                    `/customers/${id}/tasks`,
+                    { params: range },
+                )
+            ).data,
         enabled: Boolean(id),
     })
 }

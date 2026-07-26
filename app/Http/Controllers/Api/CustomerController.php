@@ -150,6 +150,76 @@ class CustomerController extends Controller
         ]);
     }
 
+    /**
+     * Every job for this customer over a date window — the maintenance history
+     * a manager reads on the profile and prints for the customer.
+     *
+     * The window is applied to the effective date: when a job was scheduled, or
+     * failing that when it was raised, so a job logged but not yet scheduled
+     * still shows rather than falling through the filter.
+     */
+    public function tasks(Request $request, Customer $customer): JsonResponse
+    {
+        $request->validate([
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date', 'after_or_equal:from'],
+        ]);
+
+        $effective = 'COALESCE(scheduled_at, created_at)';
+
+        $query = $customer->tasks()
+            ->with(['technician:id,name', 'branch:id,name', 'asset:id,code,brand,model'])
+            ->when(
+                $request->date('from'),
+                fn ($q, $from) => $q->whereRaw("{$effective} >= ?", [$from->startOfDay()]),
+            )
+            ->when(
+                $request->date('to'),
+                fn ($q, $to) => $q->whereRaw("{$effective} <= ?", [$to->endOfDay()]),
+            )
+            ->orderByRaw("{$effective} desc");
+
+        $tasks = $query->get();
+
+        return response()->json([
+            'data' => $tasks->map(fn ($task) => [
+                'id' => $task->id,
+                'code' => $task->code,
+                'date' => ($task->scheduled_at ?? $task->created_at)?->toIso8601String(),
+                'title' => $task->title,
+                'description' => $task->description,
+                'type' => $task->type->value,
+                'type_label' => $task->type->label(),
+                'status' => $task->status->value,
+                'status_label' => $task->status->label(),
+                'priority_label' => $task->priority->label(),
+                'technician' => $task->technician?->name,
+                'branch' => $task->branch?->name,
+                'asset' => $task->asset?->label(),
+                'completed_at' => $task->completed_at?->toIso8601String(),
+            ]),
+            'meta' => [
+                'customer' => [
+                    'id' => $customer->id,
+                    'code' => $customer->code,
+                    'name' => $customer->name,
+                    'company' => $customer->company,
+                    'phone' => $customer->phone,
+                    'address' => $customer->address,
+                ],
+                'from' => $request->date('from')?->toDateString(),
+                'to' => $request->date('to')?->toDateString(),
+                'total' => $tasks->count(),
+                'completed' => $tasks->where('status', \App\Enums\TaskStatus::Completed)->count(),
+                // Everything still live — not finished and not called off.
+                'open' => $tasks->whereNotIn('status', [
+                    \App\Enums\TaskStatus::Completed,
+                    \App\Enums\TaskStatus::Cancelled,
+                ])->count(),
+            ],
+        ]);
+    }
+
     public function update(Request $request, Customer $customer): CustomerResource
     {
         $customer->update($this->validated($request, $customer));
