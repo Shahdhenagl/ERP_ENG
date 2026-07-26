@@ -37,6 +37,35 @@ class ContractResource extends JsonResource
             'value' => $this->value,
             'currency' => $this->currency,
 
+            'billing_frequency' => $this->billing_frequency->value,
+            'billing_frequency_label' => $this->billing_frequency->label(),
+
+            // The instalment schedule, and the two facts the UI gates on: whether
+            // the contract may be activated yet, and which visits are held for pay.
+            'first_payment_collected' => $this->firstPaymentCollected(),
+            'held_visit_sequences' => $this->relationLoaded('payments')
+                ? $this->payments->where('status', 'due')->whereNotNull('due_visit_sequence')
+                    ->pluck('due_visit_sequence')->values()
+                : [],
+            'payments' => $this->whenLoaded('payments', fn () => $this->payments->map(fn ($p) => [
+                'id' => $p->id,
+                'sequence' => $p->sequence,
+                'amount' => (float) $p->amount,
+                'due_visit_sequence' => $p->due_visit_sequence,
+                'status' => $p->status,
+                'status_label' => $p->statusLabel(),
+                'is_upfront' => $p->isUpfront(),
+                'collected_at' => $p->collected_at?->toIso8601String(),
+                'invoice_id' => $p->invoice_id,
+                'invoice_code' => $p->invoice?->code,
+            ])->values()),
+            'payments_total' => $this->relationLoaded('payments')
+                ? round((float) $this->payments->sum('amount'), 2)
+                : null,
+            'collected_total' => $this->relationLoaded('payments')
+                ? round((float) $this->payments->where('status', 'collected')->sum('amount'), 2)
+                : null,
+
             'sla_response_hours' => $this->sla_response_hours,
             'sla_resolution_hours' => $this->sla_resolution_hours,
 

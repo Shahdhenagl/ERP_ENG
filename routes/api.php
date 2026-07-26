@@ -343,6 +343,10 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::post('contracts/{contract}/renew', [ContractController::class, 'renew'])->middleware('can:contracts.manage');
     Route::post('contracts/{contract}/cancel', [ContractController::class, 'cancel'])->middleware('can:contracts.manage');
     Route::post('contracts/{contract}/materialise', [ContractController::class, 'materialise'])->middleware('can:contracts.manage');
+    // Collecting an instalment raises an invoice and receipt, so it needs the
+    // money permission on top of the contract one.
+    Route::post('contracts/{contract}/payments/{payment}/collect', [ContractController::class, 'collectPayment'])
+        ->middleware('can:contracts.manage,invoices.manage');
 
     // Preventive maintenance — the visit schedule the planner lays out.
     Route::get('ppm/visits', [PpmController::class, 'visits'])->middleware('can:contracts.manage');

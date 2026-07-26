@@ -39,6 +39,7 @@ class SendOperationsAlerts extends Command
             ->merge($this->urgentTasks())
             ->merge($this->delayedTasks())
             ->merge($this->ppmDue())
+            ->merge($this->contractPaymentsDue())
             ->merge($this->warrantiesExpiring())
             ->merge($this->overdueInvoices())
             ->merge($this->partsLow());
@@ -111,6 +112,35 @@ class SendOperationsAlerts extends Command
                 'title' => 'قرب موعد صيانة دورية',
                 'body' => ($v->contract?->customer?->name ?? 'عقد صيانة')." — {$v->planned_for->toDateString()}",
                 'url' => '/contracts', 'tag' => "visit-{$v->id}",
+            ]);
+    }
+
+    /**
+     * A contract instalment that is holding an upcoming visit's work order — the
+     * manager collects it so the job can be released to a technician.
+     */
+    protected function contractPaymentsDue(): Collection
+    {
+        $horizon = now()->addDays(self::PPM_HORIZON_DAYS)->toDateString();
+
+        return \App\Models\ContractPayment::query()
+            ->where('status', 'due')
+            ->whereNotNull('due_visit_sequence')
+            ->whereHas('contract', fn ($q) => $q->where('status', \App\Enums\ContractStatus::Active->value))
+            ->whereExists(function ($q) use ($horizon) {
+                $q->from('contract_visits')
+                    ->whereColumn('contract_visits.contract_id', 'contract_payments.contract_id')
+                    ->whereColumn('contract_visits.sequence', 'contract_payments.due_visit_sequence')
+                    ->where('contract_visits.status', VisitStatus::Planned->value)
+                    ->whereDate('contract_visits.planned_for', '<=', $horizon);
+            })
+            ->with('contract.customer')->get()
+            ->map(fn ($p) => [
+                'key' => "contract-payment-due:{$p->id}", 'type' => 'contract.payment_due',
+                'title' => 'دفعة عقد مستحقة قبل الزيارة',
+                'body' => ($p->contract?->customer?->name ?? $p->contract?->code)
+                    ." — الدفعة {$p->sequence} (".number_format((float) $p->amount, 2).' ج)',
+                'url' => "/contracts/{$p->contract_id}", 'tag' => "contract-payment-{$p->id}",
             ]);
     }
 

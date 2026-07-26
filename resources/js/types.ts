@@ -416,6 +416,14 @@ export interface Contract {
     effective_status_label: string
     value: string | null
     currency: string
+    billing_frequency: ContractBillingFrequency
+    billing_frequency_label: string
+    /** Whether the contract may be activated yet, and which visits are held. */
+    first_payment_collected: boolean
+    held_visit_sequences: number[]
+    payments?: ContractPayment[]
+    payments_total: number | null
+    collected_total: number | null
     sla_response_hours: number | null
     sla_resolution_hours: number | null
     /** Set when this contract renewed another, and when one renewed it. */
@@ -428,6 +436,23 @@ export interface Contract {
     visits_count?: number
     visits?: ContractVisit[]
     created_at: string | null
+}
+
+export type ContractBillingFrequency = 'upfront' | 'quarterly' | 'semi_annual' | 'annual'
+
+/** One instalment on a contract — the first with activation, the rest on visits. */
+export interface ContractPayment {
+    id: number
+    sequence: number
+    amount: number
+    /** The visit its collection gates; null for the upfront instalment. */
+    due_visit_sequence: number | null
+    status: 'due' | 'collected'
+    status_label: string
+    is_upfront: boolean
+    collected_at: string | null
+    invoice_id: number | null
+    invoice_code: string | null
 }
 
 /** A customer site: where devices sit and where jobs are sent. */

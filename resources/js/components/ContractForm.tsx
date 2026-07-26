@@ -29,6 +29,7 @@ export function ContractForm({ open, onClose, contract, customerId, onSaved }: C
         ends_on: contract?.ends_on ?? '',
         visits_per_year: String(contract?.visits_per_year ?? 4),
         value: contract?.value ?? '',
+        billing_frequency: contract?.billing_frequency ?? 'upfront',
         sla_response_hours: contract?.sla_response_hours?.toString() ?? '',
         sla_resolution_hours: contract?.sla_resolution_hours?.toString() ?? '',
         notes: contract?.notes ?? '',
@@ -62,6 +63,7 @@ export function ContractForm({ open, onClose, contract, customerId, onSaved }: C
                 ends_on: form.ends_on,
                 visits_per_year: Number(form.visits_per_year),
                 value: form.value ? Number(form.value) : null,
+                billing_frequency: form.billing_frequency,
                 sla_response_hours: form.sla_response_hours ? Number(form.sla_response_hours) : null,
                 sla_resolution_hours: form.sla_resolution_hours ? Number(form.sla_resolution_hours) : null,
                 asset_ids: assetIds,
@@ -187,14 +189,32 @@ export function ContractForm({ open, onClose, contract, customerId, onSaved }: C
                     </Field>
                 </div>
 
-                <Field label="قيمة العقد" hint="بالجنيه المصري — اختياري." error={errors.value}>
-                    <Input
-                        type="number"
-                        min={0}
-                        value={form.value}
-                        onChange={(event) => set('value')(event.target.value)}
-                    />
-                </Field>
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label="قيمة العقد" hint="بالجنيه المصري — اختياري." error={errors.value}>
+                        <Input
+                            type="number"
+                            min={0}
+                            value={form.value}
+                            onChange={(event) => set('value')(event.target.value)}
+                        />
+                    </Field>
+
+                    <Field
+                        label="طريقة التحصيل"
+                        hint="تقسّم قيمة العقد دفعات على الزيارات."
+                        error={errors.billing_frequency}
+                    >
+                        <Select
+                            value={form.billing_frequency}
+                            onChange={(event) => set('billing_frequency')(event.target.value)}
+                        >
+                            <option value="upfront">مقدَّم (دفعة واحدة)</option>
+                            <option value="quarterly">ربع سنوي</option>
+                            <option value="semi_annual">نصف سنوي</option>
+                            <option value="annual">سنوي</option>
+                        </Select>
+                    </Field>
+                </div>
 
                 {/* No selection means the contract covers everything the customer
                     owns, including devices bought later. */}

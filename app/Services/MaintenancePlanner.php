@@ -242,17 +242,38 @@ class MaintenancePlanner
                 ->lockForUpdate()
                 ->get();
 
+            $created = 0;
+
             foreach ($visits as $visit) {
+                // A visit whose instalment has not been collected is held: no work
+                // order is cut for it, so it never reaches a technician until the
+                // manager confirms the payment and the next sweep picks it up.
+                if ($this->isHeldForPayment($visit)) {
+                    continue;
+                }
+
                 $task = $this->createTaskFor($visit);
 
                 $visit->update([
                     'task_id' => $task->id,
                     'status' => VisitStatus::Scheduled,
                 ]);
+
+                $created++;
             }
 
-            return $visits->count();
+            return $created;
         });
+    }
+
+    /** True while a visit carries an instalment that has not yet been collected. */
+    public function isHeldForPayment(ContractVisit $visit): bool
+    {
+        return \App\Models\ContractPayment::query()
+            ->where('contract_id', $visit->contract_id)
+            ->where('due_visit_sequence', $visit->sequence)
+            ->where('status', 'due')
+            ->exists();
     }
 
     protected function createTaskFor(ContractVisit $visit): Task

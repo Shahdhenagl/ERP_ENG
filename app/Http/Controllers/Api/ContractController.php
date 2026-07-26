@@ -8,6 +8,10 @@ use App\Http\Resources\ContractResource;
 use App\Models\ActivityLog;
 use App\Models\Asset;
 use App\Models\Contract;
+use App\Models\ContractPayment;
+use App\Models\Invoice;
+use App\Services\BillingService;
+use App\Services\ContractPaymentPlanner;
 use App\Services\MaintenancePlanner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,7 +22,11 @@ use Illuminate\Validation\ValidationException;
 
 class ContractController extends Controller
 {
-    public function __construct(protected MaintenancePlanner $planner) {}
+    public function __construct(
+        protected MaintenancePlanner $planner,
+        protected ContractPaymentPlanner $schedule,
+        protected BillingService $billing,
+    ) {}
 
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -84,6 +92,7 @@ class ContractController extends Controller
 
         $contract = Contract::create($data);
         $contract->assets()->sync($assetIds);
+        $this->schedule->rebuild($contract);
 
         ActivityLog::record('contract.created', $contract, "تم إنشاء عقد الصيانة {$contract->code}");
 
@@ -116,8 +125,17 @@ class ContractController extends Controller
             || $contract->ends_on->toDateString() !== $data['ends_on']
             || (int) $contract->visits_per_year !== (int) $data['visits_per_year'];
 
+        // The value or the cadence changing re-splits the instalments — but only
+        // while nothing has been collected, which the schedule planner enforces.
+        $billingChanged = (float) $contract->value !== (float) ($data['value'] ?? 0)
+            || $contract->billing_frequency->value !== ($data['billing_frequency'] ?? $contract->billing_frequency->value);
+
         $contract->update($data);
         $contract->assets()->sync($assetIds);
+
+        if ($termChanged || $billingChanged) {
+            $this->schedule->rebuild($contract->fresh());
+        }
 
         ActivityLog::record('contract.updated', $contract, "تم تعديل عقد الصيانة {$contract->code}");
 
@@ -159,6 +177,15 @@ class ContractController extends Controller
             ]);
         }
 
+        // The first instalment is taken with activation — a contract with a
+        // schedule does not go live on a promise to pay. Contracts with no
+        // schedule (value-less, or drafted before this feature) are unaffected.
+        if (! $contract->firstPaymentCollected()) {
+            throw ValidationException::withMessages([
+                'payment' => 'يجب تحصيل الدفعة الأولى قبل اعتماد العقد.',
+            ]);
+        }
+
         $contract->update(['status' => ContractStatus::Active]);
 
         $planned = $this->planner->plan($contract);
@@ -168,6 +195,82 @@ class ContractController extends Controller
             action: 'contract.activated',
             subject: $contract,
             description: "تم تفعيل عقد الصيانة {$contract->code} بـ {$planned} زيارة",
+        );
+
+        return new ContractResource($this->loaded($contract->fresh()));
+    }
+
+    /**
+     * Collect one instalment: raise its invoice, receive the money through the
+     * treasury, and — if it was holding a visit — release that work order so the
+     * next sweep can hand it to a technician.
+     */
+    public function collectPayment(Request $request, Contract $contract, ContractPayment $payment): ContractResource
+    {
+        abort_unless((int) $payment->contract_id === $contract->id, 404);
+
+        if ($payment->isCollected()) {
+            throw ValidationException::withMessages(['payment' => 'هذه الدفعة محصّلة بالفعل.']);
+        }
+
+        $data = $request->validate([
+            'cash_box_id' => ['nullable', 'exists:cash_boxes,id'],
+            'method' => ['nullable', 'in:cash,bank_transfer,cheque,wallet'],
+            'reference' => ['nullable', 'string', 'max:120'],
+            'note' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $count = $contract->payments()->count();
+        $label = "دفعة صيانة {$payment->sequence}/{$count} — عقد {$contract->code}";
+
+        DB::transaction(function () use ($contract, $payment, $data, $label, $request) {
+            $invoice = Invoice::create([
+                'customer_id' => $contract->customer_id,
+                'contract_id' => $contract->id,
+                'issue_date' => now()->toDateString(),
+                'due_date' => now()->toDateString(),
+                'tax_rate' => 0,
+                'notes' => $label,
+                'created_by' => $request->user()->id,
+            ]);
+
+            $invoice->lines()->create([
+                'description' => $label,
+                'qty' => 1,
+                'unit_price' => $payment->amount,
+                'line_total' => $payment->amount,
+                'sort' => 0,
+            ]);
+
+            $this->billing->issue($this->billing->recalculate($invoice));
+
+            $received = $this->billing->receivePayment([
+                'invoice_id' => $invoice->id,
+                'cash_box_id' => $data['cash_box_id'] ?? null,
+                'amount' => (float) $payment->amount,
+                'method' => $data['method'] ?? 'cash',
+                'reference' => $data['reference'] ?? null,
+                'note' => $data['note'] ?? $label,
+            ], $request->user());
+
+            $payment->update([
+                'status' => 'collected',
+                'invoice_id' => $invoice->id,
+                'payment_id' => $received->id,
+                'collected_at' => now(),
+                'collected_by' => $request->user()->id,
+            ]);
+        });
+
+        // A collected visit-instalment no longer holds its work order.
+        if ($payment->due_visit_sequence && $contract->status === ContractStatus::Active) {
+            $this->planner->materialiseDueVisits();
+        }
+
+        ActivityLog::record(
+            'contract.payment_collected',
+            $contract,
+            "تحصيل الدفعة {$payment->sequence} من عقد {$contract->code}",
         );
 
         return new ContractResource($this->loaded($contract->fresh()));
@@ -270,6 +373,7 @@ class ContractController extends Controller
             'customer',
             'assets',
             'visits.task.technician',
+            'payments.invoice',
         ])->loadCount(['assets', 'visits']);
     }
 
@@ -340,6 +444,7 @@ class ContractController extends Controller
             'status' => ['nullable', Rule::enum(ContractStatus::class)],
 
             'value' => ['nullable', 'numeric', 'min:0'],
+            'billing_frequency' => ['nullable', Rule::enum(\App\Enums\ContractBillingFrequency::class)],
             'currency' => ['nullable', 'string', 'size:3'],
 
             'sla_response_hours' => ['nullable', 'integer', 'min:1', 'max:8760'],

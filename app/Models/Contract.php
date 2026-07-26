@@ -27,6 +27,7 @@ class Contract extends Model
         'visits_per_year',
         'status',
         'value',
+        'billing_frequency',
         'currency',
         'sla_response_hours',
         'sla_resolution_hours',
@@ -42,6 +43,7 @@ class Contract extends Model
             'ends_on' => 'date',
             'visits_per_year' => 'integer',
             'value' => 'decimal:2',
+            'billing_frequency' => \App\Enums\ContractBillingFrequency::class,
             'sla_response_hours' => 'integer',
             'sla_resolution_hours' => 'integer',
         ];
@@ -54,6 +56,7 @@ class Contract extends Model
             // The column default only applies inside the database, so a freshly
             // created model would carry a null status back to the resource.
             $contract->status ??= ContractStatus::Draft;
+            $contract->billing_frequency ??= \App\Enums\ContractBillingFrequency::Upfront;
         });
     }
 
@@ -105,9 +108,39 @@ class Contract extends Model
         return $this->hasMany(Task::class);
     }
 
+    /** The instalment schedule — the whole value split by the billing frequency. */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(ContractPayment::class)->orderBy('sequence');
+    }
+
+    /** The invoices raised against this contract as its instalments are collected. */
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /** Visit sequences whose instalment is still due — their work orders wait. */
+    public function heldVisitSequences(): array
+    {
+        return $this->payments()
+            ->where('status', 'due')
+            ->whereNotNull('due_visit_sequence')
+            ->pluck('due_visit_sequence')
+            ->all();
+    }
+
+    public function firstPaymentCollected(): bool
+    {
+        $first = $this->payments()->where('sequence', 1)->first();
+
+        // No schedule (a value-less contract) never blocks on payment.
+        return ! $first || $first->status === 'collected';
     }
 
     // ── Term ─────────────────────────────────────────────────

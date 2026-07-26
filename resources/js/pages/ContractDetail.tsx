@@ -5,10 +5,12 @@ import {
     CalendarClock,
     CalendarPlus,
     CircleCheck,
+    Coins,
     HardDrive,
     Lock,
     Pencil,
     PlayCircle,
+    Printer,
     RefreshCw,
     Timer,
     Wallet,
@@ -18,14 +20,20 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ContractForm } from '@/components/ContractForm'
 import { ConfirmDialog, Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
-import { Button, ErrorState, Field, Input, PageHeader, PageLoader } from '@/components/ui'
+import { Button, ErrorState, Field, Input, PageHeader, PageLoader, Select } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
-import { CONTRACT_STATUS, VISIT_STATUS, expiryChip } from '@/lib/domain'
+import { CONTRACT_STATUS, formatMoney, VISIT_STATUS, expiryChip } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
 import { useArea } from '@/lib/nav'
 import { Attachments } from '@/components/Attachments'
-import { useContract, useContractAction, useRenewContract } from '@/lib/queries'
-import type { Contract } from '@/types'
+import {
+    useCashBoxes,
+    useCollectContractPayment,
+    useContract,
+    useContractAction,
+    useRenewContract,
+} from '@/lib/queries'
+import type { Contract, ContractPayment } from '@/types'
 import type { ContractVisit } from '@/types'
 
 export function ContractDetail() {
@@ -61,6 +69,9 @@ export function ContractDetail() {
 
     const visits = contract.visits ?? []
     const done = visits.filter((visit) => visit.status === 'done').length
+    const heldVisits = new Set(contract.held_visit_sequences)
+    // A contract with a value cannot go live until its first instalment is in.
+    const canActivate = contract.first_payment_collected
 
     return (
         <>
@@ -70,9 +81,19 @@ export function ContractDetail() {
                     رجوع
                 </Link>
 
-                <Button variant="secondary" icon={Pencil} onClick={() => setEditOpen(true)}>
-                    تعديل
-                </Button>
+                <div className="flex gap-2">
+                    <Link
+                        to={path(`/print/contracts/${contract.id}`)}
+                        target="_blank"
+                        className="btn-secondary text-xs"
+                    >
+                        <Printer className="size-4" />
+                        طباعة
+                    </Link>
+                    <Button variant="secondary" icon={Pencil} onClick={() => setEditOpen(true)}>
+                        تعديل
+                    </Button>
+                </div>
             </div>
 
             <PageHeader
@@ -104,6 +125,8 @@ export function ContractDetail() {
                             <Button
                                 icon={PlayCircle}
                                 loading={action.isPending}
+                                disabled={!canActivate}
+                                title={!canActivate ? 'حصّل الدفعة الأولى أولًا' : undefined}
                                 onClick={() =>
                                     void run('activate', 'تم تفعيل العقد وجدولة زياراته.', 'تعذّر تفعيل العقد.')
                                 }
@@ -150,7 +173,9 @@ export function ContractDetail() {
 
                     {contract.status === 'draft' && (
                         <p className="mt-3 text-xs text-navy-400">
-                            الزيارات تُجدول عند التفعيل، ويصدر أمر شغل لكل زيارة قبل موعدها بمدة قصيرة.
+                            {canActivate
+                                ? 'الزيارات تُجدول عند التفعيل، ويصدر أمر شغل لكل زيارة قبل موعدها بمدة قصيرة.'
+                                : 'لتفعيل العقد لا بد من تحصيل الدفعة الأولى من جدول الدفعات بالأسفل.'}
                         </p>
                     )}
                 </section>
@@ -158,6 +183,9 @@ export function ContractDetail() {
 
             <div className="grid gap-5 lg:grid-cols-3">
                 <div className="space-y-5 lg:col-span-2">
+                    {/* ── Payment schedule ───────────────────── */}
+                    {Boolean(contract.payments?.length) && <PaymentSchedule contract={contract} />}
+
                     {/* ── Visit plan ─────────────────────────── */}
                     <section className="card p-5">
                         <div className="mb-4 flex items-center justify-between gap-3">
@@ -176,7 +204,12 @@ export function ContractDetail() {
                         ) : (
                             <ul className="space-y-2">
                                 {visits.map((visit) => (
-                                    <VisitRow key={visit.id} visit={visit} taskHref={path('/tasks')} />
+                                    <VisitRow
+                                        key={visit.id}
+                                        visit={visit}
+                                        taskHref={path('/tasks')}
+                                        held={heldVisits.has(visit.sequence)}
+                                    />
                                 ))}
                             </ul>
                         )}
@@ -292,7 +325,15 @@ export function ContractDetail() {
     )
 }
 
-function VisitRow({ visit, taskHref }: { visit: ContractVisit; taskHref: string }) {
+function VisitRow({
+    visit,
+    taskHref,
+    held,
+}: {
+    visit: ContractVisit
+    taskHref: string
+    held?: boolean
+}) {
     const meta = VISIT_STATUS[visit.status]
 
     const body = (
@@ -312,6 +353,14 @@ function VisitRow({ visit, taskHref }: { visit: ContractVisit; taskHref: string 
                     </span>
                 )}
             </span>
+
+            {/* Held: this visit carries an instalment that has not been collected,
+                so no work order is cut for it until the money is in. */}
+            {held && !visit.task_id && (
+                <span className="badge shrink-0 bg-amber-50 text-amber-700 ring-1 ring-amber-200">
+                    محجوزة — بانتظار التحصيل
+                </span>
+            )}
 
             {/* A locked visit survives any change to the contract — worth saying
                 so before a manager tries to reschedule the term. */}
@@ -359,6 +408,173 @@ function Term({
                 <dd className="text-sm font-bold text-navy-800">{value ?? '—'}</dd>
             </div>
         </div>
+    )
+}
+
+/* ── Payment schedule ────────────────────────────────────── */
+
+/** The instalment plan: what is due when, and the button to collect each. */
+function PaymentSchedule({ contract }: { contract: Contract }) {
+    const payments = contract.payments ?? []
+    const [collecting, setCollecting] = useState<ContractPayment | null>(null)
+
+    return (
+        <section className="card p-5">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-sm font-bold text-navy-900">جدول الدفعات</h2>
+                <span className="text-xs font-semibold text-navy-400">
+                    {contract.billing_frequency_label} · حُصّل{' '}
+                    <span className="tabular text-navy-700">
+                        {formatMoney(contract.collected_total ?? 0)}
+                    </span>{' '}
+                    من {formatMoney(contract.payments_total ?? 0)}
+                </span>
+            </div>
+
+            <ul className="space-y-2">
+                {payments.map((payment) => {
+                    const when = payment.is_upfront
+                        ? 'مع اعتماد العقد'
+                        : `عند الزيارة ${payment.due_visit_sequence}`
+
+                    return (
+                        <li
+                            key={payment.id}
+                            className="flex items-center gap-3 rounded-xl bg-navy-50 p-3"
+                        >
+                            <span className="tabular grid size-8 shrink-0 place-items-center rounded-lg bg-white text-xs font-bold text-navy-500 ring-1 ring-navy-200">
+                                {payment.sequence}
+                            </span>
+
+                            <div className="min-w-0 flex-1">
+                                <p className="tabular text-sm font-bold text-navy-800">
+                                    {formatMoney(payment.amount)}
+                                </p>
+                                <p className="text-[11px] text-navy-400">
+                                    {when}
+                                    {payment.invoice_code && ` · ${payment.invoice_code}`}
+                                </p>
+                            </div>
+
+                            {payment.status === 'collected' ? (
+                                <span className="badge shrink-0 bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">
+                                    <CircleCheck className="size-3" />
+                                    محصّلة
+                                </span>
+                            ) : (
+                                <Button
+                                    icon={Coins}
+                                    className="shrink-0 text-xs"
+                                    onClick={() => setCollecting(payment)}
+                                >
+                                    تحصيل
+                                </Button>
+                            )}
+                        </li>
+                    )
+                })}
+            </ul>
+
+            {collecting && (
+                <CollectDialog
+                    contractId={contract.id}
+                    payment={collecting}
+                    onClose={() => setCollecting(null)}
+                />
+            )}
+        </section>
+    )
+}
+
+function CollectDialog({
+    contractId,
+    payment,
+    onClose,
+}: {
+    contractId: number
+    payment: ContractPayment
+    onClose: () => void
+}) {
+    const toast = useToast()
+    const collect = useCollectContractPayment(contractId)
+    const { data: boxes } = useCashBoxes()
+    const [boxId, setBoxId] = useState('')
+    const [method, setMethod] = useState('cash')
+    const [reference, setReference] = useState('')
+
+    return (
+        <Modal
+            open
+            onClose={onClose}
+            title={`تحصيل الدفعة ${payment.sequence}`}
+            description={`${formatMoney(payment.amount)} — ${
+                payment.is_upfront ? 'دفعة الاعتماد' : `عند الزيارة ${payment.due_visit_sequence}`
+            }.`}
+            size="sm"
+            footer={
+                <>
+                    <Button variant="secondary" onClick={onClose} disabled={collect.isPending}>
+                        إلغاء
+                    </Button>
+                    <Button
+                        icon={Coins}
+                        loading={collect.isPending}
+                        onClick={async () => {
+                            try {
+                                await collect.mutateAsync({
+                                    paymentId: payment.id,
+                                    cash_box_id: boxId ? Number(boxId) : null,
+                                    method,
+                                    reference: reference || null,
+                                })
+                                toast.success('تم تحصيل الدفعة.')
+                                onClose()
+                            } catch (caught) {
+                                toast.error(errorMessage(caught, 'تعذّر التحصيل.'))
+                            }
+                        }}
+                    >
+                        تأكيد التحصيل
+                    </Button>
+                </>
+            }
+        >
+            <div className="space-y-4">
+                <Field label="الخزينة" hint="تُترك فارغة لتذهب للخزينة الرئيسية.">
+                    <Select value={boxId} onChange={(e) => setBoxId(e.target.value)}>
+                        <option value="">الخزينة الرئيسية</option>
+                        {boxes?.map((box) => (
+                            <option key={box.id} value={box.id}>
+                                {box.name} ({formatMoney(box.balance)})
+                            </option>
+                        ))}
+                    </Select>
+                </Field>
+
+                <Field label="طريقة الدفع">
+                    <Select value={method} onChange={(e) => setMethod(e.target.value)}>
+                        <option value="cash">نقدي</option>
+                        <option value="bank_transfer">تحويل بنكي</option>
+                        <option value="cheque">شيك</option>
+                        <option value="wallet">محفظة</option>
+                    </Select>
+                </Field>
+
+                <Field label="مرجع (اختياري)">
+                    <Input
+                        value={reference}
+                        onChange={(e) => setReference(e.target.value)}
+                        dir="ltr"
+                        className="text-left"
+                        placeholder="رقم الشيك أو التحويل"
+                    />
+                </Field>
+
+                <p className="rounded-xl bg-navy-50 p-3 text-[11px] text-navy-500">
+                    يصدر سند قبض وفاتورة بقيمة الدفعة، وإذا كانت مرتبطة بزيارة يُرفع أمر شغلها للفنيين.
+                </p>
+            </div>
+        </Modal>
     )
 }
 

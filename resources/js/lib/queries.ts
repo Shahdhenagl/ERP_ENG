@@ -976,6 +976,26 @@ export function useRenewContract(id: number) {
     })
 }
 
+/** Collect one contract instalment — raises its invoice and receipt. */
+export function useCollectContractPayment(contractId: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ paymentId, ...payload }: { paymentId: number } & Record<string, unknown>) =>
+            (
+                await api.post<{ data: Contract }>(
+                    `/contracts/${contractId}/payments/${paymentId}/collect`,
+                    payload,
+                )
+            ).data.data,
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: keys.contract(contractId) })
+            void client.invalidateQueries({ queryKey: ['contracts'] })
+            void client.invalidateQueries({ queryKey: keys.dashboard })
+        },
+    })
+}
+
 /* ── Inventory ───────────────────────────────────────────── */
 
 /** The items list carries per-category totals so the tabs can show counts. */
