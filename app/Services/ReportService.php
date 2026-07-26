@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Enums\InvoiceStatus;
 use App\Enums\TaskStatus;
+use App\Enums\TaskType;
 use App\Enums\VisitStatus;
+use App\Models\Asset;
 use App\Models\Attendance;
 use App\Models\Contract;
 use App\Models\ContractVisit;
@@ -710,6 +712,143 @@ class ReportService
                 'replacements' => $warranty['replacements'],
                 'repair_cost' => $warranty['repair_cost'],
                 'by_model' => $warranty['by_model'],
+            ],
+        ];
+    }
+
+    /* ── Operations overview ─────────────────────────────── */
+
+    /**
+     * The standby-power estate at a glance: the devices and how they are, the
+     * batteries, the maintenance due, the work in flight, and the parts on the
+     * shelf. Every figure reads from the module that owns it.
+     *
+     * @return array<string, mixed>
+     */
+    public function operations(): array
+    {
+        $today = now()->toDateString();
+
+        // ── Devices ──────────────────────────────────────
+        $byStatus = Asset::query()
+            ->selectRaw('status, count(*) as n')
+            ->groupBy('status')
+            ->pluck('n', 'status');
+
+        $totalDevices = (int) $byStatus->sum();
+        $working = (int) ($byStatus['active'] ?? 0);
+        $underRepair = (int) ($byStatus['under_repair'] ?? 0);
+        $retired = (int) ($byStatus['retired'] ?? 0);
+
+        // ── Batteries, from the latest report against each device ──
+        $latestReportIds = DB::table('task_reports as tr')
+            ->join('tasks as t', 't.id', '=', 'tr.task_id')
+            ->whereNotNull('t.asset_id')
+            ->groupBy('t.asset_id')
+            ->selectRaw('max(tr.id) as rid')
+            ->pluck('rid');
+
+        $needReplacement = (int) DB::table('task_reports')
+            ->whereIn('id', $latestReportIds)
+            ->where('batteries_need_replacement', true)
+            ->count();
+
+        $inspected = $latestReportIds->count();
+        $battery = [
+            'good' => max(0, $inspected - $needReplacement),
+            'need_check' => max(0, $totalDevices - $inspected),  // never inspected
+            'need_replacement' => $needReplacement,
+        ];
+
+        // ── Maintenance due (planned visits gone past their date) ──
+        $openVisit = [VisitStatus::Planned->value, VisitStatus::Scheduled->value];
+        $ppmOverdue = ContractVisit::query()->whereIn('status', $openVisit)
+            ->whereDate('planned_for', '<', $today)->count();
+        $ppmUpcoming = ContractVisit::query()->whereIn('status', $openVisit)
+            ->whereDate('planned_for', '>=', $today)
+            ->whereDate('planned_for', '<=', now()->addDays(30)->toDateString())->count();
+
+        // ── Requests (work orders) ───────────────────────
+        $open = Task::query()->open()->count();
+        $closed = Task::query()->where('status', TaskStatus::Completed->value)->count();
+        $breaches = Task::query()->slaBreached()->count();
+
+        // ── Performance ──────────────────────────────────
+        $window = now()->subDays(90);
+        $recentDone = Task::query()
+            ->where('status', TaskStatus::Completed->value)
+            ->whereNotNull('completed_at')
+            ->where('created_at', '>=', $window);
+
+        $avgHours = round((float) (clone $recentDone)
+            ->selectRaw('avg(timestampdiff(hour, created_at, completed_at)) as h')
+            ->value('h'), 1);
+
+        $totalTasks = Task::query()->count();
+        $repairTasks = Task::query()->where('type', TaskType::Repair->value)->count();
+        $withSla = Task::query()->whereNotNull('resolution_due_at')->count();
+
+        $performance = [
+            'avg_response_hours' => $avgHours,
+            'fault_rate' => $totalTasks > 0 ? round($repairTasks / $totalTasks * 100, 1) : 0.0,
+            // The share of jobs met within their promised time.
+            'service_level' => $withSla > 0 ? round((1 - $breaches / $withSla) * 100, 1) : null,
+        ];
+
+        // ── Recent technical visits ──────────────────────
+        $recent = Task::query()
+            ->where('status', TaskStatus::Completed->value)
+            ->whereNotNull('completed_at')
+            ->with(['customer', 'technician'])
+            ->latest('completed_at')
+            ->limit(8)
+            ->get()
+            ->map(fn (Task $task) => [
+                'id' => $task->id,
+                'code' => $task->code,
+                'title' => $task->title,
+                'customer' => $task->customer?->name,
+                'technician' => $task->technician?->name,
+                'completed_at' => $task->completed_at?->toIso8601String(),
+            ]);
+
+        // ── Spare parts on the shelf (company stores, not vans) ──
+        $parts = DB::table('stock_levels')
+            ->join('items', 'items.id', '=', 'stock_levels.item_id')
+            ->join('warehouses', 'warehouses.id', '=', 'stock_levels.warehouse_id')
+            ->where('warehouses.type', 'store')
+            ->where('stock_levels.qty', '>', 0)
+            ->selectRaw('count(distinct items.id) as part_lines,
+                         coalesce(sum(stock_levels.qty * items.avg_cost), 0) as stock_value')
+            ->first();
+
+        $belowReorder = Item::query()->active()->get()
+            ->filter(fn (Item $item) => $item->isBelowReorderLevel())->count();
+
+        return [
+            'devices' => [
+                'total' => $totalDevices,
+                'working' => $working,
+                'under_repair' => $underRepair,
+                'retired' => $retired,
+                'stopped' => $underRepair + $retired,
+            ],
+            'battery' => $battery,
+            'maintenance' => [
+                'overdue' => $ppmOverdue,
+                'upcoming' => $ppmUpcoming,
+            ],
+            'requests' => [
+                'open' => $open,
+                'closed' => $closed,
+                'sla_breaches' => $breaches,
+            ],
+            'performance' => $performance,
+            'recent_visits' => $recent,
+            'spare_parts' => [
+                'lines' => (int) ($parts->part_lines ?? 0),
+                'value' => round((float) ($parts->stock_value ?? 0), 2),
+                'below_reorder' => $belowReorder,
             ],
         ];
     }

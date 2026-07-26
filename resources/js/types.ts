@@ -1695,6 +1695,34 @@ export interface DatasetOption {
     label: string
 }
 
+/** The standby-power estate at a glance — the operations dashboard. */
+export interface OperationsReport {
+    devices: {
+        total: number
+        working: number
+        under_repair: number
+        retired: number
+        stopped: number
+    }
+    battery: { good: number; need_check: number; need_replacement: number }
+    maintenance: { overdue: number; upcoming: number }
+    requests: { open: number; closed: number; sla_breaches: number }
+    performance: {
+        avg_response_hours: number
+        fault_rate: number
+        service_level: number | null
+    }
+    recent_visits: Array<{
+        id: number
+        code: string
+        title: string
+        customer: string | null
+        technician: string | null
+        completed_at: string | null
+    }>
+    spare_parts: { lines: number; value: number; below_reorder: number }
+}
+
 /* ── Sales returns (credit notes) ────────────────────────── */
 
 export interface SalesReturnLine {

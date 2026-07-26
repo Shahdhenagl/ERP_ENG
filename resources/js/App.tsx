@@ -92,6 +92,7 @@ import { CollectionsPage } from '@/pages/CollectionsPage'
 import { CustomerStatementPage } from '@/pages/CustomerStatementPage'
 import { SupplierStatementPage } from '@/pages/SupplierStatementPage'
 import { Dashboard } from '@/pages/Dashboard'
+import { OperationsDashboard } from '@/pages/OperationsDashboard'
 import { Login } from '@/pages/Login'
 import { Profile } from '@/pages/Profile'
 import { TaskDetail } from '@/pages/TaskDetail'
@@ -165,6 +166,7 @@ export function App() {
                                     {/* ── Dispatcher area ──────────────── */}
                                     <Route path="manager" element={<RequireRole roles={['admin', 'manager']} />}>
                                         <Route index element={<Dashboard />} />
+                                        <Route path="operations" element={<OperationsDashboard />} />
                                         <Route path="tasks" element={<TaskList />} />
                                         <Route path="tasks/new" element={<TaskForm />} />
                                         <Route path="tasks/:id" element={<TaskDetail />} />

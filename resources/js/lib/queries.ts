@@ -63,6 +63,7 @@ import type {
     CrmReport,
     HrReport,
     MaintenanceReport,
+    OperationsReport,
     DatasetOption,
     ChecklistItem,
     StockMovement,
@@ -2448,6 +2449,18 @@ export const useHrReport = (range: Record<string, unknown> = {}) =>
 
 export const useMaintenanceReport = (range: Record<string, unknown> = {}) =>
     useReport<MaintenanceReport>('maintenance', range)
+
+/** The operations dashboard — the whole estate at a glance. */
+export function useOperations() {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: ['operations'] as const,
+        queryFn: async () =>
+            (await api.get<{ data: OperationsReport }>('/reports/operations')).data.data,
+        enabled: canDispatch,
+    })
+}
 
 /** The datasets a custom export can pull — the picker on the custom page. */
 export function useDatasets() {

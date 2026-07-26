@@ -410,6 +410,44 @@ it('flags planned visits that are past due', function () {
         ->and($ppm['visits_done'])->toBe(1);
 });
 
+/* ── Operations dashboard ────────────────────────────────── */
+
+it('counts the estate by working and stopped', function () {
+    Asset::factory()->count(3)->create(['customer_id' => $this->customer->id, 'status' => 'active']);
+    Asset::factory()->create(['customer_id' => $this->customer->id, 'status' => 'under_repair']);
+    Asset::factory()->create(['customer_id' => $this->customer->id, 'status' => 'retired']);
+
+    $ops = $this->reports->operations();
+
+    expect($ops['devices']['total'])->toBe(5)
+        ->and($ops['devices']['working'])->toBe(3)
+        ->and($ops['devices']['stopped'])->toBe(2);
+});
+
+it('reads a device battery state from its most recent report', function () {
+    $asset = Asset::factory()->create(['customer_id' => $this->customer->id]);
+    $task = Task::factory()->create(['customer_id' => $this->customer->id, 'asset_id' => $asset->id]);
+    \App\Models\TaskReport::create([
+        'task_id' => $task->id, 'type' => 'completion', 'batteries_need_replacement' => true,
+    ]);
+
+    // A second device, never inspected, should read as "needs check".
+    Asset::factory()->create(['customer_id' => $this->customer->id]);
+
+    $battery = $this->reports->operations()['battery'];
+
+    expect($battery['need_replacement'])->toBe(1)
+        ->and($battery['need_check'])->toBe(1);
+});
+
+it('serves the operations dashboard through the API', function () {
+    actingAs($this->manager)->getJson('/api/reports/operations')
+        ->assertOk()
+        ->assertJsonStructure(['data' => ['devices', 'battery', 'maintenance', 'requests', 'performance', 'spare_parts']]);
+
+    actingAs($this->technician)->getJson('/api/reports/operations')->assertForbidden();
+});
+
 /* ── Custom reports: raw dataset export ──────────────────── */
 
 it('lists the datasets a custom export can pull', function () {

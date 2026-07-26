@@ -85,6 +85,12 @@ class ReportController extends Controller
         return response()->json(['data' => $this->reports->maintenance($from, $to)]);
     }
 
+    /** The standby-power estate at a glance — the operations dashboard. */
+    public function operations(): JsonResponse
+    {
+        return response()->json(['data' => $this->reports->operations()]);
+    }
+
     /**
      * Any report's own table, as a spreadsheet.
      *
