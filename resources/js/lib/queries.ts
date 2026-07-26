@@ -2504,6 +2504,55 @@ export function useDatasets() {
     })
 }
 
+/* ── Bulk import ─────────────────────────────────────────── */
+
+export function useImportDatasets() {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: ['import-datasets'] as const,
+        queryFn: async () =>
+            (await api.get<{ data: DatasetOption[] }>('/imports')).data.data,
+        enabled: canDispatch,
+        staleTime: Infinity,
+    })
+}
+
+/** Download the blank CSV template for a dataset — the format to fill. */
+export async function downloadImportTemplate(entity: string): Promise<void> {
+    const response = await api.get(`/imports/${entity}/template`, { responseType: 'blob' })
+    const url = URL.createObjectURL(response.data as Blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${entity}-template.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+}
+
+export interface ImportResult {
+    created: number
+    updated: number
+    skipped: number
+    errors: string[]
+}
+
+/** Upload a filled CSV and get back how many rows landed. */
+export function useImport() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ entity, file }: { entity: string; file: File }) => {
+            const form = new FormData()
+            form.append('file', file)
+
+            return (await api.post<{ data: ImportResult }>(`/imports/${entity}`, form)).data.data
+        },
+        onSuccess: (_data, { entity }) => {
+            void client.invalidateQueries({ queryKey: [entity === 'customers' ? 'customers' : 'items'] })
+        },
+    })
+}
+
 /** Pull one dataset's raw rows as a spreadsheet — «التقارير المخصصة». */
 export async function downloadCustomExport(
     dataset: string,

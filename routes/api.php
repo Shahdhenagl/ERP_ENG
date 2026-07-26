@@ -36,6 +36,7 @@ use App\Http\Controllers\Api\SalesOrderController;
 use App\Http\Controllers\Api\SalesReturnController;
 use App\Http\Controllers\Api\ChecklistController;
 use App\Http\Controllers\Api\HolidayController;
+use App\Http\Controllers\Api\ImportController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\StatementController;
 use App\Http\Controllers\Api\SupplierController;
@@ -282,6 +283,12 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     // Custom reports resolve to the raw rows of a whitelisted dataset.
     Route::get('reports/datasets', [ReportController::class, 'datasets'])->middleware('can:reports.view');
     Route::get('reports/custom/{dataset}/export', [ReportController::class, 'customExport'])->middleware('can:reports.view');
+
+    // Bulk import — the store() checks the per-entity permission itself, since
+    // customers and items are guarded by different modules.
+    Route::get('imports', [ImportController::class, 'catalogue'])->middleware('can:reports.view');
+    Route::get('imports/{entity}/template', [ImportController::class, 'template'])->middleware('can:reports.view');
+    Route::post('imports/{entity}', [ImportController::class, 'store']);
 
     Route::get('reports/{report}/export', [ReportController::class, 'export'])->middleware('can:reports.view');
 
