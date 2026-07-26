@@ -23,8 +23,8 @@ beforeEach(function () {
 
 it('promotes the three that were fixed in code', function () {
     // The migration seeds them, so an install that never runs the seeder still
-    // has its items grouped.
-    expect(ItemCategory::whereNotNull('slug')->count())->toBe(3)
+    // has its items grouped. (UPS later joined them with a slug of its own.)
+    expect(ItemCategory::whereIn('slug', ['battery', 'spare_part', 'consumable'])->count())->toBe(3)
         ->and(ItemCategory::where('slug', 'battery')->first()->name)->toBe('بطاريات');
 });
 

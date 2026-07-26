@@ -240,6 +240,7 @@ export const SALES_BILLING_STATE: Record<SalesBillingState, { label: string; chi
 }
 
 export const ITEM_CATEGORY: Record<ItemCategory, { label: string; chip: string }> = {
+    ups: { label: 'أجهزة UPS', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
     battery: { label: 'بطاريات', chip: 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200' },
     spare_part: { label: 'قطع غيار', chip: 'bg-sky-50 text-sky-700 ring-1 ring-sky-200' },
     consumable: { label: 'مستهلكات', chip: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200' },

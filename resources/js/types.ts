@@ -138,7 +138,7 @@ export interface CustomerProfile {
     assets: Array<{ id: number; code: string; label: string; serial: string | null }>
 }
 
-export type ItemCategory = 'battery' | 'spare_part' | 'consumable'
+export type ItemCategory = 'ups' | 'battery' | 'spare_part' | 'consumable'
 export type MovementType =
     | 'receipt' | 'transfer' | 'issue' | 'return' | 'adjustment'
     | 'purchase_return' | 'sales_return'
@@ -148,11 +148,17 @@ export interface Item {
     id: number
     code: string
     sku: string | null
+    barcode: string | null
     name: string
 
     category: ItemCategory
     category_label: string
     unit: string
+
+    /** The nameplate — only on UPS and battery items. Free-form key/value. */
+    specs: Record<string, string> | null
+    /** What it is quoted at. Cost is the weighted average, kept separately. */
+    sell_price: number | null
 
     /** Weighted moving average — set by receipts, never typed in. */
     avg_cost: number
@@ -883,6 +889,8 @@ export interface Asset {
     label: string
 
     customer_id: number
+    /** The catalogue item it was drawn from, when it came out of stock. */
+    item_id: number | null
     customer?: Customer
 
     site_address: string | null

@@ -22,7 +22,7 @@ class Battery extends Model
     use HasAttachments, HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'code', 'asset_id', 'customer_id',
+        'code', 'asset_id', 'customer_id', 'item_id',
         'serial_number', 'name', 'asset_tag', 'barcode',
         'brand', 'model', 'battery_type', 'size',
         'capacity_ah', 'voltage', 'energy_wh', 'count',
@@ -75,6 +75,12 @@ class Battery extends Model
     public function asset(): BelongsTo
     {
         return $this->belongsTo(Asset::class);
+    }
+
+    /** The catalogue item the bank was drawn from, when it came out of stock. */
+    public function item(): BelongsTo
+    {
+        return $this->belongsTo(Item::class);
     }
 
     public function customer(): BelongsTo

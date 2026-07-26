@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { ArrowLeftRight, ClipboardList, PackagePlus, Plus } from 'lucide-react'
+import { ClipboardList, PackagePlus, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { Outlet, useOutletContext } from 'react-router-dom'
 import { ItemForm } from '@/components/ItemForm'
@@ -8,7 +8,7 @@ import { StockOperationForm } from '@/components/StockOperationForm'
 import { Button, PageHeader } from '@/components/ui'
 import { formatMoney } from '@/lib/domain'
 import { useStockSummary } from '@/lib/queries'
-import type { Item } from '@/types'
+import type { Item, ItemCategory } from '@/types'
 
 /**
  * The shell every inventory section sits in: headline numbers, the actions
@@ -19,7 +19,7 @@ import type { Item } from '@/types'
  */
 
 interface InventoryContext {
-    openItemForm: (item?: Item) => void
+    openItemForm: (item?: Item, category?: ItemCategory) => void
 }
 
 /** Lets a child open the item dialog the layout owns. */
@@ -40,10 +40,12 @@ export function InventoryLayout() {
 
     const [itemForm, setItemForm] = useState(false)
     const [editing, setEditing] = useState<Item | undefined>()
+    const [newCategory, setNewCategory] = useState<ItemCategory | undefined>()
     const [operation, setOperation] = useState<'receive' | 'transfer' | 'adjust' | null>(null)
 
-    const openItemForm = (item?: Item) => {
+    const openItemForm = (item?: Item, category?: ItemCategory) => {
         setEditing(item)
+        setNewCategory(category)
         setItemForm(true)
     }
 
@@ -82,13 +84,6 @@ export function InventoryLayout() {
                 </Button>
                 <Button
                     variant="secondary"
-                    icon={ArrowLeftRight}
-                    onClick={() => setOperation('transfer')}
-                >
-                    تسليم عهدة
-                </Button>
-                <Button
-                    variant="secondary"
                     icon={ClipboardList}
                     onClick={() => setOperation('adjust')}
                 >
@@ -102,10 +97,11 @@ export function InventoryLayout() {
 
             {itemForm && (
                 <ItemForm
-                    key={editing?.id ?? 'new'}
+                    key={editing?.id ?? `new-${newCategory ?? 'any'}`}
                     open={itemForm}
                     onClose={() => setItemForm(false)}
                     item={editing}
+                    defaultCategory={newCategory}
                 />
             )}
 

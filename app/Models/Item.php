@@ -24,6 +24,8 @@ class Item extends Model
         'unit',
         'tracks_serials',
         'avg_cost',
+        'specs',
+        'sell_price',
         'reorder_level',
         'notes',
         'is_active',
@@ -36,6 +38,8 @@ class Item extends Model
             'category' => ItemCategory::class,
             'tracks_serials' => 'boolean',
             'avg_cost' => 'decimal:2',
+            'sell_price' => 'decimal:2',
+            'specs' => 'array',
             'reorder_level' => 'decimal:3',
             'is_active' => 'boolean',
         ];
@@ -46,6 +50,18 @@ class Item extends Model
         static::creating(function (self $item) {
             $item->code ??= static::nextCode();
             $item->category ??= ItemCategory::SparePart;
+        });
+
+        // Keep the editable group in step with the fixed category, matching on
+        // the slug the seeded groups carry. A part filed as a battery lands in
+        // the batteries group, and the groups page counts stay honest. A group
+        // named outright by the caller wins, so this only fills the blank.
+        static::saving(function (self $item) {
+            if ($item->isDirty('category') && ! $item->isDirty('item_category_id')) {
+                $item->item_category_id = \App\Models\ItemCategory::query()
+                    ->where('slug', $item->category->value)
+                    ->value('id') ?? $item->item_category_id;
+            }
         });
     }
 
@@ -67,7 +83,7 @@ class Item extends Model
     /** The editable grouping. `category` is the old fixed enum beside it. */
     public function group(): BelongsTo
     {
-        return $this->belongsTo(ItemCategory::class, 'item_category_id');
+        return $this->belongsTo(\App\Models\ItemCategory::class, 'item_category_id');
     }
 
     public function serials(): HasMany

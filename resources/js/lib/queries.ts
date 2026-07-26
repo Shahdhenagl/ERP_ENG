@@ -940,12 +940,20 @@ export function useRenewContract(id: number) {
 
 /* ── Inventory ───────────────────────────────────────────── */
 
+/** The items list carries per-category totals so the tabs can show counts. */
+export interface ItemsResponse extends Paginated<Item> {
+    counts?: {
+        all: number
+        by_category: Partial<Record<Item['category'], number>>
+    }
+}
+
 export function useItems(filters: Record<string, unknown> = {}) {
     const { canDispatch } = useAuth()
 
     return useQuery({
         queryKey: keys.items(filters),
-        queryFn: async () => (await api.get<Paginated<Item>>('/items', { params: filters })).data,
+        queryFn: async () => (await api.get<ItemsResponse>('/items', { params: filters })).data,
         enabled: canDispatch,
         placeholderData: (previous) => previous,
     })

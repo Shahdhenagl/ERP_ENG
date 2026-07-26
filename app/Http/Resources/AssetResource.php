@@ -39,6 +39,8 @@ class AssetResource extends JsonResource
             'label' => $this->label(),
 
             'customer_id' => $this->customer_id,
+            // The catalogue item it was drawn from, when it came out of stock.
+            'item_id' => $this->item_id,
             'branch_id' => $this->branch_id,
             'branch' => $this->whenLoaded('branch', fn () => $this->branch?->name),
             'customer' => new CustomerResource($this->whenLoaded('customer')),

@@ -22,6 +22,7 @@ class Asset extends Model
         'asset_number',
         'barcode',
         'customer_id',
+        'item_id',
         'branch_id',
         'brand',
         'model',
@@ -85,6 +86,12 @@ class Asset extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    /** The catalogue item it was drawn from, when it came out of stock. */
+    public function item(): BelongsTo
+    {
+        return $this->belongsTo(Item::class);
     }
 
     public function branch(): BelongsTo

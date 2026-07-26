@@ -28,6 +28,10 @@ class ItemResource extends JsonResource
             'category_label' => $this->category->label(),
             'unit' => $this->unit,
 
+            // The nameplate, present only on the kinds that carry one.
+            'specs' => $this->specs ?: null,
+            'sell_price' => $this->sell_price !== null ? (float) $this->sell_price : null,
+
             'avg_cost' => (float) $this->avg_cost,
             'reorder_level' => (float) $this->reorder_level,
 

@@ -1,12 +1,12 @@
 import { Save } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, Field, Input, Select, Textarea } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
-import { ASSET_STATUS, COMM_PORTS, UPS_PHASES, UPS_TYPES } from '@/lib/domain'
-import { useCustomers, useSaveAsset } from '@/lib/queries'
-import type { Asset, AssetStatus } from '@/types'
+import { ASSET_STATUS, COMM_PORTS, formatQty, UPS_PHASES, UPS_TYPES } from '@/lib/domain'
+import { useCustomers, useItems, useSaveAsset } from '@/lib/queries'
+import type { Asset, AssetStatus, Item } from '@/types'
 
 interface AssetFormProps {
     open: boolean
@@ -14,35 +14,43 @@ interface AssetFormProps {
     asset?: Asset
     /** Pre-selects the owner when opened from a customer's page. */
     customerId?: number
+    /** Pre-links a stock UPS item — set when installing straight from inventory. */
+    stockItem?: Item
     onSaved?: (asset: Asset) => void
 }
 
-export function AssetForm({ open, onClose, asset, customerId, onSaved }: AssetFormProps) {
+export function AssetForm({ open, onClose, asset, customerId, stockItem, onSaved }: AssetFormProps) {
     const toast = useToast()
     const save = useSaveAsset(asset?.id)
     const { data: customers } = useCustomers({ per_page: 200 })
+    // The catalogue UPS units on the shelf — the picker is shown only when
+    // registering a new device, so the list is what it draws from.
+    const { data: upsItems } = useItems({ category: 'ups', per_page: 200 })
     const [errors, setErrors] = useState<Record<string, string>>({})
+
+    const preset = stockItem?.specs ?? {}
 
     const [form, setForm] = useState({
         serial: asset?.serial ?? '',
-        name: asset?.name ?? '',
+        name: asset?.name ?? stockItem?.name ?? '',
         asset_number: asset?.asset_number ?? '',
         barcode: asset?.barcode ?? '',
         customer_id: String(asset?.customer_id ?? customerId ?? ''),
-        brand: asset?.brand ?? '',
-        model: asset?.model ?? '',
-        ups_type: asset?.ups_type ?? '',
-        phase: asset?.phase ?? '',
-        capacity: asset?.capacity ?? '',
-        input_voltage: asset?.input_voltage ?? '',
-        output_voltage: asset?.output_voltage ?? '',
-        frequency: asset?.frequency ?? '',
-        efficiency: asset?.efficiency ?? '',
-        power_factor: asset?.power_factor ?? '',
-        battery_voltage: asset?.battery_voltage ?? '',
-        battery_count: asset?.battery_count?.toString() ?? '',
-        backup_minutes: asset?.backup_minutes?.toString() ?? '',
-        comm_port: asset?.comm_port ?? '',
+        item_id: String(asset?.item_id ?? stockItem?.id ?? ''),
+        brand: asset?.brand ?? preset.brand ?? '',
+        model: asset?.model ?? preset.model ?? '',
+        ups_type: asset?.ups_type ?? preset.ups_type ?? '',
+        phase: asset?.phase ?? preset.phase ?? '',
+        capacity: asset?.capacity ?? preset.capacity ?? '',
+        input_voltage: asset?.input_voltage ?? preset.input_voltage ?? '',
+        output_voltage: asset?.output_voltage ?? preset.output_voltage ?? '',
+        frequency: asset?.frequency ?? preset.frequency ?? '',
+        efficiency: asset?.efficiency ?? preset.efficiency ?? '',
+        power_factor: asset?.power_factor ?? preset.power_factor ?? '',
+        battery_voltage: asset?.battery_voltage ?? preset.battery_voltage ?? '',
+        battery_count: asset?.battery_count?.toString() ?? preset.battery_count ?? '',
+        backup_minutes: asset?.backup_minutes?.toString() ?? preset.backup_minutes ?? '',
+        comm_port: asset?.comm_port ?? preset.comm_port ?? '',
         site_address: asset?.site_address ?? '',
         sold_at: asset?.sold_at ?? '',
         warranty_months: asset?.warranty_months?.toString() ?? '',
@@ -54,6 +62,36 @@ export function AssetForm({ open, onClose, asset, customerId, onSaved }: AssetFo
     const set = (key: keyof typeof form) => (value: string) =>
         setForm((current) => ({ ...current, [key]: value }))
 
+    // UPS items that actually have something on the shelf to install.
+    const installable = useMemo(
+        () => (upsItems?.data ?? []).filter((item) => item.total_qty > 0),
+        [upsItems],
+    )
+
+    /** Copy a chosen stock item's nameplate into the blank fields. */
+    const chooseItem = (id: string) => {
+        const item = installable.find((candidate) => String(candidate.id) === id)
+        setForm((current) => ({
+            ...current,
+            item_id: id,
+            name: current.name || item?.name || '',
+            brand: current.brand || item?.specs?.brand || '',
+            model: current.model || item?.specs?.model || '',
+            ups_type: current.ups_type || item?.specs?.ups_type || '',
+            phase: current.phase || item?.specs?.phase || '',
+            capacity: current.capacity || item?.specs?.capacity || '',
+            input_voltage: current.input_voltage || item?.specs?.input_voltage || '',
+            output_voltage: current.output_voltage || item?.specs?.output_voltage || '',
+            frequency: current.frequency || item?.specs?.frequency || '',
+            efficiency: current.efficiency || item?.specs?.efficiency || '',
+            power_factor: current.power_factor || item?.specs?.power_factor || '',
+            battery_voltage: current.battery_voltage || item?.specs?.battery_voltage || '',
+            battery_count: current.battery_count || item?.specs?.battery_count || '',
+            backup_minutes: current.backup_minutes || item?.specs?.backup_minutes || '',
+            comm_port: current.comm_port || item?.specs?.comm_port || '',
+        }))
+    }
+
     const handleSave = async () => {
         setErrors({})
 
@@ -64,6 +102,8 @@ export function AssetForm({ open, onClose, asset, customerId, onSaved }: AssetFo
                 asset_number: form.asset_number || null,
                 barcode: form.barcode || null,
                 customer_id: Number(form.customer_id),
+                // Only meaningful on a new record: sending it draws one off the shelf.
+                item_id: !asset && form.item_id ? Number(form.item_id) : null,
                 brand: form.brand || null,
                 model: form.model || null,
                 ups_type: form.ups_type || null,
@@ -125,6 +165,24 @@ export function AssetForm({ open, onClose, asset, customerId, onSaved }: AssetFo
                         ))}
                     </Select>
                 </Field>
+
+                {/* Drawing from stock — only when registering a new unit. */}
+                {!asset && (
+                    <Field
+                        label="من المخزون (اختياري)"
+                        error={errors.item_id}
+                        hint="اختيار صنف UPS من المخزون ينقص وحدة عند الحفظ ويملأ المواصفات"
+                    >
+                        <Select value={form.item_id} onChange={(event) => chooseItem(event.target.value)}>
+                            <option value="">بدون خصم من المخزون</option>
+                            {installable.map((item) => (
+                                <option key={item.id} value={item.id}>
+                                    {item.name} — متاح {formatQty(item.total_qty)} {item.unit}
+                                </option>
+                            ))}
+                        </Select>
+                    </Field>
+                )}
 
                 <Field
                     label="الرقم التسلسلي"

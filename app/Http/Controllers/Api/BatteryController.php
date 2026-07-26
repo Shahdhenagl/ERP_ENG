@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\ItemCategory;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Battery;
+use App\Models\Item;
+use App\Models\Warehouse;
+use App\Services\StockLedger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -38,10 +42,49 @@ class BatteryController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $battery = Battery::create([
-            ...$this->validated($request),
-            'created_by' => $request->user()->id,
-        ]);
+        $data = $this->validated($request);
+        $data['created_by'] = $request->user()->id;
+
+        // Drawn from stock: the bank carries the catalogue nameplate and price,
+        // and its cells come off the shelf in the same transaction.
+        $battery = DB::transaction(function () use ($data, $request) {
+            $item = null;
+
+            if (! empty($data['item_id'])) {
+                $item = Item::findOrFail($data['item_id']);
+
+                if ($item->category !== ItemCategory::Battery) {
+                    throw ValidationException::withMessages([
+                        'item_id' => 'الصنف المختار ليس بطارية.',
+                    ]);
+                }
+
+                foreach (($item->specs ?? []) as $key => $value) {
+                    if (empty($data[$key])) {
+                        $data[$key] = $value;
+                    }
+                }
+                $data['name'] ??= $item->name;
+                $data['unit_cost'] ??= (float) $item->avg_cost;
+                if (empty($data['sell_price']) && $item->sell_price !== null) {
+                    $data['sell_price'] = (float) $item->sell_price;
+                }
+            }
+
+            $battery = Battery::create($data);
+
+            if ($item) {
+                app(StockLedger::class)->issue(
+                    $item,
+                    Warehouse::main(),
+                    max(1, (int) $battery->count),
+                    $request->user(),
+                    "تركيب بطارية {$battery->code} عند العميل",
+                );
+            }
+
+            return $battery;
+        });
 
         ActivityLog::record('battery.created', $battery, "تسجيل بطارية {$battery->code}");
 
@@ -129,6 +172,7 @@ class BatteryController extends Controller
             'id' => $battery->id,
             'code' => $battery->code,
 
+            'item_id' => $battery->item_id,
             'asset_id' => $battery->asset_id,
             'asset' => $battery->asset?->code,
             'asset_label' => $battery->asset
@@ -184,6 +228,9 @@ class BatteryController extends Controller
         return $request->validate([
             'asset_id' => ['nullable', 'exists:assets,id'],
             'customer_id' => ['nullable', 'exists:customers,id'],
+            // The catalogue battery this bank is drawn from — its cells come off
+            // the shelf when it is set.
+            'item_id' => ['nullable', 'exists:items,id'],
             'serial_number' => ['nullable', 'string', 'max:120'],
             'name' => ['nullable', 'string', 'max:160'],
             'asset_tag' => ['nullable', 'string', 'max:64'],

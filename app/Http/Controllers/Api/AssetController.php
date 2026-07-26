@@ -2,13 +2,18 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\ItemCategory;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AssetResource;
 use App\Models\ActivityLog;
 use App\Models\Asset;
+use App\Models\Item;
+use App\Models\Warehouse;
+use App\Services\StockLedger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -34,7 +39,45 @@ class AssetController extends Controller
         $data = $this->validated($request);
         $data['created_by'] = $request->user()->id;
 
-        $asset = Asset::create($data);
+        // A unit drawn from stock carries the catalogue nameplate down and comes
+        // off the shelf in the same transaction — the register and the balance
+        // move together or neither does.
+        $asset = DB::transaction(function () use ($data, $request) {
+            $item = null;
+
+            if (! empty($data['item_id'])) {
+                $item = Item::findOrFail($data['item_id']);
+
+                if ($item->category !== ItemCategory::Ups) {
+                    throw ValidationException::withMessages([
+                        'item_id' => 'الصنف المختار ليس جهاز UPS.',
+                    ]);
+                }
+
+                // Fill only the blanks, so a serial or note the caller typed wins
+                // over the shared nameplate.
+                foreach (($item->specs ?? []) as $key => $value) {
+                    if (empty($data[$key])) {
+                        $data[$key] = $value;
+                    }
+                }
+                $data['name'] ??= $item->name;
+            }
+
+            $asset = Asset::create($data);
+
+            if ($item) {
+                app(StockLedger::class)->issue(
+                    $item,
+                    Warehouse::main(),
+                    1,
+                    $request->user(),
+                    "تركيب جهاز {$asset->code} عند العميل",
+                );
+            }
+
+            return $asset;
+        });
 
         ActivityLog::record('asset.created', $asset, "تم تسجيل الجهاز {$asset->code}");
 
@@ -96,6 +139,9 @@ class AssetController extends Controller
                 Rule::unique('assets')->ignore($asset?->id)->whereNull('deleted_at'),
             ],
             'customer_id' => ['required', 'exists:customers,id'],
+            // The catalogue UPS this unit is drawn from — one comes off the shelf
+            // when it is set. Only meaningful on a new record.
+            'item_id' => ['nullable', 'exists:items,id'],
             'branch_id' => ['nullable', 'exists:branches,id'],
             'name' => ['nullable', 'string', 'max:160'],
             'asset_number' => ['nullable', 'string', 'max:64'],
