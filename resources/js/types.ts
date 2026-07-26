@@ -60,6 +60,7 @@ export interface Customer {
     id: number
     code: string
     name: string
+    name_en: string | null
     company: string | null
     type: CustomerType | null
     type_label: string | null
@@ -68,6 +69,8 @@ export interface Customer {
     whatsapp_number: string | null
     whatsapp_link: string | null
     email: string | null
+    tax_id: string | null
+    commercial_register: string | null
     address: string | null
     city: string | null
     lat: number | null

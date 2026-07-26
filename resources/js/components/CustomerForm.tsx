@@ -22,11 +22,14 @@ export function CustomerForm({ open, onClose, customer, onSaved }: CustomerFormP
 
     const [form, setForm] = useState({
         name: customer?.name ?? '',
+        name_en: customer?.name_en ?? '',
         company: customer?.company ?? '',
         type: customer?.type ?? '',
         phone: customer?.phone ?? '',
         whatsapp: customer?.whatsapp ?? '',
         email: customer?.email ?? '',
+        tax_id: customer?.tax_id ?? '',
+        commercial_register: customer?.commercial_register ?? '',
         address: customer?.address ?? '',
         city: customer?.city ?? '',
         lat: customer?.lat?.toString() ?? '',
@@ -81,10 +84,13 @@ export function CustomerForm({ open, onClose, customer, onSaved }: CustomerFormP
                 ...form,
                 lat: form.lat === '' ? null : Number(form.lat),
                 lng: form.lng === '' ? null : Number(form.lng),
+                name_en: form.name_en || null,
                 company: form.company || null,
                 type: form.type || null,
                 whatsapp: form.whatsapp || null,
                 email: form.email || null,
+                tax_id: form.tax_id || null,
+                commercial_register: form.commercial_register || null,
                 address: form.address || null,
                 city: form.city || null,
                 map_url: form.map_url || null,
@@ -119,12 +125,22 @@ export function CustomerForm({ open, onClose, customer, onSaved }: CustomerFormP
         >
             <div className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="اسم العميل" required error={errors.name}>
+                    <Field label="اسم العميل (بالعربية)" required error={errors.name}>
                         <Input
                             value={form.name}
                             onChange={(event) => set('name')(event.target.value)}
                             placeholder="اسم الشخص أو الجهة"
                             autoFocus
+                        />
+                    </Field>
+
+                    <Field label="الاسم بالإنجليزية" error={errors.name_en}>
+                        <Input
+                            value={form.name_en}
+                            onChange={(event) => set('name_en')(event.target.value)}
+                            placeholder="Customer name (English)"
+                            dir="ltr"
+                            className="text-left"
                         />
                     </Field>
 
@@ -202,6 +218,25 @@ export function CustomerForm({ open, onClose, customer, onSaved }: CustomerFormP
                         <Input
                             value={form.city}
                             onChange={(event) => set('city')(event.target.value)}
+                        />
+                    </Field>
+
+                    <Field label="البطاقة الضريبية" error={errors.tax_id}>
+                        <Input
+                            value={form.tax_id}
+                            onChange={(event) => set('tax_id')(event.target.value)}
+                            dir="ltr"
+                            className="text-left"
+                            placeholder="الرقم الضريبي"
+                        />
+                    </Field>
+
+                    <Field label="السجل التجاري" error={errors.commercial_register}>
+                        <Input
+                            value={form.commercial_register}
+                            onChange={(event) => set('commercial_register')(event.target.value)}
+                            dir="ltr"
+                            className="text-left"
                         />
                     </Field>
                 </div>

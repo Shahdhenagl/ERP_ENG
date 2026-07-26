@@ -38,6 +38,32 @@ it('allows many customers with no phone', function () {
     expect(Customer::whereNull('phone')->count())->toBe(2);
 });
 
+/* ── Legal details ───────────────────────────────────────── */
+
+it('stores the English name and the tax and commercial numbers', function () {
+    actingAs($this->manager)
+        ->postJson('/api/customers', [
+            'name' => 'بنك القاهرة',
+            'name_en' => 'Banque du Caire',
+            'phone' => '01099999999',
+            'tax_id' => '123-456-789',
+            'commercial_register' => 'CR-88221',
+        ])
+        ->assertCreated()
+        ->assertJsonPath('name_en', 'Banque du Caire')
+        ->assertJsonPath('tax_id', '123-456-789')
+        ->assertJsonPath('commercial_register', 'CR-88221');
+});
+
+it('finds a customer by its English name', function () {
+    Customer::factory()->create(['name' => 'بنك القاهرة', 'name_en' => 'Banque du Caire', 'phone' => '01088888888']);
+
+    actingAs($this->manager)
+        ->getJson('/api/customers?search=Banque')
+        ->assertOk()
+        ->assertJsonPath('meta.total', 1);
+});
+
 /* ── Type ────────────────────────────────────────────────── */
 
 it('stores and labels a customer type', function () {

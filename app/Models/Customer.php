@@ -17,11 +17,14 @@ class Customer extends Model
     protected $fillable = [
         'code',
         'name',
+        'name_en',
         'company',
         'type',
         'phone',
         'whatsapp',
         'email',
+        'tax_id',
+        'commercial_register',
         'address',
         'city',
         'lat',
@@ -204,8 +207,10 @@ class Customer extends Model
 
         return $query->where(function (Builder $q) use ($term) {
             $q->where('name', 'like', "%{$term}%")
+                ->orWhere('name_en', 'like', "%{$term}%")
                 ->orWhere('company', 'like', "%{$term}%")
                 ->orWhere('phone', 'like', "%{$term}%")
+                ->orWhere('tax_id', 'like', "%{$term}%")
                 ->orWhere('code', 'like', "%{$term}%");
         });
     }

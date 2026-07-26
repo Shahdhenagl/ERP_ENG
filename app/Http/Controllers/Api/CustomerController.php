@@ -180,6 +180,7 @@ class CustomerController extends Controller
     {
         return $request->validate([
             'name' => ['required', 'string', 'max:160'],
+            'name_en' => ['nullable', 'string', 'max:160'],
             'company' => ['nullable', 'string', 'max:160'],
             'type' => ['nullable', Rule::in(array_keys(Customer::TYPES))],
             // Unique across customers — one number, one file. On edit the
@@ -190,6 +191,8 @@ class CustomerController extends Controller
             ],
             'whatsapp' => ['nullable', 'string', 'max:32'],
             'email' => ['nullable', 'email', 'max:160'],
+            'tax_id' => ['nullable', 'string', 'max:32'],
+            'commercial_register' => ['nullable', 'string', 'max:32'],
             'address' => ['nullable', 'string', 'max:500'],
             'city' => ['nullable', 'string', 'max:80'],
             'lat' => ['nullable', 'numeric', 'between:-90,90'],
