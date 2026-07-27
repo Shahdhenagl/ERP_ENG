@@ -6,6 +6,7 @@ use App\Models\Asset;
 use App\Models\Customer;
 use App\Models\Employee;
 use App\Models\Invoice;
+use App\Models\Item;
 use App\Models\Lead;
 use App\Models\Quotation;
 use App\Models\Supplier;
@@ -30,6 +31,7 @@ class CustomReportService
         'customers' => 'العملاء',
         'suppliers' => 'الموردون',
         'assets' => 'الأجهزة',
+        'items' => 'الأصناف والمخزون',
         'invoices' => 'الفواتير',
         'quotations' => 'عروض الأسعار',
         'tasks' => 'أوامر العمل',
@@ -64,6 +66,7 @@ class CustomReportService
             'customers' => $this->customers($from, $to),
             'suppliers' => $this->suppliers($from, $to),
             'assets' => $this->assets($from, $to),
+            'items' => $this->items($from, $to),
             'invoices' => $this->invoices($from, $to),
             'quotations' => $this->quotations($from, $to),
             'tasks' => $this->tasks($from, $to),
@@ -111,6 +114,21 @@ class CustomReportService
                 ->map(fn (Asset $a) => [
                     $a->code, $a->serial, $a->brand, $a->model,
                     $a->customer?->name, $this->str($a->status), $a->created_at?->toDateString(),
+                ]),
+        ];
+    }
+
+    /** @return array{0: array<int, string>, 1: iterable<int, array<int, mixed>>} */
+    protected function items(?string $from, ?string $to): array
+    {
+        return [
+            ['الكود', 'الاسم', 'الفئة', 'الوحدة', 'حد الطلب', 'سعر البيع', 'متوسط التكلفة', 'الرصيد', 'قيمة المخزون'],
+            $this->window(Item::with('levels'), 'created_at', $from, $to)->orderBy('id')->get()
+                ->map(fn (Item $item) => [
+                    $item->code, $item->name, $item->category->label(), $item->unit,
+                    (float) $item->reorder_level,
+                    $item->sell_price !== null ? (float) $item->sell_price : null,
+                    (float) $item->avg_cost, $item->totalQty(), $item->stockValue(),
                 ]),
         ];
     }

@@ -1,5 +1,4 @@
 import {
-    Activity,
     ArrowLeftRight,
     Banknote,
     BatteryCharging,
@@ -89,8 +88,7 @@ export const NAV: NavItem[] = [
         icon: LayoutDashboard,
         roles: ['admin', 'manager'],
         children: [
-            { to: '/', label: 'لوحة المعلومات', icon: LayoutDashboard },
-            { to: '/operations', permission: 'reports.view', label: 'لوحة التشغيل', icon: Activity },
+            { to: '/', label: 'الرئيسية', icon: LayoutDashboard },
             { to: '/notifications', label: 'التنبيهات', icon: Bell },
             { to: '/tasks', label: 'المهام المطلوبة', icon: ClipboardList },
         ],

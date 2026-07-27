@@ -21,6 +21,7 @@ import {
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CustodyExpenseModal } from '@/components/CustodyExpenseModal'
+import { OperationsOverview } from '@/pages/OperationsDashboard'
 import { TaskCard } from '@/components/TaskCard'
 import { useToast } from '@/components/Toast'
 import { Button, EmptyState, ErrorState, PageHeader, SkeletonCard } from '@/components/ui'
@@ -206,6 +207,14 @@ export function Dashboard() {
                         tone="navy"
                     />
                 </div>
+            )}
+
+            {/* ── The estate overview (was the separate operations board) ── */}
+            {canDispatch && (
+                <section className="mt-8">
+                    <h2 className="mb-3 text-sm font-bold text-navy-700">نظرة على المنشأة</h2>
+                    <OperationsOverview />
+                </section>
             )}
 
             {/* ── Contract visits waiting for a technician ───── */}

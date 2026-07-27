@@ -1,9 +1,11 @@
 import clsx from 'clsx'
-import { FileText, HandCoins, ReceiptText, ScrollText, Undo2, Users, Wrench } from 'lucide-react'
+import { FileText, HandCoins, Printer, ReceiptText, ScrollText, Undo2, Users, Wrench } from 'lucide-react'
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { EmptyState, Field, PageHeader, Select, SkeletonCard } from '@/components/ui'
 import { formatMoney } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
+import { useArea } from '@/lib/nav'
 import { useCustomers, useCustomerTimeline, type TimelineEvent } from '@/lib/queries'
 
 const TYPE: Record<TimelineEvent['type'], { icon: typeof FileText; tint: string }> = {
@@ -23,6 +25,7 @@ const TYPE: Record<TimelineEvent['type'], { icon: typeof FileText; tint: string 
  * the grouped profile never shows as one stream.
  */
 export function CustomerLedgerPage() {
+    const { path } = useArea()
     const { data: customerPage } = useCustomers({ per_page: 200 })
     const customers = customerPage?.data ?? []
     const [customerId, setCustomerId] = useState<number | null>(null)
@@ -33,8 +36,8 @@ export function CustomerLedgerPage() {
         <>
             <PageHeader title="سجل تعاملات العميل" subtitle="كل الحركات مرتبة بالتاريخ" />
 
-            <div className="mb-4 max-w-md">
-                <Field label="العميل">
+            <div className="mb-4 flex max-w-xl items-end gap-2">
+                <Field label="العميل" className="flex-1">
                     <Select
                         value={customerId ?? ''}
                         onChange={(e) => setCustomerId(e.target.value ? Number(e.target.value) : null)}
@@ -47,6 +50,17 @@ export function CustomerLedgerPage() {
                         ))}
                     </Select>
                 </Field>
+
+                {customerId && Boolean(data?.data.length) && (
+                    <Link
+                        to={path(`/print/customer-ledger/${customerId}`)}
+                        target="_blank"
+                        className="btn-secondary shrink-0 text-xs"
+                    >
+                        <Printer className="size-4" />
+                        طباعة
+                    </Link>
+                )}
             </div>
 
             {!customerId ? (

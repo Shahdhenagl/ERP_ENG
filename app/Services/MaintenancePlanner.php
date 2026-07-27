@@ -156,7 +156,10 @@ class MaintenancePlanner
         for ($i = 0; $i < $count; $i++) {
             $offset = (int) round($days * (2 * $i + 1) / (2 * $count));
 
-            $dates[] = $this->nudgeToWorkingDay($from->startOfDay()->addDays($offset));
+            // Each visit belongs to the month its slice falls in, so working-day
+            // nudging is kept inside that month — a month's visit is done within
+            // the month, never spilled into the next.
+            $dates[] = $this->nudgeToWorkingDayWithinMonth($from->startOfDay()->addDays($offset));
         }
 
         return $dates;
@@ -175,6 +178,13 @@ class MaintenancePlanner
         return max(1, (int) round($contract->visits_per_year * ($days / 365.25)));
     }
 
+    /** A closed office: the Fri/Sat weekend, or an admin-marked official holiday. */
+    protected function isClosed(CarbonImmutable $date): bool
+    {
+        return in_array($date->dayOfWeek, [CarbonImmutable::FRIDAY, CarbonImmutable::SATURDAY], true)
+            || isset($this->holidays()[$date->toDateString()]);
+    }
+
     /**
      * Step a visit onto a working day: Friday and Saturday are the weekend
      * here, and an admin-marked official holiday is a closed office too. Walk
@@ -182,16 +192,36 @@ class MaintenancePlanner
      */
     protected function nudgeToWorkingDay(CarbonImmutable $date): CarbonImmutable
     {
-        $holidays = $this->holidays();
-
-        while (
-            in_array($date->dayOfWeek, [CarbonImmutable::FRIDAY, CarbonImmutable::SATURDAY], true)
-            || isset($holidays[$date->toDateString()])
-        ) {
+        while ($this->isClosed($date)) {
             $date = $date->addDay();
         }
 
         return $date;
+    }
+
+    /**
+     * The same, but never leaving the date's own month. Nudging forward is tried
+     * first; if that would cross into the next month, it walks backward instead,
+     * so a visit planned for the month's end lands on the last working day of the
+     * month rather than the first of the next. Only if the whole tail of the
+     * month is closed does it accept the forward slip.
+     */
+    protected function nudgeToWorkingDayWithinMonth(CarbonImmutable $date): CarbonImmutable
+    {
+        $forward = $this->nudgeToWorkingDay($date);
+
+        if ($forward->isSameMonth($date)) {
+            return $forward;
+        }
+
+        $back = $date;
+        $monthStart = $date->startOfMonth();
+
+        while ($back->gte($monthStart) && $this->isClosed($back)) {
+            $back = $back->subDay();
+        }
+
+        return $back->gte($monthStart) ? $back : $forward;
     }
 
     /**

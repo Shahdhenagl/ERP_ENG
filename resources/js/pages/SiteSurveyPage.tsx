@@ -1,9 +1,11 @@
 import clsx from 'clsx'
-import { BadgeCheck, MapPin, Plus, Zap } from 'lucide-react'
+import { BadgeCheck, MapPin, Plus, Printer, Trash2, Zap } from 'lucide-react'
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Attachments } from '@/components/Attachments'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
+import { useArea } from '@/lib/nav'
 import {
     Button,
     EmptyState,
@@ -19,6 +21,7 @@ import { formatDate } from '@/lib/format'
 import {
     useApproveSiteSurvey,
     useCustomers,
+    useDeleteSiteSurvey,
     useLeads,
     useSaveSiteSurvey,
     useSiteSurveys,
@@ -152,8 +155,10 @@ export function SiteSurveyPage() {
 
 function SurveyDialog({ survey, onClose }: { survey?: SiteSurvey; onClose: () => void }) {
     const toast = useToast()
+    const { path } = useArea()
     const save = useSaveSiteSurvey()
     const approve = useApproveSiteSurvey()
+    const remove = useDeleteSiteSurvey()
     const { data: leads } = useLeads({ per_page: 200 })
     const { data: customerPage } = useCustomers({ per_page: 200 })
     const [errors, setErrors] = useState<Record<string, string>>({})
@@ -219,24 +224,57 @@ function SurveyDialog({ survey, onClose }: { survey?: SiteSurvey; onClose: () =>
             size="lg"
             footer={
                 <div className="flex w-full items-center justify-between gap-2">
-                    {survey && !locked ? (
-                        <Button
-                            variant="secondary"
-                            icon={BadgeCheck}
-                            className="text-emerald-600"
-                            disabled={approve.isPending}
-                            onClick={async () => {
-                                try {
-                                    await approve.mutateAsync(survey.id)
-                                    toast.success('تم اعتماد المعاينة.')
-                                    onClose()
-                                } catch (caught) {
-                                    toast.error(errorMessage(caught, 'تعذّر الاعتماد.'))
-                                }
-                            }}
-                        >
-                            اعتماد
-                        </Button>
+                    {survey ? (
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Link
+                                to={path(`/print/site-surveys/${survey.id}`)}
+                                target="_blank"
+                                className="btn-secondary text-xs"
+                            >
+                                <Printer className="size-4" />
+                                طباعة
+                            </Link>
+
+                            {!locked && (
+                                <>
+                                    <Button
+                                        variant="secondary"
+                                        icon={BadgeCheck}
+                                        className="text-xs text-emerald-600"
+                                        disabled={approve.isPending}
+                                        onClick={async () => {
+                                            try {
+                                                await approve.mutateAsync(survey.id)
+                                                toast.success('تم اعتماد المعاينة.')
+                                                onClose()
+                                            } catch (caught) {
+                                                toast.error(errorMessage(caught, 'تعذّر الاعتماد.'))
+                                            }
+                                        }}
+                                    >
+                                        اعتماد
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        icon={Trash2}
+                                        className="text-xs text-red-600"
+                                        loading={remove.isPending}
+                                        onClick={async () => {
+                                            if (!confirm('حذف هذه المعاينة؟')) return
+                                            try {
+                                                await remove.mutateAsync(survey.id)
+                                                toast.success('تم حذف المعاينة.')
+                                                onClose()
+                                            } catch (caught) {
+                                                toast.error(errorMessage(caught, 'تعذّر الحذف.'))
+                                            }
+                                        }}
+                                    >
+                                        حذف
+                                    </Button>
+                                </>
+                            )}
+                        </div>
                     ) : (
                         <span />
                     )}

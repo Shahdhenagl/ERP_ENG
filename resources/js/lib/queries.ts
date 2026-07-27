@@ -566,6 +566,25 @@ export function useApproveSiteSurvey() {
     })
 }
 
+export function useDeleteSiteSurvey() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id: number) => (await api.delete(`/site-surveys/${id}`)).data,
+        onSuccess: () => void client.invalidateQueries({ queryKey: ['site-surveys'] }),
+    })
+}
+
+/** One survey, for its printable sheet. */
+export function useSiteSurvey(id: number | string | undefined) {
+    return useQuery({
+        queryKey: ['site-survey', Number(id ?? 0)],
+        queryFn: async () =>
+            (await api.get<{ data: SiteSurvey }>(`/site-surveys/${id}`)).data.data,
+        enabled: Boolean(id),
+    })
+}
+
 /* ── Batteries ───────────────────────────────────────────── */
 
 export function useBatteries(filters: Record<string, unknown> = {}) {
@@ -626,7 +645,17 @@ export function useCustomerTimeline(customerId: number | undefined) {
             (
                 await api.get<{
                     data: TimelineEvent[]
-                    meta: { customer: { id: number; name: string; code: string }; total: number }
+                    meta: {
+                        customer: {
+                            id: number
+                            name: string
+                            code: string
+                            company?: string | null
+                            phone?: string | null
+                            address?: string | null
+                        }
+                        total: number
+                    }
                 }>(`/customers/${customerId}/timeline`)
             ).data,
         enabled: Boolean(customerId),

@@ -59,6 +59,23 @@ class SiteSurveyController extends Controller
         return response()->json(['data' => $this->present($siteSurvey->fresh()->load(['lead', 'customer', 'surveyor']))]);
     }
 
+    /** Remove a survey. An approved one is a quotation's basis and is kept. */
+    public function destroy(SiteSurvey $siteSurvey): JsonResponse
+    {
+        if ($siteSurvey->status === SurveyStatus::Approved) {
+            throw ValidationException::withMessages([
+                'status' => 'لا يمكن حذف معاينة معتمدة.',
+            ]);
+        }
+
+        $code = $siteSurvey->code;
+        $siteSurvey->delete();
+
+        ActivityLog::record('site_survey.deleted', $siteSurvey, "حذف معاينة {$code}");
+
+        return response()->json(['message' => 'تم حذف المعاينة.']);
+    }
+
     /** Freeze the survey as the basis a quotation is sized against. */
     public function approve(Request $request, SiteSurvey $siteSurvey): JsonResponse
     {

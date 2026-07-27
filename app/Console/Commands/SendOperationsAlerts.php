@@ -43,12 +43,15 @@ class SendOperationsAlerts extends Command
     {
         $alerts = collect()
             ->merge($this->urgentTasks())
+            ->merge($this->deviceFaults())
             ->merge($this->delayedTasks())
             ->merge($this->ppmDue())
             ->merge($this->contractPaymentsDue())
             ->merge($this->warrantiesExpiring())
+            ->merge($this->newInvoices())
             ->merge($this->overdueInvoices())
-            ->merge($this->partsLow());
+            ->merge($this->partsLow())
+            ->merge($this->approvalsNeeded());
 
         $recipients = User::query()
             ->whereIn('role', ['admin', 'manager'])
@@ -87,6 +90,19 @@ class SendOperationsAlerts extends Command
                 'key' => "urgent-task:{$t->id}", 'type' => 'task.urgent',
                 'title' => 'صيانة عاجلة',
                 'body' => "{$t->code} — ".($t->customer?->name ?? $t->title),
+                'url' => "/tasks/{$t->id}", 'tag' => "task-{$t->id}",
+            ]);
+    }
+
+    /** A reported device fault — an open repair job on a unit. */
+    protected function deviceFaults(): Collection
+    {
+        return Task::query()->open()->where('type', TaskType::Repair->value)
+            ->with(['customer', 'asset'])->get()
+            ->map(fn (Task $t) => [
+                'key' => "device-fault:{$t->id}", 'type' => 'device.fault',
+                'title' => 'بلاغ عطل جهاز',
+                'body' => ($t->asset?->label() ?? $t->customer?->name ?? $t->title)." — {$t->code}",
                 'url' => "/tasks/{$t->id}", 'tag' => "task-{$t->id}",
             ]);
     }
@@ -175,17 +191,84 @@ class SendOperationsAlerts extends Command
             ]);
     }
 
-    /** Stock that has fallen below its reorder level — a shortage forming. */
+    /**
+     * Stock that has fallen below its reorder level — a shortage forming. The
+     * heading names the kind, so a UPS or battery running low reads as a device
+     * shortage rather than hiding under "spare parts".
+     */
     protected function partsLow(): Collection
     {
         return Item::query()->active()->get()
             ->filter->isBelowReorderLevel()
             ->map(fn (Item $item) => [
-                'key' => "parts-low:{$item->id}", 'type' => 'parts.low',
-                'title' => 'نقص قطع غيار',
+                'key' => "parts-low:{$item->id}", 'type' => 'stock.low',
+                'title' => match ($item->category->value) {
+                    'ups' => 'نقص أجهزة UPS',
+                    'battery' => 'نقص بطاريات',
+                    default => 'نقص قطع غيار',
+                },
                 'body' => "{$item->name} — المتاح ".$item->totalQty()." {$item->unit}",
                 'url' => '/inventory', 'tag' => "item-{$item->id}",
             ])
             ->values();
+    }
+
+    /** Newly issued invoices — a bill went out and is now owed. */
+    protected function newInvoices(): Collection
+    {
+        return Invoice::query()
+            ->where('status', 'issued')
+            ->whereDate('created_at', '>=', now()->subDays(2)->toDateString())
+            ->with('customer')->get()
+            ->map(fn (Invoice $i) => [
+                'key' => "invoice-new:{$i->id}", 'type' => 'invoice.created',
+                'title' => 'فاتورة جديدة',
+                'body' => "{$i->code} — ".($i->customer?->name ?? '')
+                    .' · '.number_format((float) $i->total, 2).' ج',
+                'url' => "/invoices/{$i->id}", 'tag' => "invoice-{$i->id}",
+            ]);
+    }
+
+    /**
+     * Anything in the workflow waiting on a decision — a quote for sign-off,
+     * leave to approve, a purchase request to clear, a warranty claim to rule on.
+     * One alert per pending item, so a manager knows work is stuck on them.
+     */
+    protected function approvalsNeeded(): Collection
+    {
+        $quotes = Quotation::query()->pendingApproval()->with('customer')->get()
+            ->map(fn (Quotation $q) => [
+                'key' => "approval-quote:{$q->id}", 'type' => 'approval.needed',
+                'title' => 'عرض سعر بانتظار الاعتماد',
+                'body' => "{$q->code} — ".($q->customer?->name ?? ''),
+                'url' => '/sales/approvals', 'tag' => "quote-{$q->id}",
+            ]);
+
+        $leave = LeaveRequest::query()->pending()->with('employee')->get()
+            ->map(fn (LeaveRequest $l) => [
+                'key' => "approval-leave:{$l->id}", 'type' => 'approval.needed',
+                'title' => 'طلب إجازة بانتظار الاعتماد',
+                'body' => "{$l->code} — ".($l->employee?->name ?? ''),
+                'url' => '/hr/leave', 'tag' => "leave-{$l->id}",
+            ]);
+
+        $requests = PurchaseRequest::query()->awaiting()->get()
+            ->map(fn (PurchaseRequest $r) => [
+                'key' => "approval-request:{$r->id}", 'type' => 'approval.needed',
+                'title' => 'طلب شراء بانتظار الاعتماد',
+                'body' => $r->code ?? "طلب #{$r->id}",
+                'url' => '/purchase-requests', 'tag' => "request-{$r->id}",
+            ]);
+
+        $claims = WarrantyClaim::query()->where('status', ClaimStatus::Open->value)
+            ->with('asset')->get()
+            ->map(fn (WarrantyClaim $c) => [
+                'key' => "approval-claim:{$c->id}", 'type' => 'approval.needed',
+                'title' => 'مطالبة ضمان بانتظار البتّ',
+                'body' => $c->asset?->label() ?? "مطالبة #{$c->id}",
+                'url' => '/warranties', 'tag' => "claim-{$c->id}",
+            ]);
+
+        return collect()->merge($quotes)->merge($leave)->merge($requests)->merge($claims);
     }
 }

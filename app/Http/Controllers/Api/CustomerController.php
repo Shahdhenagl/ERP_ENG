@@ -317,7 +317,11 @@ class CustomerController extends Controller
         return response()->json([
             'data' => $rows,
             'meta' => [
-                'customer' => ['id' => $customer->id, 'name' => $customer->name, 'code' => $customer->code],
+                'customer' => [
+                    'id' => $customer->id, 'name' => $customer->name, 'code' => $customer->code,
+                    'company' => $customer->company, 'phone' => $customer->phone,
+                    'address' => $customer->address,
+                ],
                 'total' => $rows->count(),
             ],
         ]);

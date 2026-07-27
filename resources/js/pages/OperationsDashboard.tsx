@@ -7,32 +7,29 @@ import {
     Wrench,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { EmptyState, PageHeader, SkeletonCard } from '@/components/ui'
+import { EmptyState, SkeletonCard } from '@/components/ui'
 import { formatMoney } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
 import { useArea } from '@/lib/nav'
 import { useOperations } from '@/lib/queries'
 
 /**
- * The standby-power estate on one screen: the devices and how they are, their
- * batteries, the maintenance due, the work in flight, how the service is
- * performing, and the parts on the shelf. Every figure is read from the module
- * that owns it — this only gathers them.
+ * The standby-power estate, folded into the main dashboard: the devices and how
+ * they are, their batteries, the maintenance due, the work in flight, how the
+ * service is performing, and the parts on the shelf. Every figure is read from
+ * the module that owns it — this only gathers them.
  */
-export function OperationsDashboard() {
+export function OperationsOverview() {
     const { path } = useArea()
     const { data, isLoading } = useOperations()
 
     if (isLoading || !data) {
         return (
-            <>
-                <PageHeader title="لوحة التشغيل" subtitle="حالة الأجهزة والصيانة والأداء" />
-                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                    {Array.from({ length: 4 }).map((_, i) => (
-                        <SkeletonCard key={i} />
-                    ))}
-                </div>
-            </>
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                    <SkeletonCard key={i} />
+                ))}
+            </div>
         )
     }
 
@@ -42,8 +39,6 @@ export function OperationsDashboard() {
 
     return (
         <>
-            <PageHeader title="لوحة التشغيل" subtitle="حالة الأجهزة والصيانة والأداء" />
-
             {/* ── Devices ───────────────────────────────────── */}
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                 <Tile icon={HardDrive} label="إجمالي الأجهزة" value={d.total} tone="brand" />

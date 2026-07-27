@@ -79,6 +79,68 @@ it('alerts to a periodic visit coming up', function () {
         fn (OperationsAlert $a) => $a->type === 'ppm.due');
 });
 
+it('alerts to a reported device fault', function () {
+    Notification::fake();
+
+    \App\Models\Task::factory()->create([
+        'customer_id' => $this->customer->id,
+        'type' => \App\Enums\TaskType::Repair,
+        'status' => \App\Enums\TaskStatus::Pending,
+    ]);
+
+    artisan('alerts:sweep')->assertSuccessful();
+
+    Notification::assertSentTo($this->manager, OperationsAlert::class,
+        fn (OperationsAlert $a) => $a->type === 'device.fault');
+});
+
+it('alerts to a newly issued invoice', function () {
+    Notification::fake();
+
+    $billing = app(BillingService::class);
+    $invoice = Invoice::create([
+        'customer_id' => $this->customer->id,
+        'issue_date' => now()->toDateString(), 'due_date' => now()->addDays(15)->toDateString(),
+    ]);
+    $invoice->lines()->create(['description' => 'خدمة', 'qty' => 1, 'unit_price' => 500, 'line_total' => 500]);
+    $billing->issue($billing->recalculate($invoice));
+
+    artisan('alerts:sweep')->assertSuccessful();
+
+    Notification::assertSentTo($this->manager, OperationsAlert::class,
+        fn (OperationsAlert $a) => $a->type === 'invoice.created');
+});
+
+it('alerts when a leave request is waiting on approval', function () {
+    Notification::fake();
+
+    $employee = \App\Models\Employee::factory()->create();
+    \App\Models\LeaveRequest::create([
+        'employee_id' => $employee->id, 'type' => 'annual',
+        'from_date' => now()->addWeek()->toDateString(), 'to_date' => now()->addWeek()->toDateString(),
+        'days' => 1, 'status' => 'pending',
+    ]);
+
+    artisan('alerts:sweep')->assertSuccessful();
+
+    Notification::assertSentTo($this->manager, OperationsAlert::class,
+        fn (OperationsAlert $a) => $a->type === 'approval.needed');
+});
+
+it('names a UPS stock shortage as a device shortage', function () {
+    Notification::fake();
+
+    // A UPS catalogue item below its reorder level.
+    \App\Models\Item::factory()->create([
+        'category' => 'ups', 'name' => 'UPS 10kVA', 'reorder_level' => 5,
+    ]);
+
+    artisan('alerts:sweep')->assertSuccessful();
+
+    Notification::assertSentTo($this->manager, OperationsAlert::class,
+        fn (OperationsAlert $a) => $a->type === 'stock.low' && $a->title === 'نقص أجهزة UPS');
+});
+
 it('records a dispatch key so the condition is not re-raised', function () {
     $contract = Contract::factory()->for($this->customer)->create(['status' => 'active']);
     $visit = $contract->visits()->create([

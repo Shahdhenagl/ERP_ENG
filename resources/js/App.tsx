@@ -55,6 +55,8 @@ import { QuotationPrint } from '@/pages/print/QuotationPrint'
 import { ServiceReportPrint } from '@/pages/print/ServiceReportPrint'
 import { StatementPrint } from '@/pages/print/StatementPrint'
 import { CustomerTasksPrint } from '@/pages/print/CustomerTasksPrint'
+import { CustomerLedgerPrint } from '@/pages/print/CustomerLedgerPrint'
+import { SiteSurveyPrint } from '@/pages/print/SiteSurveyPrint'
 import { ContractPrint } from '@/pages/print/ContractPrint'
 import { DeliveryNotePrint } from '@/pages/print/DeliveryNotePrint'
 import { PaymentVoucherPrint } from '@/pages/print/PaymentVoucherPrint'
@@ -97,7 +99,6 @@ import { CollectionsPage } from '@/pages/CollectionsPage'
 import { CustomerStatementPage } from '@/pages/CustomerStatementPage'
 import { SupplierStatementPage } from '@/pages/SupplierStatementPage'
 import { Dashboard } from '@/pages/Dashboard'
-import { OperationsDashboard } from '@/pages/OperationsDashboard'
 import { Login } from '@/pages/Login'
 import { Profile } from '@/pages/Profile'
 import { TaskDetail } from '@/pages/TaskDetail'
@@ -144,6 +145,8 @@ export function App() {
                                     <Route path="quotations/:id" element={<QuotationPrint />} />
                                     <Route path="statements/:id" element={<StatementPrint />} />
                                     <Route path="customer-tasks/:id" element={<CustomerTasksPrint />} />
+                                    <Route path="customer-ledger/:id" element={<CustomerLedgerPrint />} />
+                                    <Route path="site-surveys/:id" element={<SiteSurveyPrint />} />
                                     <Route path="contracts/:id" element={<ContractPrint />} />
                                     <Route path="warranty/:id" element={<WarrantyCertificate />} />
                                     <Route path="delivery/:id" element={<DeliveryNotePrint />} />
@@ -175,7 +178,6 @@ export function App() {
                                     {/* ── Dispatcher area ──────────────── */}
                                     <Route path="manager" element={<RequireRole roles={['admin', 'manager']} />}>
                                         <Route index element={<Dashboard />} />
-                                        <Route path="operations" element={<OperationsDashboard />} />
                                         <Route path="tasks" element={<TaskList />} />
                                         <Route path="tasks/new" element={<TaskForm />} />
                                         <Route path="tasks/:id" element={<TaskDetail />} />

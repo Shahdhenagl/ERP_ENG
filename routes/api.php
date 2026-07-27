@@ -241,6 +241,7 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::post('site-surveys', [SiteSurveyController::class, 'store'])->middleware('can:crm.manage');
     Route::get('site-surveys/{siteSurvey}', [SiteSurveyController::class, 'show'])->middleware('can:crm.manage');
     Route::put('site-surveys/{siteSurvey}', [SiteSurveyController::class, 'update'])->middleware('can:crm.manage');
+    Route::delete('site-surveys/{siteSurvey}', [SiteSurveyController::class, 'destroy'])->middleware('can:crm.manage');
     Route::post('site-surveys/{siteSurvey}/approve', [SiteSurveyController::class, 'approve'])->middleware('can:crm.manage');
 
     // ── Human resources ──────────────────────────────────────
