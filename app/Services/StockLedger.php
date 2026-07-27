@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\MovementType;
+use App\Models\Invoice;
 use App\Models\Item;
 use App\Models\StockLevel;
 use App\Models\StockMovement;
@@ -142,6 +143,71 @@ class StockLedger
             $this->serials->returnFromCustomer($item, $warehouse, $context['serials'] ?? [], $movement);
 
             return $movement;
+        });
+    }
+
+    /**
+     * Goods leaving the store on a customer invoice.
+     *
+     * Kept apart from `issue()` — which is a part consumed on a job — because
+     * the two answer different questions: what a work order cost, and what was
+     * sold. Stamping the invoice on the movement is what lets a void put back
+     * exactly what this document took, rather than guessing from a note.
+     *
+     * Refuses to oversell: `subtract()` throws when the shelf cannot cover the
+     * line, and the caller's transaction rolls the whole invoice back.
+     *
+     * @param  array<int, string>  $serials
+     */
+    public function sell(
+        Item $item,
+        Warehouse $from,
+        float $qty,
+        ?User $actor,
+        Invoice $invoice,
+        array $serials = [],
+    ): StockMovement {
+        $this->assertPositive($qty);
+
+        return DB::transaction(function () use ($item, $from, $qty, $actor, $invoice, $serials) {
+            $this->subtract($item, $from, $qty);
+
+            $movement = $this->log($item, MovementType::Sale, $qty, (float) $item->avg_cost, $actor, [
+                'from_warehouse_id' => $from->id,
+                'invoice_id' => $invoice->id,
+                'note' => "بيع بفاتورة {$invoice->code}",
+            ]);
+
+            $this->serials->issue($item, $serials, $movement, $qty);
+
+            return $movement;
+        });
+    }
+
+    /**
+     * Put back what a voided invoice took out.
+     *
+     * Valued at what it left at, not at today's average: the invoice never
+     * happened, so neither did any effect it had on the cost of what remains.
+     */
+    public function unsell(
+        Item $item,
+        Warehouse $to,
+        float $qty,
+        float $unitCost,
+        ?User $actor,
+        Invoice $invoice,
+    ): StockMovement {
+        $this->assertPositive($qty);
+
+        return DB::transaction(function () use ($item, $to, $qty, $unitCost, $actor, $invoice) {
+            $this->add($item, $to, $qty);
+
+            return $this->log($item, MovementType::SaleVoid, $qty, $unitCost, $actor, [
+                'to_warehouse_id' => $to->id,
+                'invoice_id' => $invoice->id,
+                'note' => "إلغاء فاتورة {$invoice->code}",
+            ]);
         });
     }
 
@@ -445,7 +511,7 @@ class StockLedger
         MovementType $type,
         float $qty,
         float $unitCost,
-        User $actor,
+        ?User $actor,
         array $attributes = [],
     ): StockMovement {
         return StockMovement::create([
@@ -453,7 +519,7 @@ class StockLedger
             'type' => $type,
             'qty' => $qty,
             'unit_cost' => round($unitCost, 2),
-            'user_id' => $actor->id,
+            'user_id' => $actor?->id,
             ...$attributes,
         ]);
     }

@@ -7,10 +7,12 @@ use App\Enums\MovementType;
 use App\Models\CashBox;
 use App\Models\CashMovement;
 use App\Models\Invoice;
+use App\Models\Item;
 use App\Models\Payment;
 use App\Models\StockMovement;
 use App\Models\Task;
 use App\Models\User;
+use App\Models\Warehouse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -24,6 +26,8 @@ use Illuminate\Validation\ValidationException;
  */
 class BillingService
 {
+    public function __construct(protected StockLedger $stock) {}
+
     /** Recalculate an invoice from its lines. Called after any line change. */
     public function recalculate(Invoice $invoice): Invoice
     {
@@ -60,15 +64,103 @@ class BillingService
             ]);
         }
 
-        $this->recalculate($invoice);
+        // The stock leaves with the document. Both in one transaction: an
+        // invoice that issued while the shortage rolled back would be a sale of
+        // goods the store never gave up.
+        return DB::transaction(function () use ($invoice) {
+            $this->recalculate($invoice);
+            $this->issueStock($invoice);
 
-        $invoice->forceFill([
-            'status' => InvoiceStatus::Issued,
-            // Snapshot the tax number as it stood when issued.
-            'customer_tax_id' => $invoice->customer_tax_id,
-        ])->save();
+            $invoice->forceFill([
+                'status' => InvoiceStatus::Issued,
+                // Snapshot the tax number as it stood when issued.
+                'customer_tax_id' => $invoice->customer_tax_id,
+            ])->save();
 
-        return $invoice->fresh();
+            return $invoice->fresh();
+        });
+    }
+
+    /**
+     * Draw the invoice's stocked lines out of its warehouse.
+     *
+     * Only lines that name an item move: a labour line or a free-text charge
+     * was never on a shelf, and inventing a movement for it would be a lie.
+     * Quantities are summed per item first — the same battery on two lines is
+     * one draw on the balance, and checking them separately would let an
+     * invoice pass that the shelf cannot actually cover.
+     */
+    protected function issueStock(Invoice $invoice): void
+    {
+        $lines = $invoice->lines()->whereNotNull('item_id')->get();
+
+        if ($lines->isEmpty()) {
+            return;
+        }
+
+        $warehouse = $invoice->warehouse ?: Warehouse::main();
+        $actor = $this->stockActor($invoice);
+
+        foreach ($lines->groupBy('item_id') as $itemId => $group) {
+            $item = Item::find($itemId);
+
+            if (! $item) {
+                continue;
+            }
+
+            $this->stock->sell($item, $warehouse, (float) $group->sum('qty'), $actor, $invoice);
+        }
+    }
+
+    /**
+     * Who the movement is recorded against: the person doing it now if there is
+     * one, else whoever raised the invoice. Both can be missing on a document
+     * raised by a scheduled job, and an unattributed movement is better than
+     * refusing to record that the goods left.
+     */
+    protected function stockActor(Invoice $invoice): ?User
+    {
+        return auth()->user() ?? $invoice->creator;
+    }
+
+    /**
+     * Put back what this invoice took, net of anything already put back.
+     *
+     * Reads the invoice's own movements rather than its lines: a line can be
+     * gone by now, and what has to be returned is what actually left.
+     */
+    protected function restoreStock(Invoice $invoice): void
+    {
+        $movements = $invoice->stockMovements()
+            ->whereIn('type', [MovementType::Sale, MovementType::SaleVoid])
+            ->get();
+
+        if ($movements->isEmpty()) {
+            return;
+        }
+
+        $actor = $this->stockActor($invoice);
+
+        foreach ($movements->groupBy('item_id') as $itemId => $group) {
+            $sold = (float) $group->where('type', MovementType::Sale)->sum('qty');
+            $returned = (float) $group->where('type', MovementType::SaleVoid)->sum('qty');
+            $outstanding = round($sold - $returned, 3);
+
+            if ($outstanding <= 0) {
+                continue;
+            }
+
+            $item = Item::find($itemId);
+
+            if (! $item) {
+                continue;
+            }
+
+            $sale = $group->firstWhere('type', MovementType::Sale);
+            $warehouse = Warehouse::find($sale?->from_warehouse_id) ?: Warehouse::main();
+
+            $this->stock->unsell($item, $warehouse, $outstanding, (float) $sale->unit_cost, $actor, $invoice);
+        }
     }
 
     /**
@@ -83,12 +175,18 @@ class BillingService
             ]);
         }
 
-        $invoice->forceFill([
-            'status' => InvoiceStatus::Void,
-            'void_reason' => $reason,
-        ])->save();
+        return DB::transaction(function () use ($invoice, $reason) {
+            // A cancelled sale never happened, so the goods are back on the
+            // shelf. Only what this invoice actually took, and only once.
+            $this->restoreStock($invoice);
 
-        return $invoice->fresh();
+            $invoice->forceFill([
+                'status' => InvoiceStatus::Void,
+                'void_reason' => $reason,
+            ])->save();
+
+            return $invoice->fresh();
+        });
     }
 
     /**

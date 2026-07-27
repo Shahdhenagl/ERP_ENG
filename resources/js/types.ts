@@ -770,6 +770,8 @@ export interface InvoiceLine {
 }
 
 export interface Invoice {
+    /** The store the goods leave from when it is issued. Null = default store. */
+    warehouse_id?: number | null
     id: number
     code: string
 

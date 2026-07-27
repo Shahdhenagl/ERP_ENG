@@ -36,6 +36,9 @@ class InvoiceController extends Controller
     {
         $data = $request->validate([
             'customer_id' => ['required', 'exists:customers,id'],
+            // Which store the goods leave from. Null falls back to the default
+            // store when the invoice is issued.
+            'warehouse_id' => ['nullable', 'exists:warehouses,id'],
             'due_date' => ['nullable', 'date'],
             'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'discount' => ['nullable', 'numeric', 'min:0'],
@@ -80,6 +83,7 @@ class InvoiceController extends Controller
         }
 
         $data = $request->validate([
+            'warehouse_id' => ['nullable', 'exists:warehouses,id'],
             'due_date' => ['nullable', 'date'],
             'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'discount' => ['nullable', 'numeric', 'min:0'],
@@ -100,8 +104,16 @@ class InvoiceController extends Controller
         return response()->json(new InvoiceResource($invoice->load(['customer', 'lines'])));
     }
 
-    public function issue(Invoice $invoice): InvoiceResource
+    public function issue(Request $request, Invoice $invoice): InvoiceResource
     {
+        // Issuing is the moment the goods leave, so it is also the last moment
+        // the storekeeper can say which store they leave from.
+        $data = $request->validate(['warehouse_id' => ['nullable', 'exists:warehouses,id']]);
+
+        if (! empty($data['warehouse_id'])) {
+            $invoice->update(['warehouse_id' => $data['warehouse_id']]);
+        }
+
         $issued = $this->billing->issue($invoice);
 
         ActivityLog::record('invoice.issued', $issued, "تم إصدار الفاتورة {$issued->code}");

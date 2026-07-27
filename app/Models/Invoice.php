@@ -20,6 +20,7 @@ class Invoice extends Model
         'task_id',
         'contract_id',
         'sales_order_id',
+        'warehouse_id',
         'issue_date',
         'due_date',
         'status',
@@ -89,9 +90,21 @@ class Invoice extends Model
         return $this->belongsTo(SalesOrder::class);
     }
 
+    /** The store the goods leave from. Null falls back to the default store. */
+    public function warehouse(): BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class);
+    }
+
     public function lines(): HasMany
     {
         return $this->hasMany(InvoiceLine::class)->orderBy('sort');
+    }
+
+    /** Every stock movement this invoice caused — the issue and any reversal. */
+    public function stockMovements(): HasMany
+    {
+        return $this->hasMany(StockMovement::class);
     }
 
     public function salesReturns(): HasMany

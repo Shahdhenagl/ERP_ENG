@@ -11,6 +11,8 @@ enum MovementType: string
     case Adjustment = 'adjustment';
     case PurchaseReturn = 'purchase_return';
     case SalesReturn = 'sales_return';
+    case Sale = 'sale';
+    case SaleVoid = 'sale_void';
 
     public function label(): string
     {
@@ -22,6 +24,8 @@ enum MovementType: string
             self::Adjustment => 'تسوية جرد',
             self::PurchaseReturn => 'مرتجع مشتريات',
             self::SalesReturn => 'مرتجع مبيعات',
+            self::Sale => 'بيع بفاتورة',
+            self::SaleVoid => 'إلغاء فاتورة بيع',
         };
     }
 

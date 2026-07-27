@@ -1,10 +1,11 @@
+import clsx from 'clsx'
 import { Plus, Save, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, Field, Input, Select, Textarea } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
-import { DEFAULT_TAX_RATE, formatMoney } from '@/lib/domain'
+import { DEFAULT_TAX_RATE, formatMoney, formatQty } from '@/lib/domain'
 import { useCustomers, useItems, useSaveQuotation } from '@/lib/queries'
 import type { Quotation } from '@/types'
 
@@ -146,8 +147,11 @@ export function QuotationForm({
                     {rows.map((row, index) => (
                         <div key={index} className="space-y-2 rounded-2xl border border-navy-100 p-3">
                             <div className="flex gap-2">
-                                {/* Picking a catalogue item fills the description
-                                    and opens at its cost; a free line stays free. */}
+                                {/* Picking a catalogue item fills the description and
+                                    opens at its selling price — the cost is what the
+                                    company paid, and quoting it is how a sale goes out
+                                    at no margin. Falls back to cost only when no
+                                    selling price has been set on the item yet. */}
                                 <Select
                                     value={row.item_id}
                                     onChange={(e) => {
@@ -162,7 +166,7 @@ export function QuotationForm({
                                                           description: item?.name ?? r.description,
                                                           unit_price:
                                                               item && !Number(r.unit_price)
-                                                                  ? String(item.avg_cost)
+                                                                  ? String(item.sell_price ?? item.avg_cost)
                                                                   : r.unit_price,
                                                       }
                                                     : r,
@@ -222,6 +226,30 @@ export function QuotationForm({
                                     {formatMoney((Number(row.qty) || 0) * (Number(row.unit_price) || 0))}
                                 </span>
                             </div>
+
+                            {/* What is actually on the shelf. The invoice is what
+                                draws it down, and issuing one the store cannot cover
+                                is refused — better to see the shortage while the
+                                quote is still being priced. */}
+                            {(() => {
+                                const item = items.find((i) => String(i.id) === row.item_id)
+
+                                if (!item) return null
+
+                                const short = (Number(row.qty) || 0) > item.total_qty
+
+                                return (
+                                    <p
+                                        className={clsx(
+                                            'tabular text-[11px] font-bold',
+                                            short ? 'text-red-600' : 'text-navy-400',
+                                        )}
+                                    >
+                                        المتاح بالمخزن: {formatQty(item.total_qty)} {item.unit}
+                                        {short && ' — أقل من الكمية المعروضة'}
+                                    </p>
+                                )
+                            })()}
                         </div>
                     ))}
 

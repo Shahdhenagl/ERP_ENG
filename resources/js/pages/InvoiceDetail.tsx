@@ -6,12 +6,12 @@ import { InvoiceForm } from '@/components/InvoiceForm'
 import { ConfirmDialog, Modal } from '@/components/Modal'
 import { PaymentForm } from '@/components/PaymentForm'
 import { useToast } from '@/components/Toast'
-import { Button, ErrorState, Field, PageLoader, Textarea } from '@/components/ui'
+import { Button, ErrorState, Field, PageLoader, Select, Textarea } from '@/components/ui'
 import { errorMessage } from '@/lib/api'
 import { formatMoney, formatQty, PAYMENT_STATE } from '@/lib/domain'
 import { formatDate, formatSmart } from '@/lib/format'
 import { useArea } from '@/lib/nav'
-import { useInvoice, useInvoiceAction, useReversePayment } from '@/lib/queries'
+import { useInvoice, useInvoiceAction, useReversePayment, useWarehouses } from '@/lib/queries'
 
 export function InvoiceDetail() {
     const { id } = useParams<{ id: string }>()
@@ -28,6 +28,10 @@ export function InvoiceDetail() {
     const [voidOpen, setVoidOpen] = useState(false)
     const [voidReason, setVoidReason] = useState('')
     const [reversing, setReversing] = useState<number | null>(null)
+    // Which store the goods come out of. Only asked for while it can still
+    // change — issuing is what moves them.
+    const [warehouseId, setWarehouseId] = useState('')
+    const { data: warehouses } = useWarehouses()
 
     if (isLoading) return <PageLoader />
     if (isError || !invoice) {
@@ -36,6 +40,10 @@ export function InvoiceDetail() {
 
     const state = PAYMENT_STATE[invoice.payment_state]
     const isDraft = invoice.status === 'draft'
+    // Lines that name a catalogue item are the ones that come off a shelf; a
+    // labour-only invoice has no warehouse to ask about.
+    const movesStock = (invoice.lines ?? []).some((line) => line.item_id)
+    const stores = (warehouses ?? []).filter((warehouse) => warehouse.type === 'store')
     const collectable = invoice.status === 'issued' && invoice.balance > 0.005
 
     const run = async (fn: () => Promise<unknown>, success: string) => {
@@ -127,13 +135,41 @@ export function InvoiceDetail() {
                                 تعديل البنود
                             </Button>
 
+                            {/* Issuing is the moment the goods leave the store, so
+                                it is the last moment to say which store. Blank
+                                means the default one. */}
+                            {movesStock && stores.length > 1 && (
+                                <Select
+                                    value={warehouseId || String(invoice.warehouse_id ?? '')}
+                                    onChange={(e) => setWarehouseId(e.target.value)}
+                                    className="w-48"
+                                    aria-label="المخزن الذي تخرج منه البضاعة"
+                                >
+                                    <option value="">المخزن الرئيسي</option>
+                                    {stores.map((store) => (
+                                        <option key={store.id} value={store.id}>
+                                            {store.name}
+                                        </option>
+                                    ))}
+                                </Select>
+                            )}
+
                             <Button
                                 icon={CheckCircle2}
                                 loading={action.isPending}
                                 onClick={() =>
                                     run(
-                                        () => action.mutateAsync({ id: invoice.id, action: 'issue' }),
-                                        'تم إصدار الفاتورة.',
+                                        () =>
+                                            action.mutateAsync({
+                                                id: invoice.id,
+                                                action: 'issue',
+                                                payload: {
+                                                    warehouse_id: warehouseId
+                                                        ? Number(warehouseId)
+                                                        : (invoice.warehouse_id ?? null),
+                                                },
+                                            }),
+                                        'تم إصدار الفاتورة — وخرجت البضاعة من المخزن.',
                                     )
                                 }
                             >

@@ -28,6 +28,7 @@ class StockMovement extends Model
         'supplier_invoice_id',
         'purchase_return_id',
         'sales_return_id',
+        'invoice_id',
         'supplier',
         'reference',
         'note',

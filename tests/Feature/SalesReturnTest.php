@@ -34,6 +34,10 @@ beforeEach(function () {
  */
 function sold(float $price = 1000, float $qty = 2, array $attributes = []): Invoice
 {
+    // Issuing now draws the goods off the shelf, so there has to be something
+    // there to sell. Received at cost — the return prices itself off the sale.
+    test()->stock->receive(test()->item, test()->store, $qty, 700, test()->manager);
+
     $invoice = Invoice::create([
         'customer_id' => test()->customer->id,
         'issue_date' => now()->toDateString(),
