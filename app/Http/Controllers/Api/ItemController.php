@@ -7,6 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ItemResource;
 use App\Models\ActivityLog;
 use App\Models\Item;
+use App\Models\Warehouse;
+use App\Services\StockLedger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -14,6 +16,8 @@ use Illuminate\Validation\Rule;
 
 class ItemController extends Controller
 {
+    public function __construct(protected StockLedger $stock) {}
+
     public function index(Request $request): AnonymousResourceCollection
     {
         // The same filters the page is looking at, minus the category — the tabs
@@ -47,13 +51,45 @@ class ItemController extends Controller
         $data = $this->validated($request);
         $data['created_by'] = $request->user()->id;
 
-        // Cost is never typed in: it is whatever the goods actually cost when
-        // they were received. Seeding it by hand would corrupt the average.
+        // What is already on the shelf the day the item is added to the system.
+        // Taken here so nobody has to add the item and then remember to receive
+        // it — but it still goes in as a receipt, never as a number written
+        // onto the item, because a balance with no movement behind it cannot be
+        // explained to anyone later.
+        $opening = $request->validate([
+            'opening_qty' => ['nullable', 'numeric', 'min:0', 'max:9999999'],
+            // Required with a quantity: a receipt at no cost values the stock at
+            // nothing and quietly drags the average down. Zero is allowed, but
+            // it has to be said.
+            'opening_cost' => ['required_with:opening_qty', 'nullable', 'numeric', 'min:0', 'max:99999999'],
+            'opening_warehouse_id' => ['nullable', 'exists:warehouses,id'],
+        ]);
+
+        $qty = (float) ($opening['opening_qty'] ?? 0);
+
+        // Cost is never typed onto the item itself: it is whatever the goods
+        // actually cost when they were received. Seeding it by hand would
+        // corrupt the average.
         $item = Item::create($data);
+
+        if ($qty > 0) {
+            $warehouse = ! empty($opening['opening_warehouse_id'])
+                ? Warehouse::findOrFail($opening['opening_warehouse_id'])
+                : Warehouse::main();
+
+            $this->stock->receive(
+                $item,
+                $warehouse,
+                $qty,
+                (float) ($opening['opening_cost'] ?? 0),
+                $request->user(),
+                ['note' => 'رصيد افتتاحي'],
+            );
+        }
 
         ActivityLog::record('item.created', $item, "تم إضافة الصنف {$item->name}");
 
-        return response()->json(new ItemResource($item->load('levels.warehouse')), 201);
+        return response()->json(new ItemResource($item->fresh()->load('levels.warehouse')), 201);
     }
 
     public function show(Item $item): ItemResource

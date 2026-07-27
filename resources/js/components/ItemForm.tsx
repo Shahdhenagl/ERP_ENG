@@ -5,7 +5,7 @@ import { useToast } from '@/components/Toast'
 import { Button, Field, Input, Select, Textarea } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { BATTERY_TYPES, COMM_PORTS, ITEM_CATEGORY, UPS_PHASES, UPS_TYPES } from '@/lib/domain'
-import { useSaveItem } from '@/lib/queries'
+import { useSaveItem, useWarehouses } from '@/lib/queries'
 import type { Item, ItemCategory } from '@/types'
 
 interface ItemFormProps {
@@ -49,6 +49,16 @@ export function ItemForm({ open, onClose, item, defaultCategory, onSaved }: Item
         is_active: item?.is_active ?? true,
     })
 
+    // What is already on the shelf, asked for once when the item is first added.
+    // Editing an item never touches the balance: a quantity that moves without a
+    // movement behind it is a number nobody can explain a month later. After
+    // this, stock changes through a receipt, an issue or a stocktake.
+    const [openingQty, setOpeningQty] = useState('')
+    const [openingCost, setOpeningCost] = useState('')
+    const [openingWarehouse, setOpeningWarehouse] = useState('')
+    const { data: warehouses } = useWarehouses()
+    const stores = (warehouses ?? []).filter((warehouse) => warehouse.type === 'store')
+
     // The nameplate is kept in its own bag so switching category never mixes a
     // UPS field into a battery's payload.
     const [specs, setSpecs] = useState<Record<string, string>>(() => ({ ...(item?.specs ?? {}) }))
@@ -86,6 +96,13 @@ export function ItemForm({ open, onClose, item, defaultCategory, onSaved }: Item
                 specs: hasSpecs ? payloadSpecs : null,
                 notes: form.notes || null,
                 is_active: form.is_active,
+                ...(item || !Number(openingQty)
+                    ? {}
+                    : {
+                          opening_qty: Number(openingQty),
+                          opening_cost: Number(openingCost) || 0,
+                          opening_warehouse_id: openingWarehouse ? Number(openingWarehouse) : null,
+                      }),
             })
 
             toast.success(item ? 'تم تعديل الصنف.' : 'تم إضافة الصنف.')
@@ -188,6 +205,64 @@ export function ItemForm({ open, onClose, item, defaultCategory, onSaved }: Item
                         />
                     </Field>
                 </div>
+
+                {/* ── Opening stock ─────────────────────────── */}
+                {!item && (
+                    <div className="rounded-2xl bg-navy-50 p-4">
+                        <p className="mb-3 text-xs font-bold text-navy-500">
+                            الرصيد الافتتاحي — الكمية الموجودة فعلًا الآن (اختياري)
+                        </p>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <Field label="الكمية" error={errors.opening_qty}>
+                                <Input
+                                    type="number"
+                                    min={0}
+                                    step="0.001"
+                                    value={openingQty}
+                                    onChange={(event) => setOpeningQty(event.target.value)}
+                                    placeholder="0"
+                                />
+                            </Field>
+
+                            <Field
+                                label="سعر شراء الوحدة"
+                                error={errors.opening_cost}
+                                hint="التكلفة التي تُقيَّم بها هذه الكمية"
+                            >
+                                <Input
+                                    type="number"
+                                    min={0}
+                                    step="0.01"
+                                    value={openingCost}
+                                    onChange={(event) => setOpeningCost(event.target.value)}
+                                    dir="ltr"
+                                    className="text-left"
+                                    placeholder="0.00"
+                                />
+                            </Field>
+
+                            {stores.length > 1 && (
+                                <Field label="المخزن" error={errors.opening_warehouse_id}>
+                                    <Select
+                                        value={openingWarehouse}
+                                        onChange={(event) => setOpeningWarehouse(event.target.value)}
+                                    >
+                                        <option value="">المخزن الرئيسي</option>
+                                        {stores.map((store) => (
+                                            <option key={store.id} value={store.id}>
+                                                {store.name}
+                                            </option>
+                                        ))}
+                                    </Select>
+                                </Field>
+                            )}
+                        </div>
+                        <p className="mt-2 text-[11px] text-navy-400">
+                            تُسجَّل كحركة وارد باسم «رصيد افتتاحي». بعد ذلك تتغيّر الكمية بالوارد أو
+                            الصرف أو الجرد.
+                        </p>
+                    </div>
+                )}
 
                 {/* ── UPS nameplate ─────────────────────────── */}
                 {isUps && (
