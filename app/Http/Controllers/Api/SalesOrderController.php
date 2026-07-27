@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\InvoiceResource;
 use App\Models\ActivityLog;
 use App\Models\SalesOrder;
+use App\Models\StockLevel;
+use App\Models\Warehouse;
 use App\Services\SalesService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,7 +23,9 @@ class SalesOrderController extends Controller
             ->when($request->integer('customer_id'), fn ($q, $id) => $q->where('customer_id', $id))
             ->when($request->string('status')->toString(), fn ($q, $s) => $q->where('status', $s))
             ->when($request->boolean('open'), fn ($q) => $q->open())
-            ->with(['customer', 'invoices'])
+            // Lines come along so the delivery screen can say whether the goods
+            // are actually on the shelf before anyone promises a date.
+            ->with(['customer', 'invoices', 'lines.item'])
             ->orderByDesc('id')
             ->limit($request->integer('per_page', 50))
             ->get()
@@ -31,10 +35,16 @@ class SalesOrderController extends Controller
                 $request->boolean('uninvoiced'),
                 fn ($rows) => $rows->filter(fn (SalesOrder $o) => $o->billingState() !== 'invoiced'),
             )
-            ->map(fn (SalesOrder $order) => $this->present($order))
             ->values();
 
-        return response()->json(['data' => $orders]);
+        $stock = $this->onHandFor($orders);
+
+        return response()->json([
+            'data' => $orders->map(fn (SalesOrder $order) => [
+                ...$this->present($order),
+                'stock' => $this->stockReadiness($order, $stock),
+            ])->values(),
+        ]);
     }
 
     public function show(SalesOrder $salesOrder): JsonResponse
@@ -121,6 +131,71 @@ class SalesOrderController extends Controller
     }
 
     /* ── Helpers ─────────────────────────────────────────── */
+
+    /**
+     * On-hand quantity in the main store for every item these orders name, in
+     * one query. Read per order it would be a query per line, on a screen whose
+     * whole job is to show many orders at once.
+     *
+     * @param  \Illuminate\Support\Collection<int, SalesOrder>  $orders
+     * @return array<int, float>
+     */
+    protected function onHandFor($orders): array
+    {
+        $itemIds = $orders->flatMap(fn (SalesOrder $o) => $o->lines->pluck('item_id'))
+            ->filter()->unique()->values();
+
+        if ($itemIds->isEmpty()) {
+            return [];
+        }
+
+        return StockLevel::whereIn('item_id', $itemIds)
+            ->where('warehouse_id', Warehouse::main()->id)
+            ->pluck('qty', 'item_id')
+            ->map(fn ($qty) => (float) $qty)
+            ->all();
+    }
+
+    /**
+     * Whether the store can cover this order, and what is missing if not.
+     *
+     * The invoice is what draws the stock down and it refuses a shortage, so
+     * seeing it here — while the order is still a promise — is the difference
+     * between rescheduling a delivery and turning a van around at the gate.
+     * Quantities are summed per item: the same battery on two lines is one
+     * demand on the shelf.
+     *
+     * @param  array<int, float>  $onHand
+     * @return array<string, mixed>
+     */
+    protected function stockReadiness(SalesOrder $order, array $onHand): array
+    {
+        $stocked = $order->lines->filter(fn ($line) => $line->item_id);
+
+        if ($stocked->isEmpty()) {
+            // Nothing on this order comes off a shelf — labour, or lines typed
+            // free-hand. Saying "ready" would imply a check that never ran.
+            return ['state' => 'none', 'short' => []];
+        }
+
+        $short = $stocked->groupBy('item_id')
+            ->map(function ($lines, $itemId) use ($onHand) {
+                $needed = (float) $lines->sum('qty');
+                $available = $onHand[$itemId] ?? 0.0;
+
+                return $available + 1e-6 < $needed ? [
+                    'item' => $lines->first()->item?->name ?? '—',
+                    'needed' => $needed,
+                    'available' => $available,
+                ] : null;
+            })
+            ->filter()->values();
+
+        return [
+            'state' => $short->isEmpty() ? 'ready' : 'short',
+            'short' => $short->all(),
+        ];
+    }
 
     protected function present(SalesOrder $order, bool $withLines = false): array
     {

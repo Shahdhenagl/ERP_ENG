@@ -653,6 +653,16 @@ export interface SalesOrder {
 
     notes: string | null
     cancel_reason: string | null
+
+    /**
+     * Whether the main store can cover this order. `none` means nothing on it
+     * comes off a shelf, so there was nothing to check.
+     */
+    stock?: {
+        state: 'ready' | 'short' | 'none'
+        short: Array<{ item: string; needed: number; available: number }>
+    }
+
     lines?: DocumentLine[]
     invoices?: Array<{
         id: number

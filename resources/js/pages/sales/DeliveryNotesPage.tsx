@@ -1,11 +1,11 @@
 import clsx from 'clsx'
-import { Printer, Truck } from 'lucide-react'
+import { AlertTriangle, PackageCheck, Printer, Truck } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useToast } from '@/components/Toast'
 import { Button, EmptyState, PageHeader, SkeletonCard } from '@/components/ui'
 import { errorMessage } from '@/lib/api'
-import { formatMoney, SALES_ORDER_STATUS } from '@/lib/domain'
+import { formatMoney, formatQty, SALES_ORDER_STATUS } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
 import { useArea } from '@/lib/nav'
 import { useSalesOrderAction, useSalesOrders } from '@/lib/queries'
@@ -96,6 +96,29 @@ export function DeliveryNotesPage() {
                                     {formatMoney(order.total)}
                                 </p>
                             </div>
+
+                            {/* Whether the store can actually cover it. The invoice
+                                refuses a shortage, so the gate is the wrong place
+                                to find out — this is. */}
+                            {order.stock?.state === 'short' ? (
+                                <div className="mt-3 rounded-xl bg-red-50 p-2.5">
+                                    <p className="flex items-center gap-1.5 text-[11px] font-bold text-red-700">
+                                        <AlertTriangle className="size-3.5 shrink-0" />
+                                        ناقص بالمخزن
+                                    </p>
+                                    {order.stock.short.map((line) => (
+                                        <p key={line.item} className="tabular mt-0.5 text-[11px] text-red-600">
+                                            {line.item}: مطلوب {formatQty(line.needed)} — المتاح{' '}
+                                            {formatQty(line.available)}
+                                        </p>
+                                    ))}
+                                </div>
+                            ) : order.stock?.state === 'ready' && order.status === 'open' ? (
+                                <p className="mt-3 flex items-center gap-1.5 text-[11px] font-bold text-emerald-700">
+                                    <PackageCheck className="size-3.5 shrink-0" />
+                                    البضاعة متوفرة بالمخزن الرئيسي
+                                </p>
+                            ) : null}
 
                             <div className="mt-3 flex flex-wrap gap-2 border-t border-navy-100 pt-3">
                                 <Link
