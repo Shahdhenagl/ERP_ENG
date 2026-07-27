@@ -74,6 +74,7 @@ class ContractResource extends JsonResource
             // Set once a successor exists, which is what stops a second one.
             'renewal_code' => $this->renewal?->code,
             'notes' => $this->notes,
+            'terms' => $this->terms,
 
             'assets_count' => $this->whenCounted('assets'),
             'assets' => AssetResource::collection($this->whenLoaded('assets')),

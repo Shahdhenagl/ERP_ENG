@@ -1,11 +1,19 @@
-import { Save } from 'lucide-react'
+import { FileText, Save } from 'lucide-react'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, Field, Input, Select, Textarea } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
-import { useAssets, useCustomers, useSaveContract } from '@/lib/queries'
+import { defaultContractTerms } from '@/lib/contractTemplate'
+import { useAssets, useCustomers, useSaveContract, useSettings } from '@/lib/queries'
 import type { Contract } from '@/types'
+
+const BILLING_LABEL: Record<string, string> = {
+    upfront: 'مقدَّم (دفعة واحدة)',
+    quarterly: 'ربع سنوي',
+    semi_annual: 'نصف سنوي',
+    annual: 'سنوي',
+}
 
 interface ContractFormProps {
     open: boolean
@@ -20,6 +28,7 @@ export function ContractForm({ open, onClose, contract, customerId, onSaved }: C
     const toast = useToast()
     const save = useSaveContract(contract?.id)
     const { data: customers } = useCustomers({ per_page: 200 })
+    const { data: settings } = useSettings()
     const [errors, setErrors] = useState<Record<string, string>>({})
 
     const [form, setForm] = useState({
@@ -33,6 +42,7 @@ export function ContractForm({ open, onClose, contract, customerId, onSaved }: C
         sla_response_hours: contract?.sla_response_hours?.toString() ?? '',
         sla_resolution_hours: contract?.sla_resolution_hours?.toString() ?? '',
         notes: contract?.notes ?? '',
+        terms: contract?.terms ?? '',
     })
 
     const [assetIds, setAssetIds] = useState<number[]>(contract?.assets?.map((a) => a.id) ?? [])
@@ -52,6 +62,30 @@ export function ContractForm({ open, onClose, contract, customerId, onSaved }: C
             current.includes(id) ? current.filter((existing) => existing !== id) : [...current, id],
         )
 
+    // Fill the body from the current data — the customer, the covered devices,
+    // the value, the visits and the dates. A starting point, then edited by hand.
+    const generateTerms = () => {
+        const customer = customers?.data.find((c) => c.id === Number(form.customer_id))
+        const covered = (assets?.data ?? []).filter((a) => assetIds.includes(a.id))
+
+        setForm((current) => ({
+            ...current,
+            terms: defaultContractTerms({
+                customerName: customer?.name ?? '................',
+                customerAddress: customer?.address,
+                company: settings ?? {},
+                assets: covered,
+                startsOn: form.starts_on,
+                endsOn: form.ends_on,
+                visitsPerYear: Number(form.visits_per_year) || 0,
+                value: form.value ? Number(form.value) : null,
+                billingLabel: BILLING_LABEL[form.billing_frequency] ?? form.billing_frequency,
+                slaResponseHours: form.sla_response_hours ? Number(form.sla_response_hours) : null,
+            }),
+        }))
+        toast.success('تم توليد نص العقد من البيانات — عدّله كما تشاء.')
+    }
+
     const handleSave = async () => {
         setErrors({})
 
@@ -68,6 +102,7 @@ export function ContractForm({ open, onClose, contract, customerId, onSaved }: C
                 sla_resolution_hours: form.sla_resolution_hours ? Number(form.sla_resolution_hours) : null,
                 asset_ids: assetIds,
                 notes: form.notes || null,
+                terms: form.terms || null,
             })
 
             toast.success(contract ? 'تم تعديل العقد.' : 'تم إنشاء العقد كمسودة.')
@@ -248,7 +283,34 @@ export function ContractForm({ open, onClose, contract, customerId, onSaved }: C
                     </Field>
                 )}
 
-                <Field label="ملاحظات" error={errors.notes}>
+                {/* The signed body. A template is generated from the data above;
+                    the text is then editable per customer before printing. */}
+                <Field
+                    label="نص العقد"
+                    hint="يُطبع كما هو. ولّد النموذج من البيانات ثم عدّله لهذا العميل."
+                    error={errors.terms}
+                >
+                    <div className="mb-2">
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            icon={FileText}
+                            className="text-xs"
+                            onClick={generateTerms}
+                        >
+                            {form.terms ? 'إعادة توليد النموذج' : 'إدراج النموذج'}
+                        </Button>
+                    </div>
+                    <Textarea
+                        rows={10}
+                        value={form.terms}
+                        onChange={(event) => set('terms')(event.target.value)}
+                        placeholder="اكتب نص العقد أو اضغط «إدراج النموذج» ثم عدّل."
+                        className="font-[inherit] leading-7"
+                    />
+                </Field>
+
+                <Field label="ملاحظات داخلية" error={errors.notes}>
                     <Textarea
                         rows={3}
                         value={form.notes}

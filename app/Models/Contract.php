@@ -32,6 +32,7 @@ class Contract extends Model
         'sla_response_hours',
         'sla_resolution_hours',
         'notes',
+        'terms',
         'created_by',
     ];
 

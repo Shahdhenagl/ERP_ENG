@@ -454,6 +454,8 @@ class ContractController extends Controller
             'asset_ids.*' => ['integer', 'exists:assets,id'],
 
             'notes' => ['nullable', 'string', 'max:2000'],
+            // The signed body — the whole contract text, edited per customer.
+            'terms' => ['nullable', 'string', 'max:30000'],
         ]);
     }
 }

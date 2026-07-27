@@ -431,6 +431,8 @@ export interface Contract {
     renewed_from_code: string | null
     renewal_code: string | null
     notes: string | null
+    /** The full editable contract body, printed as the signed agreement. */
+    terms: string | null
     assets_count?: number
     assets?: Asset[]
     visits_count?: number

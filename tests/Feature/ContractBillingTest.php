@@ -40,6 +40,30 @@ function draftContract(array $overrides = []): Contract
     return Contract::latest('id')->first();
 }
 
+/* ── The editable contract body ──────────────────────────── */
+
+it('stores and serves an editable contract body', function () {
+    actingAs($this->manager)->postJson('/api/contracts', [
+        'customer_id' => $this->customer->id,
+        'starts_on' => now()->toDateString(),
+        'ends_on' => now()->addYear()->subDay()->toDateString(),
+        'visits_per_year' => 4,
+        'terms' => 'نص العقد الخاص بهذا العميل — البند الأول ...',
+    ])->assertCreated()
+        ->assertJsonPath('terms', 'نص العقد الخاص بهذا العميل — البند الأول ...');
+
+    $contract = Contract::latest('id')->first();
+
+    // And it can be edited for this particular customer.
+    actingAs($this->manager)->putJson("/api/contracts/{$contract->id}", [
+        'customer_id' => $this->customer->id,
+        'starts_on' => $contract->starts_on->toDateString(),
+        'ends_on' => $contract->ends_on->toDateString(),
+        'visits_per_year' => 4,
+        'terms' => 'نص معدّل لهذا العميل تحديدًا.',
+    ])->assertOk()->assertJsonPath('data.terms', 'نص معدّل لهذا العميل تحديدًا.');
+});
+
 /* ── The schedule ────────────────────────────────────────── */
 
 it('splits a quarterly contract into four instalments on visits 3, 6 and 9', function () {

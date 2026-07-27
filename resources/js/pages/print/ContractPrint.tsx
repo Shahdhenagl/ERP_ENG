@@ -35,6 +35,14 @@ export function ContractPrint() {
                 ]}
             />
 
+            {/* When the contract carries a written body, that is the agreement —
+                printed as-is. Otherwise fall back to the structured summary. */}
+            {contract.terms ? (
+                <div className="doc-body mt-5 text-[13px] leading-8 whitespace-pre-line text-navy-800">
+                    {contract.terms}
+                </div>
+            ) : (
+            <>
             <table className="doc-table mt-5">
                 <tbody>
                     <tr>
@@ -144,6 +152,8 @@ export function ContractPrint() {
                 total={contract.value ? formatMoney(Number(contract.value)) : '—'}
                 totalLabel="قيمة العقد"
             />
+            </>
+            )}
         </DocumentShell>
     )
 }
