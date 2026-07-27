@@ -1182,7 +1182,9 @@ export interface DashboardData {
         status: AttendanceStatus
         status_label: string
         worked_hours: number
+        /** Where the stamp was made. Null when it carried no coordinates. */
         check_in_location: { lat: number; lng: number } | null
+        check_out_location: { lat: number; lng: number } | null
     }>
     /** Dispatcher-only: the visits that need someone put on them. */
     maintenance_due?: Task[]

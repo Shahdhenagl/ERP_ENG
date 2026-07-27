@@ -213,9 +213,15 @@ class DashboardController extends Controller
                 'status' => $a->status->value,
                 'status_label' => $a->statusLabel(),
                 'worked_hours' => (float) $a->worked_hours,
-                // A map link the dispatcher can open, only when a stamp carried one.
+                // A map link the dispatcher can open, only when a stamp carried
+                // one. Both ends: leaving is as worth seeing as arriving, and a
+                // punch-out from home after a punch-in on site is exactly the
+                // thing a manager is looking at this list for.
                 'check_in_location' => $a->check_in_lat !== null
                     ? ['lat' => (float) $a->check_in_lat, 'lng' => (float) $a->check_in_lng]
+                    : null,
+                'check_out_location' => $a->check_out_lat !== null
+                    ? ['lat' => (float) $a->check_out_lat, 'lng' => (float) $a->check_out_lng]
                     : null,
             ])->values();
 

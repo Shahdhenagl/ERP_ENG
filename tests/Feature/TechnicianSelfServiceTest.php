@@ -142,6 +142,40 @@ it('surfaces today attendance on the manager dashboard', function () {
         ->and($data['attendance_today'][0]['check_in_location'])->not->toBeNull();
 });
 
+it('shows where they punched out, not only where they punched in', function () {
+    actingAs($this->technician)->postJson('/api/attendance/check-in', ['lat' => 30.0444, 'lng' => 31.2357])
+        ->assertCreated();
+    actingAs($this->technician)->postJson('/api/attendance/check-out', ['lat' => 29.9773, 'lng' => 31.1325])
+        ->assertOk();
+
+    $row = actingAs($this->manager)->getJson('/api/dashboard')->assertOk()->json('attendance_today.0');
+
+    // Leaving is as worth seeing as arriving: a punch-out from somewhere else
+    // is exactly what this list is read for.
+    expect($row['check_in_location']['lat'])->toBe(30.0444)
+        ->and($row['check_out_location']['lat'])->toBe(29.9773)
+        ->and($row['check_out_location']['lng'])->toBe(31.1325);
+});
+
+it('reports a stamp made without coordinates as having none', function () {
+    // Entered by hand in the office — there is nothing to show, and the
+    // dashboard says so rather than leaving a pin quietly missing.
+    // A clerk's own HR file — the office entry has no user behind it.
+    $employee = App\Models\Employee::factory()->create(['name' => 'سيد كامل']);
+
+    App\Models\Attendance::create([
+        'employee_id' => $employee->id,
+        'date' => today()->toDateString(),
+        'check_in' => '09:40',
+        'status' => 'present',
+    ]);
+
+    $row = actingAs($this->manager)->getJson('/api/dashboard')->assertOk()->json('attendance_today.0');
+
+    expect($row['check_in_location'])->toBeNull()
+        ->and($row['check_out_location'])->toBeNull();
+});
+
 it('does not leak attendance to a technician dashboard', function () {
     actingAs($this->technician)->getJson('/api/dashboard')
         ->assertOk()

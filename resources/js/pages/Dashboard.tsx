@@ -532,22 +532,76 @@ function AttendanceToday({
                                 {row.check_out && ` · انصراف ${row.check_out}`}
                                 {row.check_out && ` · ${row.worked_hours} ساعة`}
                             </p>
+
+                            {/* A stamp with no coordinates is said out loud rather
+                                than left as a missing pin — "no location" and "not
+                                looked at" must not look the same. */}
+                            {!row.check_in_location && !row.check_out_location ? (
+                                <p className="text-[11px] text-navy-300">سُجّل بدون موقع</p>
+                            ) : (
+                                <div className="mt-1 flex flex-wrap gap-1.5">
+                                    {row.check_in_location && (
+                                        <MapLink
+                                            label="موقع الحضور"
+                                            point={row.check_in_location}
+                                            tone="in"
+                                        />
+                                    )}
+                                    {row.check_out_location && (
+                                        <MapLink
+                                            label="موقع الانصراف"
+                                            point={row.check_out_location}
+                                            tone="out"
+                                        />
+                                    )}
+                                    {row.check_out && !row.check_out_location && (
+                                        <span className="text-[11px] text-navy-300">
+                                            الانصراف بدون موقع
+                                        </span>
+                                    )}
+                                </div>
+                            )}
                         </div>
-                        {row.check_in_location && (
-                            <a
-                                href={`https://maps.google.com/?q=${row.check_in_location.lat},${row.check_in_location.lng}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="tap grid size-9 shrink-0 place-items-center rounded-lg bg-navy-50 text-navy-500 hover:text-brand-600"
-                                aria-label="موقع الحضور"
-                            >
-                                <MapPin className="size-4" />
-                            </a>
-                        )}
                     </div>
                 ))}
             </div>
         </section>
+    )
+}
+
+/**
+ * One end of a punch as a map link. The coordinates are on the chip on purpose:
+ * two stamps from the same spot read the same at a glance, and telling that
+ * apart is most of why anyone opens this list.
+ */
+function MapLink({
+    label,
+    point,
+    tone,
+}: {
+    label: string
+    point: { lat: number; lng: number }
+    tone: 'in' | 'out'
+}) {
+    return (
+        <a
+            href={`https://maps.google.com/?q=${point.lat},${point.lng}`}
+            target="_blank"
+            rel="noreferrer"
+            title={label}
+            className={clsx(
+                'tabular inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-bold transition',
+                tone === 'in'
+                    ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                    : 'bg-navy-50 text-navy-500 hover:bg-navy-100',
+            )}
+        >
+            <MapPin className="size-3.5 shrink-0" />
+            {tone === 'in' ? 'حضور' : 'انصراف'}
+            <span className="text-navy-400" dir="ltr">
+                {point.lat.toFixed(4)}, {point.lng.toFixed(4)}
+            </span>
+        </a>
     )
 }
 
