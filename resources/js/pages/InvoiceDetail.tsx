@@ -8,7 +8,7 @@ import { PaymentForm } from '@/components/PaymentForm'
 import { useToast } from '@/components/Toast'
 import { Button, ErrorState, Field, PageLoader, Select, Textarea } from '@/components/ui'
 import { errorMessage } from '@/lib/api'
-import { formatMoney, formatQty, PAYMENT_STATE } from '@/lib/domain'
+import { formatMoney, formatQty, itemSpecSummary, PAYMENT_STATE } from '@/lib/domain'
 import { formatDate, formatSmart } from '@/lib/format'
 import { useArea } from '@/lib/nav'
 import { useInvoice, useInvoiceAction, useReversePayment, useWarehouses } from '@/lib/queries'
@@ -200,21 +200,35 @@ export function InvoiceDetail() {
                 <h2 className="border-b border-navy-100 p-4 text-sm font-bold text-navy-800">البنود</h2>
 
                 <div className="divide-y divide-navy-100">
-                    {invoice.lines?.map((line) => (
-                        <div key={line.id} className="flex items-start justify-between gap-3 p-4">
-                            <div className="min-w-0">
-                                <p className="truncate text-sm font-bold text-navy-900">
-                                    {line.description}
-                                </p>
-                                <p className="tabular mt-0.5 text-xs text-navy-400">
-                                    {formatQty(line.qty)} × {formatMoney(line.unit_price)}
+                    {invoice.lines?.map((line) => {
+                        const specs = itemSpecSummary(line.item_category, line.item_specs)
+
+                        return (
+                            <div key={line.id} className="flex items-start justify-between gap-3 p-4">
+                                <div className="min-w-0">
+                                    <div className="flex flex-wrap items-center gap-1.5">
+                                        <p className="truncate text-sm font-bold text-navy-900">
+                                            {line.description}
+                                        </p>
+                                        {line.item_category_label && (
+                                            <span className="badge bg-navy-100 text-navy-600">
+                                                {line.item_category_label}
+                                            </span>
+                                        )}
+                                    </div>
+                                    {specs && (
+                                        <p className="tabular mt-0.5 text-[11px] text-navy-400">{specs}</p>
+                                    )}
+                                    <p className="tabular mt-0.5 text-xs text-navy-400">
+                                        {formatQty(line.qty)} {line.unit ?? ''} × {formatMoney(line.unit_price)}
+                                    </p>
+                                </div>
+                                <p className="tabular shrink-0 text-sm font-bold text-navy-900">
+                                    {formatMoney(line.line_total)}
                                 </p>
                             </div>
-                            <p className="tabular shrink-0 text-sm font-bold text-navy-900">
-                                {formatMoney(line.line_total)}
-                            </p>
-                        </div>
-                    ))}
+                        )
+                    })}
                 </div>
 
                 <div className="space-y-1.5 bg-navy-50 p-4 text-sm">

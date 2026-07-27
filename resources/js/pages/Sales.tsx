@@ -659,24 +659,38 @@ function OrderDetail({ id, onClose }: { id: number; onClose: () => void }) {
                     </div>
 
                     <div className="overflow-hidden rounded-2xl border border-navy-100">
-                        {order.lines?.map((line) => (
-                            <div
-                                key={line.id}
-                                className="flex items-center justify-between gap-3 border-b border-navy-100 p-3 last:border-0"
-                            >
-                                <div className="min-w-0">
-                                    <p className="truncate text-sm font-bold text-navy-900">
-                                        {line.description}
-                                    </p>
-                                    <p className="tabular mt-0.5 text-xs text-navy-400">
-                                        {formatQty(line.qty)} × {formatMoney(line.unit_price)}
+                        {order.lines?.map((line) => {
+                            const specs = itemSpecSummary(line.item_category, line.item_specs)
+
+                            return (
+                                <div
+                                    key={line.id}
+                                    className="flex items-center justify-between gap-3 border-b border-navy-100 p-3 last:border-0"
+                                >
+                                    <div className="min-w-0">
+                                        <div className="flex flex-wrap items-center gap-1.5">
+                                            <p className="truncate text-sm font-bold text-navy-900">
+                                                {line.description}
+                                            </p>
+                                            {line.item_category_label && (
+                                                <span className="badge bg-navy-100 text-navy-600">
+                                                    {line.item_category_label}
+                                                </span>
+                                            )}
+                                        </div>
+                                        {specs && (
+                                            <p className="tabular mt-0.5 text-[11px] text-navy-400">{specs}</p>
+                                        )}
+                                        <p className="tabular mt-0.5 text-xs text-navy-400">
+                                            {formatQty(line.qty)} {line.unit ?? ''} × {formatMoney(line.unit_price)}
+                                        </p>
+                                    </div>
+                                    <p className="tabular shrink-0 text-sm font-bold text-navy-900">
+                                        {formatMoney(line.line_total)}
                                     </p>
                                 </div>
-                                <p className="tabular shrink-0 text-sm font-bold text-navy-900">
-                                    {formatMoney(line.line_total)}
-                                </p>
-                            </div>
-                        ))}
+                            )
+                        })}
                     </div>
 
                     {Boolean(order.invoices?.length) && (

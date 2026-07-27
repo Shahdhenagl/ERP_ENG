@@ -127,7 +127,7 @@ class SalesOrderController extends Controller
             "تم إنشاء الفاتورة {$invoice->code} من {$salesOrder->code}",
         );
 
-        return response()->json(new InvoiceResource($invoice->load(['customer', 'lines'])), 201);
+        return response()->json(new InvoiceResource($invoice->load(['customer', 'lines.item'])), 201);
     }
 
     /* ── Helpers ─────────────────────────────────────────── */
@@ -235,6 +235,11 @@ class SalesOrderController extends Controller
                 'id' => $line->id,
                 'item_id' => $line->item_id,
                 'description' => $line->description,
+                // The product behind the line — its kind and nameplate.
+                'item_category' => $line->item?->category?->value,
+                'item_category_label' => $line->item?->category?->label(),
+                'item_specs' => $line->item?->specs ?: null,
+                'unit' => $line->item?->unit,
                 'qty' => (float) $line->qty,
                 'unit_price' => (float) $line->unit_price,
                 'line_total' => (float) $line->line_total,

@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom'
 import { DocumentParty, DocumentShell, DocumentSignatures } from '@/components/DocumentShell'
 import { ErrorState } from '@/components/ui'
-import { formatQty } from '@/lib/domain'
+import { formatQty, itemSpecSummary } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
 import { useSalesOrder } from '@/lib/queries'
 
@@ -62,15 +62,31 @@ export function DeliveryNotePrint() {
                     </tr>
                 </thead>
                 <tbody>
-                    {order.lines?.map((line, index) => (
-                        <tr key={line.id ?? index}>
-                            <td className="tabular text-center text-navy-400">{index + 1}</td>
-                            <td className="tabular text-navy-500">{line.item_code ?? '—'}</td>
-                            <td>{line.description}</td>
-                            <td className="tabular text-center">{formatQty(line.qty)}</td>
-                            <td />
-                        </tr>
-                    ))}
+                    {order.lines?.map((line, index) => {
+                        const specs = itemSpecSummary(line.item_category, line.item_specs)
+
+                        return (
+                            <tr key={line.id ?? index}>
+                                <td className="tabular text-center text-navy-400">{index + 1}</td>
+                                <td className="tabular text-navy-500">{line.item_code ?? '—'}</td>
+                                <td>
+                                    {line.description}
+                                    {line.item_category_label && (
+                                        <span className="mr-1.5 text-[11px] text-navy-400">
+                                            ({line.item_category_label})
+                                        </span>
+                                    )}
+                                    {specs && (
+                                        <span className="tabular block text-[11px] text-navy-500">{specs}</span>
+                                    )}
+                                </td>
+                                <td className="tabular text-center">
+                                    {formatQty(line.qty)} {line.unit ?? ''}
+                                </td>
+                                <td />
+                            </tr>
+                        )
+                    })}
                 </tbody>
             </table>
 
