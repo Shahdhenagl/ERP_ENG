@@ -504,12 +504,16 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::get('treasury/boxes', [TreasuryController::class, 'boxes'])->middleware('can:treasury.manage');
     Route::get('treasury/boxes/{box}/statement', [TreasuryController::class, 'statement'])->middleware('can:treasury.manage');
     Route::post('treasury/boxes', [TreasuryController::class, 'storeBox'])->middleware('can:treasury.manage');
+    Route::put('treasury/boxes/{box}', [TreasuryController::class, 'updateBox'])->middleware('can:treasury.manage');
+    Route::delete('treasury/boxes/{box}', [TreasuryController::class, 'destroyBox'])->middleware('can:treasury.manage');
     Route::get('treasury/movements', [TreasuryController::class, 'movements'])->middleware('can:treasury.manage');
     Route::post('treasury/expense', [TreasuryController::class, 'expense'])->middleware('can:treasury.manage');
     Route::post('treasury/transfer', [TreasuryController::class, 'transfer'])->middleware('can:treasury.manage');
 
     Route::get('payments', [TreasuryController::class, 'payments'])->middleware('can:treasury.manage');
+    Route::get('payments/{payment}', [TreasuryController::class, 'showPayment'])->middleware('can:treasury.manage');
     Route::post('payments', [TreasuryController::class, 'receive'])->middleware('can:treasury.manage');
+    Route::put('payments/{payment}', [TreasuryController::class, 'updatePayment'])->middleware('can:treasury.manage');
     Route::delete('payments/{payment}', [TreasuryController::class, 'reverse'])->middleware('can:treasury.manage');
 
     /*

@@ -22,7 +22,7 @@ import { ConfirmDialog, Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, ErrorState, Field, Input, PageHeader, PageLoader, Select } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
-import { CONTRACT_STATUS, formatMoney, VISIT_STATUS, expiryChip } from '@/lib/domain'
+import { CONTRACT_STATUS, formatMoney, PAYMENT_METHOD, VISIT_STATUS, expiryChip } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
 import { useArea } from '@/lib/nav'
 import { Attachments } from '@/components/Attachments'
@@ -553,10 +553,11 @@ function CollectDialog({
 
                 <Field label="طريقة الدفع">
                     <Select value={method} onChange={(e) => setMethod(e.target.value)}>
-                        <option value="cash">نقدي</option>
-                        <option value="bank_transfer">تحويل بنكي</option>
-                        <option value="cheque">شيك</option>
-                        <option value="wallet">محفظة</option>
+                        {Object.entries(PAYMENT_METHOD).map(([value, label]) => (
+                            <option key={value} value={value}>
+                                {label}
+                            </option>
+                        ))}
                     </Select>
                 </Field>
 

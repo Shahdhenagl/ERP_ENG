@@ -12,6 +12,8 @@ import {
     Search,
     Send,
     ThumbsDown,
+    ThumbsUp,
+    Trash2,
     Truck,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
@@ -26,6 +28,7 @@ import { formatMoney, formatQty, QUOTATION_STATUS, SALES_BILLING_STATE, SALES_OR
 import { formatDate } from '@/lib/format'
 import { useArea } from '@/lib/nav'
 import {
+    useDeleteQuotation,
     useQuotation,
     useQuotationAction,
     useQuotations,
@@ -33,6 +36,7 @@ import {
     useSalesOrderAction,
     useSalesOrders,
 } from '@/lib/queries'
+import { useAuth } from '@/lib/auth'
 import type { Quotation } from '@/types'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 
@@ -221,12 +225,34 @@ function QuotationDetail({
 }) {
     const toast = useToast()
     const { path } = useArea()
+    const { can } = useAuth()
     const action = useQuotationAction()
+    const remove = useDeleteQuotation()
     const { data: quotation, isLoading } = useQuotation(id)
-    const [reasonFor, setReasonFor] = useState<'reject' | 'cancel' | null>(null)
+    const [reasonFor, setReasonFor] = useState<'reject' | 'cancel' | 'reject-approval' | null>(null)
     const [reason, setReason] = useState('')
 
     if (isLoading || !quotation) return null
+
+    const approve = async () => {
+        try {
+            await action.mutateAsync({ id: quotation.id, action: 'approve' })
+            toast.success('تم اعتماد العرض. يمكنك الآن إرساله للعميل.')
+        } catch (caught) {
+            toast.error(errorMessage(caught, 'تعذّر الاعتماد.'))
+        }
+    }
+
+    const handleDelete = async () => {
+        if (!confirm('حذف هذا العرض نهائيًا؟')) return
+        try {
+            await remove.mutateAsync(quotation.id)
+            toast.success('تم حذف العرض.')
+            onClose()
+        } catch (caught) {
+            toast.error(errorMessage(caught, 'تعذّر الحذف.'))
+        }
+    }
 
     const run = async (act: 'send' | 'accept', success: string) => {
         try {
@@ -342,9 +368,32 @@ function QuotationDetail({
                                         معتمد{quotation.approver ? ` — ${quotation.approver}` : ''}
                                     </span>
                                 ) : quotation.is_pending_approval ? (
-                                    <span className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-700">
-                                        بانتظار الاعتماد
-                                    </span>
+                                    // An approver decides right here rather than on a
+                                    // separate queue; anyone else just sees the state.
+                                    can('sales.approve') ? (
+                                        <>
+                                            <Button
+                                                icon={ThumbsUp}
+                                                className="text-xs"
+                                                loading={action.isPending}
+                                                onClick={approve}
+                                            >
+                                                اعتماد
+                                            </Button>
+                                            <Button
+                                                variant="secondary"
+                                                icon={ThumbsDown}
+                                                className="text-xs text-red-600"
+                                                onClick={() => setReasonFor('reject-approval')}
+                                            >
+                                                إرجاع للتعديل
+                                            </Button>
+                                        </>
+                                    ) : (
+                                        <span className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-700">
+                                            بانتظار الاعتماد
+                                        </span>
+                                    )
                                 ) : (
                                     <Button
                                         variant="secondary"
@@ -373,6 +422,15 @@ function QuotationDetail({
                                     إرسال للعميل
                                 </Button>
                                 )}
+                                <Button
+                                    variant="secondary"
+                                    icon={Trash2}
+                                    className="text-xs text-red-600"
+                                    loading={remove.isPending}
+                                    onClick={handleDelete}
+                                >
+                                    حذف
+                                </Button>
                             </>
                         )}
 
@@ -414,7 +472,13 @@ function QuotationDetail({
             <Modal
                 open={Boolean(reasonFor)}
                 onClose={() => setReasonFor(null)}
-                title={reasonFor === 'reject' ? 'رفض العميل للعرض' : 'إلغاء العرض'}
+                title={
+                    reasonFor === 'reject'
+                        ? 'رفض العميل للعرض'
+                        : reasonFor === 'reject-approval'
+                          ? 'إرجاع العرض للتعديل'
+                          : 'إلغاء العرض'
+                }
                 size="sm"
                 footer={
                     <>
@@ -423,17 +487,22 @@ function QuotationDetail({
                         </Button>
                         <Button
                             variant="danger"
-                            disabled={reasonFor === 'cancel' && !reason.trim()}
+                            disabled={reasonFor !== 'reject' && !reason.trim()}
                             loading={action.isPending}
                             onClick={async () => {
                                 try {
+                                    // Returning for edit wants a `note`; the rest a `reason`.
                                     await action.mutateAsync({
                                         id: quotation.id,
                                         action: reasonFor!,
-                                        payload: { reason },
+                                        payload:
+                                            reasonFor === 'reject-approval'
+                                                ? { note: reason }
+                                                : { reason },
                                     })
                                     toast.success('تم التسجيل.')
                                     setReasonFor(null)
+                                    setReason('')
                                     onClose()
                                 } catch (caught) {
                                     toast.error(errorMessage(caught, 'تعذّر التسجيل.'))
@@ -447,7 +516,7 @@ function QuotationDetail({
             >
                 <Field
                     label="السبب"
-                    required={reasonFor === 'cancel'}
+                    required={reasonFor !== 'reject'}
                     hint="يبقى في السجل — معرفة سبب الرفض هو نصف فائدة التسعير"
                 >
                     <Textarea value={reason} onChange={(e) => setReason(e.target.value)} />

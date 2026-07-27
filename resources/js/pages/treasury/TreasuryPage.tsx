@@ -3,13 +3,15 @@ import {
     ArrowLeftRight,
     Banknote,
     Landmark,
+    Pencil,
     Plus,
+    Trash2,
     TrendingDown,
     TrendingUp,
     Wallet,
 } from 'lucide-react'
 import { useState } from 'react'
-import { Modal } from '@/components/Modal'
+import { ConfirmDialog, Modal } from '@/components/Modal'
 import { PeriodPicker, usePeriod } from '@/components/PeriodPicker'
 import { SectionTabs } from '@/components/SectionTabs'
 import { MONEY_SECTIONS } from '@/lib/sections'
@@ -21,6 +23,7 @@ import { formatDate, formatSmart } from '@/lib/format'
 import {
     useCashBoxes,
     useCashMovements,
+    useDeleteCashBox,
     useSaveCashBox,
     useTreasuryStatement,
     useTreasurySummary,
@@ -32,11 +35,23 @@ export function TreasuryPage() {
     const period = usePeriod('month')
     const [dialog, setDialog] = useState<'expense' | 'transfer' | 'box' | null>(null)
     const [openBox, setOpenBox] = useState<CashBoxSummary | null>(null)
+    const [editingBox, setEditingBox] = useState<CashBoxSummary | null>(null)
+    const [deletingBox, setDeletingBox] = useState<CashBoxSummary | null>(null)
+    const deleteBox = useDeleteCashBox()
+    const toast = useToast()
+
+    const [moveBox, setMoveBox] = useState('')
+    const [moveDir, setMoveDir] = useState<'' | 'in' | 'out'>('')
 
     const { range } = period
     const { data: summary, isLoading } = useTreasurySummary(range)
     const { data: boxes } = useCashBoxes()
-    const { data: movements } = useCashMovements({ ...range, per_page: 40 })
+    const { data: movements } = useCashMovements({
+        ...range,
+        cash_box_id: moveBox || undefined,
+        direction: moveDir || undefined,
+        per_page: 40,
+    })
 
     const analysis = summary?.analysis
 
@@ -174,7 +189,43 @@ export function TreasuryPage() {
 
             {/* ══ Recent movement across every box ══════════════ */}
             <section className="mt-6">
-                <h2 className="mb-3 font-bold text-navy-900">حركة الخزينة</h2>
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <h2 className="font-bold text-navy-900">حركة الخزينة</h2>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Select
+                            value={moveBox}
+                            onChange={(e) => setMoveBox(e.target.value)}
+                            className="w-auto text-xs"
+                        >
+                            <option value="">كل الخزائن</option>
+                            {boxes?.map((box) => (
+                                <option key={box.id} value={box.id}>
+                                    {box.name}
+                                </option>
+                            ))}
+                        </Select>
+
+                        {(['', 'in', 'out'] as const).map((dir) => (
+                            <button
+                                key={dir || 'all'}
+                                onClick={() => setMoveDir(dir)}
+                                className={clsx(
+                                    'tap rounded-xl px-3 py-2 text-xs font-bold ring-1 transition',
+                                    moveDir === dir
+                                        ? dir === 'in'
+                                            ? 'bg-emerald-600 text-white ring-emerald-600'
+                                            : dir === 'out'
+                                              ? 'bg-red-600 text-white ring-red-600'
+                                              : 'bg-brand-600 text-white ring-brand-600'
+                                        : 'bg-white text-navy-500 ring-navy-200 hover:bg-navy-50',
+                                )}
+                            >
+                                {dir === 'in' ? 'وارد' : dir === 'out' ? 'منصرف' : 'الكل'}
+                            </button>
+                        ))}
+                    </div>
+                </div>
 
                 {!movements?.length ? (
                     <EmptyState icon={Banknote} title="لا توجد حركات في هذه الفترة" />
@@ -226,15 +277,53 @@ export function TreasuryPage() {
                 )}
             </section>
 
-            {dialog === 'box' ? (
-                <CashBoxDialog onClose={() => setDialog(null)} />
+            {dialog === 'box' || editingBox ? (
+                <CashBoxDialog
+                    box={editingBox ?? undefined}
+                    onClose={() => {
+                        setDialog(null)
+                        setEditingBox(null)
+                    }}
+                />
             ) : dialog ? (
                 <TreasuryDialog operation={dialog} onClose={() => setDialog(null)} />
             ) : null}
 
             {openBox && (
-                <StatementDialog box={openBox} range={range} onClose={() => setOpenBox(null)} />
+                <StatementDialog
+                    box={openBox}
+                    range={range}
+                    onClose={() => setOpenBox(null)}
+                    onEdit={() => {
+                        setEditingBox(openBox)
+                        setOpenBox(null)
+                    }}
+                    onDelete={() => {
+                        setDeletingBox(openBox)
+                        setOpenBox(null)
+                    }}
+                />
             )}
+
+            <ConfirmDialog
+                open={Boolean(deletingBox)}
+                onClose={() => setDeletingBox(null)}
+                onConfirm={async () => {
+                    if (!deletingBox) return
+                    try {
+                        await deleteBox.mutateAsync(deletingBox.id)
+                        toast.success('تم حذف الخزينة.')
+                        setDeletingBox(null)
+                    } catch (caught) {
+                        toast.error(errorMessage(caught, 'تعذّر الحذف.'))
+                    }
+                }}
+                title="حذف الخزينة"
+                message={`حذف «${deletingBox?.name ?? ''}»؟ الخزائن التي لها حركة لا يمكن حذفها.`}
+                confirmLabel="حذف"
+                loading={deleteBox.isPending}
+                danger
+            />
         </>
     )
 }
@@ -326,15 +415,43 @@ function StatementDialog({
     box,
     range,
     onClose,
+    onEdit,
+    onDelete,
 }: {
     box: CashBoxSummary
     range: { from?: string; to?: string }
     onClose: () => void
+    onEdit: () => void
+    onDelete: () => void
 }) {
     const { data, isLoading } = useTreasuryStatement(box.id, range)
+    // A technician's float is managed from the custody screen, not here.
+    const editable = box.type !== 'custody'
 
     return (
-        <Modal open onClose={onClose} title={`كشف ${box.name}`} size="lg">
+        <Modal
+            open
+            onClose={onClose}
+            title={`كشف ${box.name}`}
+            size="lg"
+            footer={
+                editable ? (
+                    <>
+                        <Button variant="secondary" icon={Pencil} className="text-xs" onClick={onEdit}>
+                            تعديل
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            icon={Trash2}
+                            className="text-xs text-red-600"
+                            onClick={onDelete}
+                        >
+                            حذف
+                        </Button>
+                    </>
+                ) : undefined
+            }
+        >
             {isLoading || !data ? (
                 <SkeletonCard />
             ) : (
@@ -401,20 +518,21 @@ function StatementDialog({
 
 /* ── Opening a box ───────────────────────────────────────── */
 
-function CashBoxDialog({ onClose }: { onClose: () => void }) {
+function CashBoxDialog({ onClose, box }: { onClose: () => void; box?: CashBoxSummary }) {
     const toast = useToast()
-    const save = useSaveCashBox()
+    const save = useSaveCashBox(box?.id)
     const [errors, setErrors] = useState<Record<string, string>>({})
 
-    const [name, setName] = useState('')
-    const [type, setType] = useState('cash')
-    const [accountNumber, setAccountNumber] = useState('')
+    const [name, setName] = useState(box?.name ?? '')
+    const [type, setType] = useState(box?.type === 'bank' ? 'bank' : 'cash')
+    const [accountNumber, setAccountNumber] = useState(box?.account_number ?? '')
+    const [isActive, setIsActive] = useState(box?.is_active ?? true)
 
     return (
         <Modal
             open
             onClose={onClose}
-            title="خزينة جديدة"
+            title={box ? 'تعديل الخزينة' : 'خزينة جديدة'}
             size="sm"
             footer={
                 <>
@@ -431,12 +549,13 @@ function CashBoxDialog({ onClose }: { onClose: () => void }) {
                                     name,
                                     type,
                                     account_number: accountNumber || null,
+                                    ...(box ? { is_active: isActive } : {}),
                                 })
-                                toast.success('تم فتح الخزينة.')
+                                toast.success(box ? 'تم حفظ التعديل.' : 'تم فتح الخزينة.')
                                 onClose()
                             } catch (caught) {
                                 setErrors(fieldErrors(caught))
-                                toast.error(errorMessage(caught, 'تعذّر فتح الخزينة.'))
+                                toast.error(errorMessage(caught, 'تعذّر الحفظ.'))
                             }
                         }}
                     >
@@ -470,6 +589,18 @@ function CashBoxDialog({ onClose }: { onClose: () => void }) {
                             className="text-left"
                         />
                     </Field>
+                )}
+
+                {box && (
+                    <label className="flex items-center gap-2 text-sm font-semibold text-navy-700">
+                        <input
+                            type="checkbox"
+                            checked={isActive}
+                            onChange={(e) => setIsActive(e.target.checked)}
+                            className="size-4 rounded border-navy-300"
+                        />
+                        خزينة نشطة
+                    </label>
                 )}
             </div>
         </Modal>

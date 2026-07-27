@@ -127,7 +127,7 @@ function underThousand(value: number): string {
  * Stops at the millions, which is far beyond anything this company pays a
  * supplier in one voucher — and says so rather than printing nonsense.
  */
-function amountInWords(amount: number): string {
+export function amountInWords(amount: number): string {
     const pounds = Math.floor(amount)
     const piastres = Math.round((amount - pounds) * 100)
 

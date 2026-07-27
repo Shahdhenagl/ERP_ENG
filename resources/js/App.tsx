@@ -58,6 +58,7 @@ import { CustomerTasksPrint } from '@/pages/print/CustomerTasksPrint'
 import { ContractPrint } from '@/pages/print/ContractPrint'
 import { DeliveryNotePrint } from '@/pages/print/DeliveryNotePrint'
 import { PaymentVoucherPrint } from '@/pages/print/PaymentVoucherPrint'
+import { ReceiptPrint } from '@/pages/print/ReceiptPrint'
 import { WarrantyCertificate } from '@/pages/print/WarrantyCertificate'
 import { ContractReportPage } from '@/pages/reports/ContractReportPage'
 import { CustodyReportPage } from '@/pages/reports/CustodyReportPage'
@@ -147,6 +148,7 @@ export function App() {
                                     <Route path="warranty/:id" element={<WarrantyCertificate />} />
                                     <Route path="delivery/:id" element={<DeliveryNotePrint />} />
                                     <Route path="vouchers/:id" element={<PaymentVoucherPrint />} />
+                                    <Route path="receipts/:id" element={<ReceiptPrint />} />
                                     <Route path="payslips/:id" element={<PayslipPrint />} />
                                 </Route>
 

@@ -100,7 +100,7 @@ class SupplierController extends Controller
             'supplier_id' => ['required', 'exists:suppliers,id'],
             'cash_box_id' => ['nullable', 'exists:cash_boxes,id'],
             'amount' => ['required', 'numeric', 'gt:0'],
-            'method' => ['nullable', 'in:cash,bank_transfer,cheque,wallet'],
+            'method' => ['nullable', Rule::enum(\App\Enums\PaymentMethod::class)],
             'paid_at' => ['nullable', 'date'],
             'reference' => ['nullable', 'string', 'max:64'],
             'note' => ['nullable', 'string', 'max:1000'],

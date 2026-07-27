@@ -765,7 +765,13 @@ export type PaymentState =
     | 'paid'
     | 'credited'
     | 'overdue'
-export type PaymentMethod = 'cash' | 'bank_transfer' | 'cheque' | 'wallet'
+export type PaymentMethod =
+    | 'cash'
+    | 'bank_transfer'
+    | 'instapay'
+    | 'vodafone_cash'
+    | 'cheque'
+    | 'wallet'
 /** `custody` is a technician's float — a box with their name on it. */
 export type CashBoxType = 'cash' | 'bank' | 'custody'
 

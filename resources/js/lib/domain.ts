@@ -285,6 +285,8 @@ export const PAYMENT_STATE: Record<PaymentState, { label: string; chip: string }
 export const PAYMENT_METHOD: Record<PaymentMethod, string> = {
     cash: 'نقدًا',
     bank_transfer: 'تحويل بنكي',
+    instapay: 'إنستاباي',
+    vodafone_cash: 'فودافون كاش',
     cheque: 'شيك',
     wallet: 'محفظة إلكترونية',
 }

@@ -16,6 +16,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class TreasuryController extends Controller
 {
@@ -37,6 +38,12 @@ class TreasuryController extends Controller
             ->paginate($request->integer('per_page', 30));
 
         return PaymentResource::collection($payments);
+    }
+
+    /** One receipt on its own — for the printable voucher. */
+    public function showPayment(Payment $payment): PaymentResource
+    {
+        return new PaymentResource($payment->load(['customer', 'invoice', 'box', 'actor']));
     }
 
     public function receive(Request $request): JsonResponse
@@ -114,6 +121,74 @@ class TreasuryController extends Controller
         return response()->json(['data' => ['id' => $box->id, 'name' => $box->name]], 201);
     }
 
+    /** Rename a company box or move it between cash/bank. Custody boxes are off-limits. */
+    public function updateBox(Request $request, CashBox $box): JsonResponse
+    {
+        if ($box->isCustody()) {
+            throw ValidationException::withMessages(['box' => 'خزينة عهدة فني تُدار من شاشة العهد.']);
+        }
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'type' => ['required', 'in:cash,bank'],
+            'account_number' => ['nullable', 'string', 'max:64'],
+            'is_active' => ['boolean'],
+        ]);
+
+        $box->update($data);
+
+        return response()->json(['data' => ['id' => $box->id, 'name' => $box->name]]);
+    }
+
+    /**
+     * Close an empty company box. Refused while it holds money or carries any
+     * history — a box with movements is evidence and cannot just vanish — and
+     * the main till and technicians' floats are never deletable here.
+     */
+    public function destroyBox(CashBox $box): JsonResponse
+    {
+        if ($box->isCustody()) {
+            throw ValidationException::withMessages(['box' => 'خزينة عهدة فني تُدار من شاشة العهد.']);
+        }
+
+        if ($box->id === CashBox::default()->id) {
+            throw ValidationException::withMessages(['box' => 'لا يمكن حذف الخزينة الرئيسية.']);
+        }
+
+        if ($box->movements()->exists()) {
+            throw ValidationException::withMessages([
+                'box' => 'لا يمكن حذف خزينة لها حركة. أوقفها بدلًا من ذلك.',
+            ]);
+        }
+
+        $box->delete();
+
+        return response()->json(['message' => 'تم حذف الخزينة.']);
+    }
+
+    /**
+     * Correct a receipt's details — the method, its reference, the date or the
+     * note. The amount and the box are deliberately fixed: changing what money
+     * moved, or where, is a reversal and a new receipt, not an edit.
+     */
+    public function updatePayment(Request $request, Payment $payment): JsonResponse
+    {
+        $data = $request->validate([
+            'method' => ['nullable', Rule::enum(PaymentMethod::class)],
+            'paid_at' => ['nullable', 'date'],
+            'reference' => ['nullable', 'string', 'max:64'],
+            'note' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $payment->update($data);
+
+        ActivityLog::record('payment.updated', $payment, "تعديل بيانات سند القبض {$payment->code}");
+
+        return response()->json(
+            new PaymentResource($payment->load(['customer', 'invoice', 'box', 'actor'])),
+        );
+    }
+
     public function expense(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -155,12 +230,25 @@ class TreasuryController extends Controller
 
     public function movements(Request $request): JsonResponse
     {
-        $request->validate(['from' => ['nullable', 'date'], 'to' => ['nullable', 'date']]);
+        $request->validate([
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date'],
+            'direction' => ['nullable', 'in:in,out'],
+            'source' => ['nullable', 'string', 'max:40'],
+            'search' => ['nullable', 'string', 'max:120'],
+        ]);
 
         $movements = CashMovement::query()
             ->when($request->integer('cash_box_id'), fn ($q, $id) => $q->where('cash_box_id', $id))
+            ->when($request->string('direction')->toString(), fn ($q, $d) => $q->where('direction', $d))
+            ->when($request->string('source')->toString(), fn ($q, $s) => $q->where('source', $s))
             ->when($request->date('from'), fn ($q, $from) => $q->whereDate('created_at', '>=', $from))
             ->when($request->date('to'), fn ($q, $to) => $q->whereDate('created_at', '<=', $to))
+            ->when($request->string('search')->toString(), fn ($q, $term) => $q->where(
+                fn ($sub) => $sub->where('note', 'like', "%{$term}%")
+                    ->orWhere('category', 'like', "%{$term}%")
+                    ->orWhereHas('payment.customer', fn ($c) => $c->where('name', 'like', "%{$term}%")),
+            ))
             ->with(['box', 'actor', 'payment.customer'])
             ->orderByDesc('id')
             ->paginate($request->integer('per_page', 30));

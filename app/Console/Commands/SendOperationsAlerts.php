@@ -2,15 +2,21 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\ClaimStatus;
 use App\Enums\TaskPriority;
+use App\Enums\TaskType;
 use App\Enums\VisitStatus;
 use App\Models\AlertDispatch;
 use App\Models\ContractVisit;
 use App\Models\Invoice;
 use App\Models\Item;
+use App\Models\LeaveRequest;
+use App\Models\PurchaseRequest;
+use App\Models\Quotation;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\Warranty;
+use App\Models\WarrantyClaim;
 use App\Notifications\OperationsAlert;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;

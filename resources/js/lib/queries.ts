@@ -1646,6 +1646,15 @@ export function useQuotationAction() {
     })
 }
 
+export function useDeleteQuotation() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id: number) => (await api.delete(`/quotations/${id}`)).data,
+        onSuccess: () => invalidateSales(client),
+    })
+}
+
 export function useSalesOrders(filters: Record<string, unknown> = {}) {
     const { canDispatch } = useAuth()
 
@@ -1932,12 +1941,34 @@ export function useTreasuryStatement(
     })
 }
 
-export function useSaveCashBox() {
+export function useSaveCashBox(id?: number) {
     const client = useQueryClient()
 
     return useMutation({
         mutationFn: async (payload: Record<string, unknown>) =>
-            (await api.post('/treasury/boxes', payload)).data,
+            id
+                ? (await api.put(`/treasury/boxes/${id}`, payload)).data
+                : (await api.post('/treasury/boxes', payload)).data,
+        onSuccess: () => invalidateMoney(client),
+    })
+}
+
+export function useDeleteCashBox() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id: number) => (await api.delete(`/treasury/boxes/${id}`)).data,
+        onSuccess: () => invalidateMoney(client),
+    })
+}
+
+/** Correct a receipt's method/reference/date/note — never its amount or box. */
+export function useUpdatePayment(id: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (await api.put(`/payments/${id}`, payload)).data,
         onSuccess: () => invalidateMoney(client),
     })
 }
@@ -1975,6 +2006,15 @@ export function useReversePayment() {
     return useMutation({
         mutationFn: async (id: number) => (await api.delete(`/payments/${id}`)).data,
         onSuccess: () => invalidateMoney(client),
+    })
+}
+
+/** One receipt, for the printable سند قبض. */
+export function usePayment(id: number | string | undefined) {
+    return useQuery({
+        queryKey: ['payment', Number(id ?? 0)],
+        queryFn: async () => (await api.get<{ data: Payment }>(`/payments/${id}`)).data.data,
+        enabled: Boolean(id),
     })
 }
 

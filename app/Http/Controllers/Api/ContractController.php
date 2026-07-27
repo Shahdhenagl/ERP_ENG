@@ -215,7 +215,7 @@ class ContractController extends Controller
 
         $data = $request->validate([
             'cash_box_id' => ['nullable', 'exists:cash_boxes,id'],
-            'method' => ['nullable', 'in:cash,bank_transfer,cheque,wallet'],
+            'method' => ['nullable', Rule::enum(\App\Enums\PaymentMethod::class)],
             'reference' => ['nullable', 'string', 'max:120'],
             'note' => ['nullable', 'string', 'max:500'],
         ]);
