@@ -235,6 +235,12 @@ class QuotationController extends Controller
                 'item_id' => $line->item_id,
                 'item_code' => $line->item_code,
                 'description' => $line->description,
+                // The product behind the line — its kind and nameplate — so the
+                // reader understands what is being quoted, not just its price.
+                'item_category' => $line->item?->category?->value,
+                'item_category_label' => $line->item?->category?->label(),
+                'item_specs' => $line->item?->specs ?: null,
+                'unit' => $line->item?->unit,
                 'qty' => (float) $line->qty,
                 'unit_price' => (float) $line->unit_price,
                 'line_total' => (float) $line->line_total,

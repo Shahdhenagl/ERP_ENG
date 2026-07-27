@@ -246,6 +246,34 @@ export const ITEM_CATEGORY: Record<ItemCategory, { label: string; chip: string }
     consumable: { label: 'مستهلكات', chip: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200' },
 }
 
+/** A one-line nameplate for a UPS or battery — brand, model and the key ratings. */
+export function itemSpecSummary(
+    category: string | null | undefined,
+    specs?: Record<string, string> | null,
+): string | null {
+    if (!specs) return null
+
+    const parts =
+        category === 'ups'
+            ? [
+                  specs.brand,
+                  specs.model,
+                  specs.capacity,
+                  specs.phase === 'three' ? '٣ أوجه' : specs.phase === 'single' ? 'وجه واحد' : null,
+              ]
+            : category === 'battery'
+              ? [
+                    specs.brand,
+                    specs.model,
+                    specs.capacity_ah && `${specs.capacity_ah}Ah`,
+                    specs.voltage && `${specs.voltage}V`,
+                ]
+              : [specs.brand, specs.model]
+
+    const text = parts.filter(Boolean).join(' · ')
+    return text || null
+}
+
 export const MOVEMENT_TYPE: Record<MovementType, { label: string; chip: string; sign: '+' | '−' | '±' }> = {
     receipt: { label: 'وارد', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200', sign: '+' },
     transfer: { label: 'تحويل', chip: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200', sign: '±' },

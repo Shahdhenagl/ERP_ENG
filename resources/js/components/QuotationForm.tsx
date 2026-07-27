@@ -5,7 +5,7 @@ import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, Field, Input, Select, Textarea } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
-import { DEFAULT_TAX_RATE, formatMoney, formatQty } from '@/lib/domain'
+import { DEFAULT_TAX_RATE, formatMoney, formatQty, ITEM_CATEGORY, itemSpecSummary } from '@/lib/domain'
 import { useCustomers, useItems, useSaveQuotation } from '@/lib/queries'
 import type { Quotation } from '@/types'
 
@@ -237,17 +237,30 @@ export function QuotationForm({
                                 if (!item) return null
 
                                 const short = (Number(row.qty) || 0) > item.total_qty
+                                const specs = itemSpecSummary(item.category, item.specs)
 
                                 return (
-                                    <p
-                                        className={clsx(
-                                            'tabular text-[11px] font-bold',
-                                            short ? 'text-red-600' : 'text-navy-400',
-                                        )}
-                                    >
-                                        المتاح بالمخزن: {formatQty(item.total_qty)} {item.unit}
-                                        {short && ' — أقل من الكمية المعروضة'}
-                                    </p>
+                                    <>
+                                        {/* The product's kind and nameplate, so the
+                                            person pricing the quote sees what it is. */}
+                                        <p className="flex flex-wrap items-center gap-1.5 text-[11px] text-navy-500">
+                                            <span
+                                                className={clsx('badge', ITEM_CATEGORY[item.category].chip)}
+                                            >
+                                                {ITEM_CATEGORY[item.category].label}
+                                            </span>
+                                            {specs && <span className="tabular">{specs}</span>}
+                                        </p>
+                                        <p
+                                            className={clsx(
+                                                'tabular text-[11px] font-bold',
+                                                short ? 'text-red-600' : 'text-navy-400',
+                                            )}
+                                        >
+                                            المتاح بالمخزن: {formatQty(item.total_qty)} {item.unit}
+                                            {short && ' — أقل من الكمية المعروضة'}
+                                        </p>
+                                    </>
                                 )
                             })()}
                         </div>

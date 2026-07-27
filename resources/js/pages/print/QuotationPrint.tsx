@@ -6,7 +6,7 @@ import {
     DocumentTotals,
 } from '@/components/DocumentShell'
 import { ErrorState } from '@/components/ui'
-import { formatMoney, formatQty } from '@/lib/domain'
+import { formatMoney, formatQty, itemSpecSummary } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
 import { useQuotation, useSettings } from '@/lib/queries'
 
@@ -63,15 +63,31 @@ export function QuotationPrint() {
                     </tr>
                 </thead>
                 <tbody>
-                    {quotation.lines?.map((line, index) => (
-                        <tr key={line.id}>
-                            <td className="text-navy-400">{index + 1}</td>
-                            <td className="font-semibold text-navy-900">{line.description}</td>
-                            <td className="tabular text-center">{formatQty(line.qty)}</td>
-                            <td className="tabular text-center">{formatMoney(line.unit_price)}</td>
-                            <td className="tabular text-left font-bold">{formatMoney(line.line_total)}</td>
-                        </tr>
-                    ))}
+                    {quotation.lines?.map((line, index) => {
+                        const specs = itemSpecSummary(line.item_category, line.item_specs)
+
+                        return (
+                            <tr key={line.id}>
+                                <td className="text-navy-400">{index + 1}</td>
+                                <td className="text-navy-900">
+                                    <span className="font-semibold">{line.description}</span>
+                                    {line.item_category_label && (
+                                        <span className="mr-1.5 text-[11px] text-navy-400">
+                                            ({line.item_category_label})
+                                        </span>
+                                    )}
+                                    {specs && (
+                                        <span className="tabular block text-[11px] text-navy-500">{specs}</span>
+                                    )}
+                                </td>
+                                <td className="tabular text-center">
+                                    {formatQty(line.qty)} {line.unit ?? ''}
+                                </td>
+                                <td className="tabular text-center">{formatMoney(line.unit_price)}</td>
+                                <td className="tabular text-left font-bold">{formatMoney(line.line_total)}</td>
+                            </tr>
+                        )
+                    })}
                 </tbody>
             </table>
 

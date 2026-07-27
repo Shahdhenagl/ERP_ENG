@@ -225,22 +225,39 @@ export function ContractDetail() {
                             </p>
                         ) : (
                             <ul className="space-y-2">
-                                {contract.assets.map((asset) => (
-                                    <li key={asset.id}>
-                                        <Link
-                                            to={path(`/assets/${asset.id}`)}
-                                            className="tap flex items-center gap-3 rounded-xl bg-navy-50 p-3 transition hover:bg-navy-100"
-                                        >
-                                            <HardDrive className="size-4 shrink-0 text-navy-400" />
-                                            <span className="min-w-0 flex-1 truncate text-sm font-semibold text-navy-800">
-                                                {asset.label}
-                                            </span>
-                                            <span className="tabular shrink-0 text-[11px] text-navy-400">
-                                                {asset.code}
-                                            </span>
-                                        </Link>
-                                    </li>
-                                ))}
+                                {contract.assets.map((asset) => {
+                                    const specs = [
+                                        asset.serial,
+                                        asset.capacity,
+                                        [asset.brand, asset.model].filter(Boolean).join(' '),
+                                    ]
+                                        .filter(Boolean)
+                                        .join(' · ')
+
+                                    return (
+                                        <li key={asset.id}>
+                                            <Link
+                                                to={path(`/assets/${asset.id}`)}
+                                                className="tap flex items-center gap-3 rounded-xl bg-navy-50 p-3 transition hover:bg-navy-100"
+                                            >
+                                                <HardDrive className="size-4 shrink-0 text-navy-400" />
+                                                <span className="min-w-0 flex-1">
+                                                    <span className="block truncate text-sm font-semibold text-navy-800">
+                                                        {asset.label}
+                                                    </span>
+                                                    {specs && (
+                                                        <span className="tabular block truncate text-[11px] text-navy-400">
+                                                            {specs}
+                                                        </span>
+                                                    )}
+                                                </span>
+                                                <span className="tabular shrink-0 text-[11px] text-navy-400">
+                                                    {asset.code}
+                                                </span>
+                                            </Link>
+                                        </li>
+                                    )
+                                })}
                             </ul>
                         )}
                     </section>

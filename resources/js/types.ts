@@ -574,6 +574,11 @@ export interface DocumentLine {
     item_id?: number | null
     item_code?: string | null
     description: string
+    /** The product's kind and nameplate, when the line is a catalogue item. */
+    item_category?: string | null
+    item_category_label?: string | null
+    item_specs?: Record<string, string> | null
+    unit?: string | null
     qty: number
     unit_price: number
     line_total: number
