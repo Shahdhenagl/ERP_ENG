@@ -95,6 +95,35 @@ it('lets the manager see the technician expenses on the statement', function () 
         ->and($data['expenses'][0]['amount'])->toEqual(120);
 });
 
+it('narrows the statement expenses to a chosen month', function () {
+    // One expense this month, one dated to a past month.
+    actingAs($this->technician)->postJson('/api/custody/mine/spend', [
+        'amount' => 100, 'category' => 'وقود',
+    ])->assertCreated();
+    actingAs($this->technician)->postJson('/api/custody/mine/spend', [
+        'amount' => 200, 'category' => 'مبيت',
+    ])->assertCreated();
+
+    $old = CashMovement::where('source', 'expense')->where('amount', 200)->first();
+    $old->forceFill(['created_at' => '2026-03-15 10:00:00'])->save();
+
+    // Filtering to March shows only the old one.
+    $march = actingAs($this->manager)
+        ->getJson("/api/custody/{$this->technician->id}?month=2026-03")
+        ->assertOk()
+        ->json('data.expenses');
+
+    expect($march)->toHaveCount(1)
+        ->and($march[0]['category'])->toBe('مبيت');
+
+    // With no month, both show.
+    $all = actingAs($this->manager)
+        ->getJson("/api/custody/{$this->technician->id}")
+        ->json('data.expenses');
+
+    expect($all)->toHaveCount(2);
+});
+
 /* ── Overspend, task expenses, settle and waive ──────────── */
 
 it('lets a technician spend past their float, dropping it negative', function () {

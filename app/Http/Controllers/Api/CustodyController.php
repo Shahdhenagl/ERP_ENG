@@ -23,14 +23,19 @@ class CustodyController extends Controller
     }
 
     /** One technician, with the movements and expenses behind their custody. */
-    public function show(User $user): JsonResponse
+    public function show(Request $request, User $user): JsonResponse
     {
+        // An optional YYYY-MM narrows the expenses to one month for the printed
+        // statement; the cash, stock and devices are always the position today.
+        $month = $request->string('month')->toString() ?: null;
+
         return response()->json([
             'data' => [
                 ...$this->custody->statementFor($user),
                 'shortfall' => $this->custody->shortfallFor($user),
                 'stock_history' => $this->custody->stockHistoryFor($user),
-                'expenses' => $this->custody->expensesFor($user),
+                'expenses' => $this->custody->expensesFor($user, $month),
+                'month' => $month,
             ],
         ]);
     }

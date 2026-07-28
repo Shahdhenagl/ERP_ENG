@@ -381,7 +381,7 @@ class CustodyService
      *
      * @return array<int, array<string, mixed>>
      */
-    public function expensesFor(User $technician, int $limit = 50): array
+    public function expensesFor(User $technician, ?string $month = null, int $limit = 50): array
     {
         $box = CashBox::where('user_id', $technician->id)->first();
 
@@ -393,6 +393,10 @@ class CustodyService
             ->where('cash_box_id', $box->id)
             ->where('direction', 'out')
             ->where('source', 'expense')
+            // A month is YYYY-MM; without one the recent list is shown as before.
+            ->when($month, fn ($q) => $q
+                ->whereYear('created_at', (int) substr($month, 0, 4))
+                ->whereMonth('created_at', (int) substr($month, 5, 2)))
             ->with(['actor', 'task'])
             ->latest('id')
             ->limit($limit)

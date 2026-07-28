@@ -1,11 +1,13 @@
-import { HardDrive, Package, Receipt, Users, Wallet } from 'lucide-react'
+import { HardDrive, Package, Printer, Receipt, Users, Wallet } from 'lucide-react'
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
-import { Button, EmptyState, Field, PageHeader, Select, SkeletonCard } from '@/components/ui'
+import { Button, EmptyState, Field, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
 import { errorMessage } from '@/lib/api'
 import { formatMoney, formatQty } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
+import { useArea } from '@/lib/nav'
 import {
     useCashBoxes,
     useCustody,
@@ -20,16 +22,18 @@ import {
  * company is exposed with them.
  */
 export function CustodyStatementPage() {
+    const { path } = useArea()
     const { data: statements } = useCustody()
     const [userId, setUserId] = useState<number | null>(null)
+    const [month, setMonth] = useState('')
 
-    const { data, isLoading } = useCustodyStatement(userId ?? undefined)
+    const { data, isLoading } = useCustodyStatement(userId ?? undefined, month || undefined)
 
     return (
         <>
             <PageHeader title="كشف حساب الموظف" subtitle="النقدية والمخزون والأجهزة في عهدة الموظف" />
 
-            <div className="mb-4 max-w-md">
+            <div className="mb-4 grid gap-3 sm:grid-cols-[2fr_1fr_auto] sm:items-end">
                 <Field label="الموظف">
                     <Select
                         value={userId ?? ''}
@@ -43,6 +47,21 @@ export function CustodyStatementPage() {
                         ))}
                     </Select>
                 </Field>
+
+                <Field label="الشهر (للمصروفات)">
+                    <Input type="month" value={month} onChange={(e) => setMonth(e.target.value)} />
+                </Field>
+
+                {userId && (
+                    <Link
+                        to={path(`/print/custody/${userId}${month ? `?month=${month}` : ''}`)}
+                        target="_blank"
+                        className="btn-secondary inline-flex h-[42px] items-center justify-center gap-1.5"
+                    >
+                        <Printer className="size-4" />
+                        طباعة
+                    </Link>
+                )}
             </div>
 
             {!userId ? (

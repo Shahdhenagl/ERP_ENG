@@ -1268,11 +1268,15 @@ export function useCustodyCash() {
 }
 
 /** One technician's custody in full — cash, stock and devices. */
-export function useCustodyStatement(userId: number | undefined) {
+export function useCustodyStatement(userId: number | undefined, month?: string) {
     return useQuery({
-        queryKey: ['custody-statement', userId ?? 0],
+        queryKey: ['custody-statement', userId ?? 0, month ?? ''],
         queryFn: async () =>
-            (await api.get<{ data: CustodyStatement }>(`/custody/${userId}`)).data.data,
+            (
+                await api.get<{ data: CustodyStatement }>(`/custody/${userId}`, {
+                    params: month ? { month } : {},
+                })
+            ).data.data,
         enabled: Boolean(userId),
     })
 }

@@ -61,6 +61,7 @@ import { ContractPrint } from '@/pages/print/ContractPrint'
 import { DeliveryNotePrint } from '@/pages/print/DeliveryNotePrint'
 import { PaymentVoucherPrint } from '@/pages/print/PaymentVoucherPrint'
 import { CashVoucherPrint } from '@/pages/print/CashVoucherPrint'
+import { CustodyStatementPrint } from '@/pages/print/CustodyStatementPrint'
 import { ReceiptPrint } from '@/pages/print/ReceiptPrint'
 import { WarrantyCertificate } from '@/pages/print/WarrantyCertificate'
 import { ContractReportPage } from '@/pages/reports/ContractReportPage'
@@ -153,6 +154,7 @@ export function App() {
                                     <Route path="delivery/:id" element={<DeliveryNotePrint />} />
                                     <Route path="vouchers/:id" element={<PaymentVoucherPrint />} />
                                     <Route path="cash-vouchers/:id" element={<CashVoucherPrint />} />
+                                    <Route path="custody/:id" element={<CustodyStatementPrint />} />
                                     <Route path="receipts/:id" element={<ReceiptPrint />} />
                                     <Route path="payslips/:id" element={<PayslipPrint />} />
                                 </Route>
