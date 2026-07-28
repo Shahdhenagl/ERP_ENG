@@ -64,6 +64,44 @@ it('refuses to touch a technician float from here', function () {
     ])->assertStatus(422);
 });
 
+it('records an external deposit into a box as income', function () {
+    $box = CashBox::default();
+    $before = $box->balance();
+
+    actingAs($this->manager)->postJson('/api/treasury/deposit', [
+        'cash_box_id' => $box->id,
+        'amount' => 1500,
+        'party' => 'شركة النور',
+        'note' => 'دفعة مقدمة',
+    ])->assertCreated();
+
+    // The money is in the box, and it is a receipt, not an expense.
+    expect($box->fresh()->balance())->toBe(round($before + 1500, 2));
+
+    $movement = CashMovement::where('source', 'external_deposit')->latest('id')->first();
+    expect($movement)->not->toBeNull()
+        ->and($movement->direction)->toBe('in')
+        ->and($movement->category)->toBe('شركة النور')
+        ->and((float) $movement->amount)->toBe(1500.0);
+});
+
+it('refuses an external deposit with no party named', function () {
+    actingAs($this->manager)->postJson('/api/treasury/deposit', [
+        'cash_box_id' => CashBox::default()->id,
+        'amount' => 500,
+    ])->assertStatus(422);
+});
+
+it('keeps external deposits off a technician', function () {
+    $tech = User::factory()->technician()->create();
+
+    actingAs($tech)->postJson('/api/treasury/deposit', [
+        'cash_box_id' => CashBox::default()->id,
+        'amount' => 500,
+        'party' => 'جهة',
+    ])->assertForbidden();
+});
+
 it('corrects a receipt without moving the money', function () {
     $customer = Customer::factory()->create();
     $id = actingAs($this->manager)->postJson('/api/payments', [

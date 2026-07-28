@@ -326,6 +326,10 @@ class LedgerPoster
 
             $other = match ($movement->source) {
                 'payment' => Account::key('receivable'),
+                // Money from someone who is not a customer on the books — a
+                // refund, a grant, an owner topping up the till. It is income,
+                // not the settling of a receivable that was never raised.
+                'external_deposit' => Account::key('other_income'),
                 'supplier_payment' => Account::key('payable'),
                 'opening' => Account::key('opening_equity'),
                 // An advance is an asset until a payslip recovers it; a paid
@@ -475,6 +479,8 @@ class LedgerPoster
     {
         return match ($movement->source) {
             'payment' => 'payment',
+            // An external deposit is a receipt like any other on the journal.
+            'external_deposit' => 'payment',
             'supplier_payment' => 'supplier_payment',
             'transfer' => 'transfer',
             'custody_advance', 'custody_settle', 'custody_waive' => 'custody',

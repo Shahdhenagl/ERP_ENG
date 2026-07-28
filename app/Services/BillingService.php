@@ -308,6 +308,47 @@ class BillingService
         ]);
     }
 
+    /**
+     * Money into a box from someone who is not a customer on the books — a
+     * refund, a deposit from an outside party, the owner topping up the till.
+     *
+     * Recorded as its own receipt so it shows on the box and in income without
+     * being mistaken for a customer paying down an invoice: there is no
+     * receivable behind it, and `LedgerPoster` credits other income for it.
+     * The party's name is the note, which is what the printed voucher reads.
+     */
+    public function recordExternalDeposit(
+        CashBox $box,
+        float $amount,
+        User $actor,
+        array $context = [],
+    ): CashMovement {
+        $amount = round($amount, 2);
+
+        if ($amount <= 0) {
+            throw ValidationException::withMessages(['amount' => 'المبلغ يجب أن يكون أكبر من صفر.']);
+        }
+
+        $party = trim((string) ($context['party'] ?? ''));
+
+        if ($party === '') {
+            throw ValidationException::withMessages(['party' => 'اكتب اسم الجهة المودِعة.']);
+        }
+
+        $extra = trim((string) ($context['note'] ?? ''));
+
+        return CashMovement::create([
+            'cash_box_id' => $box->id,
+            'direction' => 'in',
+            'amount' => $amount,
+            'source' => 'external_deposit',
+            'category' => $party,
+            'note' => $extra !== '' ? "{$party} — {$extra}" : $party,
+            'receipt_path' => $context['receipt_path'] ?? null,
+            'user_id' => $actor->id,
+        ]);
+    }
+
     /** Move money between boxes — cash banked, or drawn out. */
     public function transferBetweenBoxes(CashBox $from, CashBox $to, float $amount, User $actor, ?string $note = null): void
     {

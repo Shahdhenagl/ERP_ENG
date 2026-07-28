@@ -69,7 +69,7 @@ class ChartOfAccounts
         ['4',    'الإيرادات',                     'revenue',   null,               true],
         ['4101', 'إيرادات المبيعات',              'revenue',   'sales_revenue',    false],
         ['4102', 'إيرادات الصيانة والخدمات',      'revenue',   'service_revenue',  false],
-        ['4103', 'إيرادات أخرى',                  'revenue',   null,               false],
+        ['4103', 'إيرادات أخرى',                  'revenue',   'other_income',     false],
         // Contra-revenue: carries a debit balance and nets off the two above,
         // which is exactly what a discount does to a period's income.
         ['4104', 'خصم مسموح به',                  'revenue',   'sales_discount',   false],

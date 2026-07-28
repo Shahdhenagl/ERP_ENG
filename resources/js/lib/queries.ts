@@ -2049,7 +2049,7 @@ export function usePayment(id: number | string | undefined) {
 }
 
 /** Cash and receivables move together, so they refresh together. */
-export function useTreasuryOperation(operation: 'expense' | 'transfer') {
+export function useTreasuryOperation(operation: 'expense' | 'transfer' | 'deposit') {
     const client = useQueryClient()
 
     return useMutation({

@@ -208,6 +208,36 @@ class TreasuryController extends Controller
         return response()->json(['data' => ['id' => $movement->id]], 201);
     }
 
+    /**
+     * A receipt from someone who is not a customer on the books — the party's
+     * name and the amount, into a box. Its own kind of voucher, kept apart from
+     * a customer settling an invoice.
+     */
+    public function deposit(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'cash_box_id' => ['required', 'exists:cash_boxes,id'],
+            'amount' => ['required', 'numeric', 'gt:0'],
+            'party' => ['required', 'string', 'max:160'],
+            'note' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $movement = $this->billing->recordExternalDeposit(
+            CashBox::findOrFail($data['cash_box_id']),
+            (float) $data['amount'],
+            $request->user(),
+            $data,
+        );
+
+        ActivityLog::record(
+            'deposit.received',
+            $movement,
+            "إيداع خارجي من {$data['party']} بمبلغ ".number_format((float) $data['amount'], 2),
+        );
+
+        return response()->json(['data' => ['id' => $movement->id]], 201);
+    }
+
     public function transfer(Request $request): JsonResponse
     {
         $data = $request->validate([

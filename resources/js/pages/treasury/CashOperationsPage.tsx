@@ -1,4 +1,4 @@
-import { ArrowLeftRight, Banknote } from 'lucide-react'
+import { ArrowLeftRight, Banknote, HandCoins } from 'lucide-react'
 import { useState } from 'react'
 import { useToast } from '@/components/Toast'
 import { Button, Field, Input, PageHeader, Select, Textarea } from '@/components/ui'
@@ -16,11 +16,15 @@ export function CashOperationsPage() {
 
     return (
         <>
-            <PageHeader title="تحويل الخزينة والمصروفات" subtitle="تحويل بين الخزائن وتسجيل المصروفات" />
+            <PageHeader
+                title="عمليات الخزينة"
+                subtitle="تحويل بين الخزائن وتسجيل المصروفات والإيداعات الخارجية"
+            />
 
             <div className="grid gap-4 lg:grid-cols-2">
                 <TransferCard boxes={boxes ?? []} />
                 <ExpenseCard boxes={boxes ?? []} />
+                <DepositCard boxes={boxes ?? []} />
             </div>
         </>
     )
@@ -161,6 +165,74 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
                 }}
             >
                 تسجيل المصروف
+            </Button>
+        </div>
+    )
+}
+
+/**
+ * Money in from someone who is not a customer — a refund, an outside party's
+ * deposit, the owner topping up the till. Its own voucher, so it is never
+ * mistaken for a customer settling an invoice.
+ */
+function DepositCard({ boxes }: { boxes: Box[] }) {
+    const toast = useToast()
+    const deposit = useTreasuryOperation('deposit')
+    const [errors, setErrors] = useState<Record<string, string>>({})
+    const [form, setForm] = useState({ cash_box_id: '', amount: '', party: '', note: '' })
+    const set = (k: keyof typeof form) => (v: string) => setForm((c) => ({ ...c, [k]: v }))
+
+    return (
+        <div className="card space-y-4 p-5">
+            <h2 className="flex items-center gap-2 font-bold text-navy-900">
+                <HandCoins className="size-4.5 text-emerald-600" />
+                إيداع خارجي
+            </h2>
+
+            <Field label="الخزينة" required error={errors.cash_box_id}>
+                <Select value={form.cash_box_id} onChange={(e) => set('cash_box_id')(e.target.value)}>
+                    <option value="">— اختر —</option>
+                    {boxes.map((b) => (
+                        <option key={b.id} value={b.id}>
+                            {b.name} · {formatMoney(b.balance)}
+                        </option>
+                    ))}
+                </Select>
+            </Field>
+            <Field label="الجهة المودِعة" required error={errors.party} hint="اسم الشخص أو الجهة">
+                <Input value={form.party} onChange={(e) => set('party')(e.target.value)} />
+            </Field>
+            <Field label="المبلغ" required error={errors.amount}>
+                <Input type="number" min={0} step="any" value={form.amount} onChange={(e) => set('amount')(e.target.value)} dir="ltr" className="text-left" />
+            </Field>
+            <Field label="ملاحظة" error={errors.note}>
+                <Textarea value={form.note} onChange={(e) => set('note')(e.target.value)} rows={2} />
+            </Field>
+
+            <Button
+                icon={HandCoins}
+                variant="secondary"
+                className="w-full"
+                loading={deposit.isPending}
+                disabled={!form.cash_box_id || !form.amount || !form.party.trim()}
+                onClick={async () => {
+                    setErrors({})
+                    try {
+                        await deposit.mutateAsync({
+                            cash_box_id: Number(form.cash_box_id),
+                            amount: Number(form.amount),
+                            party: form.party.trim(),
+                            note: form.note || null,
+                        })
+                        toast.success('تم تسجيل الإيداع.')
+                        setForm({ cash_box_id: '', amount: '', party: '', note: '' })
+                    } catch (caught) {
+                        setErrors(fieldErrors(caught))
+                        toast.error(errorMessage(caught, 'تعذّر التسجيل.'))
+                    }
+                }}
+            >
+                تسجيل الإيداع
             </Button>
         </div>
     )

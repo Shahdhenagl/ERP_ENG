@@ -19,6 +19,7 @@ class TreasuryReport
     /** Headings a movement's `source` maps to, shared with the movement feed. */
     public const LABELS = [
         'payment' => 'تحصيل من العملاء',
+        'external_deposit' => 'إيداع خارجي',
         'custody_settle' => 'رد عهدة',
         'opening' => 'رصيد افتتاحي',
         'expense' => 'مصروفات',
