@@ -9,6 +9,8 @@ use App\Http\Resources\ContractResource;
 use App\Models\Contract;
 use App\Models\Customer;
 use App\Models\FollowUp;
+use App\Models\Invoice;
+use App\Models\Item;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\Warranty;
@@ -200,6 +202,41 @@ class DashboardController extends Controller
                 ->orderByDesc('check_out')
                 ->orderBy('check_in')
                 ->get();
+
+            // ── Standing alerts: the conditions the manager acts on ──
+            // Shortages, delayed jobs and overdue money — the same conditions the
+            // daily sweep raises, surfaced live on the board.
+            $lowStock = Item::query()->active()->belowReorderLevel()
+                ->orderBy('name')->limit(8)->get();
+            $stats['low_stock'] = Item::query()->active()->belowReorderLevel()->count();
+            $payload['low_stock'] = $lowStock->map(fn (Item $i) => [
+                'id' => $i->id,
+                'name' => $i->name,
+                'qty' => $i->totalQty(),
+                'unit' => $i->unit,
+                'reorder_level' => (float) $i->reorder_level,
+            ])->values();
+
+            $delayed = Task::query()->open()->slaBreached()->with('customer')
+                ->orderBy('resolution_due_at')->limit(8)->get();
+            $stats['delayed'] = Task::query()->open()->slaBreached()->count();
+            $payload['delayed_tasks'] = $delayed->map(fn (Task $t) => [
+                'id' => $t->id,
+                'code' => $t->code,
+                'customer' => $t->customer?->name,
+                'title' => $t->title,
+            ])->values();
+
+            $overdue = Invoice::query()->overdue()->with('customer')
+                ->orderBy('due_date')->limit(8)->get();
+            $stats['overdue_invoices'] = Invoice::query()->overdue()->count();
+            $payload['overdue_invoices'] = $overdue->map(fn (Invoice $i) => [
+                'id' => $i->id,
+                'code' => $i->code,
+                'customer' => $i->customer?->name,
+                'balance' => $i->balance(),
+                'due_date' => $i->due_date?->toDateString(),
+            ])->values();
 
             $stats['checked_in_today'] = $attendanceToday->count();
             $stats['on_site_now'] = $attendanceToday->whereNull('check_out')->count();

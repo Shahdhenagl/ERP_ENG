@@ -217,6 +217,69 @@ export function Dashboard() {
                 </section>
             )}
 
+            {/* ── Standing alerts: what needs an action now ──── */}
+            {canDispatch &&
+                Boolean(
+                    data?.low_stock?.length ||
+                        data?.delayed_tasks?.length ||
+                        data?.overdue_invoices?.length,
+                ) && (
+                    <section className="mt-8">
+                        <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-navy-700">
+                            <AlertTriangle className="size-4 text-amber-600" />
+                            تنبيهات تحتاج إجراء
+                        </h2>
+
+                        <div className="grid gap-4 lg:grid-cols-3">
+                            {(can('inventory.view') || can('inventory.manage')) &&
+                                Boolean(data?.low_stock?.length) && (
+                                    <AlertColumn
+                                        title="نواقص المخزون"
+                                        count={stats?.low_stock}
+                                        tone="amber"
+                                        to={path('/inventory')}
+                                        rows={data!.low_stock!.map((i) => ({
+                                            key: `s-${i.id}`,
+                                            title: i.name,
+                                            subtitle: `المتاح ${i.qty} ${i.unit} · حد الطلب ${i.reorder_level}`,
+                                        }))}
+                                    />
+                                )}
+
+                            {Boolean(data?.delayed_tasks?.length) && (
+                                <AlertColumn
+                                    title="مهام متأخرة عن الوقت"
+                                    count={stats?.delayed}
+                                    tone="red"
+                                    to={path('/tasks?open_only=1')}
+                                    rows={data!.delayed_tasks!.map((t) => ({
+                                        key: `t-${t.id}`,
+                                        to: path(`/tasks/${t.id}`),
+                                        title: t.customer ?? t.title ?? t.code,
+                                        subtitle: t.code,
+                                    }))}
+                                />
+                            )}
+
+                            {(can('invoices.manage') || can('treasury.manage')) &&
+                                Boolean(data?.overdue_invoices?.length) && (
+                                    <AlertColumn
+                                        title="فواتير متأخرة السداد"
+                                        count={stats?.overdue_invoices}
+                                        tone="red"
+                                        to={path('/invoices')}
+                                        rows={data!.overdue_invoices!.map((i) => ({
+                                            key: `i-${i.id}`,
+                                            to: path(`/invoices/${i.id}`),
+                                            title: i.customer ?? i.code,
+                                            subtitle: `${i.code} · ${formatMoney(i.balance)}`,
+                                        }))}
+                                    />
+                                )}
+                        </div>
+                    </section>
+                )}
+
             {/* ── Contract visits waiting for a technician ───── */}
             {/* The reason contracts exist: a signed schedule is worthless if
                 nobody is told the date has come round. */}
@@ -649,6 +712,59 @@ function StatTile({ icon: Icon, label, value, loading, tone, to }: StatTileProps
     )
 
     return to ? <Link to={to}>{content}</Link> : content
+}
+
+/** One column of standing alerts — a heading with a count and a short list. */
+function AlertColumn({
+    title,
+    count,
+    tone,
+    to,
+    rows,
+}: {
+    title: string
+    count?: number
+    tone: 'amber' | 'red'
+    to: string
+    rows: Array<{ key: string; to?: string; title: string; subtitle: string }>
+}) {
+    const chip = tone === 'red' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'
+
+    return (
+        <div className="card p-4">
+            <div className="mb-2 flex items-center justify-between gap-2">
+                <Link to={to} className="text-sm font-bold text-navy-800 hover:underline">
+                    {title}
+                </Link>
+                {typeof count === 'number' && count > 0 && (
+                    <span className={clsx('tabular badge shrink-0', chip)}>{count}</span>
+                )}
+            </div>
+
+            <ul className="divide-y divide-navy-100">
+                {rows.map((row) => {
+                    const body = (
+                        <>
+                            <p className="truncate text-sm font-semibold text-navy-800">{row.title}</p>
+                            <p className="tabular truncate text-[11px] text-navy-400">{row.subtitle}</p>
+                        </>
+                    )
+
+                    return (
+                        <li key={row.key} className="py-2">
+                            {row.to ? (
+                                <Link to={row.to} className="block min-w-0">
+                                    {body}
+                                </Link>
+                            ) : (
+                                <div className="min-w-0">{body}</div>
+                            )}
+                        </li>
+                    )
+                })}
+            </ul>
+        </div>
+    )
 }
 
 function StatusBar({ counts }: { counts?: Record<string, number> }) {

@@ -1178,6 +1178,10 @@ export interface DashboardData {
         contracts_active?: number
         contracts_expiring?: number
         follow_ups_due?: number
+        /** Standing-alert counts surfaced on the board. */
+        low_stock?: number
+        delayed?: number
+        overdue_invoices?: number
         /** Technicians who have checked in today, and how many are still on site. */
         checked_in_today?: number
         on_site_now?: number
@@ -1189,6 +1193,17 @@ export interface DashboardData {
             completed_count: number
         }>
     }
+    /** Live standing alerts on the board — shortages, delays, overdue money. */
+    low_stock?: Array<{ id: number; name: string; qty: number; unit: string; reorder_level: number }>
+    delayed_tasks?: Array<{ id: number; code: string; customer: string | null; title: string | null }>
+    overdue_invoices?: Array<{
+        id: number
+        code: string
+        customer: string | null
+        balance: number
+        due_date: string | null
+    }>
+
     upcoming: Task[]
     /** Dispatcher-only: today's field attendance, off the technicians' check-ins. */
     attendance_today?: Array<{

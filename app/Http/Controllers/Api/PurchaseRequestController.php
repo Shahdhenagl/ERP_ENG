@@ -103,13 +103,20 @@ class PurchaseRequestController extends Controller
         ]);
     }
 
-    public function submit(Request $request, PurchaseRequest $purchaseRequest): JsonResponse
+    public function submit(Request $request, PurchaseRequest $purchaseRequest, \App\Services\ApprovalNotifier $approvals): JsonResponse
     {
         $this->assertOwner($request, $purchaseRequest);
 
         $submitted = $this->requisitions->submit($purchaseRequest);
 
         ActivityLog::record('purchase_request.sent', $submitted, "إرسال طلب الشراء {$submitted->code}");
+
+        $approvals->needed(
+            'طلب شراء بانتظار الاعتماد',
+            "{$submitted->code} — ".($submitted->requester?->name ?? ''),
+            '/purchase-requests',
+            "request-{$submitted->id}",
+        );
 
         return response()->json(['data' => $this->present($submitted->load(['lines.item', 'requester']))]);
     }

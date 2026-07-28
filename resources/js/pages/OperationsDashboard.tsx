@@ -1,26 +1,14 @@
-import {
-    Activity,
-    BatteryCharging,
-    CalendarClock,
-    HardDrive,
-    Package,
-    Wrench,
-} from 'lucide-react'
-import { Link } from 'react-router-dom'
-import { EmptyState, SkeletonCard } from '@/components/ui'
-import { formatMoney } from '@/lib/domain'
-import { formatDate } from '@/lib/format'
-import { useArea } from '@/lib/nav'
+import { Activity, CalendarClock, HardDrive, Wrench } from 'lucide-react'
+import { SkeletonCard } from '@/components/ui'
 import { useOperations } from '@/lib/queries'
 
 /**
- * The standby-power estate, folded into the main dashboard: the devices and how
- * they are, their batteries, the maintenance due, the work in flight, how the
- * service is performing, and the parts on the shelf. Every figure is read from
- * the module that owns it — this only gathers them.
+ * The standby-power estate at a glance, folded into the dashboard: the devices
+ * and how they are, then a single compact strip of the numbers that matter —
+ * batteries to replace, work open, SLA slips, parts short, and how the service
+ * is performing. Every figure is read from the module that owns it.
  */
 export function OperationsOverview() {
-    const { path } = useArea()
     const { data, isLoading } = useOperations()
 
     if (isLoading || !data) {
@@ -59,90 +47,32 @@ export function OperationsOverview() {
                 />
             </div>
 
-            {/* ── Batteries ─────────────────────────────────── */}
-            <Section title="حالة البطاريات" icon={BatteryCharging}>
-                <div className="grid grid-cols-3 gap-3">
-                    <Stat label="جيدة" value={b.good} tone="up" />
-                    <Stat label="تحتاج فحص" value={b.need_check} tone="warn" hint="لم تُفحص بعد" />
-                    <Stat label="تحتاج استبدال" value={b.need_replacement} tone="down" />
-                </div>
-            </Section>
-
-            {/* ── Requests + performance ────────────────────── */}
-            <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                <Section title="طلبات الصيانة" icon={Wrench}>
-                    <div className="grid grid-cols-3 gap-3">
-                        <Stat label="مفتوحة" value={data.requests.open} tone="brand" />
-                        <Stat label="مغلقة" value={data.requests.closed} tone="up" />
-                        <Stat
-                            label="تأخّر عن الوقت"
-                            value={data.requests.sla_breaches}
-                            tone={data.requests.sla_breaches ? 'down' : 'up'}
-                        />
-                    </div>
-                </Section>
-
-                <Section title="مؤشرات الأداء" icon={Activity}>
-                    <div className="grid grid-cols-3 gap-3">
-                        <Stat
-                            label="زمن الاستجابة"
-                            value={p.avg_response_hours}
-                            suffix="س"
-                            tone="brand"
-                        />
-                        <Stat label="نسبة الأعطال" value={p.fault_rate} suffix="%" tone="warn" />
-                        <Stat
-                            label="مستوى الخدمة"
-                            value={p.service_level ?? '—'}
-                            suffix={p.service_level === null ? '' : '%'}
-                            tone={p.service_level !== null && p.service_level >= 90 ? 'up' : 'slate'}
-                        />
-                    </div>
-                </Section>
+            {/* ── One compact strip of the key numbers ──────── */}
+            <div className="card mt-4 grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 lg:grid-cols-6">
+                <Stat
+                    label="بطاريات تحتاج استبدال"
+                    value={b.need_replacement}
+                    tone={b.need_replacement ? 'down' : 'up'}
+                />
+                <Stat label="طلبات مفتوحة" value={data.requests.open} tone="brand" />
+                <Stat
+                    label="تأخّر عن الوقت"
+                    value={data.requests.sla_breaches}
+                    tone={data.requests.sla_breaches ? 'down' : 'up'}
+                />
+                <Stat
+                    label="قطع تحت حد الطلب"
+                    value={data.spare_parts.below_reorder}
+                    tone={data.spare_parts.below_reorder ? 'warn' : 'up'}
+                />
+                <Stat label="زمن الاستجابة" value={p.avg_response_hours} suffix="س" tone="brand" />
+                <Stat
+                    label="مستوى الخدمة"
+                    value={p.service_level ?? '—'}
+                    suffix={p.service_level === null ? '' : '%'}
+                    tone={p.service_level !== null && p.service_level >= 90 ? 'up' : 'slate'}
+                />
             </div>
-
-            {/* ── Spare parts ───────────────────────────────── */}
-            <Section title="مخزون قطع الغيار" icon={Package}>
-                <div className="grid grid-cols-3 gap-3">
-                    <Stat label="أصناف متوفرة" value={data.spare_parts.lines} tone="brand" />
-                    <Stat label="قيمة المخزون" value={formatMoney(data.spare_parts.value)} />
-                    <Stat
-                        label="تحت حد الطلب"
-                        value={data.spare_parts.below_reorder}
-                        tone={data.spare_parts.below_reorder ? 'warn' : 'up'}
-                    />
-                </div>
-            </Section>
-
-            {/* ── Recent visits ─────────────────────────────── */}
-            <Section title="آخر الزيارات الفنية" icon={CalendarClock}>
-                {data.recent_visits.length === 0 ? (
-                    <EmptyState icon={CalendarClock} title="لا توجد زيارات منفّذة بعد" />
-                ) : (
-                    <div className="divide-y divide-navy-100">
-                        {data.recent_visits.map((visit) => (
-                            <Link
-                                key={visit.id}
-                                to={path(`/tasks/${visit.id}`)}
-                                className="flex items-center justify-between gap-3 py-2.5"
-                            >
-                                <div className="min-w-0">
-                                    <p className="truncate text-sm font-semibold text-navy-800">
-                                        {visit.customer ?? visit.title}
-                                    </p>
-                                    <p className="tabular text-[11px] text-navy-400">
-                                        {visit.code}
-                                        {visit.technician && ` · ${visit.technician}`}
-                                    </p>
-                                </div>
-                                <span className="tabular shrink-0 text-[11px] text-navy-400">
-                                    {visit.completed_at && formatDate(visit.completed_at)}
-                                </span>
-                            </Link>
-                        ))}
-                    </div>
-                )}
-            </Section>
         </>
     )
 }
@@ -182,13 +112,11 @@ function Stat({
     label,
     value,
     tone = 'slate',
-    hint,
     suffix,
 }: {
     label: string
     value: number | string
     tone?: keyof typeof TONES
-    hint?: string
     suffix?: string
 }) {
     return (
@@ -198,27 +126,6 @@ function Stat({
                 {suffix && <span className="mr-0.5 text-xs font-bold">{suffix}</span>}
             </p>
             <p className="mt-0.5 text-[11px] font-semibold text-navy-500">{label}</p>
-            {hint && <p className="text-[10px] text-navy-400">{hint}</p>}
         </div>
-    )
-}
-
-function Section({
-    title,
-    icon: Icon,
-    children,
-}: {
-    title: string
-    icon: typeof HardDrive
-    children: React.ReactNode
-}) {
-    return (
-        <section className="mt-4">
-            <div className="mb-2 flex items-center gap-2">
-                <Icon className="size-4 text-navy-400" />
-                <h2 className="text-sm font-bold text-navy-800">{title}</h2>
-            </div>
-            <div className="card p-4">{children}</div>
-        </section>
     )
 }

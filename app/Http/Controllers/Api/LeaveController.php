@@ -69,7 +69,7 @@ class LeaveController extends Controller
      * approve it, only a manager can, through decide(). The employee file is
      * opened on first use if it does not exist yet.
      */
-    public function storeMine(Request $request): JsonResponse
+    public function storeMine(Request $request, \App\Services\ApprovalNotifier $approvals): JsonResponse
     {
         $data = $request->validate([
             'type' => ['required', 'in:annual,sick,unpaid'],
@@ -84,6 +84,13 @@ class LeaveController extends Controller
         $leave = $this->leave->request($data, $request->user());
 
         ActivityLog::record('leave.created', $leave, "طلب إجازة {$leave->code}");
+
+        $approvals->needed(
+            'طلب إجازة بانتظار الاعتماد',
+            "{$leave->code} — {$employee->name}",
+            '/hr/leave',
+            "leave-{$leave->id}",
+        );
 
         return response()->json(['data' => $this->present($leave->load('employee'))], 201);
     }

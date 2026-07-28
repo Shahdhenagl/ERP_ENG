@@ -2106,7 +2106,9 @@ export function useNotifications() {
         queryFn: async () =>
             (await api.get<{ data: AppNotification[]; meta: { unread_count: number } }>('/notifications'))
                 .data,
-        refetchInterval: 45_000,
+        // Snappy enough that the chime for a new arrival feels prompt, without
+        // hammering the server; a granted desktop push is instant regardless.
+        refetchInterval: 25_000,
     })
 }
 

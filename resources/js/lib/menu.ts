@@ -84,11 +84,11 @@ export const NAV: NavItem[] = [
     /* 1 ── الرئيسية ─────────────────────────────────────────── */
     {
         to: '/',
-        label: 'الرئيسية',
+        label: 'لوحة التحكم',
         icon: LayoutDashboard,
         roles: ['admin', 'manager'],
         children: [
-            { to: '/', label: 'الرئيسية', icon: LayoutDashboard },
+            { to: '/', label: 'لوحة التحكم', icon: LayoutDashboard },
             { to: '/notifications', label: 'التنبيهات', icon: Bell },
             { to: '/tasks', label: 'المهام المطلوبة', icon: ClipboardList },
         ],

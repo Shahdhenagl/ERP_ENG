@@ -122,7 +122,7 @@ class QuotationController extends Controller
     /* ── Internal approval ───────────────────────────────── */
 
     /** Hand a draft to a manager for sign-off before it goes out. */
-    public function submit(Quotation $quotation): JsonResponse
+    public function submit(Quotation $quotation, \App\Services\ApprovalNotifier $approvals): JsonResponse
     {
         abort_unless($quotation->status === QuotationStatus::Draft, 422, 'لا يُقدَّم للاعتماد إلا عرض في المسودة.');
 
@@ -134,6 +134,13 @@ class QuotationController extends Controller
         ]);
 
         ActivityLog::record('quotation.submitted', $quotation, "تم تقديم {$quotation->code} للاعتماد");
+
+        $approvals->needed(
+            'عرض سعر بانتظار الاعتماد',
+            "{$quotation->code} — ".($quotation->customer?->name ?? ''),
+            '/sales/approvals',
+            "quote-{$quotation->id}",
+        );
 
         return response()->json(['data' => $this->present($quotation->fresh()->load(['customer', 'approver']))]);
     }

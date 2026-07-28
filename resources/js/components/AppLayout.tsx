@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth'
 import { useArea } from '@/lib/nav'
 import { NAV, type NavItem } from '@/lib/menu'
 import { useNotifications } from '@/lib/queries'
+import { useNotificationAlerts } from '@/lib/useNotificationAlerts'
 import { syncPushSubscription } from '@/lib/push'
 import { NotificationPanel } from '@/components/NotificationPanel'
 
@@ -23,6 +24,9 @@ export function AppLayout() {
     }, [])
 
     const { data: notifications } = useNotifications()
+
+    // A chime + desktop popup the moment a new one arrives; the bell is untouched.
+    useNotificationAlerts()
 
     const unread = notifications?.meta.unread_count ?? 0
     // Role decides which application you get; the permission decides whether
