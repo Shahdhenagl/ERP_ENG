@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { AlertTriangle, FileText, Search, Wallet } from 'lucide-react'
+import { AlertTriangle, FileText, Printer, Search, Wallet } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { MonthDayFilter, monthDayRange } from '@/components/MonthDayFilter'
@@ -42,6 +42,21 @@ export function InvoiceList() {
             <PageHeader
                 title="الفواتير"
                 subtitle={data ? `${data.meta.total} فاتورة` : undefined}
+                actions={
+                    <Link
+                        to={`${path('/print/invoices-list')}?${new URLSearchParams({
+                            ...(search ? { search } : {}),
+                            ...(filter !== 'all' ? { [filter]: '1' } : {}),
+                            ...(month ? { month } : {}),
+                            ...(day ? { day } : {}),
+                        }).toString()}`}
+                        target="_blank"
+                        className="btn-secondary"
+                    >
+                        <Printer className="size-4" />
+                        طباعة
+                    </Link>
+                }
             />
 
             <SectionTabs sections={MONEY_SECTIONS} />

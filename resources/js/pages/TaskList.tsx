@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { Inbox, Plus, Search, SlidersHorizontal, X } from 'lucide-react'
+import { Inbox, Plus, Printer, Search, SlidersHorizontal, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { TaskCard } from '@/components/TaskCard'
@@ -113,12 +113,22 @@ export function TaskList() {
                 title="المهام"
                 subtitle={data ? `${data.meta.total} مهمة` : undefined}
                 actions={
-                    canDispatch && (
-                        <Link to={path('/tasks/new')} className="btn-primary">
-                            <Plus className="size-4" />
-                            مهمة جديدة
+                    <div className="flex gap-2">
+                        <Link
+                            to={`${path('/print/tasks')}?${searchParams.toString()}`}
+                            target="_blank"
+                            className="btn-secondary"
+                        >
+                            <Printer className="size-4" />
+                            طباعة
                         </Link>
-                    )
+                        {canDispatch && (
+                            <Link to={path('/tasks/new')} className="btn-primary">
+                                <Plus className="size-4" />
+                                مهمة جديدة
+                            </Link>
+                        )}
+                    </div>
                 }
             />
 
