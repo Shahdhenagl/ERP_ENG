@@ -17,6 +17,7 @@ import type {
     FollowUp,
     PermissionCatalogue,
     UserPermissions,
+    AlertGroup,
     AppNotification,
     Asset,
     BalanceSheet,
@@ -2109,6 +2110,22 @@ export function useNotifications() {
         // Snappy enough that the chime for a new arrival feels prompt, without
         // hammering the server; a granted desktop push is instant regardless.
         refetchInterval: 25_000,
+    })
+}
+
+/**
+ * The operational alerts board — live conditions grouped (shortages, delays,
+ * deadlines, overdue money, approvals). Separate from the bell's history.
+ */
+export function useOperationsAlerts() {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: ['operations-alerts'],
+        queryFn: async () =>
+            (await api.get<{ data: { groups: AlertGroup[]; total: number } }>('/alerts')).data.data,
+        enabled: canDispatch,
+        refetchInterval: 60_000,
     })
 }
 

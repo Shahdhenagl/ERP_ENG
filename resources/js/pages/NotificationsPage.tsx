@@ -1,134 +1,108 @@
 import clsx from 'clsx'
-import { CheckCheck, Inbox } from 'lucide-react'
-import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Button, EmptyState, PageHeader, SkeletonCard } from '@/components/ui'
-import { formatRelative } from '@/lib/format'
+import {
+    AlertTriangle,
+    BadgeCheck,
+    CalendarClock,
+    CheckCircle2,
+    Package,
+    Receipt,
+    ShieldAlert,
+    Wrench,
+    type LucideIcon,
+} from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { EmptyState, PageHeader, SkeletonCard } from '@/components/ui'
 import { useArea } from '@/lib/nav'
-import { useMarkAllRead, useMarkNotificationRead, useNotifications } from '@/lib/queries'
+import { useOperationsAlerts } from '@/lib/queries'
+
+/** Each group's icon and accent — the bell keeps the ordinary history. */
+const GROUP: Record<string, { icon: LucideIcon; accent: string; chip: string }> = {
+    stock: { icon: Package, accent: 'text-amber-600', chip: 'bg-amber-50 text-amber-700' },
+    tasks: { icon: Wrench, accent: 'text-red-600', chip: 'bg-red-50 text-red-700' },
+    maintenance: { icon: CalendarClock, accent: 'text-brand-600', chip: 'bg-brand-50 text-brand-700' },
+    warranties: { icon: ShieldAlert, accent: 'text-violet-600', chip: 'bg-violet-50 text-violet-700' },
+    finance: { icon: Receipt, accent: 'text-red-600', chip: 'bg-red-50 text-red-700' },
+    approvals: { icon: BadgeCheck, accent: 'text-emerald-600', chip: 'bg-emerald-50 text-emerald-700' },
+}
 
 /**
- * The full notification history — the standing list behind the bell's quick
- * peek. Filter to the unread, open one to jump to what it points at (which
- * clears it), or mark the whole lot read.
+ * The operational alerts board — the standing conditions that need acting on:
+ * stock shortages, urgent and delayed jobs, maintenance and contract deadlines,
+ * warranties lapsing, money overdue, and anything waiting on a sign-off.
+ *
+ * This is deliberately NOT the bell. The bell keeps the ordinary notification
+ * history; this reads the live conditions, grouped, and refreshes on its own.
  */
 export function NotificationsPage() {
-    const { data, isLoading } = useNotifications()
-    const markAll = useMarkAllRead()
-    const markRead = useMarkNotificationRead()
-    const navigate = useNavigate()
     const { path } = useArea()
+    const { data, isLoading } = useOperationsAlerts()
 
-    const [unreadOnly, setUnreadOnly] = useState(false)
-
-    const notifications = data?.data ?? []
-    const unread = data?.meta.unread_count ?? 0
-
-    const rows = useMemo(
-        () => (unreadOnly ? notifications.filter((n) => !n.read_at) : notifications),
-        [notifications, unreadOnly],
-    )
-
-    const open = (id: string, url: string | null) => {
-        markRead.mutate(id)
-        if (url) navigate(path(url))
-    }
+    const groups = data?.groups ?? []
+    const total = data?.total ?? 0
 
     return (
         <>
             <PageHeader
                 title="التنبيهات"
-                subtitle={unread ? `${unread} غير مقروء` : 'كل شيء مقروء'}
-                actions={
-                    notifications.length > 0 && unread > 0 ? (
-                        <Button
-                            variant="secondary"
-                            icon={CheckCheck}
-                            loading={markAll.isPending}
-                            onClick={() => markAll.mutate()}
-                        >
-                            تعليم الكل كمقروء
-                        </Button>
-                    ) : undefined
+                subtitle={
+                    total ? `${total} تنبيه يحتاج إجراء` : 'لا توجد تنبيهات تشغيلية حاليًا'
                 }
             />
 
-            <div className="mb-4 flex gap-1 rounded-xl bg-navy-100 p-1">
-                {(
-                    [
-                        [false, 'الكل'],
-                        [true, `غير المقروء${unread ? ` (${unread})` : ''}`],
-                    ] as const
-                ).map(([value, label]) => (
-                    <button
-                        key={String(value)}
-                        onClick={() => setUnreadOnly(value)}
-                        className={clsx(
-                            'tap flex-1 rounded-lg px-3 py-2 text-xs font-bold transition',
-                            unreadOnly === value ? 'bg-white text-navy-900 shadow-sm' : 'text-navy-500',
-                        )}
-                    >
-                        {label}
-                    </button>
-                ))}
-            </div>
-
             {isLoading ? (
-                <SkeletonCard />
-            ) : !rows.length ? (
+                <div className="space-y-3">
+                    <SkeletonCard />
+                    <SkeletonCard />
+                </div>
+            ) : groups.length === 0 ? (
                 <EmptyState
-                    icon={Inbox}
-                    title={unreadOnly ? 'لا توجد إشعارات غير مقروءة' : 'لا توجد إشعارات بعد'}
+                    icon={CheckCircle2}
+                    title="كل شيء تحت السيطرة"
+                    description="لا نواقص مخزون ولا مهام متأخرة ولا مستحقات فائتة ولا طلبات تنتظر الاعتماد."
                 />
             ) : (
-                <div className="space-y-2">
-                    {rows.map((notification) => {
-                        const url = notification.data.url
-                            ? notification.data.url
-                            : notification.data.task_id
-                              ? `/tasks/${notification.data.task_id}`
-                              : null
+                <div className="space-y-5">
+                    {groups.map((group) => {
+                        const meta = GROUP[group.key] ?? {
+                            icon: AlertTriangle,
+                            accent: 'text-navy-500',
+                            chip: 'bg-navy-100 text-navy-600',
+                        }
+                        const Icon = meta.icon
 
                         return (
-                            <button
-                                key={notification.id}
-                                onClick={() => open(notification.id, url)}
-                                className={clsx(
-                                    'block w-full rounded-2xl border p-3.5 text-right transition',
-                                    notification.read_at
-                                        ? 'border-navy-100 bg-white hover:bg-navy-50'
-                                        : 'border-brand-200 bg-brand-50/60 hover:bg-brand-50',
-                                )}
-                            >
-                                <div className="flex items-start gap-2">
-                                    {!notification.read_at && (
-                                        <span className="mt-1.5 size-2 shrink-0 rounded-full bg-brand-500" />
-                                    )}
-                                    <div className="min-w-0 flex-1">
-                                        <p className="text-sm font-bold text-navy-900">
-                                            {notification.data.code && (
-                                                <span className="tabular text-brand-600">
-                                                    {notification.data.code}{' '}
-                                                </span>
-                                            )}
-                                            {notification.data.title ?? 'إشعار'}
-                                        </p>
-                                        {notification.data.body && (
-                                            <p className="mt-0.5 text-xs text-navy-600">
-                                                {notification.data.body}
-                                            </p>
-                                        )}
-                                        {notification.data.actor && (
-                                            <p className="mt-0.5 text-xs text-navy-500">
-                                                بواسطة {notification.data.actor}
-                                            </p>
-                                        )}
-                                        <p className="mt-1 text-[11px] text-navy-400">
-                                            {formatRelative(notification.created_at)}
-                                        </p>
-                                    </div>
+                            <section key={group.key}>
+                                <div className="mb-2 flex items-center gap-2">
+                                    <Icon className={clsx('size-4', meta.accent)} />
+                                    <h2 className="text-sm font-bold text-navy-800">{group.label}</h2>
+                                    <span className={clsx('tabular badge', meta.chip)}>{group.count}</span>
                                 </div>
-                            </button>
+
+                                <div className="overflow-hidden rounded-2xl border border-navy-100">
+                                    {group.items.map((item, index) => (
+                                        <Link
+                                            key={`${group.key}-${index}`}
+                                            to={path(item.url)}
+                                            className="flex items-start gap-3 border-b border-navy-100 bg-white p-3.5 transition last:border-0 hover:bg-navy-50"
+                                        >
+                                            <span
+                                                className={clsx(
+                                                    'mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg',
+                                                    meta.chip,
+                                                )}
+                                            >
+                                                <Icon className="size-4" />
+                                            </span>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-sm font-bold text-navy-900">{item.title}</p>
+                                                <p className="tabular mt-0.5 truncate text-xs text-navy-500">
+                                                    {item.body}
+                                                </p>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            </section>
                         )
                     })}
                 </div>

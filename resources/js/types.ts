@@ -1244,6 +1244,21 @@ export interface DashboardData {
     }>
 }
 
+/** One live operational alert on the board. */
+export interface AlertItem {
+    type: string
+    title: string
+    body: string
+    url: string
+}
+
+export interface AlertGroup {
+    key: string
+    label: string
+    count: number
+    items: AlertItem[]
+}
+
 export interface AppNotification {
     id: string
     data: {
