@@ -578,8 +578,21 @@ export function TaskDetail() {
                                             {log.from_label ? `${log.from_label} ← ` : ''}
                                             {log.to_label}
                                         </p>
-                                        <p className="mt-0.5 text-navy-400">
-                                            {log.user?.name} · {formatDateTime(log.created_at)}
+                                        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-navy-400">
+                                            <span>
+                                                {log.user?.name} · {formatDateTime(log.created_at)}
+                                            </span>
+                                            {log.lat != null && log.lng != null && (
+                                                <a
+                                                    href={`https://www.google.com/maps?q=${log.lat},${log.lng}`}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="inline-flex items-center gap-0.5 font-bold text-brand-600 hover:text-brand-700"
+                                                >
+                                                    <MapPin className="size-3" />
+                                                    الموقع
+                                                </a>
+                                            )}
                                         </p>
                                         {log.note && (
                                             <p className="mt-1 text-navy-600">{log.note}</p>
