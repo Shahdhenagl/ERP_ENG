@@ -2266,6 +2266,24 @@ export interface Employee {
     status_label: string
     notes: string | null
 
+    attendance?: {
+        this_month: {
+            present: number
+            late: number
+            absent: number
+            leave: number
+            worked_hours: number
+        }
+        recent: Array<{
+            id: number
+            date: string
+            status: AttendanceStatus
+            status_label: string
+            check_in: string | null
+            check_out: string | null
+            worked_hours: number
+        }>
+    }
     leave?: Array<{
         id: number
         code: string

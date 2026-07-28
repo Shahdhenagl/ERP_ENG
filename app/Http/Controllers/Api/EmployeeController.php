@@ -147,8 +147,35 @@ class EmployeeController extends Controller
             return $base;
         }
 
+        // This month's attendance at a glance, plus the recent day-by-day — so
+        // the profile answers "how has this person been showing up" without a
+        // trip to the attendance screen.
+        $monthRecords = $employee->attendances()
+            ->whereYear('date', now()->year)
+            ->whereMonth('date', now()->month)
+            ->get();
+
         return [
             ...$base,
+            'attendance' => [
+                'this_month' => [
+                    'present' => $monthRecords->where('status', 'present')->count(),
+                    'late' => $monthRecords->where('status', 'late')->count(),
+                    'absent' => $monthRecords->where('status', 'absent')->count(),
+                    'leave' => $monthRecords->where('status', 'leave')->count(),
+                    'worked_hours' => round((float) $monthRecords->sum('worked_hours'), 2),
+                ],
+                'recent' => $employee->attendances()->latest('date')->limit(12)->get()->map(fn ($a) => [
+                    'id' => $a->id,
+                    'date' => $a->date instanceof \Illuminate\Support\Carbon
+                        ? $a->date->toDateString() : (string) $a->date,
+                    'status' => $a->status->value,
+                    'status_label' => $a->statusLabel(),
+                    'check_in' => $a->check_in ? substr((string) $a->check_in, 0, 5) : null,
+                    'check_out' => $a->check_out ? substr((string) $a->check_out, 0, 5) : null,
+                    'worked_hours' => (float) $a->worked_hours,
+                ]),
+            ],
             'leave' => $employee->leaveRequests()->latest()->limit(10)->get()->map(fn ($l) => [
                 'id' => $l->id,
                 'code' => $l->code,

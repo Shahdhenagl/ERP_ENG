@@ -1,18 +1,36 @@
-import { Plus, Search, Trash2, UserRound } from 'lucide-react'
+import clsx from 'clsx'
+import { Pencil, Plus, Search, Trash2, UserRound } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, EmptyState, Field, Input, Select, SkeletonCard, Textarea } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { formatMoney } from '@/lib/domain'
-import { useDeleteEmployee, useEmployees, useSaveEmployee } from '@/lib/queries'
-import type { Allowance, Employee } from '@/types'
+import { formatDate } from '@/lib/format'
+import { useDeleteEmployee, useEmployee, useEmployees, useSaveEmployee } from '@/lib/queries'
+import type { Allowance, AttendanceStatus, Employee } from '@/types'
+
+const ATT_CHIP: Record<AttendanceStatus, string> = {
+    present: 'bg-emerald-50 text-emerald-700',
+    late: 'bg-amber-50 text-amber-700',
+    absent: 'bg-red-50 text-red-700',
+    leave: 'bg-sky-50 text-sky-700',
+    holiday: 'bg-slate-100 text-slate-500',
+}
+
+const LEAVE_CHIP: Record<string, string> = {
+    approved: 'bg-emerald-50 text-emerald-700',
+    pending: 'bg-amber-50 text-amber-700',
+    rejected: 'bg-red-50 text-red-700',
+    cancelled: 'bg-slate-100 text-slate-500',
+}
 
 export function EmployeesTab() {
     const toast = useToast()
     const remove = useDeleteEmployee()
     const [search, setSearch] = useState('')
     const [editing, setEditing] = useState<Employee | null | undefined>(undefined)
+    const [viewing, setViewing] = useState<Employee | null>(null)
 
     const { data, isLoading } = useEmployees({ search, per_page: 60 })
 
@@ -66,7 +84,7 @@ export function EmployeesTab() {
                         <div key={employee.id} className="card p-4">
                             <div className="flex items-start justify-between gap-3">
                                 <button
-                                    onClick={() => setEditing(employee)}
+                                    onClick={() => setViewing(employee)}
                                     className="min-w-0 flex-1 text-right"
                                 >
                                     <div className="flex flex-wrap items-center gap-2">
@@ -122,10 +140,246 @@ export function EmployeesTab() {
                 </div>
             )}
 
+            {viewing && (
+                <EmployeeProfile
+                    employee={viewing}
+                    onClose={() => setViewing(null)}
+                    onEdit={() => {
+                        setEditing(viewing)
+                        setViewing(null)
+                    }}
+                />
+            )}
+
             {editing !== undefined && (
                 <EmployeeForm employee={editing} onClose={() => setEditing(undefined)} />
             )}
         </>
+    )
+}
+
+/* ── The read profile ────────────────────────────────────── */
+
+function EmployeeProfile({
+    employee,
+    onClose,
+    onEdit,
+}: {
+    employee: Employee
+    onClose: () => void
+    onEdit: () => void
+}) {
+    // The list row is enough to open on; the detail (attendance, leave, pay)
+    // is fetched fresh so the profile is never a stale snapshot.
+    const { data, isLoading } = useEmployee(employee.id)
+    const e = data ?? employee
+    const att = data?.attendance
+
+    return (
+        <Modal
+            open
+            onClose={onClose}
+            title={e.name}
+            size="lg"
+            footer={
+                <Button variant="secondary" icon={Pencil} onClick={onEdit}>
+                    تعديل البيانات
+                </Button>
+            }
+        >
+            {isLoading && !data ? (
+                <SkeletonCard />
+            ) : (
+                <div className="space-y-5">
+                    {/* Personal data */}
+                    <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                        <Info label="الكود" value={e.code} />
+                        <Info label="الوظيفة" value={e.job_title} />
+                        <Info label="القسم" value={e.department} />
+                        <Info label="الرقم القومي" value={e.national_id} ltr />
+                        <Info label="الهاتف" value={e.phone} ltr />
+                        <Info label="تاريخ التعيين" value={e.hired_on ? formatDate(e.hired_on) : null} />
+                        <Info label="الحالة" value={e.status_label} />
+                        <Info label="نوع التعاقد" value={EMPLOYMENT[e.employment_type]} />
+                        <Info
+                            label="رصيد الإجازات"
+                            value={`${e.annual_leave_remaining} / ${e.annual_leave_days} يوم`}
+                        />
+                    </section>
+
+                    {/* Salary */}
+                    <section>
+                        <h3 className="mb-2 text-sm font-bold text-navy-800">الراتب</h3>
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                            <Figure label="الأساسي" value={formatMoney(e.basic_salary)} />
+                            <Figure label="البدلات" value={formatMoney(e.allowances_total)} />
+                            <Figure label="الإجمالي" value={formatMoney(e.gross_salary)} accent />
+                            <Figure
+                                label="سلف قائمة"
+                                value={formatMoney(e.outstanding_advances)}
+                                tone={e.outstanding_advances > 0 ? 'warn' : undefined}
+                            />
+                        </div>
+                    </section>
+
+                    {/* Attendance this month + recent */}
+                    <section>
+                        <h3 className="mb-2 text-sm font-bold text-navy-800">الحضور</h3>
+                        {att && (
+                            <div className="mb-3 grid grid-cols-2 gap-2 text-center sm:grid-cols-5">
+                                <MiniTile label="حاضر" value={att.this_month.present} tone="up" />
+                                <MiniTile label="متأخر" value={att.this_month.late} tone="warn" />
+                                <MiniTile label="غائب" value={att.this_month.absent} tone="down" />
+                                <MiniTile label="إجازة" value={att.this_month.leave} />
+                                <MiniTile label="ساعات" value={att.this_month.worked_hours} />
+                            </div>
+                        )}
+                        {att?.recent.length ? (
+                            <div className="overflow-hidden rounded-xl border border-navy-100">
+                                {att.recent.map((r) => (
+                                    <div
+                                        key={r.id}
+                                        className="flex items-center justify-between gap-2 border-b border-navy-100 px-3 py-2 text-xs last:border-0"
+                                    >
+                                        <span className="tabular text-navy-500">{formatDate(r.date)}</span>
+                                        <span className={clsx('badge', ATT_CHIP[r.status])}>
+                                            {r.status_label}
+                                        </span>
+                                        <span className="tabular text-navy-500">
+                                            {r.check_in ?? '—'} → {r.check_out ?? '—'}
+                                        </span>
+                                        <span className="tabular font-bold text-navy-700">
+                                            {r.worked_hours > 0 ? `${r.worked_hours} س` : '—'}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-xs text-navy-400">لا يوجد حضور مسجّل.</p>
+                        )}
+                    </section>
+
+                    {/* Leaves */}
+                    <section>
+                        <h3 className="mb-2 text-sm font-bold text-navy-800">الإجازات</h3>
+                        {e.leave?.length ? (
+                            <div className="space-y-1.5">
+                                {e.leave.map((l) => (
+                                    <div
+                                        key={l.id}
+                                        className="flex items-center justify-between gap-2 rounded-xl bg-navy-50 px-3 py-2 text-xs"
+                                    >
+                                        <span className="font-bold text-navy-700">{l.type_label}</span>
+                                        <span className="tabular text-navy-500">
+                                            {l.from_date && formatDate(l.from_date)}
+                                            {l.to_date && l.to_date !== l.from_date && ` → ${formatDate(l.to_date)}`}
+                                            {` · ${l.days} يوم`}
+                                        </span>
+                                        <span className={clsx('badge', LEAVE_CHIP[l.status])}>
+                                            {l.status_label}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-xs text-navy-400">لا توجد إجازات.</p>
+                        )}
+                    </section>
+
+                    {/* Payslips */}
+                    <section>
+                        <h3 className="mb-2 text-sm font-bold text-navy-800">الرواتب المصروفة</h3>
+                        {e.payslips?.length ? (
+                            <div className="space-y-1.5">
+                                {e.payslips.map((p) => (
+                                    <div
+                                        key={p.id}
+                                        className="flex items-center justify-between gap-2 rounded-xl bg-navy-50 px-3 py-2 text-xs"
+                                    >
+                                        <span className="font-bold text-navy-700">{p.month ?? p.run_code}</span>
+                                        <span className="tabular text-navy-500">
+                                            {p.paid_on ? formatDate(p.paid_on) : 'غير مصروف'}
+                                        </span>
+                                        <span className="tabular font-extrabold text-navy-900">
+                                            {formatMoney(p.net)}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-xs text-navy-400">لا توجد رواتب مصروفة بعد.</p>
+                        )}
+                    </section>
+                </div>
+            )}
+        </Modal>
+    )
+}
+
+const EMPLOYMENT: Record<string, string> = {
+    full_time: 'دوام كامل',
+    part_time: 'دوام جزئي',
+    contract: 'عقد مؤقت',
+}
+
+function Info({ label, value, ltr }: { label: string; value: string | null; ltr?: boolean }) {
+    return (
+        <div>
+            <p className="text-[10px] font-bold text-navy-400">{label}</p>
+            <p
+                className={clsx('mt-0.5 text-sm font-semibold text-navy-800', ltr && 'text-left')}
+                dir={ltr ? 'ltr' : undefined}
+            >
+                {value || '—'}
+            </p>
+        </div>
+    )
+}
+
+function Figure({
+    label,
+    value,
+    accent,
+    tone,
+}: {
+    label: string
+    value: string
+    accent?: boolean
+    tone?: 'warn'
+}) {
+    return (
+        <div className="card p-3">
+            <p className="text-[10px] font-bold text-navy-400">{label}</p>
+            <p
+                className={clsx(
+                    'tabular mt-1 text-sm font-extrabold',
+                    tone === 'warn' ? 'text-amber-600' : accent ? 'text-brand-700' : 'text-navy-900',
+                )}
+            >
+                {value}
+            </p>
+        </div>
+    )
+}
+
+function MiniTile({
+    label,
+    value,
+    tone,
+}: {
+    label: string
+    value: number
+    tone?: 'up' | 'down' | 'warn'
+}) {
+    const colour = tone
+        ? { up: 'text-emerald-600', down: 'text-red-600', warn: 'text-amber-600' }[tone]
+        : 'text-navy-900'
+
+    return (
+        <div className="rounded-xl bg-navy-50 px-2 py-2">
+            <p className="text-[10px] font-bold text-navy-400">{label}</p>
+            <p className={clsx('tabular text-base font-extrabold', colour)}>{value}</p>
+        </div>
     )
 }
 
