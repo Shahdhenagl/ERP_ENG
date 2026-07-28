@@ -948,6 +948,20 @@ export interface CashMovementRow {
     created_at: string | null
 }
 
+/** A printable manual cash voucher — an expense paid or a deposit received. */
+export interface CashVoucher {
+    id: number
+    code: string
+    kind: 'receipt' | 'payment'
+    title: string
+    party: string | null
+    amount: number
+    cash_box: string | null
+    note: string | null
+    actor: string | null
+    date: string | null
+}
+
 export type AssetStatus = 'active' | 'under_repair' | 'retired'
 
 export interface Asset {

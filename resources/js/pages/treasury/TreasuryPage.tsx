@@ -5,31 +5,39 @@ import {
     Landmark,
     Pencil,
     Plus,
+    Printer,
     Trash2,
     TrendingDown,
     TrendingUp,
     Wallet,
 } from 'lucide-react'
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { ConfirmDialog, Modal } from '@/components/Modal'
 import { PeriodPicker, usePeriod } from '@/components/PeriodPicker'
 import { SectionTabs } from '@/components/SectionTabs'
 import { MONEY_SECTIONS } from '@/lib/sections'
 import { useToast } from '@/components/Toast'
-import { Button, EmptyState, Field, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
+import { Button, EmptyState, Field, Input, PageHeader, Select, SkeletonCard, Textarea } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { formatMoney } from '@/lib/domain'
 import { formatDate, formatSmart } from '@/lib/format'
+import { useArea } from '@/lib/nav'
 import {
     useCashBoxes,
     useCashMovements,
     useDeleteCashBox,
+    useDeleteCashMovement,
     useSaveCashBox,
     useTreasuryStatement,
     useTreasurySummary,
+    useUpdateCashMovement,
 } from '@/lib/queries'
 import { TreasuryDialog } from '@/pages/treasury/TreasuryDialog'
-import type { CashBoxSummary } from '@/types'
+import type { CashBoxSummary, CashMovementRow } from '@/types'
+
+/** The two manual vouchers a hand raises here — printable, editable, deletable. */
+const VOUCHER_SOURCES = new Set(['expense', 'external_deposit'])
 
 export function TreasuryPage() {
     const period = usePeriod('month')
@@ -42,6 +50,10 @@ export function TreasuryPage() {
 
     const [moveBox, setMoveBox] = useState('')
     const [moveDir, setMoveDir] = useState<'' | 'in' | 'out'>('')
+    const [editingMove, setEditingMove] = useState<CashMovementRow | null>(null)
+    const [deletingMove, setDeletingMove] = useState<CashMovementRow | null>(null)
+    const deleteMove = useDeleteCashMovement()
+    const { path } = useArea()
 
     const { range } = period
     const { data: summary, isLoading } = useTreasurySummary(range)
@@ -231,48 +243,82 @@ export function TreasuryPage() {
                     <EmptyState icon={Banknote} title="لا توجد حركات في هذه الفترة" />
                 ) : (
                     <div className="space-y-2">
-                        {movements.map((movement) => (
-                            <div key={movement.id} className="card p-3.5">
-                                <div className="flex items-start justify-between gap-3">
-                                    <div className="min-w-0">
-                                        <span
+                        {movements.map((movement) => {
+                            const isVoucher = VOUCHER_SOURCES.has(movement.source)
+
+                            return (
+                                <div key={movement.id} className="card p-3.5">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <span
+                                                className={clsx(
+                                                    'badge',
+                                                    movement.direction === 'in'
+                                                        ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
+                                                        : 'bg-red-50 text-red-700 ring-1 ring-red-200',
+                                                )}
+                                            >
+                                                {movement.source_label}
+                                            </span>
+
+                                            <p className="mt-1 truncate text-sm font-bold text-navy-900">
+                                                {movement.customer ?? movement.category ?? movement.box}
+                                            </p>
+
+                                            <p className="mt-0.5 text-[11px] text-navy-400">
+                                                {movement.box}
+                                                {movement.note && ` · ${movement.note}`}
+                                                {movement.actor && ` · ${movement.actor}`}
+                                                {movement.created_at &&
+                                                    ` · ${formatSmart(movement.created_at)}`}
+                                            </p>
+                                        </div>
+
+                                        <p
                                             className={clsx(
-                                                'badge',
+                                                'tabular shrink-0 font-extrabold',
                                                 movement.direction === 'in'
-                                                    ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
-                                                    : 'bg-red-50 text-red-700 ring-1 ring-red-200',
+                                                    ? 'text-emerald-600'
+                                                    : 'text-red-600',
                                             )}
                                         >
-                                            {movement.source_label}
-                                        </span>
-
-                                        <p className="mt-1 truncate text-sm font-bold text-navy-900">
-                                            {movement.customer ?? movement.category ?? movement.box}
-                                        </p>
-
-                                        <p className="mt-0.5 text-[11px] text-navy-400">
-                                            {movement.box}
-                                            {movement.note && ` · ${movement.note}`}
-                                            {movement.actor && ` · ${movement.actor}`}
-                                            {movement.created_at &&
-                                                ` · ${formatSmart(movement.created_at)}`}
+                                            {movement.direction === 'in' ? '+' : '−'}
+                                            {formatMoney(movement.amount)}
                                         </p>
                                     </div>
 
-                                    <p
-                                        className={clsx(
-                                            'tabular shrink-0 font-extrabold',
-                                            movement.direction === 'in'
-                                                ? 'text-emerald-600'
-                                                : 'text-red-600',
-                                        )}
-                                    >
-                                        {movement.direction === 'in' ? '+' : '−'}
-                                        {formatMoney(movement.amount)}
-                                    </p>
+                                    {/* Only the manual vouchers — an expense paid, a deposit
+                                        taken — carry these. A customer or supplier receipt is
+                                        undone from its own screen. */}
+                                    {isVoucher && (
+                                        <div className="mt-2.5 flex items-center gap-1 border-t border-navy-100 pt-2.5">
+                                            <Link
+                                                to={path(`/print/cash-vouchers/${movement.id}`)}
+                                                target="_blank"
+                                                className="tap flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-bold text-navy-500 transition hover:bg-navy-50 hover:text-navy-800"
+                                            >
+                                                <Printer className="size-3.5" />
+                                                طباعة
+                                            </Link>
+                                            <button
+                                                onClick={() => setEditingMove(movement)}
+                                                className="tap flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-bold text-navy-500 transition hover:bg-navy-50 hover:text-navy-800"
+                                            >
+                                                <Pencil className="size-3.5" />
+                                                تعديل
+                                            </button>
+                                            <button
+                                                onClick={() => setDeletingMove(movement)}
+                                                className="tap flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-bold text-red-500 transition hover:bg-red-50 hover:text-red-700"
+                                            >
+                                                <Trash2 className="size-3.5" />
+                                                حذف
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
-                            </div>
-                        ))}
+                            )
+                        })}
                     </div>
                 )}
             </section>
@@ -324,7 +370,107 @@ export function TreasuryPage() {
                 loading={deleteBox.isPending}
                 danger
             />
+
+            {editingMove && (
+                <VoucherEditDialog movement={editingMove} onClose={() => setEditingMove(null)} />
+            )}
+
+            <ConfirmDialog
+                open={Boolean(deletingMove)}
+                onClose={() => setDeletingMove(null)}
+                onConfirm={async () => {
+                    if (!deletingMove) return
+                    try {
+                        await deleteMove.mutateAsync(deletingMove.id)
+                        toast.success('تم حذف السند وإرجاع الرصيد.')
+                        setDeletingMove(null)
+                    } catch (caught) {
+                        toast.error(errorMessage(caught, 'تعذّر الحذف.'))
+                    }
+                }}
+                title="حذف السند"
+                message={`حذف ${deletingMove?.source_label ?? ''} بمبلغ ${formatMoney(deletingMove?.amount ?? 0)}؟ سيُعاد الرصيد إلى الخزينة.`}
+                confirmLabel="حذف"
+                loading={deleteMove.isPending}
+                danger
+            />
         </>
+    )
+}
+
+/* ── Editing a manual voucher ────────────────────────────── */
+
+function VoucherEditDialog({
+    movement,
+    onClose,
+}: {
+    movement: CashMovementRow
+    onClose: () => void
+}) {
+    const toast = useToast()
+    const update = useUpdateCashMovement()
+    const [errors, setErrors] = useState<Record<string, string>>({})
+    const isDeposit = movement.source === 'external_deposit'
+
+    // For a deposit the heading holds the party; for an expense it is the item.
+    const [category, setCategory] = useState(movement.category ?? '')
+    const [note, setNote] = useState(movement.note ?? '')
+
+    return (
+        <Modal
+            open
+            onClose={onClose}
+            title="تعديل السند"
+            size="sm"
+            footer={
+                <>
+                    <Button variant="secondary" onClick={onClose} disabled={update.isPending}>
+                        إلغاء
+                    </Button>
+                    <Button
+                        loading={update.isPending}
+                        onClick={async () => {
+                            setErrors({})
+                            try {
+                                await update.mutateAsync({
+                                    id: movement.id,
+                                    category: category || null,
+                                    note: note || null,
+                                })
+                                toast.success('تم حفظ التعديل.')
+                                onClose()
+                            } catch (caught) {
+                                setErrors(fieldErrors(caught))
+                                toast.error(errorMessage(caught, 'تعذّر الحفظ.'))
+                            }
+                        }}
+                    >
+                        حفظ
+                    </Button>
+                </>
+            }
+        >
+            <div className="space-y-4">
+                <div className="flex items-center justify-between rounded-2xl bg-navy-50 p-3 text-sm">
+                    <span className="text-navy-500">المبلغ (ثابت)</span>
+                    <span className="tabular font-extrabold text-navy-900">
+                        {formatMoney(movement.amount)}
+                    </span>
+                </div>
+
+                <Field label={isDeposit ? 'الجهة المودِعة' : 'البند'} error={errors.category}>
+                    <Input value={category} onChange={(e) => setCategory(e.target.value)} />
+                </Field>
+
+                <Field label="ملاحظة" error={errors.note}>
+                    <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} />
+                </Field>
+
+                <p className="text-[11px] text-navy-400">
+                    لتغيير المبلغ أو الخزينة، احذف السند وسجّل واحدًا جديدًا.
+                </p>
+            </div>
+        </Modal>
     )
 }
 

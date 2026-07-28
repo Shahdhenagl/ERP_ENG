@@ -510,6 +510,9 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::put('treasury/boxes/{box}', [TreasuryController::class, 'updateBox'])->middleware('can:treasury.manage');
     Route::delete('treasury/boxes/{box}', [TreasuryController::class, 'destroyBox'])->middleware('can:treasury.manage');
     Route::get('treasury/movements', [TreasuryController::class, 'movements'])->middleware('can:treasury.manage');
+    Route::get('treasury/movements/{movement}/voucher', [TreasuryController::class, 'voucher'])->middleware('can:treasury.manage');
+    Route::put('treasury/movements/{movement}', [TreasuryController::class, 'updateMovement'])->middleware('can:treasury.manage');
+    Route::delete('treasury/movements/{movement}', [TreasuryController::class, 'destroyMovement'])->middleware('can:treasury.manage');
     Route::post('treasury/expense', [TreasuryController::class, 'expense'])->middleware('can:treasury.manage');
     Route::post('treasury/deposit', [TreasuryController::class, 'deposit'])->middleware('can:treasury.manage');
     Route::post('treasury/transfer', [TreasuryController::class, 'transfer'])->middleware('can:treasury.manage');

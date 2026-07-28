@@ -15,6 +15,7 @@ use App\Services\TreasuryReport;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -256,6 +257,98 @@ class TreasuryController extends Controller
         );
 
         return response()->json(['message' => 'تم التحويل.'], 201);
+    }
+
+    /**
+     * A manual cash voucher — an expense paid or a deposit received — for the
+     * printable sheet. Only the two kinds a hand raises: a customer's or
+     * supplier's receipt has its own voucher with the document behind it.
+     */
+    public function voucher(CashMovement $movement): JsonResponse
+    {
+        abort_unless(
+            in_array($movement->source, ['expense', 'external_deposit'], true),
+            404,
+        );
+
+        $movement->load(['box', 'actor']);
+        $isReceipt = $movement->direction === 'in';
+
+        return response()->json([
+            'data' => [
+                'id' => $movement->id,
+                'code' => ($isReceipt ? 'RC-' : 'PV-').str_pad((string) $movement->id, 5, '0', STR_PAD_LEFT),
+                'kind' => $isReceipt ? 'receipt' : 'payment',
+                'title' => $isReceipt ? 'سند قبض' : 'سند صرف',
+                'party' => $movement->category,
+                'amount' => (float) $movement->amount,
+                'cash_box' => $movement->box?->name,
+                'note' => $movement->note,
+                'actor' => $movement->actor?->name,
+                'date' => $movement->created_at?->toDateString(),
+            ],
+        ]);
+    }
+
+    /**
+     * Correct a manual voucher's wording — its heading and note. The amount and
+     * the box are fixed on purpose: changing what money moved, or where, is a
+     * delete and a fresh voucher, not an edit — the same rule a receipt follows.
+     */
+    public function updateMovement(Request $request, CashMovement $movement): JsonResponse
+    {
+        abort_unless(
+            in_array($movement->source, ['expense', 'external_deposit'], true),
+            404,
+        );
+
+        $data = $request->validate([
+            'category' => ['nullable', 'string', 'max:160'],
+            'note' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $movement->update([
+            'category' => $data['category'] ?? $movement->category,
+            'note' => $data['note'] ?? null,
+        ]);
+
+        ActivityLog::record('cash_voucher.updated', $movement, "تعديل سند خزينة #{$movement->id}");
+
+        return response()->json(['data' => ['id' => $movement->id]]);
+    }
+
+    /**
+     * Tear up a manual voucher: the movement and the journal entry it posted go
+     * together, so the box balance and the ledger are both put back. Refused
+     * once the box has been reconciled up to it — a signed-off day is closed.
+     */
+    public function destroyMovement(CashMovement $movement): JsonResponse
+    {
+        abort_unless(
+            in_array($movement->source, ['expense', 'external_deposit'], true),
+            404,
+        );
+
+        if ($movement->reconciled_at) {
+            throw ValidationException::withMessages([
+                'movement' => 'لا يمكن حذف سند بعد تسوية الخزينة عليه.',
+            ]);
+        }
+
+        DB::transaction(function () use ($movement) {
+            \App\Models\JournalEntry::where('sourceable_type', $movement->getMorphClass())
+                ->where('sourceable_id', $movement->getKey())
+                ->each(function ($entry) {
+                    $entry->lines()->delete();
+                    $entry->delete();
+                });
+
+            $movement->delete();
+        });
+
+        ActivityLog::record('cash_voucher.deleted', null, "حذف سند خزينة #{$movement->id}");
+
+        return response()->json(['message' => 'تم حذف السند.']);
     }
 
     public function movements(Request $request): JsonResponse

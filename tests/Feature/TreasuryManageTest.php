@@ -102,6 +102,69 @@ it('keeps external deposits off a technician', function () {
     ])->assertForbidden();
 });
 
+it('prints, edits and deletes an expense voucher', function () {
+    $box = CashBox::default();
+    // Fund the box so the expense has something to draw on.
+    actingAs($this->manager)->postJson('/api/treasury/deposit', [
+        'cash_box_id' => $box->id, 'amount' => 2000, 'party' => 'تمويل',
+    ])->assertCreated();
+
+    actingAs($this->manager)->postJson('/api/treasury/expense', [
+        'cash_box_id' => $box->id, 'amount' => 300, 'category' => 'وقود', 'note' => 'بنزين',
+    ])->assertCreated();
+
+    $expense = CashMovement::where('source', 'expense')->latest('id')->first();
+
+    // Print: the voucher reads as a payment out.
+    actingAs($this->manager)->getJson("/api/treasury/movements/{$expense->id}/voucher")
+        ->assertOk()
+        ->assertJsonPath('data.kind', 'payment')
+        ->assertJsonPath('data.title', 'سند صرف');
+
+    // Edit: the heading and note change, the money does not.
+    actingAs($this->manager)->putJson("/api/treasury/movements/{$expense->id}", [
+        'category' => 'صيانة سيارة', 'note' => 'تغيير زيت',
+    ])->assertOk();
+    expect($expense->fresh()->category)->toBe('صيانة سيارة');
+
+    // Delete: the balance comes back.
+    $before = $box->fresh()->balance();
+    actingAs($this->manager)->deleteJson("/api/treasury/movements/{$expense->id}")->assertOk();
+
+    expect(CashMovement::find($expense->id))->toBeNull()
+        ->and($box->fresh()->balance())->toBe(round($before + 300, 2));
+});
+
+it('deletes an external deposit voucher and takes the money back out', function () {
+    $box = CashBox::default();
+    actingAs($this->manager)->postJson('/api/treasury/deposit', [
+        'cash_box_id' => $box->id, 'amount' => 1000, 'party' => 'جهة',
+    ])->assertCreated();
+
+    $deposit = CashMovement::where('source', 'external_deposit')->latest('id')->first();
+    $before = $box->fresh()->balance();
+
+    actingAs($this->manager)->getJson("/api/treasury/movements/{$deposit->id}/voucher")
+        ->assertOk()->assertJsonPath('data.kind', 'receipt');
+
+    actingAs($this->manager)->deleteJson("/api/treasury/movements/{$deposit->id}")->assertOk();
+
+    expect($box->fresh()->balance())->toBe(round($before - 1000, 2));
+});
+
+it('will not touch a customer receipt as a manual voucher', function () {
+    $customer = Customer::factory()->create();
+    actingAs($this->manager)->postJson('/api/payments', [
+        'customer_id' => $customer->id, 'amount' => 500, 'method' => 'cash',
+    ])->assertCreated();
+
+    $receipt = CashMovement::where('source', 'payment')->latest('id')->first();
+
+    // A customer receipt is undone from its own screen, not here.
+    actingAs($this->manager)->getJson("/api/treasury/movements/{$receipt->id}/voucher")->assertNotFound();
+    actingAs($this->manager)->deleteJson("/api/treasury/movements/{$receipt->id}")->assertNotFound();
+});
+
 it('corrects a receipt without moving the money', function () {
     $customer = Customer::factory()->create();
     $id = actingAs($this->manager)->postJson('/api/payments', [

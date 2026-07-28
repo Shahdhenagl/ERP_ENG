@@ -35,6 +35,7 @@ import type {
     DashboardData,
     CashBoxSummary,
     CashMovementRow,
+    CashVoucher,
     Cheque,
     ChequeOutlook,
     Reconciliation,
@@ -1938,6 +1939,35 @@ export function useCashMovements(filters: Record<string, unknown> = {}) {
             (await api.get<{ data: CashMovementRow[] }>('/treasury/movements', { params: filters })).data
                 .data,
         placeholderData: (previous) => previous,
+    })
+}
+
+/** A manual cash voucher — an expense or an external deposit — for printing. */
+export function useCashVoucher(id: number | string | undefined) {
+    return useQuery({
+        queryKey: ['cash-voucher', id],
+        queryFn: async () =>
+            (await api.get<{ data: CashVoucher }>(`/treasury/movements/${id}/voucher`)).data.data,
+        enabled: Boolean(id),
+    })
+}
+
+export function useUpdateCashMovement() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ id, ...payload }: { id: number } & Record<string, unknown>) =>
+            (await api.put(`/treasury/movements/${id}`, payload)).data,
+        onSuccess: () => invalidateMoney(client),
+    })
+}
+
+export function useDeleteCashMovement() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id: number) => (await api.delete(`/treasury/movements/${id}`)).data,
+        onSuccess: () => invalidateMoney(client),
     })
 }
 
