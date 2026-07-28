@@ -30,7 +30,7 @@ export function CustodySettlePage() {
                 <EmptyState
                     icon={Wallet}
                     title="لا توجد عهد نقدية مفتوحة"
-                    description="اصرف عهدة نقدية لفني من شاشة العهد لتظهر هنا للتسوية."
+                    description="اصرف عهدة نقدية لأي موظف من شاشة العهد لتظهر هنا للتسوية."
                 />
             ) : (
                 <div className="space-y-2">

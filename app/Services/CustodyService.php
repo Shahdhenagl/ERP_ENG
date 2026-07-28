@@ -326,12 +326,23 @@ class CustodyService
     /** Every technician's custody, for the overview screen. */
     public function allStatements(): array
     {
+        // Everyone actually holding custody in any of its forms — cash, a van of
+        // stock, or a device — whatever their role. A user picks up a line here
+        // the moment they are given any of the three.
+        $holders = collect()
+            ->merge(CashBox::whereNotNull('user_id')->pluck('user_id'))
+            ->merge(Warehouse::where('type', 'van')->whereNotNull('user_id')->pluck('user_id'))
+            ->merge(AssetCustody::open()->pluck('user_id'))
+            ->unique()
+            ->filter()
+            ->values();
+
         return User::query()
-            ->technicians()
+            ->whereIn('id', $holders)
             ->active()
             ->orderBy('name')
             ->get()
-            ->map(fn (User $technician) => $this->statementFor($technician))
+            ->map(fn (User $holder) => $this->statementFor($holder))
             ->all();
     }
 
@@ -444,11 +455,17 @@ class CustodyService
         });
     }
 
+    /**
+     * Custody may be entrusted to anyone on staff, whatever their role — a
+     * driver, an accountant, an office manager — not only a field technician. The
+     * one bar is a suspended account: money and devices are not handed to someone
+     * whose access has been pulled.
+     */
     protected function assertTechnician(User $user): void
     {
-        if (! $user->isTechnician()) {
+        if (! $user->is_active) {
             throw ValidationException::withMessages([
-                'user_id' => 'العهدة تُسلَّم لفني فقط.',
+                'user_id' => 'لا يمكن تسليم عهدة لمستخدم موقوف.',
             ]);
         }
     }

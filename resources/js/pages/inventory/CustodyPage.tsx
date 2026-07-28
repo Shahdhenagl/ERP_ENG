@@ -6,14 +6,7 @@ import { useToast } from '@/components/Toast'
 import { Button, EmptyState, Field, Input, Select, SkeletonCard, Textarea } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { formatMoney, formatQty } from '@/lib/domain'
-import {
-    useAssets,
-    useCashBoxes,
-    useCustody,
-    useCustodyCash,
-    useCustodyDevice,
-    useTechnicians,
-} from '@/lib/queries'
+import { useAssets, useCashBoxes, useCustody, useCustodyCash, useCustodyDevice, useUsers } from '@/lib/queries'
 import type { CustodyStatement } from '@/types'
 
 /**
@@ -23,36 +16,44 @@ import type { CustodyStatement } from '@/types'
  */
 export function CustodyPage() {
     const { data: statements, isLoading } = useCustody()
+    // A card's holder when topping up their float; a standalone advance to anyone
+    // when null-but-open.
     const [cashFor, setCashFor] = useState<CustodyStatement | null>(null)
+    const [cashOpen, setCashOpen] = useState(false)
     const [deviceOpen, setDeviceOpen] = useState(false)
 
-    if (isLoading) return <SkeletonCard />
-
-    if (!statements?.length) {
-        return (
-            <EmptyState
-                icon={HandCoins}
-                title="لا يوجد فنيون"
-                description="أضف فنيين لتتمكن من تسليم العهد."
-            />
-        )
-    }
-
-    const totalOut = statements.reduce((sum, s) => sum + s.total_value, 0)
+    const totalOut = (statements ?? []).reduce((sum, s) => sum + s.total_value, 0)
 
     return (
         <>
+            {/* The two ways custody goes out live at the top, always reachable —
+                a float to anyone on staff, or a device — so a first advance never
+                depends on the person already having a card. */}
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <p className="text-sm text-navy-500">
                     إجمالي العهد المفتوحة:{' '}
                     <strong className="tabular text-navy-900">{formatMoney(totalOut)}</strong>
                 </p>
 
-                <Button variant="secondary" icon={HardDrive} onClick={() => setDeviceOpen(true)}>
-                    تسليم جهاز
-                </Button>
+                <div className="flex gap-2">
+                    <Button icon={Wallet} onClick={() => setCashOpen(true)}>
+                        صرف عهدة نقدية
+                    </Button>
+                    <Button variant="secondary" icon={HardDrive} onClick={() => setDeviceOpen(true)}>
+                        تسليم جهاز
+                    </Button>
+                </div>
             </div>
 
+            {isLoading ? (
+                <SkeletonCard />
+            ) : !statements?.length ? (
+                <EmptyState
+                    icon={HandCoins}
+                    title="لا توجد عهد مفتوحة"
+                    description="اصرف عهدة نقدية أو سلّم جهازًا لأي موظف ليظهر هنا بما في عهدته."
+                />
+            ) : (
             <div className="space-y-3">
                 {statements.map((statement) => (
                     <div key={statement.technician.id} className="card p-4">
@@ -136,8 +137,17 @@ export function CustodyPage() {
                     </div>
                 ))}
             </div>
+            )}
 
-            {cashFor && <CashDialog statement={cashFor} onClose={() => setCashFor(null)} />}
+            {(cashOpen || cashFor) && (
+                <CashDialog
+                    statement={cashFor}
+                    onClose={() => {
+                        setCashOpen(false)
+                        setCashFor(null)
+                    }}
+                />
+            )}
             {deviceOpen && <DeviceDialog onClose={() => setDeviceOpen(false)} />}
         </>
     )
@@ -226,27 +236,32 @@ function CashDialog({
     statement,
     onClose,
 }: {
-    statement: CustodyStatement
+    statement: CustodyStatement | null
     onClose: () => void
 }) {
     const toast = useToast()
     const cash = useCustodyCash()
     const { data: boxes } = useCashBoxes()
+    // The recipient is only picked for a fresh advance; a card already names them.
+    const { data: userPage } = useUsers(statement ? {} : { active_only: 1, per_page: 200 })
     const [errors, setErrors] = useState<Record<string, string>>({})
 
+    const holder = statement?.technician
+    const [userId, setUserId] = useState(holder ? String(holder.id) : '')
+    // A fresh advance only ever hands money out; a return is against a held float.
     const [direction, setDirection] = useState<'advance' | 'return'>('advance')
     const [amount, setAmount] = useState('')
     const [boxId, setBoxId] = useState('')
     const [note, setNote] = useState('')
 
-    // A technician's own float is not somewhere to move money from or to.
+    // A custody float is not somewhere to move company money from or to.
     const companyBoxes = boxes?.filter((box) => box.type !== 'custody') ?? []
 
     return (
         <Modal
             open
             onClose={onClose}
-            title={`عهدة ${statement.technician.name} النقدية`}
+            title={holder ? `عهدة ${holder.name} النقدية` : 'صرف عهدة نقدية'}
             size="sm"
             footer={
                 <>
@@ -255,12 +270,13 @@ function CashDialog({
                     </Button>
                     <Button
                         loading={cash.isPending}
+                        disabled={!userId || !amount}
                         onClick={async () => {
                             setErrors({})
 
                             try {
                                 await cash.mutateAsync({
-                                    user_id: statement.technician.id,
+                                    user_id: Number(userId),
                                     cash_box_id: Number(boxId || companyBoxes[0]?.id),
                                     amount: Number(amount),
                                     direction,
@@ -282,22 +298,39 @@ function CashDialog({
             }
         >
             <div className="space-y-4">
-                <div className="flex items-center justify-between rounded-2xl bg-navy-50 p-4 text-sm">
-                    <span className="text-navy-500">الرصيد الحالي معه</span>
-                    <span className="tabular font-extrabold text-navy-900">
-                        {formatMoney(statement.cash.balance)}
-                    </span>
-                </div>
+                {holder ? (
+                    <div className="flex items-center justify-between rounded-2xl bg-navy-50 p-4 text-sm">
+                        <span className="text-navy-500">الرصيد الحالي معه</span>
+                        <span className="tabular font-extrabold text-navy-900">
+                            {formatMoney(statement!.cash.balance)}
+                        </span>
+                    </div>
+                ) : (
+                    // Any active user, whatever their role, may be given a float.
+                    <Field label="الموظف" required error={errors.user_id}>
+                        <Select value={userId} onChange={(e) => setUserId(e.target.value)}>
+                            <option value="">— اختر الموظف —</option>
+                            {userPage?.data.map((user) => (
+                                <option key={user.id} value={user.id}>
+                                    {user.name}
+                                    {user.role_label ? ` — ${user.role_label}` : ''}
+                                </option>
+                            ))}
+                        </Select>
+                    </Field>
+                )}
 
-                <Field label="العملية" required>
-                    <Select
-                        value={direction}
-                        onChange={(e) => setDirection(e.target.value as 'advance' | 'return')}
-                    >
-                        <option value="advance">صرف عهدة للفني</option>
-                        <option value="return">رد عهدة من الفني</option>
-                    </Select>
-                </Field>
+                {holder && (
+                    <Field label="العملية" required>
+                        <Select
+                            value={direction}
+                            onChange={(e) => setDirection(e.target.value as 'advance' | 'return')}
+                        >
+                            <option value="advance">صرف عهدة</option>
+                            <option value="return">رد عهدة</option>
+                        </Select>
+                    </Field>
+                )}
 
                 <Field label="المبلغ" required error={errors.amount}>
                     <Input
@@ -338,7 +371,7 @@ function CashDialog({
 function DeviceDialog({ onClose }: { onClose: () => void }) {
     const toast = useToast()
     const action = useCustodyDevice()
-    const { data: technicians } = useTechnicians()
+    const { data: userPage } = useUsers({ active_only: 1, per_page: 200 })
     const { data: assetPage } = useAssets({ per_page: 200 })
     const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -352,7 +385,7 @@ function DeviceDialog({ onClose }: { onClose: () => void }) {
         <Modal
             open
             onClose={onClose}
-            title="تسليم جهاز لعهدة فني"
+            title="تسليم جهاز لعهدة موظف"
             size="sm"
             footer={
                 <>
@@ -401,12 +434,13 @@ function DeviceDialog({ onClose }: { onClose: () => void }) {
                     </Select>
                 </Field>
 
-                <Field label="الفني" required error={errors.user_id}>
+                <Field label="الموظف" required error={errors.user_id}>
                     <Select value={userId} onChange={(e) => setUserId(e.target.value)}>
-                        <option value="">— اختر الفني —</option>
-                        {technicians?.map((technician) => (
-                            <option key={technician.id} value={technician.id}>
-                                {technician.name}
+                        <option value="">— اختر الموظف —</option>
+                        {userPage?.data.map((user) => (
+                            <option key={user.id} value={user.id}>
+                                {user.name}
+                                {user.role_label ? ` — ${user.role_label}` : ''}
                             </option>
                         ))}
                     </Select>

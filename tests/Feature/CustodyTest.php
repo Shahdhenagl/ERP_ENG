@@ -135,8 +135,19 @@ it('leaves the company total unchanged by an advance', function () {
     expect(round(CashBox::all()->sum(fn (CashBox $b) => $b->balance()), 2))->toBe(round($before, 2));
 });
 
-it('refuses to hand a float to somebody who is not a technician', function () {
+it('hands a float to any active user, whatever their role', function () {
+    // Custody is not a technician-only thing: a driver or an office manager may
+    // be entrusted with cash too.
     fundTreasury(5000);
+
+    $this->custody->advanceCash($this->manager, 100, $this->treasury, $this->manager);
+
+    expect($this->custody->cashBoxFor($this->manager)->balance())->toBe(100.0);
+});
+
+it('refuses to hand a float to a suspended account', function () {
+    fundTreasury(5000);
+    $this->manager->update(['is_active' => false]);
 
     expect(fn () => $this->custody->advanceCash($this->manager, 100, $this->treasury, $this->manager))
         ->toThrow(ValidationException::class);
@@ -222,8 +233,16 @@ it('reports an empty custody rather than failing on a technician with none', fun
         ->and($statement['total_value'])->toBe(0.0);
 });
 
-it('lists every active technician on the overview', function () {
-    expect($this->custody->allStatements())->toHaveCount(2);
+it('lists everyone currently holding custody, whatever their role', function () {
+    // The overview is the holders, not the roster — and a holder can be anyone.
+    fundTreasury(5000);
+    $this->custody->advanceCash($this->technician, 500, $this->treasury, $this->manager);
+    $this->custody->advanceCash($this->manager, 300, $this->treasury, $this->manager);
+
+    $statements = $this->custody->allStatements();
+
+    expect($statements)->toHaveCount(2)
+        ->and(collect($statements)->pluck('technician.name'))->toContain($this->manager->name);
 });
 
 /* ── Access ──────────────────────────────────────────────── */
@@ -254,6 +273,23 @@ it('lets a manager hand out a cash advance through the API', function () {
         ->assertCreated();
 
     expect($this->custody->cashBoxFor($this->technician)->balance())->toBe(1500.0);
+});
+
+it('advances a float to a non-technician through the API', function () {
+    // Custody is given to any employee now, not only the field team.
+    fundTreasury(5000);
+    $accountant = User::factory()->manager()->create(['name' => 'أمين الخزنة']);
+
+    \Pest\Laravel\actingAs($this->manager)
+        ->postJson('/api/custody/cash', [
+            'user_id' => $accountant->id,
+            'cash_box_id' => $this->treasury->id,
+            'amount' => 400,
+            'direction' => 'advance',
+        ])
+        ->assertCreated();
+
+    expect($this->custody->cashBoxFor($accountant)->balance())->toBe(400.0);
 });
 
 it('lets a manager record a device handover through the API', function () {
