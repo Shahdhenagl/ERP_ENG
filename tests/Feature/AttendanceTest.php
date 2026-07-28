@@ -90,6 +90,24 @@ it('narrows the list to a month', function () {
         ->and($rows[0]['date'])->toBe('2026-08-10');
 });
 
+it('narrows the list to a single day and carries the punch location', function () {
+    Attendance::create([
+        'employee_id' => $this->employee->id, 'date' => '2026-08-10', 'status' => 'present',
+        'check_in' => '08:05', 'check_in_lat' => 30.0444, 'check_in_lng' => 31.2357,
+    ]);
+    Attendance::create(['employee_id' => $this->employee->id, 'date' => '2026-08-11', 'status' => 'present']);
+
+    $rows = actingAs($this->manager)
+        ->getJson('/api/attendance?year=2026&month=8&date=2026-08-10')
+        ->assertOk()
+        ->json('data');
+
+    expect($rows)->toHaveCount(1)
+        ->and($rows[0]['date'])->toBe('2026-08-10')
+        ->and($rows[0]['check_in'])->toBe('08:05')
+        ->and((float) $rows[0]['check_in_lat'])->toBe(30.0444);
+});
+
 it('bars a technician from attendance', function () {
     $technician = User::factory()->technician()->create();
 

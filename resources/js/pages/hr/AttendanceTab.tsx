@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { CalendarCheck, Clock, Plus, Trash2 } from 'lucide-react'
+import { CalendarCheck, Clock, MapPin, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
@@ -156,50 +156,128 @@ function SummaryView({ filters }: { filters: { year: number; month: number } }) 
 
 /* ── The day-by-day log ──────────────────────────────────── */
 
-function LogView({ filters }: { filters: { year: number; month: number } }) {
-    const { data, isLoading } = useAttendance(filters)
-    const [editing, setEditing] = useState<Attendance | null>(null)
-
-    if (isLoading) return <SkeletonCard />
-    if (!data?.data.length) {
-        return <EmptyState icon={Clock} title="لا توجد سجلات هذا الشهر" />
+/** A stamp's coordinates as a maps link, or a dash when it was entered by hand. */
+function LocationLink({ lat, lng }: { lat?: number | null; lng?: number | null }) {
+    if (lat == null || lng == null) {
+        return <span className="text-navy-300">—</span>
     }
 
     return (
-        <>
-            <div className="space-y-2">
-                {data.data.map((record) => {
-                    const meta = STATUS[record.status]
+        <a
+            href={`https://www.google.com/maps?q=${lat},${lng}`}
+            target="_blank"
+            rel="noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center gap-0.5 text-[11px] font-bold text-brand-600 hover:text-brand-700"
+        >
+            <MapPin className="size-3" />
+            موقع
+        </a>
+    )
+}
 
-                    return (
-                        <button
-                            key={record.id}
-                            onClick={() => setEditing(record)}
-                            className="card-interactive block w-full p-3.5 text-right"
-                        >
-                            <div className="flex items-center justify-between gap-3">
-                                <div className="min-w-0">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <span className="font-bold text-navy-900">{record.employee}</span>
-                                        <span className={clsx('badge', meta.chip)}>{meta.label}</span>
-                                    </div>
-                                    <p className="tabular mt-0.5 text-[11px] text-navy-400">
-                                        {formatDate(record.date)}
-                                        {record.check_in && ` · ${record.check_in}`}
-                                        {record.check_out && ` — ${record.check_out}`}
-                                        {record.late_minutes > 0 && ` · تأخير ${record.late_minutes}د`}
-                                    </p>
-                                </div>
-                                {record.worked_hours > 0 && (
-                                    <span className="tabular shrink-0 text-sm font-bold text-navy-700">
-                                        {record.worked_hours} س
-                                    </span>
-                                )}
-                            </div>
-                        </button>
-                    )
-                })}
+function LogView({ filters }: { filters: { year: number; month: number } }) {
+    // A day narrows the month's log to one date; empty means the whole month.
+    const [day, setDay] = useState('')
+    const { data, isLoading } = useAttendance({ ...filters, date: day || undefined })
+    const [editing, setEditing] = useState<Attendance | null>(null)
+
+    return (
+        <>
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+                <Input
+                    type="date"
+                    value={day}
+                    onChange={(e) => setDay(e.target.value)}
+                    className="w-auto"
+                />
+                {day && (
+                    <Button variant="secondary" className="text-xs" onClick={() => setDay('')}>
+                        كل الشهر
+                    </Button>
+                )}
             </div>
+
+            {isLoading ? (
+                <SkeletonCard />
+            ) : !data?.data.length ? (
+                <EmptyState icon={Clock} title="لا توجد سجلات في هذه الفترة" />
+            ) : (
+                <div className="overflow-x-auto rounded-2xl border border-navy-100">
+                    <table className="w-full min-w-[720px] text-sm">
+                        <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
+                            <tr>
+                                <th className="px-3 py-2 text-right">الموظف</th>
+                                <th className="w-24 px-2 py-2 text-right">التاريخ</th>
+                                <th className="w-16 px-2 py-2 text-center">الحالة</th>
+                                <th className="w-28 px-2 py-2 text-center">حضور</th>
+                                <th className="w-28 px-2 py-2 text-center">انصراف</th>
+                                <th className="w-16 px-2 py-2 text-center">تأخير</th>
+                                <th className="w-16 px-2 py-2 text-left">ساعات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {data.data.map((record) => {
+                                const meta = STATUS[record.status]
+
+                                return (
+                                    <tr
+                                        key={record.id}
+                                        onClick={() => setEditing(record)}
+                                        className="cursor-pointer border-t border-navy-100 transition hover:bg-navy-50"
+                                    >
+                                        <td className="px-3 py-2.5 font-bold text-navy-900">
+                                            {record.employee}
+                                        </td>
+                                        <td className="tabular px-2 py-2.5 text-navy-500">
+                                            {formatDate(record.date)}
+                                        </td>
+                                        <td className="px-2 py-2.5 text-center">
+                                            <span className={clsx('badge', meta.chip)}>{meta.label}</span>
+                                        </td>
+                                        <td className="px-2 py-2.5 text-center">
+                                            {record.check_in ? (
+                                                <div className="flex flex-col items-center">
+                                                    <span className="tabular font-bold text-navy-800">
+                                                        {record.check_in}
+                                                    </span>
+                                                    <LocationLink
+                                                        lat={record.check_in_lat}
+                                                        lng={record.check_in_lng}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <span className="text-navy-300">—</span>
+                                            )}
+                                        </td>
+                                        <td className="px-2 py-2.5 text-center">
+                                            {record.check_out ? (
+                                                <div className="flex flex-col items-center">
+                                                    <span className="tabular font-bold text-navy-800">
+                                                        {record.check_out}
+                                                    </span>
+                                                    <LocationLink
+                                                        lat={record.check_out_lat}
+                                                        lng={record.check_out_lng}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <span className="text-navy-300">—</span>
+                                            )}
+                                        </td>
+                                        <td className="tabular px-2 py-2.5 text-center text-navy-500">
+                                            {record.late_minutes > 0 ? `${record.late_minutes}د` : '—'}
+                                        </td>
+                                        <td className="tabular px-2 py-2.5 text-left font-extrabold text-navy-900">
+                                            {record.worked_hours > 0 ? record.worked_hours : '—'}
+                                        </td>
+                                    </tr>
+                                )
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            )}
 
             {editing && (
                 <RecordDialog
