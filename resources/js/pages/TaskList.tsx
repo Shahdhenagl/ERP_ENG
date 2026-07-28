@@ -21,6 +21,13 @@ const QUICK_FILTERS: Array<{ key: string; label: string; params: Record<string, 
     { key: 'completed', label: 'منتهية', params: { status: 'completed' } },
 ]
 
+/** The last calendar day of a YYYY-MM, as YYYY-MM-DD. */
+function endOfMonth(month: string): string {
+    const [year, m] = month.split('-').map(Number)
+    const last = new Date(year, m, 0).getDate()
+    return `${month}-${String(last).padStart(2, '0')}`
+}
+
 export function TaskList() {
     const { canDispatch } = useAuth()
     const { path } = useArea()
@@ -29,8 +36,21 @@ export function TaskList() {
 
     const filters = useMemo(() => {
         const entries = Object.fromEntries(searchParams.entries())
+        // `month` (YYYY-MM) and `day` (YYYY-MM-DD) are the UI's own filters; the
+        // API knows a scheduled-date range, so translate before sending. A day
+        // narrows to itself; otherwise a month spans its whole length.
+        const { month, day, ...rest } = entries
+        const range: Record<string, string> = {}
 
-        return { ...entries, per_page: '30' }
+        if (day) {
+            range.scheduled_after = day
+            range.scheduled_before = day
+        } else if (month) {
+            range.scheduled_after = `${month}-01`
+            range.scheduled_before = endOfMonth(month)
+        }
+
+        return { ...rest, ...range, per_page: '30' }
     }, [searchParams])
 
     const { data, isLoading, isError, refetch, isFetching } = useTasks(filters)
@@ -71,7 +91,11 @@ export function TaskList() {
     }
 
     const hasAdvancedFilters = Boolean(
-        searchParams.get('type') || searchParams.get('priority') || searchParams.get('assigned_to'),
+        searchParams.get('type') ||
+            searchParams.get('priority') ||
+            searchParams.get('assigned_to') ||
+            searchParams.get('month') ||
+            searchParams.get('day'),
     )
 
     // Wait for a pause in typing before hitting the API.
@@ -182,6 +206,26 @@ export function TaskList() {
                             ))}
                         </Select>
                     )}
+
+                    {/* Filter by the task's scheduled date — a whole month, or a
+                        single day which takes precedence over it. */}
+                    <label className="flex flex-col gap-1">
+                        <span className="text-[11px] font-bold text-navy-400">الشهر</span>
+                        <Input
+                            type="month"
+                            value={searchParams.get('month') ?? ''}
+                            onChange={(event) => setParam('month', event.target.value)}
+                        />
+                    </label>
+
+                    <label className="flex flex-col gap-1">
+                        <span className="text-[11px] font-bold text-navy-400">اليوم</span>
+                        <Input
+                            type="date"
+                            value={searchParams.get('day') ?? ''}
+                            onChange={(event) => setParam('day', event.target.value)}
+                        />
+                    </label>
 
                     {hasAdvancedFilters && (
                         <button

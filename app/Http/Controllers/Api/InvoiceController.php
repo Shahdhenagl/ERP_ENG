@@ -25,6 +25,9 @@ class InvoiceController extends Controller
             ->when($request->string('status')->toString(), fn ($q, $s) => $q->where('status', $s))
             ->when($request->boolean('outstanding'), fn ($q) => $q->outstanding())
             ->when($request->boolean('overdue'), fn ($q) => $q->overdue())
+            // A month or a single day, by the invoice's own date.
+            ->when($request->date('from'), fn ($q, $from) => $q->whereDate('issue_date', '>=', $from))
+            ->when($request->date('to'), fn ($q, $to) => $q->whereDate('issue_date', '<=', $to))
             ->with(['customer', 'payments'])
             ->orderByDesc('id')
             ->paginate($request->integer('per_page', 25));

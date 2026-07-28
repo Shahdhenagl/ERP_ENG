@@ -1,5 +1,7 @@
 import clsx from 'clsx'
 import { ClipboardList } from 'lucide-react'
+import { useState } from 'react'
+import { MonthDayFilter, monthDayRange } from '@/components/MonthDayFilter'
 import { EmptyState, SkeletonCard } from '@/components/ui'
 import { formatMoney, formatQty, MOVEMENT_TYPE, MOVEMENT_TYPE_FALLBACK } from '@/lib/domain'
 import { formatSmart } from '@/lib/format'
@@ -7,17 +9,24 @@ import { useMovements } from '@/lib/queries'
 
 /** The audit trail: every movement, newest first. */
 export function MovementsPage() {
-    const { data, isLoading } = useMovements({ per_page: 50 })
+    const [month, setMonth] = useState('')
+    const [day, setDay] = useState('')
 
-    if (isLoading) return <SkeletonCard />
-
-    if (!data?.data.length) {
-        return <EmptyState icon={ClipboardList} title="لا توجد حركات بعد" />
-    }
+    const { data, isLoading } = useMovements({ per_page: 50, ...monthDayRange(month, day) })
 
     return (
-        <div className="space-y-2">
-            {data.data.map((movement) => {
+        <>
+            <div className="mb-4">
+                <MonthDayFilter month={month} day={day} onMonth={setMonth} onDay={setDay} />
+            </div>
+
+            {isLoading ? (
+                <SkeletonCard />
+            ) : !data?.data.length ? (
+                <EmptyState icon={ClipboardList} title="لا توجد حركات في هذه الفترة" />
+            ) : (
+                <div className="space-y-2">
+                    {data.data.map((movement) => {
                 const meta = MOVEMENT_TYPE[movement.type] ?? MOVEMENT_TYPE_FALLBACK
 
                 return (
@@ -61,7 +70,9 @@ export function MovementsPage() {
                         </div>
                     </div>
                 )
-            })}
-        </div>
+                    })}
+                </div>
+            )}
+        </>
     )
 }

@@ -89,6 +89,9 @@ class StockController extends Controller
                 fn ($w) => $w->where('from_warehouse_id', $id)->orWhere('to_warehouse_id', $id),
             ))
             ->when($request->string('type')->toString(), fn ($q, $t) => $q->where('type', $t))
+            // A month or a single day of movement.
+            ->when($request->date('from'), fn ($q, $from) => $q->whereDate('created_at', '>=', $from))
+            ->when($request->date('to'), fn ($q, $to) => $q->whereDate('created_at', '<=', $to))
             ->when($user->isTechnician(), function ($q) use ($user) {
                 $van = Warehouse::where('user_id', $user->id)->value('id');
 

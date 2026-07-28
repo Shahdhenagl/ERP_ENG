@@ -2,6 +2,7 @@ import clsx from 'clsx'
 import { AlertTriangle, FileText, Search, Wallet } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { MonthDayFilter, monthDayRange } from '@/components/MonthDayFilter'
 import { SectionTabs } from '@/components/SectionTabs'
 import { MONEY_SECTIONS } from '@/lib/sections'
 import { EmptyState, ErrorState, Input, PageHeader, SkeletonCard } from '@/components/ui'
@@ -16,12 +17,15 @@ export function InvoiceList() {
     const { path } = useArea()
     const [search, setSearch] = useState('')
     const [filter, setFilter] = useState<Filter>('all')
+    const [month, setMonth] = useState('')
+    const [day, setDay] = useState('')
 
     const { data: summary } = useTreasurySummary()
     const { data, isLoading, isError, refetch } = useInvoices({
         search,
         outstanding: filter === 'outstanding' ? 1 : undefined,
         overdue: filter === 'overdue' ? 1 : undefined,
+        ...monthDayRange(month, day),
         per_page: 40,
     })
 
@@ -86,6 +90,8 @@ export function InvoiceList() {
                         </button>
                     ))}
                 </div>
+
+                <MonthDayFilter month={month} day={day} onMonth={setMonth} onDay={setDay} />
             </div>
 
             {isError ? (
