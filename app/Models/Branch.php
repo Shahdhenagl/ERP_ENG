@@ -19,7 +19,7 @@ class Branch extends Model
 
     protected $fillable = [
         'code', 'customer_id', 'name', 'customer_ref',
-        'address', 'city', 'lat', 'lng', 'map_url',
+        'address', 'governorate', 'city', 'lat', 'lng', 'map_url',
         'contact_name', 'contact_phone', 'contact_whatsapp',
         'working_hours', 'route', 'notes', 'is_active', 'created_by',
     ];

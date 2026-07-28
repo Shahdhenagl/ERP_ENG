@@ -26,6 +26,7 @@ class Customer extends Model
         'tax_id',
         'commercial_register',
         'address',
+        'governorate',
         'city',
         'lat',
         'lng',

@@ -30,6 +30,7 @@ class CustomerResource extends JsonResource
             'tax_id' => $this->tax_id,
             'commercial_register' => $this->commercial_register,
             'address' => $this->address,
+            'governorate' => $this->governorate,
             'city' => $this->city,
             'lat' => $this->lat,
             'lng' => $this->lng,

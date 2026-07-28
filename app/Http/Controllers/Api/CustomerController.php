@@ -264,6 +264,7 @@ class CustomerController extends Controller
             'tax_id' => ['nullable', 'string', 'max:32'],
             'commercial_register' => ['nullable', 'string', 'max:32'],
             'address' => ['nullable', 'string', 'max:500'],
+            'governorate' => ['nullable', 'string', 'max:60'],
             'city' => ['nullable', 'string', 'max:80'],
             'lat' => ['nullable', 'numeric', 'between:-90,90'],
             'lng' => ['nullable', 'numeric', 'between:-180,180'],

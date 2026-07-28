@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, Field, Input, Select, Textarea } from '@/components/ui'
+import { LocationSelect } from '@/components/LocationSelect'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { useSaveCustomer } from '@/lib/queries'
 import { CUSTOMER_TYPES, type Customer } from '@/types'
@@ -31,6 +32,7 @@ export function CustomerForm({ open, onClose, customer, onSaved }: CustomerFormP
         tax_id: customer?.tax_id ?? '',
         commercial_register: customer?.commercial_register ?? '',
         address: customer?.address ?? '',
+        governorate: customer?.governorate ?? '',
         city: customer?.city ?? '',
         lat: customer?.lat?.toString() ?? '',
         lng: customer?.lng?.toString() ?? '',
@@ -92,6 +94,7 @@ export function CustomerForm({ open, onClose, customer, onSaved }: CustomerFormP
                 tax_id: form.tax_id || null,
                 commercial_register: form.commercial_register || null,
                 address: form.address || null,
+                governorate: form.governorate || null,
                 city: form.city || null,
                 map_url: form.map_url || null,
                 notes: form.notes || null,
@@ -214,12 +217,13 @@ export function CustomerForm({ open, onClose, customer, onSaved }: CustomerFormP
                         />
                     </Field>
 
-                    <Field label="المدينة / المحافظة" error={errors.city}>
-                        <Input
-                            value={form.city}
-                            onChange={(event) => set('city')(event.target.value)}
-                        />
-                    </Field>
+                    <LocationSelect
+                        governorate={form.governorate}
+                        district={form.city}
+                        onGovernorate={set('governorate')}
+                        onDistrict={set('city')}
+                        errors={{ governorate: errors.governorate, city: errors.city }}
+                    />
 
                     <Field label="البطاقة الضريبية" error={errors.tax_id}>
                         <Input

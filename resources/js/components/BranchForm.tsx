@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, Field, Input, Textarea } from '@/components/ui'
+import { LocationSelect } from '@/components/LocationSelect'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { useSaveBranch } from '@/lib/queries'
 import type { Branch } from '@/types'
@@ -28,6 +29,7 @@ export function BranchForm({
         name: branch?.name ?? '',
         customer_ref: branch?.customer_ref ?? '',
         address: branch?.address ?? '',
+        governorate: branch?.governorate ?? '',
         city: branch?.city ?? '',
         lat: branch?.lat?.toString() ?? '',
         lng: branch?.lng?.toString() ?? '',
@@ -85,6 +87,7 @@ export function BranchForm({
                 name: form.name,
                 customer_ref: form.customer_ref || null,
                 address: form.address || null,
+                governorate: form.governorate || null,
                 city: form.city || null,
                 lat: form.lat ? Number(form.lat) : null,
                 lng: form.lng ? Number(form.lng) : null,
@@ -153,6 +156,16 @@ export function BranchForm({
                         rows={2}
                     />
                 </Field>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <LocationSelect
+                        governorate={form.governorate}
+                        district={form.city}
+                        onGovernorate={set('governorate')}
+                        onDistrict={set('city')}
+                        errors={{ governorate: errors.governorate, city: errors.city }}
+                    />
+                </div>
 
                 <Field
                     label="رابط الموقع على الخريطة"

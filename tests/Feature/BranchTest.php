@@ -181,6 +181,19 @@ it('saves a branch route through the API and returns its total', function () {
         ->and($response->json('data.route.legs.0.label'))->toBe('إلى أسوان');
 });
 
+it('saves the governorate and district from the address library', function () {
+    $response = actingAs($this->manager)
+        ->postJson("/api/customers/{$this->customer->id}/branches", [
+            'name' => 'فرع المعادي',
+            'governorate' => 'القاهرة',
+            'city' => 'المعادي',
+        ])
+        ->assertCreated();
+
+    expect($response->json('data.governorate'))->toBe('القاهرة')
+        ->and($response->json('data.city'))->toBe('المعادي');
+});
+
 it('carries the route to the task so the technician sees the itinerary', function () {
     $branch = branchFor($this->customer, [
         'route' => ['legs' => [['label' => 'إلى الفرع', 'cost' => 40]], 'allowance' => 60],

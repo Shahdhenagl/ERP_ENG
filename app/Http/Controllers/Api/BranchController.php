@@ -105,6 +105,7 @@ class BranchController extends Controller
             'customer_ref' => $branch->customer_ref,
 
             'address' => $branch->address,
+            'governorate' => $branch->governorate,
             'city' => $branch->city,
             'lat' => $branch->lat,
             'lng' => $branch->lng,
@@ -134,6 +135,7 @@ class BranchController extends Controller
             'name' => ['required', 'string', 'max:160'],
             'customer_ref' => ['nullable', 'string', 'max:64'],
             'address' => ['nullable', 'string', 'max:500'],
+            'governorate' => ['nullable', 'string', 'max:60'],
             'city' => ['nullable', 'string', 'max:80'],
             'lat' => ['nullable', 'numeric', 'between:-90,90'],
             'lng' => ['nullable', 'numeric', 'between:-180,180'],

@@ -74,6 +74,7 @@ export interface Customer {
     tax_id: string | null
     commercial_register: string | null
     address: string | null
+    governorate: string | null
     city: string | null
     lat: number | null
     lng: number | null
@@ -471,6 +472,7 @@ export interface Branch {
     customer_ref: string | null
 
     address: string | null
+    governorate: string | null
     city: string | null
     lat: number | null
     lng: number | null
