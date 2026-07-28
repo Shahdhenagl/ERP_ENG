@@ -1,5 +1,15 @@
 import clsx from 'clsx'
-import { AlertTriangle, MapPin, Package, Pencil, Plus, Search, Trash2 } from 'lucide-react'
+import {
+    AlertTriangle,
+    LayoutGrid,
+    MapPin,
+    Package,
+    Pencil,
+    Plus,
+    Rows3,
+    Search,
+    Trash2,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { AssetForm } from '@/components/AssetForm'
 import { BatteryForm } from '@/components/BatteryForm'
@@ -11,6 +21,13 @@ import { formatMoney, formatQty, ITEM_CATEGORY } from '@/lib/domain'
 import { useDeleteItem, useItems } from '@/lib/queries'
 import { useInventory } from '@/pages/inventory/InventoryLayout'
 import type { Item, ItemCategory } from '@/types'
+
+type ViewMode = 'cards' | 'table'
+
+/** The chosen layout sticks between visits — a preference, not a filter. */
+function storedView(): ViewMode {
+    return localStorage.getItem('items.view') === 'table' ? 'table' : 'cards'
+}
 
 /** A one-line nameplate summary for a UPS or battery row. */
 function specSummary(item: Item): string | null {
@@ -33,6 +50,7 @@ export function ItemsPage() {
     const [search, setSearch] = useState('')
     const [category, setCategory] = useState<'' | ItemCategory>('')
     const [lowOnly, setLowOnly] = useState(false)
+    const [view, setView] = useState<ViewMode>(storedView)
     const [deleting, setDeleting] = useState<Item | undefined>()
     // The UPS/battery being installed at a customer — drawn off the shelf on save.
     const [installing, setInstalling] = useState<Item | undefined>()
@@ -44,6 +62,11 @@ export function ItemsPage() {
         per_page: 50,
     })
     const remove = useDeleteItem()
+
+    const setViewMode = (mode: ViewMode) => {
+        localStorage.setItem('items.view', mode)
+        setView(mode)
+    }
 
     const timer = useRef<number>(0)
     const debounced = (value: string) => {
@@ -76,6 +99,8 @@ export function ItemsPage() {
             }),
         ),
     ]
+
+    const items = data?.data ?? []
 
     return (
         <>
@@ -132,11 +157,27 @@ export function ItemsPage() {
                         تحت حد الطلب
                     </button>
 
+                    {/* Table for scanning many at a glance, cards for the detail. */}
+                    <div className="mr-auto flex items-center gap-1 rounded-xl bg-navy-100 p-1">
+                        <ViewButton
+                            active={view === 'cards'}
+                            onClick={() => setViewMode('cards')}
+                            icon={LayoutGrid}
+                            label="كروت"
+                        />
+                        <ViewButton
+                            active={view === 'table'}
+                            onClick={() => setViewMode('table')}
+                            icon={Rows3}
+                            label="جدول"
+                        />
+                    </div>
+
                     {/* Adding while a group is selected files the item straight into it. */}
                     {category && (
                         <Button
                             icon={Plus}
-                            className="mr-auto text-xs"
+                            className="text-xs"
                             onClick={() => openItemForm(undefined, category)}
                         >
                             {ITEM_CATEGORY[category].label} — صنف جديد
@@ -153,7 +194,7 @@ export function ItemsPage() {
                         <SkeletonCard key={index} />
                     ))}
                 </div>
-            ) : !data?.data.length ? (
+            ) : !items.length ? (
                 <EmptyState
                     icon={Package}
                     title="لا توجد أصناف"
@@ -164,9 +205,16 @@ export function ItemsPage() {
                         </Button>
                     }
                 />
+            ) : view === 'table' ? (
+                <ItemsTable
+                    items={items}
+                    onEdit={(item) => openItemForm(item)}
+                    onDelete={setDeleting}
+                    onInstall={setInstalling}
+                />
             ) : (
-                <div className="space-y-3">
-                    {data.data.map((item) => {
+                <div className="grid gap-3 lg:grid-cols-2">
+                    {items.map((item) => {
                         const summary = specSummary(item)
 
                         return (
@@ -288,5 +336,147 @@ export function ItemsPage() {
                 danger
             />
         </>
+    )
+}
+
+function ViewButton({
+    active,
+    onClick,
+    icon: Icon,
+    label,
+}: {
+    active: boolean
+    onClick: () => void
+    icon: typeof LayoutGrid
+    label: string
+}) {
+    return (
+        <button
+            onClick={onClick}
+            aria-pressed={active}
+            className={clsx(
+                'tap flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-bold transition',
+                active ? 'bg-white text-navy-800 shadow-sm' : 'text-navy-500 hover:text-navy-700',
+            )}
+        >
+            <Icon className="size-3.5" />
+            {label}
+        </button>
+    )
+}
+
+/**
+ * The dense view: every column the counter asks for on one row — name, group,
+ * barcode, what is on the shelf, what it cost on average, and what we sell it
+ * at — so a whole catalogue can be scanned without opening a card each time.
+ */
+function ItemsTable({
+    items,
+    onEdit,
+    onDelete,
+    onInstall,
+}: {
+    items: Item[]
+    onEdit: (item: Item) => void
+    onDelete: (item: Item) => void
+    onInstall: (item: Item) => void
+}) {
+    return (
+        <div className="overflow-x-auto rounded-2xl border border-navy-100">
+            <table className="w-full text-sm">
+                <thead>
+                    <tr className="border-b border-navy-100 bg-navy-50 text-right text-[11px] font-bold text-navy-500">
+                        <th className="p-3">الصنف</th>
+                        <th className="p-3">الفئة</th>
+                        <th className="p-3">الباركود</th>
+                        <th className="p-3 text-left">المتاح</th>
+                        <th className="p-3 text-left">متوسط الشراء</th>
+                        <th className="p-3 text-left">سعر البيع</th>
+                        <th className="w-20 p-3" />
+                    </tr>
+                </thead>
+                <tbody>
+                    {items.map((item) => {
+                        const summary = specSummary(item)
+
+                        return (
+                            <tr
+                                key={item.id}
+                                className="border-b border-navy-100 bg-white transition last:border-0 hover:bg-navy-50"
+                            >
+                                <td className="p-3">
+                                    <div className="flex items-center gap-2">
+                                        <span className="tabular text-[10px] font-bold text-brand-600">
+                                            {item.code}
+                                        </span>
+                                        {item.below_reorder_level && (
+                                            <AlertTriangle className="size-3.5 text-amber-500" />
+                                        )}
+                                    </div>
+                                    <p className="font-bold text-navy-900">{item.name}</p>
+                                    {summary && (
+                                        <p className="tabular text-[11px] text-navy-400">{summary}</p>
+                                    )}
+                                </td>
+                                <td className="p-3">
+                                    <span className={clsx('badge', ITEM_CATEGORY[item.category].chip)}>
+                                        {item.category_label}
+                                    </span>
+                                </td>
+                                <td className="tabular p-3 text-navy-600" dir="ltr">
+                                    <span className="block text-right">{item.barcode || '—'}</span>
+                                </td>
+                                <td className="tabular p-3 text-left">
+                                    <span
+                                        className={clsx(
+                                            'font-bold',
+                                            item.below_reorder_level ? 'text-amber-600' : 'text-navy-900',
+                                        )}
+                                    >
+                                        {formatQty(item.total_qty)}
+                                    </span>{' '}
+                                    <span className="text-[11px] text-navy-400">{item.unit}</span>
+                                </td>
+                                <td className="tabular p-3 text-left text-navy-700">
+                                    {formatMoney(item.avg_cost)}
+                                </td>
+                                <td className="tabular p-3 text-left text-navy-700">
+                                    {item.sell_price !== null ? formatMoney(item.sell_price) : '—'}
+                                </td>
+                                <td className="p-3">
+                                    <div className="flex items-center justify-end gap-0.5">
+                                        {(item.category === 'ups' || item.category === 'battery') &&
+                                            item.total_qty > 0 && (
+                                                <button
+                                                    onClick={() => onInstall(item)}
+                                                    className="tap grid place-items-center rounded-lg p-2 text-brand-500 transition hover:bg-brand-50 hover:text-brand-700"
+                                                    aria-label="تركيب عند عميل"
+                                                    title="تركيب عند عميل"
+                                                >
+                                                    <MapPin className="size-4" />
+                                                </button>
+                                            )}
+                                        <button
+                                            onClick={() => onEdit(item)}
+                                            className="tap grid place-items-center rounded-lg p-2 text-navy-400 transition hover:bg-navy-50 hover:text-navy-700"
+                                            aria-label="تعديل"
+                                        >
+                                            <Pencil className="size-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => onDelete(item)}
+                                            className="tap grid place-items-center rounded-lg p-2 text-navy-400 transition hover:bg-red-50 hover:text-red-600"
+                                            aria-label="حذف"
+                                        >
+                                            <Trash2 className="size-4" />
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        )
+                    })}
+                </tbody>
+            </table>
+        </div>
     )
 }

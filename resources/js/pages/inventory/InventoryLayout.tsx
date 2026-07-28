@@ -59,8 +59,8 @@ export function InventoryLayout() {
                         : undefined
                 }
                 actions={
-                    <Button icon={PackagePlus} onClick={() => setOperation('receive')}>
-                        تسجيل وارد
+                    <Button icon={Plus} onClick={() => openItemForm()}>
+                        صنف جديد
                     </Button>
                 }
             />
@@ -79,8 +79,12 @@ export function InventoryLayout() {
             )}
 
             <div className="mb-5 flex flex-wrap gap-2">
-                <Button variant="secondary" icon={Plus} onClick={() => openItemForm()}>
-                    صنف جديد
+                <Button
+                    variant="secondary"
+                    icon={PackagePlus}
+                    onClick={() => setOperation('receive')}
+                >
+                    تسجيل وارد
                 </Button>
                 <Button
                     variant="secondary"
