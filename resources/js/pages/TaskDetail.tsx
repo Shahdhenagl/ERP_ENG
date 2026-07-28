@@ -28,7 +28,7 @@ import { CustodyExpenseModal } from '@/components/CustodyExpenseModal'
 import { ReportForm } from '@/components/ReportForm'
 import { StatusRail } from '@/components/StatusRail'
 import { useToast } from '@/components/Toast'
-import { Badge, Button, ErrorState, Field, PageLoader, Select, Textarea } from '@/components/ui'
+import { Badge, Button, ErrorState, Field, Input, PageLoader, Select, Textarea } from '@/components/ui'
 import { errorMessage } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import {
@@ -51,6 +51,7 @@ import {
     useDeleteTask,
     useInvoiceAction,
     useMyCustody,
+    useSpendMine,
     useTask,
     useTechnicians,
     useUploadAttachments,
@@ -312,7 +313,14 @@ export function TaskDetail() {
                                     </div>
                                 )}
 
-                                {task.branch?.route && <RouteBlock branch={task.branch} />}
+                                {task.branch?.route && (
+                                    <RouteBlock
+                                        branch={task.branch}
+                                        taskId={task.id}
+                                        taskCode={task.code}
+                                        canRecord={canDrive}
+                                    />
+                                )}
 
                                 {task.effective_address && (
                                     <p className="flex items-start gap-2 text-sm text-navy-600">
@@ -930,7 +938,18 @@ function TaskExpenses({ task, canAdd }: { task: Task; canAdd: boolean }) {
 }
 
 /** خط السير to the site: the legs, their fares, and the float they add up to. */
-function RouteBlock({ branch }: { branch: NonNullable<Task['branch']> }) {
+function RouteBlock({
+    branch,
+    taskId,
+    taskCode,
+    canRecord,
+}: {
+    branch: NonNullable<Task['branch']>
+    taskId: number
+    taskCode: string
+    canRecord: boolean
+}) {
+    const [confirming, setConfirming] = useState(false)
     const route = branch.route
     if (!route) return null
 
@@ -979,7 +998,167 @@ function RouteBlock({ branch }: { branch: NonNullable<Task['branch']> }) {
                     {formatMoney(branch.route_total)}
                 </span>
             </div>
+
+            {/* The technician confirms the actual fares — same as planned, or
+                edited on the road — and it books as a خط السير expense. */}
+            {canRecord && (
+                <Button
+                    variant="secondary"
+                    icon={Route}
+                    className="mt-2 w-full text-xs"
+                    onClick={() => setConfirming(true)}
+                >
+                    تأكيد خط السير وتسجيله
+                </Button>
+            )}
+
+            {confirming && (
+                <RouteExpenseDialog
+                    route={route}
+                    taskId={taskId}
+                    taskCode={taskCode}
+                    onClose={() => setConfirming(false)}
+                />
+            )}
         </div>
+    )
+}
+
+/**
+ * The technician confirming the route they actually took: each leg's fare
+ * starts at what the branch expected and can be corrected, the allowance and
+ * any lodging alongside. The total books as a خط السير expense on the job, out
+ * of their float, with the breakdown as its note.
+ */
+function RouteExpenseDialog({
+    route,
+    taskId,
+    taskCode,
+    onClose,
+}: {
+    route: NonNullable<NonNullable<Task['branch']>['route']>
+    taskId: number
+    taskCode: string
+    onClose: () => void
+}) {
+    const toast = useToast()
+    const spend = useSpendMine()
+
+    const [legs, setLegs] = useState(
+        (route.legs ?? []).map((leg) => ({
+            label: leg.label,
+            cost: leg.cost != null ? String(leg.cost) : '',
+        })),
+    )
+    const [allowance, setAllowance] = useState(route.allowance ? String(route.allowance) : '')
+    const [lodging, setLodging] = useState(route.lodging ? String(route.lodging) : '')
+
+    const total =
+        legs.reduce((sum, leg) => sum + (Number(leg.cost) || 0), 0) +
+        (Number(allowance) || 0) +
+        (Number(lodging) || 0)
+
+    const setLeg = (index: number, cost: string) =>
+        setLegs((current) => current.map((leg, i) => (i === index ? { ...leg, cost } : leg)))
+
+    return (
+        <Modal
+            open
+            onClose={onClose}
+            title="خط السير"
+            description={`تأكيد الأجرة الفعلية وتسجيلها على المهمة ${taskCode}`}
+            size="sm"
+            footer={
+                <>
+                    <Button variant="secondary" onClick={onClose} disabled={spend.isPending}>
+                        إلغاء
+                    </Button>
+                    <Button
+                        loading={spend.isPending}
+                        disabled={total <= 0}
+                        onClick={async () => {
+                            const note = [
+                                ...legs
+                                    .filter((leg) => Number(leg.cost) > 0)
+                                    .map((leg) => `${leg.label}: ${Number(leg.cost)}`),
+                                Number(allowance) > 0 ? `بدل: ${Number(allowance)}` : null,
+                                Number(lodging) > 0 ? `مبيت: ${Number(lodging)}` : null,
+                            ]
+                                .filter(Boolean)
+                                .join(' · ')
+
+                            try {
+                                await spend.mutateAsync({
+                                    amount: total,
+                                    category: 'خط السير',
+                                    note: note || null,
+                                    task_id: taskId,
+                                    receipt: null,
+                                })
+                                toast.success('تم تسجيل خط السير وخصمه من عهدتك.')
+                                onClose()
+                            } catch (caught) {
+                                toast.error(errorMessage(caught, 'تعذّر التسجيل.'))
+                            }
+                        }}
+                    >
+                        تسجيل {formatMoney(total)}
+                    </Button>
+                </>
+            }
+        >
+            <div className="space-y-3">
+                {legs.length === 0 && (
+                    <p className="text-xs text-navy-400">لا محطات محددة — أضِف البدل أو المبيت فقط.</p>
+                )}
+                {legs.map((leg, index) => (
+                    <Field key={index} label={leg.label}>
+                        <Input
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            inputMode="decimal"
+                            value={leg.cost}
+                            onChange={(e) => setLeg(index, e.target.value)}
+                            dir="ltr"
+                            className="text-left"
+                        />
+                    </Field>
+                ))}
+
+                <div className="grid grid-cols-2 gap-3">
+                    <Field label="بدل">
+                        <Input
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            value={allowance}
+                            onChange={(e) => setAllowance(e.target.value)}
+                            dir="ltr"
+                            className="text-left"
+                        />
+                    </Field>
+                    <Field label="مبيت">
+                        <Input
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            value={lodging}
+                            onChange={(e) => setLodging(e.target.value)}
+                            dir="ltr"
+                            className="text-left"
+                        />
+                    </Field>
+                </div>
+
+                <div className="flex items-center justify-between rounded-xl bg-navy-50 px-4 py-3">
+                    <span className="text-xs font-bold text-navy-500">الإجمالي</span>
+                    <span className="tabular text-lg font-extrabold text-navy-900">
+                        {formatMoney(total)}
+                    </span>
+                </div>
+            </div>
+        </Modal>
     )
 }
 

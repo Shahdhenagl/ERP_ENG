@@ -368,7 +368,7 @@ export const ALL_READING_KEYS = [
 ] as const
 
 /** Expense headings a technician picks from when spending out of their float. */
-export const EXPENSE_CATEGORIES = ['وقود', 'مواصلات', 'مبيت', 'قطع غيار', 'ضيافة', 'أخرى'] as const
+export const EXPENSE_CATEGORIES = ['وقود', 'مواصلات', 'خط السير', 'مبيت', 'قطع غيار', 'ضيافة', 'أخرى'] as const
 
 /** UPS topology, on the device nameplate. */
 export const UPS_TYPES: Record<string, string> = {

@@ -1,4 +1,4 @@
-import { MapPin, Save } from 'lucide-react'
+import { MapPin, Save, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
@@ -41,6 +41,20 @@ export function BranchForm({
         notes: branch?.notes ?? '',
         is_active: branch?.is_active ?? true,
     })
+
+    // The expected route: the stations on the way with their fares, plus the
+    // daily allowance and any lodging. The technician confirms the actual cost
+    // against this on the job.
+    const [legs, setLegs] = useState<Array<{ label: string; cost: string }>>(
+        (branch?.route?.legs ?? []).map((leg) => ({
+            label: leg.label,
+            cost: leg.cost != null ? String(leg.cost) : '',
+        })),
+    )
+    const [allowance, setAllowance] = useState(
+        branch?.route?.allowance ? String(branch.route.allowance) : '',
+    )
+    const [lodging, setLodging] = useState(branch?.route?.lodging ? String(branch.route.lodging) : '')
 
     const set = (key: keyof typeof form) => (value: string | boolean) =>
         setForm((current) => ({ ...current, [key]: value }))
@@ -96,6 +110,19 @@ export function BranchForm({
                 contact_phone: form.contact_phone || null,
                 contact_whatsapp: form.contact_whatsapp || null,
                 working_hours: form.working_hours || null,
+                route:
+                    legs.some((leg) => leg.label.trim()) || allowance || lodging
+                        ? {
+                              legs: legs
+                                  .filter((leg) => leg.label.trim())
+                                  .map((leg) => ({
+                                      label: leg.label.trim(),
+                                      cost: Number(leg.cost) || 0,
+                                  })),
+                              allowance: Number(allowance) || 0,
+                              lodging: Number(lodging) || 0,
+                          }
+                        : null,
                 notes: form.notes || null,
                 is_active: form.is_active,
             })
@@ -251,6 +278,95 @@ export function BranchForm({
                             placeholder="٩ ص - ٥ م، الجمعة مغلق"
                         />
                     </Field>
+                </div>
+
+                {/* ── Route: the expected fare per station ─────── */}
+                <div className="rounded-2xl border border-navy-100 bg-navy-50/50 p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                        <div>
+                            <h3 className="text-sm font-bold text-navy-800">خط السير</h3>
+                            <p className="text-[11px] text-navy-400">
+                                التكلفة المتوقعة لكل محطة — يؤكّدها الفني أو يعدّلها عند التنفيذ.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setLegs((current) => [...current, { label: '', cost: '' }])}
+                            className="tap rounded-lg bg-navy-100 px-3 py-1.5 text-xs font-bold text-navy-700"
+                        >
+                            إضافة محطة
+                        </button>
+                    </div>
+
+                    <div className="space-y-2">
+                        {legs.map((leg, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                                <Input
+                                    value={leg.label}
+                                    placeholder="إلى الفرع / محطة"
+                                    onChange={(e) =>
+                                        setLegs((current) =>
+                                            current.map((l, i) =>
+                                                i === index ? { ...l, label: e.target.value } : l,
+                                            ),
+                                        )
+                                    }
+                                    className="flex-1"
+                                />
+                                <Input
+                                    type="number"
+                                    min={0}
+                                    step="0.01"
+                                    value={leg.cost}
+                                    placeholder="التكلفة"
+                                    onChange={(e) =>
+                                        setLegs((current) =>
+                                            current.map((l, i) =>
+                                                i === index ? { ...l, cost: e.target.value } : l,
+                                            ),
+                                        )
+                                    }
+                                    dir="ltr"
+                                    className="w-28 text-left"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setLegs((current) => current.filter((_, i) => i !== index))
+                                    }
+                                    className="tap grid size-9 shrink-0 place-items-center rounded-xl bg-red-50 text-red-600"
+                                    aria-label="حذف"
+                                >
+                                    <Trash2 className="size-4" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-2 gap-3">
+                        <Field label="بدل">
+                            <Input
+                                type="number"
+                                min={0}
+                                step="0.01"
+                                value={allowance}
+                                onChange={(e) => setAllowance(e.target.value)}
+                                dir="ltr"
+                                className="text-left"
+                            />
+                        </Field>
+                        <Field label="مبيت">
+                            <Input
+                                type="number"
+                                min={0}
+                                step="0.01"
+                                value={lodging}
+                                onChange={(e) => setLodging(e.target.value)}
+                                dir="ltr"
+                                className="text-left"
+                            />
+                        </Field>
+                    </div>
                 </div>
 
                 <Field label="ملاحظات" error={errors.notes}>
