@@ -7,6 +7,7 @@ use App\Enums\TaskStatus;
 use App\Enums\TaskType;
 use App\Enums\VisitStatus;
 use App\Models\ActivityLog;
+use App\Models\Branch;
 use App\Models\Contract;
 use App\Models\ContractVisit;
 use App\Models\Task;
@@ -266,7 +267,7 @@ class MaintenancePlanner
             $visits = ContractVisit::query()
                 ->due(self::HORIZON_DAYS)
                 ->whereHas('contract', fn ($q) => $q->activeOn(now()->toDateString()))
-                ->with('contract.customer', 'contract.assets')
+                ->with('contract.customer.branches', 'contract.assets')
                 ->orderBy('planned_for')
                 ->limit($limit)
                 ->lockForUpdate()
@@ -282,10 +283,26 @@ class MaintenancePlanner
                     continue;
                 }
 
-                $task = $this->createTaskFor($visit);
+                // A round covers every branch — one work order each — so a
+                // customer with thirty branches gets thirty jobs this month. A
+                // customer with no branches on file gets the single site job it
+                // always did.
+                $branches = $visit->contract->customer?->branches()->active()->get() ?? collect();
+                $first = null;
+
+                if ($branches->isEmpty()) {
+                    $first = $this->createTaskFor($visit, null);
+                } else {
+                    foreach ($branches as $branch) {
+                        $task = $this->createTaskFor($visit, $branch);
+                        $first ??= $task;
+                    }
+                }
 
                 $visit->update([
-                    'task_id' => $task->id,
+                    // The representative job keeps the legacy one-to-one link
+                    // alive; every job also carries the round id on its own side.
+                    'task_id' => $first?->id,
                     'status' => VisitStatus::Scheduled,
                 ]);
 
@@ -306,20 +323,28 @@ class MaintenancePlanner
             ->exists();
     }
 
-    protected function createTaskFor(ContractVisit $visit): Task
+    protected function createTaskFor(ContractVisit $visit, ?Branch $branch = null): Task
     {
         $contract = $visit->contract;
-        $assets = $contract->assets;
+
+        // The devices this job answers for: the branch's own when it is a branch
+        // job, the whole covered set otherwise.
+        $assets = $branch
+            ? $contract->assets->where('branch_id', $branch->id)->values()
+            : $contract->assets;
 
         return Task::create([
             'customer_id' => $contract->customer_id,
             'contract_id' => $contract->id,
+            'contract_visit_id' => $visit->id,
+            'branch_id' => $branch?->id,
             // One device: point the job straight at it so the visit shows up in
             // that device's history. Several: the job covers the site, and the
             // per-device link is a gap we have not closed yet.
             'asset_id' => $assets->count() === 1 ? $assets->first()->id : null,
             'created_by' => $contract->created_by,
-            'title' => 'زيارة صيانة دورية — '.$contract->code,
+            'title' => 'زيارة صيانة دورية — '.$contract->code
+                .($branch ? ' — '.$branch->name : ''),
             'description' => $this->visitDescription($visit),
             'type' => TaskType::Maintenance,
             'priority' => TaskPriority::Normal,

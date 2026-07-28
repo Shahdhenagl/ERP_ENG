@@ -67,15 +67,34 @@ it('computes compliance from what was due', function () {
 });
 
 it('marks a visit done when its maintenance task completes', function () {
+    $visit = visit(['status' => VisitStatus::Scheduled]);
     $task = Task::factory()->for($this->customer)->create([
         'contract_id' => $this->contract->id,
+        'contract_visit_id' => $visit->id,
         'status' => TaskStatus::InProgress,
     ]);
-    $visit = visit(['status' => VisitStatus::Scheduled, 'task_id' => $task->id]);
+    $visit->update(['task_id' => $task->id]);
 
     app(TaskWorkflow::class)->transition($task, TaskStatus::Completed, $this->manager);
 
     expect($visit->fresh()->status)->toBe(VisitStatus::Done);
+});
+
+it('holds a round open until every branch job is done', function () {
+    // Two branches → two jobs for the round; the round closes only when both do.
+    $visit = visit(['status' => VisitStatus::Scheduled]);
+
+    $jobs = collect(range(1, 2))->map(fn () => Task::factory()->for($this->customer)->create([
+        'contract_id' => $this->contract->id,
+        'contract_visit_id' => $visit->id,
+        'status' => TaskStatus::InProgress,
+    ]));
+
+    app(TaskWorkflow::class)->transition($jobs[0], TaskStatus::Completed, $this->manager);
+    expect($visit->fresh()->status)->toBe(VisitStatus::Scheduled);   // one still open
+
+    app(TaskWorkflow::class)->transition($jobs[1], TaskStatus::Completed, $this->manager);
+    expect($visit->fresh()->status)->toBe(VisitStatus::Done);        // both done
 });
 
 it('bars a technician from the PPM schedule', function () {

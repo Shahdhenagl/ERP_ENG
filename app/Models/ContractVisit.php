@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * One promised visit. Lives apart from `tasks` so a year of planning never
@@ -47,6 +48,16 @@ class ContractVisit extends Model
         return $this->belongsTo(Task::class);
     }
 
+    /**
+     * Every work order this round cut — one per covered branch. A round with a
+     * single site (or none) still has exactly one, so this is the honest count
+     * whether the contract fans out or not.
+     */
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
+    }
+
     // ── Replanning ───────────────────────────────────────────
 
     /**
@@ -63,13 +74,20 @@ class ContractVisit extends Model
             return true;
         }
 
-        $task = $this->task;
+        // A round fans out to one job per branch. It is committed the moment any
+        // one of them is accepted or moved off pending — a technician has taken
+        // on the round, even if the other branches' orders have not gone out.
+        $tasks = $this->relationLoaded('tasks') ? $this->tasks : $this->tasks()->get();
 
-        if (! $task) {
-            return false;
+        // Fall back to the single legacy link when no task carries the round id
+        // yet (a plan made before the round could fan out).
+        if ($tasks->isEmpty() && $this->task) {
+            $tasks = collect([$this->task]);
         }
 
-        return $task->status !== TaskStatus::Pending || $task->assigned_to !== null;
+        return $tasks->contains(
+            fn (Task $task) => $task->status !== TaskStatus::Pending || $task->assigned_to !== null,
+        );
     }
 
     public function scopeFree(Builder $query): Builder

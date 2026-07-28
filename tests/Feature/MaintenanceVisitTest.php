@@ -25,6 +25,52 @@ beforeEach(function () {
 
 /* ── Planning ───────────────────────────────────────────── */
 
+it('fans a due round out to one job per covered branch', function () {
+    $contract = Contract::factory()->active()->for($this->customer)->create([
+        'starts_on' => now()->toDateString(),
+        'ends_on' => now()->addYear()->subDay()->toDateString(),
+        'visits_per_year' => 12,
+    ]);
+
+    foreach (['المعادي', 'مدينة نصر', 'الجيزة'] as $name) {
+        \App\Models\Branch::create([
+            'customer_id' => $this->customer->id, 'name' => $name, 'is_active' => true,
+        ]);
+    }
+
+    // A round due today, so materialising is deterministic.
+    $visit = \App\Models\ContractVisit::create([
+        'contract_id' => $contract->id, 'sequence' => 1,
+        'planned_for' => now()->toDateString(), 'status' => VisitStatus::Planned,
+    ]);
+
+    $this->planner->materialiseDueVisits();
+
+    $tasks = Task::where('contract_id', $contract->id)->get();
+
+    // Three branches → three jobs, all under the one round.
+    expect($tasks)->toHaveCount(3)
+        ->and($tasks->pluck('branch_id')->filter()->unique()->count())->toBe(3)
+        ->and($tasks->pluck('contract_visit_id')->unique()->all())->toBe([$visit->id]);
+});
+
+it('still cuts a single site job when the customer has no branches', function () {
+    $contract = Contract::factory()->active()->for($this->customer)->create([
+        'starts_on' => now()->toDateString(),
+        'ends_on' => now()->addYear()->subDay()->toDateString(),
+        'visits_per_year' => 12,
+    ]);
+
+    \App\Models\ContractVisit::create([
+        'contract_id' => $contract->id, 'sequence' => 1,
+        'planned_for' => now()->toDateString(), 'status' => VisitStatus::Planned,
+    ]);
+
+    $this->planner->materialiseDueVisits();
+
+    expect(Task::where('contract_id', $contract->id)->count())->toBe(1);
+});
+
 it('lays out the whole term as visits, not as work orders', function () {
     $contract = Contract::factory()->for($this->customer)->create([
         'starts_on' => now()->toDateString(),

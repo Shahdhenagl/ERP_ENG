@@ -23,6 +23,7 @@ class Task extends Model
         'branch_id',
         'asset_id',
         'contract_id',
+        'contract_visit_id',
         'assigned_to',
         'created_by',
         'title',
@@ -162,9 +163,10 @@ class Task extends Model
         return $this->hasOne(SatisfactionSurvey::class);
     }
 
-    public function contractVisit(): HasOne
+    /** The maintenance round this job belongs to, when it came from a contract. */
+    public function contractVisit(): BelongsTo
     {
-        return $this->hasOne(ContractVisit::class);
+        return $this->belongsTo(ContractVisit::class);
     }
 
     // ── Location helpers ─────────────────────────────────────

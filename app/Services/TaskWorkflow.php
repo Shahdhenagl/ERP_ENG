@@ -82,11 +82,19 @@ class TaskWorkflow
 
             // A completed maintenance visit closes its plan entry, so PPM
             // compliance counts the visits actually carried out — not just the
-            // ones a work order was cut for.
-            if ($to === TaskStatus::Completed) {
-                $task->contractVisit()
-                    ->where('status', VisitStatus::Scheduled->value)
-                    ->update(['status' => VisitStatus::Done->value]);
+            // ones a work order was cut for. A round fans out to one job per
+            // branch, so it is only done once every branch's job is: closing it
+            // on the first would count a round nobody finished.
+            if ($to === TaskStatus::Completed && ($visit = $task->contractVisit)) {
+                if ($visit->status === VisitStatus::Scheduled) {
+                    $open = $visit->tasks()
+                        ->whereNotIn('status', [TaskStatus::Completed->value, TaskStatus::Cancelled->value])
+                        ->exists();
+
+                    if (! $open) {
+                        $visit->update(['status' => VisitStatus::Done->value]);
+                    }
+                }
             }
         });
 
