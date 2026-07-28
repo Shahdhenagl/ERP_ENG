@@ -8,6 +8,8 @@ use App\Models\PurchaseOrder;
 use App\Services\PurchasingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class PurchaseOrderController extends Controller
 {
@@ -25,7 +27,19 @@ class PurchaseOrderController extends Controller
             // `open` filters on a derived value, so it is applied after loading
             // rather than pretending it can be done in SQL.
             ->when($request->boolean('open'), fn ($rows) => $rows->filter->isOpen())
-            ->map(fn (PurchaseOrder $order) => $this->present($order))
+            // One order whose data is somehow broken must not take the whole
+            // list down with it — skip it and leave a trace to chase, rather
+            // than 500 the purchasing screen.
+            ->map(function (PurchaseOrder $order) {
+                try {
+                    return $this->present($order);
+                } catch (Throwable $e) {
+                    Log::warning("تعذّر عرض أمر الشراء #{$order->id}: ".$e->getMessage());
+
+                    return null;
+                }
+            })
+            ->filter()
             ->values();
 
         return response()->json(['data' => $orders]);
