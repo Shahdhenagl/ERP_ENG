@@ -44,6 +44,7 @@ class OperationsAlertScanner
             ->merge($this->delayedTasks())
             ->merge($this->ppmDue())
             ->merge($this->contractPaymentsDue())
+            ->merge($this->contractsExpiring())
             ->merge($this->warrantiesExpiring())
             ->merge($this->newInvoices())
             ->merge($this->overdueInvoices())
@@ -164,6 +165,24 @@ class OperationsAlertScanner
             ]);
     }
 
+    /** How far ahead a maintenance contract counts as "about to end". */
+    public const CONTRACT_HORIZON_DAYS = 60;
+
+    /** Contracts whose term is nearly up — a renewal to chase before cover lapses. */
+    protected function contractsExpiring(): Collection
+    {
+        return \App\Models\Contract::query()
+            ->expiringWithin(self::CONTRACT_HORIZON_DAYS)
+            ->with('customer')->get()
+            ->map(fn (\App\Models\Contract $c) => [
+                'key' => "contract-expiring:{$c->id}",
+                'type' => 'contract.expiring',
+                'title' => 'عقد قارب على الانتهاء',
+                'body' => ($c->customer?->name ?? $c->code)." — ينتهي {$c->ends_on?->toDateString()}",
+                'url' => "/contracts/{$c->id}", 'tag' => "contract-{$c->id}",
+            ]);
+    }
+
     /** Cover about to lapse. */
     protected function warrantiesExpiring(): Collection
     {
@@ -239,7 +258,7 @@ class OperationsAlertScanner
                 'key' => "approval-quote:{$q->id}", 'type' => 'approval.needed',
                 'title' => 'عرض سعر بانتظار الاعتماد',
                 'body' => "{$q->code} — ".($q->customer?->name ?? ''),
-                'url' => '/sales/approvals', 'tag' => "quote-{$q->id}",
+                'url' => "/sales/approvals?quote={$q->id}", 'tag' => "quote-{$q->id}",
             ]);
 
         $leave = LeaveRequest::query()->pending()->with('employee')->get()

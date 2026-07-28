@@ -1,9 +1,13 @@
-import { BadgeCheck, ClipboardCheck, ThumbsDown } from 'lucide-react'
+import clsx from 'clsx'
+import { BadgeCheck, ClipboardCheck, Eye, ThumbsDown } from 'lucide-react'
+import { useEffect } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useToast } from '@/components/Toast'
 import { Button, EmptyState, PageHeader, SkeletonCard } from '@/components/ui'
 import { errorMessage } from '@/lib/api'
 import { formatMoney } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
+import { useArea } from '@/lib/nav'
 import { useQuotationAction, useQuotations } from '@/lib/queries'
 
 /**
@@ -13,8 +17,19 @@ import { useQuotationAction, useQuotations } from '@/lib/queries'
  */
 export function QuoteApprovalsPage() {
     const toast = useToast()
+    const { path } = useArea()
     const action = useQuotationAction()
     const { data, isLoading } = useQuotations({ pending_approval: 1, per_page: 80 })
+
+    // Deep-linked from a notification: scroll to and highlight the named quote.
+    const [params] = useSearchParams()
+    const focusId = params.get('quote') ? Number(params.get('quote')) : null
+
+    useEffect(() => {
+        if (!focusId || !data?.length) return
+        const el = document.getElementById(`quote-${focusId}`)
+        el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, [focusId, data])
 
     const decide = async (id: number, approve: boolean) => {
         if (!approve) {
@@ -55,7 +70,14 @@ export function QuoteApprovalsPage() {
             ) : (
                 <div className="space-y-2">
                     {data.map((quote) => (
-                        <div key={quote.id} className="card p-4">
+                        <div
+                            key={quote.id}
+                            id={`quote-${quote.id}`}
+                            className={clsx(
+                                'card p-4 transition',
+                                focusId === quote.id && 'ring-2 ring-brand-400',
+                            )}
+                        >
                             <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
                                     <div className="flex flex-wrap items-center gap-2">
@@ -83,7 +105,7 @@ export function QuoteApprovalsPage() {
                                 </p>
                             </div>
 
-                            <div className="mt-3 flex gap-2 border-t border-navy-100 pt-3">
+                            <div className="mt-3 flex flex-wrap gap-2 border-t border-navy-100 pt-3">
                                 <Button
                                     icon={BadgeCheck}
                                     className="text-xs"
@@ -100,6 +122,14 @@ export function QuoteApprovalsPage() {
                                 >
                                     إعادة للتعديل
                                 </Button>
+                                <Link
+                                    to={path(`/print/quotations/${quote.id}`)}
+                                    target="_blank"
+                                    className="btn-secondary text-xs"
+                                >
+                                    <Eye className="size-3.5" />
+                                    معاينة العرض
+                                </Link>
                             </div>
                         </div>
                     ))}

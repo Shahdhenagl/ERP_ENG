@@ -88,7 +88,7 @@ export function Textarea({ className, ...props }: TextareaHTMLAttributes<HTMLTex
 
 export function Select({ className, children, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
     return (
-        <select className={clsx('input cursor-pointer', className)} {...props}>
+        <select className={clsx('input select', className)} {...props}>
             {children}
         </select>
     )

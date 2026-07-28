@@ -177,8 +177,24 @@
     .input {
         @apply w-full rounded-xl border border-navy-200 bg-white px-4 py-2.5 text-sm shadow-sm transition
                placeholder:text-navy-300
+               hover:border-navy-300
                focus:border-brand-400 focus:ring-4 focus:ring-brand-100 focus:outline-none
                disabled:bg-navy-50 disabled:text-navy-400;
+    }
+
+    /* A dropdown with a custom chevron on the left — the native arrow reads as
+       unstyled, and in RTL it sits on the wrong side. Single element still, so
+       width utilities passed to it keep working. */
+    .select {
+        @apply cursor-pointer appearance-none bg-no-repeat pl-10 font-medium;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+        background-position: left 0.75rem center;
+        background-size: 1.05rem;
+    }
+
+    /* Native option lists can't be fully styled, but this keeps them readable. */
+    .select option {
+        @apply bg-white py-2 font-medium text-navy-800;
     }
 
     .label {

@@ -49,6 +49,22 @@ it('shows a quote waiting on approval under the approvals group', function () {
         ->and($groups->firstWhere('key', 'approvals')['count'])->toBeGreaterThan(0);
 });
 
+it('flags a contract about to end under the maintenance group', function () {
+    \App\Models\Contract::factory()->active()->for($this->customer)->create([
+        'starts_on' => now()->subYear()->toDateString(),
+        'ends_on' => now()->addDays(20)->toDateString(),
+    ]);
+
+    $groups = collect(
+        actingAs($this->manager)->getJson('/api/alerts')->assertOk()->json('data.groups'),
+    );
+
+    $maintenance = $groups->firstWhere('key', 'maintenance');
+
+    expect($maintenance)->not->toBeNull()
+        ->and(collect($maintenance['items'])->pluck('title'))->toContain('عقد قارب على الانتهاء');
+});
+
 it('returns nothing to act on when all is clear', function () {
     actingAs($this->manager)->getJson('/api/alerts')
         ->assertOk()

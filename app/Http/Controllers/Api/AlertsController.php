@@ -22,7 +22,7 @@ class AlertsController extends Controller
     protected const GROUPS = [
         ['key' => 'stock', 'label' => 'نواقص المخزون', 'types' => ['stock.low']],
         ['key' => 'tasks', 'label' => 'مهام عاجلة ومتأخرة', 'types' => ['task.urgent', 'device.fault', 'task.delayed']],
-        ['key' => 'maintenance', 'label' => 'الصيانة الدورية والعقود', 'types' => ['ppm.due', 'contract.payment_due']],
+        ['key' => 'maintenance', 'label' => 'الصيانة الدورية والعقود', 'types' => ['ppm.due', 'contract.payment_due', 'contract.expiring']],
         ['key' => 'warranties', 'label' => 'الضمانات', 'types' => ['warranty.expiring']],
         ['key' => 'finance', 'label' => 'متأخرات السداد', 'types' => ['invoice.overdue', 'expense.recurring_due']],
         ['key' => 'approvals', 'label' => 'بانتظار الاعتماد', 'types' => ['approval.needed']],

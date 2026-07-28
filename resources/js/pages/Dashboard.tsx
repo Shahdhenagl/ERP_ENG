@@ -222,7 +222,8 @@ export function Dashboard() {
                 Boolean(
                     data?.low_stock?.length ||
                         data?.delayed_tasks?.length ||
-                        data?.overdue_invoices?.length,
+                        data?.overdue_invoices?.length ||
+                        data?.contracts_expiring?.length,
                 ) && (
                     <section className="mt-8">
                         <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-navy-700">
@@ -276,6 +277,27 @@ export function Dashboard() {
                                         }))}
                                     />
                                 )}
+
+                            {Boolean(data?.contracts_expiring?.length) && (
+                                <AlertColumn
+                                    title="عقود قاربت على الانتهاء"
+                                    count={stats?.contracts_expiring}
+                                    tone="amber"
+                                    to={path('/contracts')}
+                                    rows={data!.contracts_expiring!.map((c) => ({
+                                        key: `c-${c.id}`,
+                                        to: path(`/contracts/${c.id}`),
+                                        title: c.customer?.name ?? c.label ?? c.code,
+                                        subtitle: `${c.code} · ${
+                                            c.days_remaining != null
+                                                ? `يتبقى ${c.days_remaining} يوم`
+                                                : c.ends_on
+                                                  ? `ينتهي ${formatDate(c.ends_on)}`
+                                                  : ''
+                                        }`,
+                                    }))}
+                                />
+                            )}
                         </div>
                     </section>
                 )}
