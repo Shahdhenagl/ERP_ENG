@@ -36,6 +36,7 @@ import type {
     CashBoxSummary,
     CashMovementRow,
     CashVoucher,
+    RecurringExpense,
     Cheque,
     ChequeOutlook,
     Reconciliation,
@@ -2090,6 +2091,55 @@ export function useTreasuryOperation(operation: 'expense' | 'transfer' | 'deposi
         mutationFn: async (payload: Record<string, unknown>) =>
             (await api.post(`/treasury/${operation}`, payload)).data,
         onSuccess: () => invalidateMoney(client),
+    })
+}
+
+/* ── Recurring (fixed) expenses ──────────────────────────── */
+
+export function useRecurringExpenses() {
+    return useQuery({
+        queryKey: ['recurring-expenses'],
+        queryFn: async () =>
+            (
+                await api.get<{ data: RecurringExpense[]; meta: { due_soon: number } }>(
+                    '/recurring-expenses',
+                )
+            ).data,
+    })
+}
+
+export function useSaveRecurringExpense(id?: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (
+                await (id
+                    ? api.put(`/recurring-expenses/${id}`, payload)
+                    : api.post('/recurring-expenses', payload))
+            ).data,
+        onSuccess: () => client.invalidateQueries({ queryKey: ['recurring-expenses'] }),
+    })
+}
+
+export function useDeleteRecurringExpense() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id: number) => (await api.delete(`/recurring-expenses/${id}`)).data,
+        onSuccess: () => client.invalidateQueries({ queryKey: ['recurring-expenses'] }),
+    })
+}
+
+export function usePayRecurringExpense() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id: number) => (await api.post(`/recurring-expenses/${id}/pay`, {})).data,
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: ['recurring-expenses'] })
+            invalidateMoney(client)
+        },
     })
 }
 

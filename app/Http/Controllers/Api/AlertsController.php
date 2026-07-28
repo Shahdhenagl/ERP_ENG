@@ -24,7 +24,7 @@ class AlertsController extends Controller
         ['key' => 'tasks', 'label' => 'مهام عاجلة ومتأخرة', 'types' => ['task.urgent', 'device.fault', 'task.delayed']],
         ['key' => 'maintenance', 'label' => 'الصيانة الدورية والعقود', 'types' => ['ppm.due', 'contract.payment_due']],
         ['key' => 'warranties', 'label' => 'الضمانات', 'types' => ['warranty.expiring']],
-        ['key' => 'finance', 'label' => 'متأخرات السداد', 'types' => ['invoice.overdue']],
+        ['key' => 'finance', 'label' => 'متأخرات السداد', 'types' => ['invoice.overdue', 'expense.recurring_due']],
         ['key' => 'approvals', 'label' => 'بانتظار الاعتماد', 'types' => ['approval.needed']],
     ];
 

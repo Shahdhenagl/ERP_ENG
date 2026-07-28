@@ -229,7 +229,7 @@ export const NAV: NavItem[] = [
             { to: '/treasury', permission: 'treasury.manage', label: 'الخزائن', icon: Wallet },
             { to: '/collections', permission: 'treasury.manage', label: 'سند قبض', icon: HandCoins },
             { to: '/treasury/payments-out', permission: 'treasury.manage', label: 'سند صرف', icon: Banknote },
-            { to: '/treasury/operations', permission: 'treasury.manage', label: 'تحويل خزنة / المصروفات', icon: ArrowLeftRight },
+            { to: '/treasury/operations', permission: 'treasury.manage', label: 'عمليات الخزينة والمصروفات الدورية', icon: ArrowLeftRight },
             { to: '/treasury/daybook', permission: 'treasury.manage', label: 'حركة الخزينة اليومية', icon: FileClock },
         ],
     },

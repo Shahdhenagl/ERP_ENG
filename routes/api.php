@@ -30,6 +30,7 @@ use App\Http\Controllers\Api\PurchaseOrderController;
 use App\Http\Controllers\Api\SupplierQuoteController;
 use App\Http\Controllers\Api\PurchaseRequestController;
 use App\Http\Controllers\Api\QuotationController;
+use App\Http\Controllers\Api\RecurringExpenseController;
 use App\Http\Controllers\Api\TenderController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\SalesOrderController;
@@ -515,6 +516,13 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::delete('treasury/movements/{movement}', [TreasuryController::class, 'destroyMovement'])->middleware('can:treasury.manage');
     Route::post('treasury/expense', [TreasuryController::class, 'expense'])->middleware('can:treasury.manage');
     Route::post('treasury/deposit', [TreasuryController::class, 'deposit'])->middleware('can:treasury.manage');
+
+    // Fixed, recurring bills — rent, a line, a licence — with a due reminder.
+    Route::get('recurring-expenses', [RecurringExpenseController::class, 'index'])->middleware('can:treasury.manage');
+    Route::post('recurring-expenses', [RecurringExpenseController::class, 'store'])->middleware('can:treasury.manage');
+    Route::put('recurring-expenses/{recurringExpense}', [RecurringExpenseController::class, 'update'])->middleware('can:treasury.manage');
+    Route::delete('recurring-expenses/{recurringExpense}', [RecurringExpenseController::class, 'destroy'])->middleware('can:treasury.manage');
+    Route::post('recurring-expenses/{recurringExpense}/pay', [RecurringExpenseController::class, 'pay'])->middleware('can:treasury.manage');
     Route::post('treasury/transfer', [TreasuryController::class, 'transfer'])->middleware('can:treasury.manage');
 
     Route::get('payments', [TreasuryController::class, 'payments'])->middleware('can:treasury.manage');

@@ -47,8 +47,36 @@ class OperationsAlertScanner
             ->merge($this->warrantiesExpiring())
             ->merge($this->newInvoices())
             ->merge($this->overdueInvoices())
+            ->merge($this->recurringExpensesDue())
             ->merge($this->partsLow())
             ->merge($this->approvalsNeeded());
+    }
+
+    /** How many days before a fixed expense falls due it starts reminding. */
+    public const RECURRING_HORIZON_DAYS = 3;
+
+    /**
+     * Fixed expenses due within three days, or already overdue — the reminder
+     * keeps showing until the bill is paid, which rolls its next due forward and
+     * takes it back off this list.
+     */
+    protected function recurringExpensesDue(): Collection
+    {
+        return \App\Models\RecurringExpense::query()
+            ->dueWithin(self::RECURRING_HORIZON_DAYS)
+            ->with('box')->get()
+            ->map(function (\App\Models\RecurringExpense $e) {
+                $days = $e->daysUntilDue();
+                $when = $days < 0 ? 'متأخر' : ($days === 0 ? 'اليوم' : "خلال {$days} يوم");
+
+                return [
+                    'key' => "recurring-expense-due:{$e->id}:{$e->next_due_on->toDateString()}",
+                    'type' => 'expense.recurring_due',
+                    'title' => 'مصروف دوري مستحق',
+                    'body' => "{$e->name} — ".number_format((float) $e->amount, 2)." ج · {$when}",
+                    'url' => '/treasury/operations', 'tag' => "recurring-expense-{$e->id}",
+                ];
+            });
     }
 
     /** Urgent work still open — a fault or a call that cannot wait. */

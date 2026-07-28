@@ -950,6 +950,24 @@ export interface CashMovementRow {
     created_at: string | null
 }
 
+/** A fixed bill that comes round on a cycle — rent, a line, a licence. */
+export interface RecurringExpense {
+    id: number
+    name: string
+    amount: number
+    category: string | null
+    cash_box_id: number | null
+    cash_box: string | null
+    cycle_days: number
+    start_on: string | null
+    next_due_on: string | null
+    last_paid_on: string | null
+    days_until_due: number
+    is_due_soon: boolean
+    is_active: boolean
+    notes: string | null
+}
+
 /** A printable manual cash voucher — an expense paid or a deposit received. */
 export interface CashVoucher {
     id: number

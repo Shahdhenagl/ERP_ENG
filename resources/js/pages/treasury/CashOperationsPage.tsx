@@ -5,6 +5,7 @@ import { Button, Field, Input, PageHeader, Select, Textarea } from '@/components
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { formatMoney } from '@/lib/domain'
 import { useCashBoxes, useTreasuryOperation } from '@/lib/queries'
+import { RecurringExpensesSection } from '@/pages/treasury/RecurringExpensesSection'
 
 /**
  * The two cash operations that are not a customer or supplier settlement:
@@ -25,6 +26,10 @@ export function CashOperationsPage() {
                 <TransferCard boxes={boxes ?? []} />
                 <ExpenseCard boxes={boxes ?? []} />
                 <DepositCard boxes={boxes ?? []} />
+            </div>
+
+            <div className="mt-4">
+                <RecurringExpensesSection />
             </div>
         </>
     )
