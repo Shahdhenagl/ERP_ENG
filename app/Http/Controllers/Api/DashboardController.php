@@ -144,6 +144,26 @@ class DashboardController extends Controller
                 Contract::query()->expiringWithin(60)->with('customer')->orderBy('ends_on')->limit(5)->get(),
             )->resolve();
 
+            // Quotes a salesperson has handed over and cannot send until someone
+            // signs them off. Every hour one sits here is an hour the customer
+            // is waiting, so it belongs beside the other things needing an act.
+            $awaitingApproval = \App\Models\Quotation::query()
+                ->pendingApproval()
+                ->with('customer')
+                ->orderBy('submitted_at')
+                ->limit(5)
+                ->get();
+
+            $stats['pending_approvals'] = \App\Models\Quotation::query()->pendingApproval()->count();
+            $payload['pending_approvals'] = $awaitingApproval->map(fn ($q) => [
+                'id' => $q->id,
+                'code' => $q->code,
+                'customer' => $q->customer?->name,
+                'title' => $q->title,
+                'total' => (float) $q->total,
+                'submitted_at' => $q->submitted_at?->toIso8601String(),
+            ]);
+
             // Cover about to lapse is money waiting to be asked for: an
             // extension is sellable while the customer still feels covered, and
             // worthless the day after. Sixty days matches the contract horizon.

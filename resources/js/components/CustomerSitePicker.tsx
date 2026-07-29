@@ -28,6 +28,7 @@ export function CustomerSitePicker({
     disabled?: boolean
 }) {
     const [search, setSearch] = useState('')
+    const [siteSearch, setSiteSearch] = useState('')
 
     // Searching is the point, so the page size is small — the list is a
     // shortlist to pick from, not the customer book.
@@ -42,6 +43,17 @@ export function CustomerSitePicker({
         customerId ? Number(customerId) : undefined,
     )
     const branches = (branchList ?? []).filter((branch) => branch.is_active)
+
+    // Filtered in the browser: the whole list is already here, and a round trip
+    // per keystroke would be slower than the typing.
+    const term = siteSearch.trim().toLowerCase()
+    const matchingBranches = term
+        ? branches.filter(
+              (branch) =>
+                  branch.name.toLowerCase().includes(term)
+                  || (branch.city ?? '').toLowerCase().includes(term),
+          )
+        : branches
 
     // Read on its own rather than looked up in the visible list: reopening a
     // saved document has no search behind it, so the name would come up blank.
@@ -119,26 +131,45 @@ export function CustomerSitePicker({
                 )}
             </Field>
 
-            {/* Only asked where there is a choice to make. */}
+            {/* Only asked where there is a choice to make. A customer with a
+                handful of sites needs no search; one with thirty does, and the
+                same box serves both. */}
             {customerId && branches.length > 0 && (
                 <Field
                     label="الفرع"
                     error={branchError}
                     hint="اترك الاختيار فارغًا لو العرض للمقر الرئيسي."
                 >
+                    {branches.length > 8 && (
+                        <div className="relative mb-2">
+                            <Search className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-navy-300" />
+                            <Input
+                                value={siteSearch}
+                                onChange={(event) => setSiteSearch(event.target.value)}
+                                placeholder="ابحث باسم الفرع…"
+                                className="pr-9"
+                                disabled={disabled}
+                            />
+                        </div>
+                    )}
+
                     <Select
                         value={branchId}
                         onChange={(event) => onChange({ customerId, branchId: event.target.value })}
                         disabled={disabled}
                     >
                         <option value="">— المقر الرئيسي —</option>
-                        {branches.map((branch) => (
+                        {matchingBranches.map((branch) => (
                             <option key={branch.id} value={branch.id}>
                                 {branch.name}
                                 {branch.city ? ` — ${branch.city}` : ''}
                             </option>
                         ))}
                     </Select>
+
+                    {siteSearch && matchingBranches.length === 0 && (
+                        <p className="mt-1 text-[11px] text-navy-400">لا يوجد فرع بهذا الاسم.</p>
+                    )}
                 </Field>
             )}
 

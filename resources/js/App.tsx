@@ -1,5 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { BrowserRouter, Navigate, Outlet, Route, Routes, useParams } from 'react-router-dom'
+import {
+    BrowserRouter,
+    Navigate,
+    Outlet,
+    Route,
+    Routes,
+    useLocation,
+    useParams,
+} from 'react-router-dom'
 import { AppLayout } from '@/components/AppLayout'
 import { ToastProvider } from '@/components/Toast'
 import { PageLoader } from '@/components/ui'
@@ -324,7 +332,7 @@ export function App() {
                                 </Route>
                             </Route>
 
-                            <Route path="*" element={<AreaRedirect to="/" />} />
+                            <Route path="*" element={<AreaFallback />} />
                         </Routes>
                     </AuthProvider>
                 </ToastProvider>
@@ -368,4 +376,25 @@ function AreaRedirect({ to }: { to: string }) {
     const suffix = id ? to.replace(':id', id) : to
 
     return <Navigate to={areaFor(user.role) + (suffix === '/' ? '' : suffix)} replace />
+}
+
+/**
+ * Anything that fell through, sent to the same path inside the signed-in area.
+ *
+ * A desktop push carries an unprefixed path — /sales/approvals?quote=5 — because
+ * the server cannot know which area the recipient reads in. Landing that on the
+ * dashboard loses the thing the notification was about. Already-prefixed paths
+ * go home instead, or an unknown one would bounce against itself forever.
+ */
+function AreaFallback() {
+    const { user, loading } = useAuth()
+    const { pathname, search } = useLocation()
+
+    if (loading) return <PageLoader />
+    if (!user) return <Navigate to="/login" replace />
+
+    const base = areaFor(user.role)
+    const inArea = pathname === base || pathname.startsWith(`${base}/`)
+
+    return <Navigate to={inArea || pathname === '/' ? base : `${base}${pathname}${search}`} replace />
 }

@@ -577,8 +577,11 @@ export interface CustomerTaskRow {
     status_label: string
     priority_label: string
     technician: string | null
+    customer: string | null
     branch: string | null
     asset: string | null
+    /** When work actually began and ended, not when it was booked for. */
+    started_at: string | null
     completed_at: string | null
 }
 
@@ -1261,6 +1264,7 @@ export interface DashboardData {
         follow_ups_due?: number
         /** Standing-alert counts surfaced on the board. */
         low_stock?: number
+        pending_approvals?: number
         delayed?: number
         overdue_invoices?: number
         /** Technicians who have checked in today, and how many are still on site. */
@@ -1277,6 +1281,15 @@ export interface DashboardData {
     /** Live standing alerts on the board — shortages, delays, overdue money. */
     low_stock?: Array<{ id: number; name: string; qty: number; unit: string; reorder_level: number }>
     delayed_tasks?: Array<{ id: number; code: string; customer: string | null; title: string | null }>
+    /** Quotes handed over for sign-off and stuck until someone gives it. */
+    pending_approvals?: Array<{
+        id: number
+        code: string
+        customer: string | null
+        title: string | null
+        total: number
+        submitted_at: string | null
+    }>
     overdue_invoices?: Array<{
         id: number
         code: string

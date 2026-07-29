@@ -2,7 +2,7 @@ import clsx from 'clsx'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { DocumentParty, DocumentShell, DocumentTotals } from '@/components/DocumentShell'
 import { ErrorState, PageLoader } from '@/components/ui'
-import { formatDate } from '@/lib/format'
+import { formatDate, formatDateTime } from '@/lib/format'
 import { useCustomerTasks } from '@/lib/queries'
 
 /** Job-status colours, matched to the on-screen history. */
@@ -55,31 +55,36 @@ export function CustomerTasksPrint() {
                 <table className="doc-table mt-5">
                     <thead>
                         <tr>
-                            <th className="w-24">التاريخ</th>
-                            <th className="w-28">الكود</th>
+                            <th className="w-24">الكود</th>
                             <th>المهمة</th>
-                            <th className="w-20">النوع</th>
-                            <th className="w-28">الفني</th>
-                            <th className="w-24">الحالة</th>
+                            <th className="w-28">العميل</th>
+                            <th className="w-28">الجهاز</th>
+                            <th className="w-24">الفرع</th>
+                            <th className="w-24">بداية التنفيذ</th>
+                            <th className="w-24">انتهاء التنفيذ</th>
+                            <th className="w-20">الحالة</th>
                         </tr>
                     </thead>
                     <tbody>
                         {rows.map((task) => (
                             <tr key={task.id}>
-                                <td className="tabular text-navy-500">
-                                    {task.date ? formatDate(task.date) : '—'}
-                                </td>
                                 <td className="tabular text-navy-600">{task.code}</td>
                                 <td className="text-navy-700">
-                                    {task.title ?? '—'}
-                                    {(task.branch || task.asset) && (
-                                        <span className="block text-[11px] text-navy-400">
-                                            {[task.branch, task.asset].filter(Boolean).join(' · ')}
-                                        </span>
-                                    )}
+                                    {task.title ?? task.type_label}
+                                    <span className="block text-[11px] text-navy-400">
+                                        {task.type_label}
+                                        {task.technician && ` · ${task.technician}`}
+                                    </span>
                                 </td>
-                                <td className="text-navy-600">{task.type_label}</td>
-                                <td className="text-navy-600">{task.technician ?? '—'}</td>
+                                <td className="text-navy-600">{task.customer ?? '—'}</td>
+                                <td className="text-navy-600">{task.asset ?? '—'}</td>
+                                <td className="text-navy-600">{task.branch ?? '—'}</td>
+                                <td className="tabular text-navy-600">
+                                    {task.started_at ? formatDateTime(task.started_at) : '—'}
+                                </td>
+                                <td className="tabular text-navy-600">
+                                    {task.completed_at ? formatDateTime(task.completed_at) : '—'}
+                                </td>
                                 <td className={clsx('font-bold', STATUS_TEXT[task.status] ?? 'text-navy-700')}>
                                     {task.status_label}
                                 </td>

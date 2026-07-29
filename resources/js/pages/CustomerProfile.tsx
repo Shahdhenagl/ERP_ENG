@@ -1,5 +1,6 @@
 import clsx from 'clsx'
 import {
+    ArrowLeft,
     ArrowRight,
     Boxes,
     ClipboardList,
@@ -17,7 +18,7 @@ import { Link, useParams } from 'react-router-dom'
 import { CustomerForm } from '@/components/CustomerForm'
 import { Button, EmptyState, ErrorState, Field, Input, PageLoader, SkeletonCard } from '@/components/ui'
 import { formatMoney } from '@/lib/domain'
-import { formatDate, telLink } from '@/lib/format'
+import { formatDate, formatDateTime, telLink } from '@/lib/format'
 import { useArea } from '@/lib/nav'
 import { BranchesSection } from '@/components/BranchesSection'
 import { useCustomer, useCustomerProfile, useCustomerTasks } from '@/lib/queries'
@@ -186,7 +187,12 @@ export function CustomerProfile() {
                 ) : (
                     <div className="space-y-2">
                         {data.quotations.map((quotation) => (
-                            <div key={quotation.id} className="flex items-center justify-between gap-3 rounded-xl bg-navy-50 p-3">
+                            <Link
+                                key={quotation.id}
+                                to={`${path('/print/quotations')}/${quotation.id}`}
+                                target="_blank"
+                                className="card-interactive flex items-center justify-between gap-3 p-3.5"
+                            >
                                 <div className="min-w-0">
                                     <div className="flex flex-wrap items-center gap-2">
                                         <span className="tabular text-[11px] font-bold text-navy-500">
@@ -196,14 +202,17 @@ export function CustomerProfile() {
                                             {quotation.status_label}
                                         </span>
                                     </div>
-                                    <p className="mt-0.5 truncate text-sm text-navy-700">
-                                        {quotation.title ?? '—'} · {formatDate(quotation.issue_date)}
+                                    <p className="mt-0.5 truncate text-sm font-semibold text-navy-800">
+                                        {quotation.title ?? '—'}
+                                    </p>
+                                    <p className="tabular text-[11px] text-navy-400">
+                                        {formatDate(quotation.issue_date)}
                                     </p>
                                 </div>
                                 <span className="tabular shrink-0 text-sm font-bold text-navy-700">
                                     {formatMoney(quotation.total)}
                                 </span>
-                            </div>
+                            </Link>
                         ))}
                     </div>
                 )}
@@ -318,38 +327,45 @@ function CustomerTasksSection({ customerId }: { customerId: number }) {
                         <MiniStat label="مفتوحة" value={String(data.meta.open)} tone="warn" />
                     </div>
 
+                    {/* One row per visit, each opening the job behind it — the
+                        history is where a question about a visit starts. */}
                     <div className="overflow-x-auto rounded-2xl border border-navy-100">
-                        <table className="w-full min-w-[620px] text-sm">
+                        <table className="w-full min-w-[60rem] text-right text-sm">
                             <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
                                 <tr>
-                                    <th className="px-3 py-2 text-right">التاريخ</th>
-                                    <th className="px-3 py-2 text-right">المهمة</th>
-                                    <th className="px-3 py-2 text-right">النوع</th>
-                                    <th className="px-3 py-2 text-right">الفني</th>
-                                    <th className="px-3 py-2 text-right">الحالة</th>
+                                    <th className="px-3 py-2.5">المهمة</th>
+                                    <th className="px-3 py-2.5">العميل</th>
+                                    <th className="px-3 py-2.5">الجهاز</th>
+                                    <th className="px-3 py-2.5">الفرع</th>
+                                    <th className="w-32 px-3 py-2.5">بداية التنفيذ</th>
+                                    <th className="w-32 px-3 py-2.5">انتهاء التنفيذ</th>
+                                    <th className="w-28 px-3 py-2.5">الحالة</th>
+                                    <th className="w-12 px-3 py-2.5" />
                                 </tr>
                             </thead>
                             <tbody>
                                 {data.data.map((task) => (
-                                    <tr key={task.id} className="border-t border-navy-100 align-top">
-                                        <td className="tabular px-3 py-2.5 text-navy-500">
-                                            {task.date ? formatDate(task.date) : '—'}
-                                        </td>
+                                    <tr
+                                        key={task.id}
+                                        className="border-t border-navy-100 hover:bg-navy-50/60"
+                                    >
                                         <td className="px-3 py-2.5">
-                                            <span className="tabular text-[11px] font-bold text-brand-600">
+                                            <span className="tabular block text-[11px] font-bold text-brand-600">
                                                 {task.code}
                                             </span>
-                                            {task.title && (
-                                                <span className="block text-navy-700">{task.title}</span>
-                                            )}
-                                            {(task.branch || task.asset) && (
-                                                <span className="block text-[11px] text-navy-400">
-                                                    {[task.branch, task.asset].filter(Boolean).join(' · ')}
-                                                </span>
-                                            )}
+                                            <span className="block truncate font-semibold text-navy-800">
+                                                {task.title ?? task.type_label}
+                                            </span>
                                         </td>
-                                        <td className="px-3 py-2.5 text-navy-600">{task.type_label}</td>
-                                        <td className="px-3 py-2.5 text-navy-600">{task.technician ?? '—'}</td>
+                                        <td className="px-3 py-2.5 text-navy-700">{task.customer ?? '—'}</td>
+                                        <td className="px-3 py-2.5 text-navy-600">{task.asset ?? '—'}</td>
+                                        <td className="px-3 py-2.5 text-navy-600">{task.branch ?? '—'}</td>
+                                        <td className="tabular px-3 py-2.5 text-navy-600">
+                                            {task.started_at ? formatDateTime(task.started_at) : '—'}
+                                        </td>
+                                        <td className="tabular px-3 py-2.5 text-navy-600">
+                                            {task.completed_at ? formatDateTime(task.completed_at) : '—'}
+                                        </td>
                                         <td className="px-3 py-2.5">
                                             <span
                                                 className={clsx(
@@ -360,6 +376,15 @@ function CustomerTasksSection({ customerId }: { customerId: number }) {
                                             >
                                                 {task.status_label}
                                             </span>
+                                        </td>
+                                        <td className="px-3 py-2.5">
+                                            <Link
+                                                to={path(`/tasks/${task.id}`)}
+                                                className="tap grid place-items-center rounded-lg p-1.5 text-navy-400 transition hover:bg-white hover:text-brand-600"
+                                                aria-label={`فتح ${task.code}`}
+                                            >
+                                                <ArrowLeft className="size-4" />
+                                            </Link>
                                         </td>
                                     </tr>
                                 ))}

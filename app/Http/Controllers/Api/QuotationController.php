@@ -142,7 +142,7 @@ class QuotationController extends Controller
         $approvals->needed(
             'عرض سعر بانتظار الاعتماد',
             "{$quotation->code} — ".($quotation->customer?->name ?? ''),
-            '/sales/approvals',
+            "/sales/approvals?quote={$quotation->id}",
             "quote-{$quotation->id}",
         );
 

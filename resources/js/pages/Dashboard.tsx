@@ -223,6 +223,7 @@ export function Dashboard() {
                     data?.low_stock?.length ||
                         data?.delayed_tasks?.length ||
                         data?.overdue_invoices?.length ||
+                        data?.pending_approvals?.length ||
                         data?.contracts_expiring?.length,
                 ) && (
                     <section className="mt-8">
@@ -246,6 +247,21 @@ export function Dashboard() {
                                         }))}
                                     />
                                 )}
+
+                            {Boolean(data?.pending_approvals?.length) && (
+                                <AlertColumn
+                                    title="عروض بانتظار الاعتماد"
+                                    count={stats?.pending_approvals}
+                                    tone="amber"
+                                    to={path('/sales/approvals')}
+                                    rows={data!.pending_approvals!.map((q) => ({
+                                        key: `q-${q.id}`,
+                                        to: `${path('/sales/approvals')}?quote=${q.id}`,
+                                        title: q.customer ?? q.title ?? q.code,
+                                        subtitle: `${q.code} · ${formatMoney(q.total)}`,
+                                    }))}
+                                />
+                            )}
 
                             {Boolean(data?.delayed_tasks?.length) && (
                                 <AlertColumn

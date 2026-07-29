@@ -194,8 +194,12 @@ class CustomerController extends Controller
                 'status_label' => $task->status->label(),
                 'priority_label' => $task->priority->label(),
                 'technician' => $task->technician?->name,
+                'customer' => $customer->name,
                 'branch' => $task->branch?->name,
                 'asset' => $task->asset?->label(),
+                // The two timestamps that say how long the visit actually took,
+                // as against when it was booked for.
+                'started_at' => $task->started_at?->toIso8601String(),
                 'completed_at' => $task->completed_at?->toIso8601String(),
             ]),
             'meta' => [
