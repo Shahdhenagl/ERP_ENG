@@ -1,8 +1,11 @@
-import { Building2, FileText } from 'lucide-react'
+import clsx from 'clsx'
+import { Building2, FileText, Printer } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import { EmptyState, Field, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
 import { formatMoney } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
+import { useArea } from '@/lib/nav'
 import { useSuppliers, useSupplierStatement } from '@/lib/queries'
 
 /**
@@ -14,6 +17,7 @@ import { useSuppliers, useSupplierStatement } from '@/lib/queries'
  */
 export function SupplierStatementPage() {
     const { data: suppliers } = useSuppliers()
+    const { path } = useArea()
 
     const [supplierId, setSupplierId] = useState<number | null>(null)
     const [from, setFrom] = useState('')
@@ -26,7 +30,25 @@ export function SupplierStatementPage() {
 
     return (
         <>
-            <PageHeader title="كشف حساب المورد" subtitle="الفواتير والمدفوعات والرصيد الجاري" />
+            <PageHeader
+                title="كشف حساب المورد"
+                subtitle="الفواتير والمدفوعات والرصيد الجاري"
+                actions={
+                    <Link
+                        to={`${path('/print/supplier-statements')}/${supplierId ?? 0}?${new URLSearchParams(
+                            {
+                                ...(from ? { from } : {}),
+                                ...(to ? { to } : {}),
+                            },
+                        ).toString()}`}
+                        target="_blank"
+                        className={clsx('btn-secondary', !supplierId && 'pointer-events-none opacity-40')}
+                    >
+                        <Printer className="size-4" />
+                        طباعة
+                    </Link>
+                }
+            />
 
             <div className="mb-4 grid gap-3 sm:grid-cols-[2fr_1fr_1fr]">
                 <Field label="المورد">

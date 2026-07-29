@@ -60,6 +60,7 @@ import { Settings } from '@/pages/Settings'
 import { InvoicePrint } from '@/pages/print/InvoicePrint'
 import { QuotationPrint } from '@/pages/print/QuotationPrint'
 import { SupplierInvoicePrint } from '@/pages/print/SupplierInvoicePrint'
+import { SupplierStatementPrint } from '@/pages/print/SupplierStatementPrint'
 import { ServiceReportPrint } from '@/pages/print/ServiceReportPrint'
 import { StatementPrint } from '@/pages/print/StatementPrint'
 import { CustomerTasksPrint } from '@/pages/print/CustomerTasksPrint'
@@ -159,6 +160,10 @@ export function App() {
                                     <Route
                                         path="supplier-invoices/:id"
                                         element={<SupplierInvoicePrint />}
+                                    />
+                                    <Route
+                                        path="supplier-statements/:id"
+                                        element={<SupplierStatementPrint />}
                                     />
                                     <Route path="statements/:id" element={<StatementPrint />} />
                                     <Route path="customer-tasks/:id" element={<CustomerTasksPrint />} />
