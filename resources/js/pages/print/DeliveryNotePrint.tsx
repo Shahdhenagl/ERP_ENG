@@ -81,7 +81,7 @@ export function DeliveryNotePrint() {
                                     {specs.length > 0 && <SpecRowList rows={specs} />}
                                 </td>
                                 <td className="tabular text-center">
-                                    {formatQty(line.qty)} {line.unit ?? ''}
+                                    {formatQty(line.qty)}
                                 </td>
                                 <td />
                             </tr>

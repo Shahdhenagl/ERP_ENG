@@ -93,15 +93,22 @@ export function SpecSheet({
     )
 }
 
-/** The same nameplate inline, for a row inside a document or a list. */
+/**
+ * The nameplate under a line on a document.
+ *
+ * A grid rather than a wrapped run of text: ratings read as pairs, and pairs
+ * that reflow mid-line stop being scannable at exactly the moment there are
+ * enough of them to need scanning.
+ */
 export function SpecRowList({ rows }: { rows: SpecRow[] }) {
     if (rows.length === 0) return null
 
     return (
-        <span className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5">
+        <span className="doc-specs">
             {rows.map(([label, value]) => (
-                <span key={label} className="tabular text-[11px] text-navy-500">
-                    {label}: <strong className="font-semibold text-navy-700">{value}</strong>
+                <span key={label} className="doc-spec">
+                    <span className="doc-spec-label">{label}</span>
+                    <span className="doc-spec-value tabular">{value}</span>
                 </span>
             ))}
         </span>

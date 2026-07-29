@@ -341,19 +341,62 @@
 
 .doc-table th {
     background: var(--color-navy-50);
-    padding: 8px 10px;
+    padding: 9px 10px;
     font-size: 12px;
     font-weight: 700;
-    color: var(--color-navy-600);
+    color: var(--color-navy-700);
     text-align: right;
-    border-bottom: 1px solid var(--color-navy-200);
+    letter-spacing: 0.01em;
+    border-block: 1px solid var(--color-navy-200);
 }
 
 .doc-table td {
-    padding: 9px 10px;
+    padding: 11px 10px;
     font-size: 13px;
+    line-height: 1.65;
     border-bottom: 1px solid var(--color-navy-100);
     vertical-align: top;
+}
+
+/* Alternating rows: on paper the eye loses its place across six columns long
+   before it loses the row itself. */
+.doc-table tbody tr:nth-child(even) {
+    background: color-mix(in oklab, var(--color-navy-50) 45%, white);
+}
+
+/* ── A device's nameplate under its line ──────────────────────
+   Pairs in fixed columns rather than a wrapped run, so a rating can be found
+   by looking down rather than reading along. */
+.doc-specs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 2px 18px;
+    margin-top: 5px;
+    padding-top: 5px;
+    border-top: 1px dashed var(--color-navy-200);
+}
+
+.doc-spec {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 11.5px;
+    line-height: 1.5;
+}
+
+.doc-spec-label {
+    color: var(--color-navy-400);
+}
+
+.doc-spec-value {
+    font-weight: 600;
+    color: var(--color-navy-700);
+}
+
+@media (max-width: 640px) {
+    .doc-specs {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 @media print {

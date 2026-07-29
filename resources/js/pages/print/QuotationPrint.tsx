@@ -105,7 +105,7 @@ export function QuotationPrint() {
                                     )}
                                 </td>
                                 <td className="tabular text-center">
-                                    {formatQty(line.qty)} {line.unit ?? ''}
+                                    {formatQty(line.qty)}
                                 </td>
                                 <td className="tabular text-center">{formatMoney(line.unit_price)}</td>
                                 <td className="tabular text-left font-bold">{formatMoney(line.line_total)}</td>
