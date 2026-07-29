@@ -34,6 +34,9 @@ class Setting extends Model
         'company_commercial_id' => '',
         'invoice_footer' => '',
         'quotation_terms' => '',
+        // The conditions every offer closes with, as label/value pairs. A
+        // quote may override them; most never need to.
+        'quotation_conditions' => '[{"label": "الأسعار", "value": "الأسعار شاملة القيمة المضافة"}, {"label": "مدة التوريد", "value": "بضاعة حاضرة"}, {"label": "طريقة السداد", "value": "100% عند الاستلام"}, {"label": "الضمان", "value": "عام من تاريخ التوريد"}, {"label": "سريان العرض", "value": "أسبوع من تاريخه"}]',
         'default_tax_rate' => '14',
     ];
 

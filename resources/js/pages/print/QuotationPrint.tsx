@@ -23,6 +23,13 @@ export function QuotationPrint() {
     // wins, because it was written for this customer.
     const terms = quotation.terms || settings?.quotation_terms
 
+    // The standing conditions, unless this offer states its own. Parsed
+    // defensively: a settings string somebody hand-edited must not take the
+    // whole document down with it.
+    const conditions = quotation.conditions?.length
+        ? quotation.conditions
+        : parseConditions(settings?.quotation_conditions)
+
     return (
         <DocumentShell title="عرض سعر" subtitle={quotation.code}>
             <div className="grid grid-cols-2 gap-4">
@@ -134,6 +141,35 @@ export function QuotationPrint() {
                 inWords={quotation.total}
             />
 
+            {/* The conditions the offer closes on, read label-first the way the
+                sheet is scanned: down the right column, then across. */}
+            {conditions.length > 0 && (
+                <div className="doc-keep mt-6 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5">
+                    <ul className="space-y-1.5">
+                        {conditions.map((condition) => (
+                            <li
+                                key={condition.label}
+                                className="text-[13px] font-bold text-navy-800 underline underline-offset-4"
+                            >
+                                {condition.label} :-
+                            </li>
+                        ))}
+                    </ul>
+
+                    <ul className="space-y-1.5">
+                        {conditions.map((condition) => (
+                            <li key={condition.label} className="text-[13px] text-navy-700">
+                                * {condition.value}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
+            <p className="doc-keep mt-5 text-center text-[13px] font-bold text-navy-800">
+                وتفضلوا بقبول فائق الاحترام،،،
+            </p>
+
             {terms && (
                 <div className="doc-keep mt-6 rounded-lg border border-navy-200 p-3">
                     <p className="mb-1.5 text-[11px] font-bold text-navy-400">الشروط والأحكام</p>
@@ -146,4 +182,22 @@ export function QuotationPrint() {
             <DocumentSignatures labels={['عن الشركة', 'موافقة العميل']} />
         </DocumentShell>
     )
+}
+
+/** Settings hold them as JSON text; a bad edit there yields none, not a crash. */
+function parseConditions(raw: string | undefined): Array<{ label: string; value: string }> {
+    if (!raw) return []
+
+    try {
+        const parsed: unknown = JSON.parse(raw)
+
+        return Array.isArray(parsed)
+            ? parsed.filter(
+                  (row): row is { label: string; value: string } =>
+                      Boolean(row) && typeof row === 'object' && 'label' in row && 'value' in row,
+              )
+            : []
+    } catch {
+        return []
+    }
 }

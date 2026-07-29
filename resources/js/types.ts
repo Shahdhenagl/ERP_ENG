@@ -628,6 +628,7 @@ export interface Quotation {
 
     customer_id: number
     customer: string | null
+    customer_code: string | null
     /** The site being quoted — null when the deal is with the head office. */
     branch_id: number | null
     branch: string | null
@@ -654,6 +655,8 @@ export interface Quotation {
     currency: string
 
     terms: string | null
+    /** The conditions the offer closes on; null falls back to the company set. */
+    conditions: Array<{ label: string; value: string }> | null
     notes: string | null
     reject_reason: string | null
 
@@ -680,6 +683,7 @@ export interface SalesOrder {
 
     customer_id: number
     customer: string | null
+    customer_code: string | null
     /** Carried over from the quote — where this order delivers. */
     branch_id: number | null
     branch: string | null

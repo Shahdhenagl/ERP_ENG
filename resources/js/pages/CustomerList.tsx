@@ -15,6 +15,8 @@ import {
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BranchForm } from '@/components/BranchForm'
+import { ExportButton } from '@/components/ExportButton'
+import { api } from '@/lib/api'
 import { CustomerForm } from '@/components/CustomerForm'
 import { ConfirmDialog } from '@/components/Modal'
 import { StatStrip } from '@/components/StatStrip'
@@ -82,9 +84,47 @@ export function CustomerList() {
                 title="العملاء"
                 subtitle={data ? `${data.meta.total} عميل` : undefined}
                 actions={
-                    <Button icon={Plus} onClick={openNew}>
-                        عميل جديد
-                    </Button>
+                    <>
+                        <ExportButton
+                            filename="customers"
+                            headers={[
+                                'الكود',
+                                'العميل',
+                                'النوع',
+                                'الهاتف',
+                                'المحافظة',
+                                'الحي',
+                                'العقود',
+                                'المهام',
+                            ]}
+                            disabled={!data?.data.length}
+                            rows={async () => {
+                                const { data: page } = await api.get('/customers', {
+                                    params: {
+                                        search,
+                                        type: type || undefined,
+                                        contract: contract || undefined,
+                                        active: active === '' ? undefined : active,
+                                        per_page: 1000,
+                                    },
+                                })
+
+                                return page.data.map((row: Customer) => [
+                                    row.code,
+                                    row.name,
+                                    row.type_label,
+                                    row.phone,
+                                    row.governorate,
+                                    row.city,
+                                    row.contracts_count ?? 0,
+                                    row.tasks_count ?? 0,
+                                ])
+                            }}
+                        />
+                        <Button icon={Plus} onClick={openNew}>
+                            عميل جديد
+                        </Button>
+                    </>
                 }
             />
 
@@ -164,6 +204,7 @@ export function CustomerList() {
                 <DataTable
                     minWidth="58rem"
                     headers={[
+                        { label: 'الكود', className: 'w-28' },
                         'العميل',
                         'النوع',
                         'الهاتف',
@@ -175,14 +216,15 @@ export function CustomerList() {
                 >
                     {data.data.map((customer) => (
                         <tr key={customer.id} className="border-t border-navy-100 hover:bg-navy-50/60">
+                            <td className="tabular px-3 py-2.5 text-[11px] font-bold text-brand-600">
+                                {customer.code}
+                            </td>
                             <td className="px-3 py-2.5">
-                                <Link to={path(`/customers/${customer.id}`)} className="block">
-                                    <span className="block truncate font-semibold text-navy-800">
-                                        {customer.name}
-                                    </span>
-                                    <span className="tabular block text-[11px] font-bold text-brand-600">
-                                        {customer.code}
-                                    </span>
+                                <Link
+                                    to={path(`/customers/${customer.id}`)}
+                                    className="block truncate font-semibold text-navy-800"
+                                >
+                                    {customer.name}
                                 </Link>
                             </td>
                             <td className="px-3 py-2.5 text-navy-600">{customer.type_label ?? '—'}</td>

@@ -6,6 +6,8 @@ import { ContractForm } from '@/components/ContractForm'
 import { ConfirmDialog } from '@/components/Modal'
 import { StatStrip } from '@/components/StatStrip'
 import { useToast } from '@/components/Toast'
+import { ExportButton } from '@/components/ExportButton'
+import { api } from '@/lib/api'
 import { SectionTabs } from '@/components/SectionTabs'
 import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { Button, EmptyState, ErrorState, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
@@ -68,9 +70,32 @@ export function ContractList() {
                 title="عقود الصيانة"
                 subtitle={data ? `${data.meta.total} عقد` : undefined}
                 actions={
+                    <>
+                    <ExportButton
+                        filename="contracts"
+                        headers={['الكود', 'العقد', 'العميل', 'من', 'إلى', 'الزيارات', 'القيمة', 'الحالة']}
+                        disabled={!data?.data.length}
+                        rows={async () => {
+                            const { data: page } = await api.get('/contracts', {
+                                params: { search, status: status || undefined, per_page: 1000 },
+                            })
+
+                            return page.data.map((row: Contract) => [
+                                row.code,
+                                row.title ?? row.label,
+                                row.customer?.name,
+                                row.starts_on,
+                                row.ends_on,
+                                row.visits_per_year,
+                                row.value ?? '',
+                                row.effective_status_label,
+                            ])
+                        }}
+                    />
                     <Button icon={Plus} onClick={openNew}>
                         عقد جديد
                     </Button>
+                    </>
                 }
             />
 
@@ -155,6 +180,7 @@ export function ContractList() {
                 <DataTable
                     minWidth="58rem"
                     headers={[
+                        { label: 'الكود', className: 'w-28' },
                         'العقد',
                         'العميل',
                         'الفترة',
@@ -166,14 +192,15 @@ export function ContractList() {
                 >
                     {data.data.map((contract) => (
                         <tr key={contract.id} className="border-t border-navy-100 hover:bg-navy-50/60">
+                            <td className="tabular px-3 py-2.5 text-[11px] font-bold text-brand-600">
+                                {contract.code}
+                            </td>
                             <td className="px-3 py-2.5">
-                                <Link to={path(`/contracts/${contract.id}`)} className="block">
-                                    <span className="tabular block text-[11px] font-bold text-brand-600">
-                                        {contract.code}
-                                    </span>
-                                    <span className="block truncate font-semibold text-navy-800">
-                                        {contract.title ?? contract.label}
-                                    </span>
+                                <Link
+                                    to={path(`/contracts/${contract.id}`)}
+                                    className="block truncate font-semibold text-navy-800"
+                                >
+                                    {contract.title ?? contract.label}
                                 </Link>
                             </td>
                             <td className="px-3 py-2.5 text-navy-700">

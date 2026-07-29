@@ -20,7 +20,7 @@ class Quotation extends Model
         'issue_date', 'valid_until', 'status',
         'subtotal', 'discount',
         'discount_percent', 'tax_rate', 'tax_amount', 'total', 'currency',
-        'terms', 'notes', 'reject_reason', 'sent_at', 'decided_at', 'created_by',
+        'terms', 'conditions', 'notes', 'reject_reason', 'sent_at', 'decided_at', 'created_by',
         'submitted_at', 'approved_at', 'approved_by', 'approval_note',
     ];
 
@@ -40,6 +40,7 @@ class Quotation extends Model
             'tax_rate' => 'decimal:2',
             'tax_amount' => 'decimal:2',
             'total' => 'decimal:2',
+            'conditions' => 'array',
         ];
     }
 

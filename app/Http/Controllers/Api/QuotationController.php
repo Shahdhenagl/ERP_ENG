@@ -203,6 +203,7 @@ class QuotationController extends Controller
 
             'customer_id' => $quotation->customer_id,
             'customer' => $quotation->customer?->name,
+            'customer_code' => $quotation->customer?->code,
             'branch_id' => $quotation->branch_id,
             'branch' => $quotation->branch?->name,
             'asset_id' => $quotation->asset_id,
@@ -219,6 +220,7 @@ class QuotationController extends Controller
             'effective_status_label' => $quotation->effectiveStatusLabel(),
 
             'subtotal' => (float) $quotation->subtotal,
+            'conditions' => $quotation->conditions,
             'discount' => (float) $quotation->discount,
             'discount_percent' => $quotation->discount_percent !== null
                 ? (float) $quotation->discount_percent
@@ -282,6 +284,9 @@ class QuotationController extends Controller
             'discount' => ['nullable', 'numeric', 'min:0'],
             'discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'terms' => ['nullable', 'string', 'max:2000'],
+            'conditions' => ['nullable', 'array', 'max:12'],
+            'conditions.*.label' => ['required', 'string', 'max:60'],
+            'conditions.*.value' => ['required', 'string', 'max:200'],
             'notes' => ['nullable', 'string', 'max:2000'],
 
             'lines' => ['required', 'array', 'min:1'],

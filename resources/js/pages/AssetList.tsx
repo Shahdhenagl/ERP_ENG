@@ -5,6 +5,8 @@ import { Link } from 'react-router-dom'
 import { AssetForm } from '@/components/AssetForm'
 import { ConfirmDialog } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
+import { ExportButton } from '@/components/ExportButton'
+import { api } from '@/lib/api'
 import { SectionTabs } from '@/components/SectionTabs'
 import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { Button, EmptyState, ErrorState, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
@@ -67,9 +69,31 @@ export function AssetList() {
                 title="الأجهزة"
                 subtitle={data ? `${data.meta.total} جهاز مسجّل` : undefined}
                 actions={
-                    <Button icon={Plus} onClick={openNew}>
-                        جهاز جديد
-                    </Button>
+                    <>
+                        <ExportButton
+                            filename="assets"
+                            headers={['الكود', 'الجهاز', 'السيريال', 'العميل', 'الحالة', 'الضمان', 'الزيارات']}
+                            disabled={!data?.data.length}
+                            rows={async () => {
+                                const { data: page } = await api.get('/assets', {
+                                    params: { search, status: status || undefined, per_page: 1000 },
+                                })
+
+                                return page.data.map((row: Asset) => [
+                                    row.code,
+                                    row.label,
+                                    row.serial,
+                                    row.customer?.name,
+                                    row.status_label,
+                                    row.warranty_label,
+                                    row.tasks_count ?? 0,
+                                ])
+                            }}
+                        />
+                        <Button icon={Plus} onClick={openNew}>
+                            جهاز جديد
+                        </Button>
+                    </>
                 }
             />
 
@@ -142,6 +166,7 @@ export function AssetList() {
                 <DataTable
                     minWidth="60rem"
                     headers={[
+                        { label: 'الكود', className: 'w-28' },
                         'الجهاز',
                         'السيريال',
                         'العميل',
@@ -158,14 +183,15 @@ export function AssetList() {
 
                         return (
                             <tr key={asset.id} className="border-t border-navy-100 hover:bg-navy-50/60">
+                                <td className="tabular px-3 py-2.5 text-[11px] font-bold text-brand-600">
+                                    {asset.code}
+                                </td>
                                 <td className="px-3 py-2.5">
-                                    <Link to={path(`/assets/${asset.id}`)} className="block">
-                                        <span className="block truncate font-semibold text-navy-800">
-                                            {asset.label}
-                                        </span>
-                                        <span className="tabular block text-[11px] font-bold text-brand-600">
-                                            {asset.code}
-                                        </span>
+                                    <Link
+                                        to={path(`/assets/${asset.id}`)}
+                                        className="block truncate font-semibold text-navy-800"
+                                    >
+                                        {asset.label}
                                     </Link>
                                 </td>
                                 <td className="tabular px-3 py-2.5 text-navy-600">

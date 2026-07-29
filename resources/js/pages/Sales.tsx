@@ -146,7 +146,9 @@ function QuotationsTab() {
                 <DataTable
                     minWidth="56rem"
                     headers={[
+                        { label: 'كود العرض', className: 'w-28' },
                         'العرض',
+                        { label: 'كود العميل', className: 'w-24' },
                         'العميل',
                         'الفرع',
                         { label: 'التاريخ', className: 'w-28' },
@@ -161,13 +163,14 @@ function QuotationsTab() {
                             onClick={() => setDetailId(quotation.id)}
                             className="cursor-pointer border-t border-navy-100 hover:bg-navy-50/60"
                         >
-                            <td className="px-3 py-2.5">
-                                <span className="tabular block text-[11px] font-bold text-brand-600">
-                                    {quotation.code}
-                                </span>
-                                <span className="block truncate text-navy-800">
-                                    {quotation.title ?? '—'}
-                                </span>
+                            <td className="tabular px-3 py-2.5 text-[11px] font-bold text-brand-600">
+                                {quotation.code}
+                            </td>
+                            <td className="px-3 py-2.5 truncate text-navy-800">
+                                {quotation.title ?? '—'}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-[11px] text-navy-500">
+                                {quotation.customer_code ?? '—'}
                             </td>
                             <td className="px-3 py-2.5 text-navy-700">{quotation.customer ?? '—'}</td>
                             <td className="px-3 py-2.5 text-navy-600">{quotation.branch ?? '—'}</td>
@@ -650,7 +653,8 @@ function OrdersTab() {
                 <DataTable
                     minWidth="54rem"
                     headers={[
-                        'الأمر',
+                        { label: 'كود الأمر', className: 'w-28' },
+                        { label: 'كود العميل', className: 'w-24' },
                         'العميل',
                         'الفرع',
                         { label: 'التاريخ', className: 'w-28' },
@@ -667,6 +671,9 @@ function OrdersTab() {
                         >
                             <td className="tabular px-3 py-2.5 text-[11px] font-bold text-brand-600">
                                 {order.code}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-[11px] text-navy-500">
+                                {order.customer_code ?? '—'}
                             </td>
                             <td className="px-3 py-2.5 text-navy-700">{order.customer ?? '—'}</td>
                             <td className="px-3 py-2.5 text-navy-600">{order.branch ?? '—'}</td>

@@ -207,6 +207,7 @@ class SalesOrderController extends Controller
 
             'customer_id' => $order->customer_id,
             'customer' => $order->customer?->name,
+            'customer_code' => $order->customer?->code,
             'branch_id' => $order->branch_id,
             'branch' => $order->branch?->name,
             'quotation_id' => $order->quotation_id,

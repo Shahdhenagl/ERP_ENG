@@ -32,6 +32,7 @@ class SettingController extends Controller
             'company_commercial_id' => ['nullable', 'string', 'max:32'],
             'invoice_footer' => ['nullable', 'string', 'max:1000'],
             'quotation_terms' => ['nullable', 'string', 'max:2000'],
+            'quotation_conditions' => ['nullable', 'string', 'max:2000'],
             'default_tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
         ]);
 

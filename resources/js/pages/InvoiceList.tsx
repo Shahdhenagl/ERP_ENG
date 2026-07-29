@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { EMPTY_RANGE, MonthDayFilter, monthDayRange } from '@/components/MonthDayFilter'
 import type { DateRange } from '@/components/MonthDayFilter'
+import { ExportButton } from '@/components/ExportButton'
+import { api } from '@/lib/api'
 import { SectionTabs } from '@/components/SectionTabs'
 import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { MONEY_SECTIONS } from '@/lib/sections'
@@ -12,6 +14,7 @@ import { formatMoney, PAYMENT_STATE } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
 import { useArea } from '@/lib/nav'
 import { useInvoices, useTreasurySummary } from '@/lib/queries'
+import type { Invoice } from '@/types'
 
 type Filter = 'all' | 'outstanding' | 'overdue'
 
@@ -59,6 +62,35 @@ export function InvoiceList() {
                 title="الفواتير"
                 subtitle={data ? `${data.meta.total} فاتورة` : undefined}
                 actions={
+                    <>
+                    <ExportButton
+                        filename="invoices"
+                        headers={['الكود', 'كود العميل', 'العميل', 'النوع', 'التاريخ', 'الاستحقاق', 'الإجمالي', 'السداد']}
+                        disabled={!data?.data.length}
+                        rows={async () => {
+                            const { data: page } = await api.get('/invoices', {
+                                params: {
+                                    search,
+                                    outstanding: filter === 'outstanding' ? 1 : undefined,
+                                    overdue: filter === 'overdue' ? 1 : undefined,
+                                    source: source || undefined,
+                                    ...monthDayRange(month, day, range),
+                                    per_page: 1000,
+                                },
+                            })
+
+                            return page.data.map((row: Invoice) => [
+                                row.code,
+                                row.customer?.code,
+                                row.customer?.name,
+                                row.source_label,
+                                row.issue_date,
+                                row.due_date,
+                                row.total,
+                                row.payment_state_label,
+                            ])
+                        }}
+                    />
                     <Link
                         to={`${path('/print/invoices-list')}?${new URLSearchParams({
                             ...(search ? { search } : {}),
@@ -75,6 +107,7 @@ export function InvoiceList() {
                         <Printer className="size-4" />
                         طباعة
                     </Link>
+                    </>
                 }
             />
 
@@ -176,7 +209,8 @@ export function InvoiceList() {
                 <DataTable
                     minWidth="56rem"
                     headers={[
-                        'الفاتورة',
+                        { label: 'الكود', className: 'w-28' },
+                        { label: 'كود العميل', className: 'w-24' },
                         'العميل',
                         { label: 'النوع', className: 'w-28' },
                         { label: 'التاريخ', className: 'w-28' },
@@ -197,6 +231,9 @@ export function InvoiceList() {
                                     >
                                         {invoice.code}
                                     </Link>
+                                </td>
+                                <td className="tabular px-3 py-2.5 text-[11px] text-navy-500">
+                                    {invoice.customer?.code ?? '—'}
                                 </td>
                                 <td className="px-3 py-2.5 text-navy-700">
                                     {invoice.customer?.name ?? '—'}
