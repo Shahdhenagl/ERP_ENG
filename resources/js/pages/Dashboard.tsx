@@ -24,6 +24,7 @@ import { errorMessage } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import { formatMoney, STATUS, STATUS_FLOW } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
+import { currentPosition } from '@/lib/geo'
 import { useArea } from '@/lib/nav'
 import {
     useAttendancePunch,
@@ -31,19 +32,6 @@ import {
     useMyAttendanceToday,
 } from '@/lib/queries'
 import type { DashboardData } from '@/types'
-
-/** Best-effort GPS stamp; never blocks the punch. */
-async function currentPosition(): Promise<{ lat?: number; lng?: number }> {
-    if (!navigator.geolocation) return {}
-
-    return new Promise((resolve) => {
-        navigator.geolocation.getCurrentPosition(
-            (position) => resolve({ lat: position.coords.latitude, lng: position.coords.longitude }),
-            () => resolve({}),
-            { timeout: 4000, maximumAge: 60_000 },
-        )
-    })
-}
 
 export function Dashboard() {
     const { user, canDispatch, can } = useAuth()

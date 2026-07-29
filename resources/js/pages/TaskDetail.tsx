@@ -21,7 +21,7 @@ import {
     UserCog,
     X,
 } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ConfirmDialog, Modal } from '@/components/Modal'
 import { CustodyExpenseModal } from '@/components/CustodyExpenseModal'
@@ -51,6 +51,7 @@ import {
     Requirement,
     SiteCard,
 } from '@/components/TaskFlow'
+import { currentPosition, warmPosition } from '@/lib/geo'
 import { useArea } from '@/lib/nav'
 import { useIsPhone } from '@/lib/viewport'
 import {
@@ -87,6 +88,10 @@ export function TaskDetail() {
     const [expenseOpen, setExpenseOpen] = useState(false)
     const [routeOpen, setRouteOpen] = useState(false)
     const [attachmentsOpen, setAttachmentsOpen] = useState(false)
+
+    // Ask for a fix while the job is being read rather than at the moment a
+    // button is pressed and somebody is waiting on it.
+    useEffect(() => warmPosition(), [])
 
     // A technician on a phone is doing one thing; a dispatcher at a desk is
     // looking at everything. Same job, two shapes.
@@ -136,12 +141,18 @@ export function TaskDetail() {
             return
         }
 
-        // Stamp where the technician was — useful evidence on a dispute.
+        // Stamp where the technician was — the evidence that a job was
+        // accepted from the yard and finished at the site.
         const position = await currentPosition()
 
         try {
             await changeStatus.mutateAsync({ status: next, ...position })
-            toast.success(`تم تحديث الحالة إلى «${STATUS[next].label}».`)
+
+            if (position.lat == null) {
+                toast.info('تم التحديث، لكن تعذّر تحديد الموقع — فعّل خدمة الموقع للمتصفح.')
+            } else {
+                toast.success(`تم تحديث الحالة إلى «${STATUS[next].label}».`)
+            }
         } catch (caught) {
             toast.error(errorMessage(caught, 'تعذّر تحديث الحالة.'))
         }
@@ -763,33 +774,53 @@ export function TaskDetail() {
                         <section className="card p-5">
                             <h2 className="mb-3 text-sm font-bold text-navy-800">سجل التحديثات</h2>
                             <ul className="space-y-3">
-                                {[...task.status_logs].reverse().map((log) => (
-                                    <li key={log.id} className="border-r-2 border-navy-100 pr-3 text-xs">
-                                        <p className="font-bold text-navy-800">
-                                            {log.from_label ? `${log.from_label} ← ` : ''}
-                                            {log.to_label}
-                                        </p>
-                                        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-navy-400">
-                                            <span>
-                                                {log.user?.name} · {formatDateTime(log.created_at)}
+                                {[...task.status_logs].reverse().map((log) => {
+                                    const meta = STATUS[log.to_status]
+                                    const LogIcon = meta.icon
+
+                                    return (
+                                        <li key={log.id} className="flex gap-3 text-xs">
+                                            {/* The state as its own mark: a log
+                                                read down the page is a run of
+                                                states, and a colour finds one
+                                                faster than a line of text. */}
+                                            <span
+                                                className={clsx(
+                                                    'grid size-8 shrink-0 place-items-center rounded-full text-white',
+                                                    meta.solid,
+                                                )}
+                                            >
+                                                <LogIcon className="size-4" />
                                             </span>
-                                            {log.lat != null && log.lng != null && (
-                                                <a
-                                                    href={`https://www.google.com/maps?q=${log.lat},${log.lng}`}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="inline-flex items-center gap-0.5 font-bold text-brand-600 hover:text-brand-700"
-                                                >
-                                                    <MapPin className="size-3" />
-                                                    الموقع
-                                                </a>
-                                            )}
-                                        </p>
-                                        {log.note && (
-                                            <p className="mt-1 text-navy-600">{log.note}</p>
-                                        )}
-                                    </li>
-                                ))}
+
+                                            <div className="min-w-0 flex-1">
+                                                <p className="font-bold text-navy-800">
+                                                    {log.from_label ? `${log.from_label} ← ` : ''}
+                                                    {log.to_label}
+                                                </p>
+                                                <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-navy-400">
+                                                    <span>
+                                                        {log.user?.name} · {formatDateTime(log.created_at)}
+                                                    </span>
+                                                    {log.lat != null && log.lng != null && (
+                                                        <a
+                                                            href={`https://www.google.com/maps?q=${log.lat},${log.lng}`}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="inline-flex items-center gap-0.5 font-bold text-brand-600 hover:text-brand-700"
+                                                        >
+                                                            <MapPin className="size-3" />
+                                                            الموقع
+                                                        </a>
+                                                    )}
+                                                </p>
+                                                {log.note && (
+                                                    <p className="mt-1 text-navy-600">{log.note}</p>
+                                                )}
+                                            </div>
+                                        </li>
+                                    )
+                                })}
                             </ul>
                         </section>
                     )}
@@ -1620,15 +1651,3 @@ function AssignDialog({
 }
 
 /** Best-effort GPS stamp; never blocks the status change. */
-async function currentPosition(): Promise<{ lat?: number; lng?: number }> {
-    if (!navigator.geolocation) return {}
-
-    return new Promise((resolve) => {
-        navigator.geolocation.getCurrentPosition(
-            (position) =>
-                resolve({ lat: position.coords.latitude, lng: position.coords.longitude }),
-            () => resolve({}),
-            { timeout: 4000, maximumAge: 60_000 },
-        )
-    })
-}
