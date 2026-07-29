@@ -43,6 +43,7 @@ export function ContractForm({ open, onClose, contract, customerId, onSaved }: C
         starts_on: contract?.starts_on ?? new Date().toISOString().slice(0, 10),
         ends_on: contract?.ends_on ?? '',
         visits_per_year: String(contract?.visits_per_year ?? 4),
+        first_visit_on: contract?.first_visit_on ?? '',
         value: contract?.value ?? '',
         billing_frequency: contract?.billing_frequency ?? 'upfront',
         sla_response_hours: contract?.sla_response_hours?.toString() ?? '',
@@ -115,6 +116,7 @@ export function ContractForm({ open, onClose, contract, customerId, onSaved }: C
                 starts_on: form.starts_on,
                 ends_on: form.ends_on,
                 visits_per_year: Number(form.visits_per_year),
+                first_visit_on: form.first_visit_on || null,
                 value: form.value ? Number(form.value) : null,
                 billing_frequency: form.billing_frequency,
                 sla_response_hours: form.sla_response_hours ? Number(form.sla_response_hours) : null,
@@ -195,6 +197,23 @@ export function ContractForm({ open, onClose, contract, customerId, onSaved }: C
                         />
                     </Field>
                 </div>
+
+                {/* Without a date the first round lands about half an interval
+                    in — right when the start date is the installation, wrong
+                    once a date has been agreed with the customer. */}
+                <Field
+                    label="تاريخ أول زيارة"
+                    hint="اختياري — يحدَّد باقي الزيارات على نفس الوتيرة بدءًا منه. اتركه فارغًا لتوزيعها على المدة."
+                    error={errors.first_visit_on}
+                >
+                    <Input
+                        type="date"
+                        value={form.first_visit_on}
+                        min={form.starts_on || undefined}
+                        max={form.ends_on || undefined}
+                        onChange={(event) => set('first_visit_on')(event.target.value)}
+                    />
+                </Field>
 
                 <Field
                     label="عدد الزيارات سنويًا"

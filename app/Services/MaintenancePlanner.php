@@ -111,8 +111,18 @@ class MaintenancePlanner
             // planning dates that have already passed.
             $from = CarbonImmutable::parse($contract->starts_on)->max(CarbonImmutable::now()->startOfDay());
             $until = CarbonImmutable::parse($contract->ends_on);
+            $remaining = $target - $locked->count();
 
-            $dates = $this->distribute($from, $until, $target - $locked->count());
+            // An agreed first-visit date anchors the whole run; without one the
+            // visits are spread across the term. Only while nothing has been
+            // committed yet — a date cannot move a round somebody already did.
+            $anchor = $contract->first_visit_on
+                ? CarbonImmutable::parse($contract->first_visit_on)
+                : null;
+
+            $dates = $anchor && $locked->isEmpty()
+                ? $this->distributeFrom($anchor, $contract, $remaining)
+                : $this->distribute($from, $until, $remaining);
             $sequence = $locked->count();
 
             foreach ($dates as $date) {
@@ -132,6 +142,39 @@ class MaintenancePlanner
 
             return count($dates);
         });
+    }
+
+    /**
+     * Lay the visits out from an agreed first date, one cadence apart.
+     *
+     * The cadence is the term's own — a year at twelve a year is a visit every
+     * thirty days or so — so "first visit on the 5th" gives the 5th of every
+     * month rather than a run compressed into what is left of the year. A date
+     * that would fall past the term is pinned to its last day: the contract
+     * still owes the visit, and dropping it silently would be worse.
+     *
+     * @return array<int, CarbonImmutable>
+     */
+    public function distributeFrom(CarbonImmutable $anchor, Contract $contract, int $count): array
+    {
+        if ($count < 1) {
+            return [];
+        }
+
+        $starts = CarbonImmutable::parse($contract->starts_on)->startOfDay();
+        $until = CarbonImmutable::parse($contract->ends_on)->startOfDay();
+
+        $termDays = max(1, $starts->diffInDays($until));
+        $step = $termDays / max(1, $this->visitCountFor($contract));
+
+        $dates = [];
+
+        for ($i = 0; $i < $count; $i++) {
+            $date = $anchor->startOfDay()->addDays((int) round($i * $step));
+            $dates[] = $this->nudgeToWorkingDayWithinMonth($date->min($until));
+        }
+
+        return $dates;
     }
 
     /**

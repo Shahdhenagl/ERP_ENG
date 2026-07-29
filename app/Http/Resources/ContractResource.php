@@ -23,6 +23,8 @@ class ContractResource extends JsonResource
             'starts_on' => $this->starts_on?->toDateString(),
             'ends_on' => $this->ends_on?->toDateString(),
             'visits_per_year' => $this->visits_per_year,
+            // Null means "spread from the start"; a date anchors the schedule.
+            'first_visit_on' => $this->first_visit_on?->toDateString(),
             'days_remaining' => $this->daysRemaining(),
 
             // What the operator set, kept separate from what the calendar says.

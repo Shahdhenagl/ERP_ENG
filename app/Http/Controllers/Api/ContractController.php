@@ -119,11 +119,12 @@ class ContractController extends Controller
         $this->assertNoOverlap($data['customer_id'], $data['starts_on'], $data['ends_on'], $contract->id);
         $this->assertAssetsBelongToCustomer($assetIds, (int) $data['customer_id']);
 
-        // Only these three change what the plan should look like. Editing the
-        // title or the notes should not disturb dates a customer was told.
+        // Only these change what the plan should look like. Editing the title
+        // or the notes should not disturb dates a customer was told.
         $termChanged = $contract->starts_on->toDateString() !== $data['starts_on']
             || $contract->ends_on->toDateString() !== $data['ends_on']
-            || (int) $contract->visits_per_year !== (int) $data['visits_per_year'];
+            || (int) $contract->visits_per_year !== (int) $data['visits_per_year']
+            || $contract->first_visit_on?->toDateString() !== ($data['first_visit_on'] ?? null);
 
         // The value or the cadence changing re-splits the instalments — but only
         // while nothing has been collected, which the schedule planner enforces.
@@ -445,6 +446,9 @@ class ContractController extends Controller
             'starts_on' => ['required', 'date'],
             'ends_on' => ['required', 'date', 'after:starts_on'],
             'visits_per_year' => ['required', 'integer', 'min:1', 'max:24'],
+            // The agreed date of the first round. Inside the term, or the plan
+            // it anchors would start before the contract does.
+            'first_visit_on' => ['nullable', 'date', 'after_or_equal:starts_on', 'before_or_equal:ends_on'],
 
             'status' => ['nullable', Rule::enum(ContractStatus::class)],
 

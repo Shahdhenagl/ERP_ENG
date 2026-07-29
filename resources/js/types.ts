@@ -434,6 +434,8 @@ export interface Contract {
     starts_on: string | null
     ends_on: string | null
     visits_per_year: number
+    /** The agreed date of the first round; null spreads them across the term. */
+    first_visit_on: string | null
     /** Negative once the term has elapsed. */
     days_remaining: number
     status: ContractStatus
