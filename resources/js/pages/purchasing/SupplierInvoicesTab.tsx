@@ -2,6 +2,8 @@ import clsx from 'clsx'
 import { FileText, Plus, Printer, Search, Undo2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { EMPTY_RANGE, MonthDayFilter, monthDayRange } from '@/components/MonthDayFilter'
+import type { DateRange } from '@/components/MonthDayFilter'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, EmptyState, Field, Input, Select, SkeletonCard, Textarea } from '@/components/ui'
@@ -27,18 +29,36 @@ const STATE: Record<SupplierPaymentState, string> = {
     overdue: 'bg-red-50 text-red-700 ring-1 ring-red-200',
 }
 
+/** The four questions asked of this list, as tabs. */
+const TABS: Array<[string, string]> = [
+    ['all', 'الكل'],
+    ['outstanding', 'غير مسددة'],
+    ['settled', 'مسددة'],
+    ['draft', 'مسودات'],
+]
+
 export function SupplierInvoicesTab() {
     const [search, setSearch] = useState('')
-    const [outstanding, setOutstanding] = useState(false)
+    const [tab, setTab] = useState('all')
+    const [supplierId, setSupplierId] = useState('')
+    const [month, setMonth] = useState('')
+    const [day, setDay] = useState('')
+    const [range, setRange] = useState<DateRange>(EMPTY_RANGE)
     const [drafting, setDrafting] = useState(false)
     const [voiding, setVoiding] = useState<SupplierInvoice | null>(null)
 
     const toast = useToast()
     const { path } = useArea()
     const act = useSupplierInvoiceAction()
+    const { data: suppliers } = useSuppliers()
+
     const { data, isLoading } = useSupplierInvoices({
         search,
-        outstanding: outstanding ? 1 : undefined,
+        outstanding: tab === 'outstanding' ? 1 : undefined,
+        settled: tab === 'settled' ? 1 : undefined,
+        status: tab === 'draft' ? 'draft' : undefined,
+        supplier_id: supplierId || undefined,
+        ...monthDayRange(month, day, range),
         per_page: 40,
     })
 
@@ -71,19 +91,49 @@ export function SupplierInvoicesTab() {
                     />
                 </div>
 
-                <button
-                    onClick={() => setOutstanding((value) => !value)}
-                    className={clsx(
-                        'tap rounded-xl px-3 py-2.5 text-xs font-bold transition',
-                        outstanding ? 'bg-navy-900 text-white' : 'bg-navy-100 text-navy-600',
-                    )}
+                <Select
+                    value={supplierId}
+                    onChange={(e) => setSupplierId(e.target.value)}
+                    className="w-auto min-w-40"
                 >
-                    المُرحّلة فقط
-                </button>
+                    <option value="">كل الموردين</option>
+                    {suppliers?.map((supplier) => (
+                        <option key={supplier.id} value={supplier.id}>
+                            {supplier.name}
+                        </option>
+                    ))}
+                </Select>
 
                 <Button icon={Plus} onClick={() => setDrafting(true)}>
                     فاتورة مورّد
                 </Button>
+            </div>
+
+            <div className="mb-4 space-y-3">
+                <div className="flex gap-1 rounded-xl bg-navy-100 p-1">
+                    {TABS.map(([value, label]) => (
+                        <button
+                            key={value}
+                            onClick={() => setTab(value)}
+                            className={clsx(
+                                'tap flex-1 rounded-lg px-3 py-2 text-xs font-bold transition',
+                                tab === value ? 'bg-white text-navy-900 shadow-sm' : 'text-navy-500',
+                            )}
+                        >
+                            {label}
+                        </button>
+                    ))}
+                </div>
+
+                {/* By the bill's own date — the month it was issued in. */}
+                <MonthDayFilter
+                    month={month}
+                    day={day}
+                    range={range}
+                    onMonth={setMonth}
+                    onDay={setDay}
+                    onRange={setRange}
+                />
             </div>
 
             {isLoading ? (

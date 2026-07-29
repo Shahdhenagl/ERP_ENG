@@ -27,7 +27,11 @@ class SupplierInvoiceController extends Controller
             ->when($request->integer('supplier_id'), fn ($q, $id) => $q->where('supplier_id', $id))
             ->when($request->string('status')->toString(), fn ($q, $s) => $q->where('status', $s))
             ->when($request->boolean('outstanding'), fn ($q) => $q->outstanding())
+            ->when($request->boolean('settled'), fn ($q) => $q->settled())
             ->when($request->boolean('overdue'), fn ($q) => $q->overdue())
+            // By the bill's own date, so "what did we pay in March" is one filter.
+            ->when($request->date('from'), fn ($q, $from) => $q->whereDate('invoice_date', '>=', $from))
+            ->when($request->date('to'), fn ($q, $to) => $q->whereDate('invoice_date', '<=', $to))
             ->when($request->string('search')->toString(), fn ($q, $term) => $q->where(
                 fn ($i) => $i->where('code', 'like', "%{$term}%")
                     ->orWhere('supplier_ref', 'like', "%{$term}%")

@@ -573,3 +573,41 @@ it('drops a bill off the outstanding list once it is paid', function () {
     // whether the bill was posted, never whether anything was still owed.
     expect(\App\Models\SupplierInvoice::outstanding()->pluck('id'))->not->toContain($invoice->id);
 });
+
+it('splits the list into what is owed and what is settled', function () {
+    $owing = \App\Models\SupplierInvoice::create([
+        'supplier_id' => $this->supplier->id,
+        'invoice_date' => now()->toDateString(),
+        'total' => 1000,
+        'status' => 'posted',
+        'created_by' => $this->manager->id,
+    ]);
+
+    $paid = \App\Models\SupplierInvoice::create([
+        'supplier_id' => $this->supplier->id,
+        'invoice_date' => now()->toDateString(),
+        'total' => 400,
+        'status' => 'posted',
+        'created_by' => $this->manager->id,
+    ]);
+
+    \App\Models\SupplierPayment::create([
+        'supplier_id' => $this->supplier->id,
+        'supplier_invoice_id' => $paid->id,
+        'cash_box_id' => \App\Models\CashBox::default()->id,
+        'amount' => 400,
+        'paid_on' => now()->toDateString(),
+        'method' => 'cash',
+        'created_by' => $this->manager->id,
+    ]);
+
+    $outstanding = actingAs($this->manager)
+        ->getJson('/api/supplier-invoices?outstanding=1')->assertOk()->json('data');
+
+    $settled = actingAs($this->manager)
+        ->getJson('/api/supplier-invoices?settled=1')->assertOk()->json('data');
+
+    // The two halves partition the posted bills: neither list may drop one.
+    expect(collect($outstanding)->pluck('id')->all())->toBe([$owing->id])
+        ->and(collect($settled)->pluck('id')->all())->toBe([$paid->id]);
+});

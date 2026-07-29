@@ -211,6 +211,25 @@ class SupplierInvoice extends Model
         );
     }
 
+    /**
+     * The other half of outstanding: posted and owing nothing. Written as its
+     * own scope rather than a negation at the call site, so the two can never
+     * drift apart and leave a bill in neither list.
+     */
+    public function scopeSettled(Builder $query): Builder
+    {
+        return $query->where('status', 'posted')->whereRaw(
+            'supplier_invoices.total <= ('
+            .'(select coalesce(sum(amount), 0) from supplier_payments'
+            .' where supplier_payments.supplier_invoice_id = supplier_invoices.id'
+            .' and supplier_payments.deleted_at is null)'
+            .' + (select coalesce(sum(total), 0) from purchase_returns'
+            .' where purchase_returns.supplier_invoice_id = supplier_invoices.id'
+            ." and purchase_returns.status = 'posted' and purchase_returns.deleted_at is null)"
+            .') + 0.005',
+        );
+    }
+
     public function scopeOverdue(Builder $query): Builder
     {
         return $query->outstanding()
