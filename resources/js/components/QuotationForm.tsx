@@ -1,12 +1,13 @@
 import clsx from 'clsx'
 import { Plus, Save, Trash2 } from 'lucide-react'
 import { useState } from 'react'
+import { CustomerSitePicker } from '@/components/CustomerSitePicker'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, Field, Input, Select, Textarea } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { DEFAULT_TAX_RATE, formatMoney, formatQty, ITEM_CATEGORY, itemSpecSummary } from '@/lib/domain'
-import { useCustomers, useItems, useSaveQuotation } from '@/lib/queries'
+import { useItems, useSaveQuotation } from '@/lib/queries'
 import type { Quotation } from '@/types'
 
 interface Row {
@@ -29,14 +30,13 @@ export function QuotationForm({
 }) {
     const toast = useToast()
     const save = useSaveQuotation(quotation?.id)
-    const { data: customerPage } = useCustomers({ active_only: 1, per_page: 200 })
     const { data: itemPage } = useItems({ active_only: 1, per_page: 200 })
     const [errors, setErrors] = useState<Record<string, string>>({})
 
-    const customers = customerPage?.data ?? []
     const items = itemPage?.data ?? []
 
     const [customerId, setCustomerId] = useState(String(quotation?.customer_id ?? ''))
+    const [branchId, setBranchId] = useState(String(quotation?.branch_id ?? ''))
     const [title, setTitle] = useState(quotation?.title ?? '')
     const [validUntil, setValidUntil] = useState(
         quotation?.valid_until ?? new Date(Date.now() + 14 * 864e5).toISOString().slice(0, 10),
@@ -71,6 +71,7 @@ export function QuotationForm({
         try {
             const saved = await save.mutateAsync({
                 customer_id: Number(customerId),
+                branch_id: branchId ? Number(branchId) : null,
                 title: title || null,
                 valid_until: validUntil || null,
                 tax_rate: Number(taxRate) || 0,
@@ -114,17 +115,18 @@ export function QuotationForm({
             }
         >
             <div className="space-y-4">
+                <CustomerSitePicker
+                    customerId={customerId}
+                    branchId={branchId}
+                    onChange={(next) => {
+                        setCustomerId(next.customerId)
+                        setBranchId(next.branchId)
+                    }}
+                    customerError={errors.customer_id}
+                    branchError={errors.branch_id}
+                />
+
                 <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="العميل" required error={errors.customer_id}>
-                        <Select value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
-                            <option value="">— اختر العميل —</option>
-                            {customers.map((customer) => (
-                                <option key={customer.id} value={customer.id}>
-                                    {customer.name}
-                                </option>
-                            ))}
-                        </Select>
-                    </Field>
 
                     <Field label="صالح حتى" error={errors.valid_until} hint="بعده لا يعود السعر ملزمًا">
                         <Input

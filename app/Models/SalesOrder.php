@@ -15,7 +15,7 @@ class SalesOrder extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'code', 'customer_id', 'quotation_id', 'order_date', 'delivery_date', 'status',
+        'code', 'customer_id', 'branch_id', 'quotation_id', 'order_date', 'delivery_date', 'status',
         'subtotal', 'discount', 'tax_rate', 'tax_amount', 'total', 'currency',
         'notes', 'cancel_reason', 'created_by',
     ];
@@ -56,6 +56,12 @@ class SalesOrder extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    /** The site this order delivers to — carried over from the quote. */
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
     }
 
     public function quotation(): BelongsTo

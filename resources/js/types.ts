@@ -618,6 +618,9 @@ export interface Quotation {
 
     customer_id: number
     customer: string | null
+    /** The site being quoted — null when the deal is with the head office. */
+    branch_id: number | null
+    branch: string | null
     asset_id: number | null
     asset: string | null
 
@@ -665,6 +668,9 @@ export interface SalesOrder {
 
     customer_id: number
     customer: string | null
+    /** Carried over from the quote — where this order delivers. */
+    branch_id: number | null
+    branch: string | null
     quotation_id: number | null
     quotation_code: string | null
 

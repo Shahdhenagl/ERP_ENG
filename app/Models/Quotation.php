@@ -16,7 +16,7 @@ class Quotation extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'code', 'customer_id', 'asset_id', 'task_id', 'title',
+        'code', 'customer_id', 'branch_id', 'asset_id', 'task_id', 'title',
         'issue_date', 'valid_until', 'status',
         'subtotal', 'discount', 'tax_rate', 'tax_amount', 'total', 'currency',
         'terms', 'notes', 'reject_reason', 'sent_at', 'decided_at', 'created_by',
@@ -63,6 +63,12 @@ class Quotation extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    /** The site being quoted, when the customer has more than one. */
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
     }
 
     public function asset(): BelongsTo

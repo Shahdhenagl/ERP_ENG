@@ -167,6 +167,12 @@ function QuotationsTab() {
 
                                     <p className="mt-1.5 truncate font-bold text-navy-900">
                                         {quotation.customer}
+                                        {quotation.branch && (
+                                            <span className="font-normal text-navy-400">
+                                                {' — '}
+                                                {quotation.branch}
+                                            </span>
+                                        )}
                                     </p>
                                     {quotation.title && (
                                         <p className="truncate text-xs text-navy-400">{quotation.title}</p>
@@ -275,7 +281,15 @@ function QuotationDetail({
                 <div className="space-y-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="min-w-0">
-                            <p className="font-bold text-navy-900">{quotation.customer}</p>
+                            <p className="font-bold text-navy-900">
+                                {quotation.customer}
+                                {quotation.branch && (
+                                    <span className="font-normal text-navy-400">
+                                        {' — '}
+                                        {quotation.branch}
+                                    </span>
+                                )}
+                            </p>
                             {quotation.title && (
                                 <p className="text-sm text-navy-500">{quotation.title}</p>
                             )}
@@ -603,6 +617,12 @@ function OrdersTab() {
 
                                     <p className="mt-1.5 truncate font-bold text-navy-900">
                                         {order.customer}
+                                        {order.branch && (
+                                            <span className="font-normal text-navy-400">
+                                                {' — '}
+                                                {order.branch}
+                                            </span>
+                                        )}
                                     </p>
                                     <p className="text-xs text-navy-400">
                                         {order.order_date && formatDate(order.order_date)}
@@ -641,7 +661,15 @@ function OrderDetail({ id, onClose }: { id: number; onClose: () => void }) {
                 <div className="space-y-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="min-w-0">
-                            <p className="font-bold text-navy-900">{order.customer}</p>
+                            <p className="font-bold text-navy-900">
+                                {order.customer}
+                                {order.branch && (
+                                    <span className="font-normal text-navy-400">
+                                        {' — '}
+                                        {order.branch}
+                                    </span>
+                                )}
+                            </p>
                             <div className="mt-1.5 flex flex-wrap gap-1.5">
                                 <span className={clsx('badge', SALES_ORDER_STATUS[order.status].chip)}>
                                     {order.status_label}

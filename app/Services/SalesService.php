@@ -147,6 +147,8 @@ class SalesService
         return DB::transaction(function () use ($quotation, $actor) {
             $order = SalesOrder::create([
                 'customer_id' => $quotation->customer_id,
+                // The site that was quoted is the site that gets delivered to.
+                'branch_id' => $quotation->branch_id,
                 'quotation_id' => $quotation->id,
                 'order_date' => now()->toDateString(),
                 'discount' => $quotation->discount,

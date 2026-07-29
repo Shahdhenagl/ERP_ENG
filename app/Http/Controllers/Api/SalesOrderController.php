@@ -25,7 +25,7 @@ class SalesOrderController extends Controller
             ->when($request->boolean('open'), fn ($q) => $q->open())
             // Lines come along so the delivery screen can say whether the goods
             // are actually on the shelf before anyone promises a date.
-            ->with(['customer', 'invoices', 'lines.item'])
+            ->with(['customer', 'branch', 'invoices', 'lines.item'])
             ->orderByDesc('id')
             ->limit($request->integer('per_page', 50))
             ->get()
@@ -51,7 +51,7 @@ class SalesOrderController extends Controller
     {
         return response()->json([
             'data' => $this->present(
-                $salesOrder->load(['customer', 'quotation', 'lines.item', 'invoices', 'tasks']),
+                $salesOrder->load(['customer', 'branch', 'quotation', 'lines.item', 'invoices', 'tasks']),
                 true,
             ),
         ]);
@@ -61,6 +61,7 @@ class SalesOrderController extends Controller
     {
         $data = $request->validate([
             'customer_id' => ['required', 'exists:customers,id'],
+            'branch_id' => ['nullable', 'exists:branches,id'],
             'delivery_date' => ['nullable', 'date'],
             'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'discount' => ['nullable', 'numeric', 'min:0'],
@@ -95,7 +96,7 @@ class SalesOrderController extends Controller
 
         ActivityLog::record('sales_order.created', $order, "تم إنشاء أمر البيع {$order->code}");
 
-        return response()->json(['data' => $this->present($order->load(['customer', 'lines.item']), true)], 201);
+        return response()->json(['data' => $this->present($order->load(['customer', 'branch', 'lines.item']), true)], 201);
     }
 
     public function deliver(SalesOrder $salesOrder): JsonResponse
@@ -104,7 +105,7 @@ class SalesOrderController extends Controller
 
         ActivityLog::record('sales_order.delivered', $delivered, "تم تسليم {$delivered->code}");
 
-        return response()->json(['data' => $this->present($delivered->load(['customer', 'lines.item']), true)]);
+        return response()->json(['data' => $this->present($delivered->load(['customer', 'branch', 'lines.item']), true)]);
     }
 
     public function cancel(Request $request, SalesOrder $salesOrder): JsonResponse
@@ -113,7 +114,7 @@ class SalesOrderController extends Controller
 
         $cancelled = $this->sales->cancelOrder($salesOrder, $data['reason']);
 
-        return response()->json(['data' => $this->present($cancelled->load(['customer', 'lines.item']), true)]);
+        return response()->json(['data' => $this->present($cancelled->load(['customer', 'branch', 'lines.item']), true)]);
     }
 
     /** Draft an invoice from the order lines. Issuing stays a separate call. */
@@ -205,6 +206,8 @@ class SalesOrderController extends Controller
 
             'customer_id' => $order->customer_id,
             'customer' => $order->customer?->name,
+            'branch_id' => $order->branch_id,
+            'branch' => $order->branch?->name,
             'quotation_id' => $order->quotation_id,
             'quotation_code' => $order->quotation?->code,
 

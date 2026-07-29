@@ -29,6 +29,7 @@ export function QuotationPrint() {
                     heading="مقدَّم إلى"
                     rows={[
                         ['العميل', quotation.customer],
+                        ['الفرع', quotation.branch],
                         ['الجهاز', quotation.asset],
                     ]}
                 />

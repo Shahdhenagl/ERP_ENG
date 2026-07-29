@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Api;
 use App\Enums\QuotationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
+use App\Models\Branch;
 use App\Models\Quotation;
 use App\Services\SalesService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class QuotationController extends Controller
 {
@@ -22,7 +24,7 @@ class QuotationController extends Controller
             ->when($request->string('status')->toString(), fn ($q, $s) => $q->where('status', $s))
             ->when($request->boolean('awaiting'), fn ($q) => $q->awaitingDecision())
             ->when($request->boolean('pending_approval'), fn ($q) => $q->pendingApproval())
-            ->with(['customer', 'salesOrder', 'approver'])
+            ->with(['customer', 'branch', 'salesOrder', 'approver'])
             ->orderByDesc('id')
             ->limit($request->integer('per_page', 50))
             ->get()
@@ -34,13 +36,14 @@ class QuotationController extends Controller
     public function show(Quotation $quotation): JsonResponse
     {
         return response()->json([
-            'data' => $this->present($quotation->load(['customer', 'asset', 'lines.item', 'salesOrder']), true),
+            'data' => $this->present($quotation->load(['customer', 'branch', 'asset', 'lines.item', 'salesOrder']), true),
         ]);
     }
 
     public function store(Request $request): JsonResponse
     {
         $data = $this->validated($request);
+        $this->assertBranchBelongsToCustomer($data);
 
         $quotation = Quotation::create([
             ...collect($data)->except('lines')->all(),
@@ -52,7 +55,7 @@ class QuotationController extends Controller
 
         ActivityLog::record('quotation.created', $quotation, "تم إنشاء عرض السعر {$quotation->code}");
 
-        return response()->json(['data' => $this->present($quotation->load(['customer', 'lines.item']), true)], 201);
+        return response()->json(['data' => $this->present($quotation->load(['customer', 'branch', 'lines.item']), true)], 201);
     }
 
     public function update(Request $request, Quotation $quotation): JsonResponse
@@ -66,12 +69,13 @@ class QuotationController extends Controller
         }
 
         $data = $this->validated($request);
+        $this->assertBranchBelongsToCustomer($data);
 
         $quotation->update(collect($data)->except('lines')->all());
         $this->syncLines($quotation, $data['lines']);
         $quotation = $this->sales->recalculateQuotation($quotation);
 
-        return response()->json(['data' => $this->present($quotation->load(['customer', 'lines.item']), true)]);
+        return response()->json(['data' => $this->present($quotation->load(['customer', 'branch', 'lines.item']), true)]);
     }
 
     public function send(Quotation $quotation): JsonResponse
@@ -80,7 +84,7 @@ class QuotationController extends Controller
 
         ActivityLog::record('quotation.sent', $sent, "تم إرسال عرض السعر {$sent->code}");
 
-        return response()->json(['data' => $this->present($sent->load(['customer', 'lines.item']), true)]);
+        return response()->json(['data' => $this->present($sent->load(['customer', 'branch', 'lines.item']), true)]);
     }
 
     /** The customer accepted — hand it on as a sales order. */
@@ -107,7 +111,7 @@ class QuotationController extends Controller
 
         ActivityLog::record('quotation.rejected', $rejected, "تم رفض عرض السعر {$rejected->code}");
 
-        return response()->json(['data' => $this->present($rejected->load(['customer', 'lines.item']), true)]);
+        return response()->json(['data' => $this->present($rejected->load(['customer', 'branch', 'lines.item']), true)]);
     }
 
     public function cancel(Request $request, Quotation $quotation): JsonResponse
@@ -116,7 +120,7 @@ class QuotationController extends Controller
 
         $cancelled = $this->sales->cancel($quotation, $data['reason']);
 
-        return response()->json(['data' => $this->present($cancelled->load(['customer', 'lines.item']), true)]);
+        return response()->json(['data' => $this->present($cancelled->load(['customer', 'branch', 'lines.item']), true)]);
     }
 
     /* ── Internal approval ───────────────────────────────── */
@@ -142,7 +146,7 @@ class QuotationController extends Controller
             "quote-{$quotation->id}",
         );
 
-        return response()->json(['data' => $this->present($quotation->fresh()->load(['customer', 'approver']))]);
+        return response()->json(['data' => $this->present($quotation->fresh()->load(['customer', 'branch', 'approver']))]);
     }
 
     /** Sign it off — cleared to send to the customer. */
@@ -158,7 +162,7 @@ class QuotationController extends Controller
 
         ActivityLog::record('quotation.approved', $quotation, "تم اعتماد عرض السعر {$quotation->code}");
 
-        return response()->json(['data' => $this->present($quotation->fresh()->load(['customer', 'approver']))]);
+        return response()->json(['data' => $this->present($quotation->fresh()->load(['customer', 'branch', 'approver']))]);
     }
 
     /** Send it back to the salesperson with a note instead of approving. */
@@ -172,7 +176,7 @@ class QuotationController extends Controller
 
         ActivityLog::record('quotation.approval_rejected', $quotation, "أُعيد {$quotation->code} للتعديل");
 
-        return response()->json(['data' => $this->present($quotation->fresh()->load(['customer', 'approver']))]);
+        return response()->json(['data' => $this->present($quotation->fresh()->load(['customer', 'branch', 'approver']))]);
     }
 
     public function destroy(Quotation $quotation): JsonResponse
@@ -199,6 +203,8 @@ class QuotationController extends Controller
 
             'customer_id' => $quotation->customer_id,
             'customer' => $quotation->customer?->name,
+            'branch_id' => $quotation->branch_id,
+            'branch' => $quotation->branch?->name,
             'asset_id' => $quotation->asset_id,
             'asset' => $quotation->asset?->serial,
 
@@ -262,6 +268,9 @@ class QuotationController extends Controller
     {
         return $request->validate([
             'customer_id' => ['required', 'exists:customers,id'],
+            // The site being quoted. Tied to the chosen customer below, because
+            // "exists" alone would let a quote name someone else's branch.
+            'branch_id' => ['nullable', 'exists:branches,id'],
             'asset_id' => ['nullable', 'exists:assets,id'],
             'task_id' => ['nullable', 'exists:tasks,id'],
             'title' => ['nullable', 'string', 'max:200'],
@@ -277,6 +286,25 @@ class QuotationController extends Controller
             'lines.*.qty' => ['required', 'numeric', 'gt:0'],
             'lines.*.unit_price' => ['required', 'numeric', 'min:0'],
         ]);
+    }
+
+    /**
+     * A branch belongs to exactly one customer, so quoting one against another
+     * is a mix-up worth refusing rather than storing.
+     */
+    protected function assertBranchBelongsToCustomer(array $data): void
+    {
+        if (empty($data['branch_id'])) {
+            return;
+        }
+
+        $owner = Branch::whereKey($data['branch_id'])->value('customer_id');
+
+        if ((int) $owner !== (int) $data['customer_id']) {
+            throw ValidationException::withMessages([
+                'branch_id' => 'هذا الفرع لا يخص العميل المختار.',
+            ]);
+        }
     }
 
     /** Replace every line in one go — drafts are cheap, diffing is not. */
