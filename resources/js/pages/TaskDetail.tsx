@@ -88,6 +88,7 @@ export function TaskDetail() {
     const [expenseOpen, setExpenseOpen] = useState(false)
     const [routeOpen, setRouteOpen] = useState(false)
     const [attachmentsOpen, setAttachmentsOpen] = useState(false)
+    const [viewingReport, setViewingReport] = useState<ReportType | null>(null)
 
     // Ask for a fix while the job is being read rather than at the moment a
     // button is pressed and somebody is waiting on it.
@@ -213,7 +214,7 @@ export function TaskDetail() {
                 </div>
 
                 {task.status === 'completed' ? (
-                    <CompletedSummary task={task} />
+                    <CompletedSummary task={task} onOpenReport={setViewingReport} />
                 ) : (
                     <>
                         <FlowRail status={task.status} />
@@ -303,6 +304,28 @@ export function TaskDetail() {
                         size="sm"
                     >
                         <AttachmentsSection task={task} canEdit />
+                    </Modal>
+                )}
+
+                {/* Read back what was filed, rather than remembered. */}
+                {viewingReport && (
+                    <Modal
+                        open
+                        onClose={() => setViewingReport(null)}
+                        title={viewingReport === 'completion' ? 'تقرير الإنهاء' : 'تقرير المعاينة'}
+                        size="sm"
+                    >
+                        {(() => {
+                            const report =
+                                viewingReport === 'completion' ? completionReport : diagnosisReport
+
+                            return report ? (
+                                <ReportBlock
+                                    title={viewingReport === 'completion' ? 'الإنهاء' : 'المعاينة'}
+                                    report={report}
+                                />
+                            ) : null
+                        })()}
                     </Modal>
                 )}
 

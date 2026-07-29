@@ -4,6 +4,7 @@ import {
     Check,
     ClipboardCheck,
     Clock,
+    Eye,
     FileText,
     MapPin,
     Navigation,
@@ -323,7 +324,14 @@ export function ExpenseBar({
  * technician shows when asked what happened, rather than a queue item that has
  * gone quiet.
  */
-export function CompletedSummary({ task }: { task: Task }) {
+export function CompletedSummary({
+    task,
+    onOpenReport,
+}: {
+    task: Task
+    /** Opens a filed report to be read back. */
+    onOpenReport: (type: 'diagnosis' | 'completion') => void
+}) {
     const spent = task.expenses_total ?? 0
     const photos = (task.attachments ?? []).length
     const reports = task.reports ?? []
@@ -372,14 +380,21 @@ export function CompletedSummary({ task }: { task: Task }) {
                 <div className="card p-4">
                     <p className="mb-2 text-[11px] font-bold text-navy-400">التقارير المرفوعة</p>
                     <div className="space-y-1.5">
+                        {/* Filed, and readable: a technician asked what he wrote
+                            should not have to remember it. */}
                         {reports.map((report) => (
-                            <div
+                            <button
                                 key={report.id}
-                                className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800"
+                                type="button"
+                                onClick={() => onOpenReport(report.type)}
+                                className="tap flex w-full items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2.5 text-right text-xs font-bold text-emerald-800 transition hover:bg-emerald-100"
                             >
                                 <Check className="size-3.5 shrink-0" />
-                                {report.type === 'completion' ? 'تقرير الإنهاء' : 'تقرير المعاينة'}
-                            </div>
+                                <span className="flex-1">
+                                    {report.type === 'completion' ? 'تقرير الإنهاء' : 'تقرير المعاينة'}
+                                </span>
+                                <Eye className="size-4 shrink-0 opacity-70" />
+                            </button>
                         ))}
                     </div>
                 </div>
