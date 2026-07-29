@@ -17,6 +17,9 @@ class Contract extends Model
 {
     use HasAttachments, HasFactory, SoftDeletes;
 
+    /** Memoises coveredBranches(); see the Coverage section below. */
+    protected ?\Illuminate\Support\Collection $branchCache = null;
+
     protected $fillable = [
         'code',
         'customer_id',
@@ -142,6 +145,38 @@ class Contract extends Model
 
         // No schedule (a value-less contract) never blocks on payment.
         return ! $first || $first->status === 'collected';
+    }
+
+    // ── Coverage ─────────────────────────────────────────────
+
+    /**
+     * How many sites this contract answers for. A round is a visit to each of
+     * the customer's live branches, so this is the multiplier between what the
+     * contract promises and what reaches the dispatch board.
+     *
+     * A customer with no branches on file is one site, not none — that is the
+     * single job the planner cuts for them.
+     */
+    public function coveredBranches(): \Illuminate\Support\Collection
+    {
+        // Read three times per contract resource — count, year total, and the
+        // printed schedule — so it is resolved once. A declared property, not a
+        // dynamic one, so Eloquent never mistakes it for a relation.
+        return $this->branchCache ??= ($this->customer?->branches()
+            ->active()
+            ->orderBy('name')
+            ->get() ?? collect());
+    }
+
+    public function coveredBranchesCount(): int
+    {
+        return $this->coveredBranches()->count();
+    }
+
+    /** Work orders a full year of this contract will produce. */
+    public function jobsPerYear(): int
+    {
+        return max(1, $this->coveredBranchesCount()) * (int) $this->visits_per_year;
     }
 
     // ── Term ─────────────────────────────────────────────────

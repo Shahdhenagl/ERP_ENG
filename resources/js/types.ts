@@ -396,6 +396,27 @@ export interface ContractVisit {
     is_locked: boolean
     task_id: number | null
     task?: Task
+    /** A round is one job per covered branch — these are those jobs. */
+    jobs_count?: number
+    jobs_done?: number
+    jobs?: ContractVisitJob[]
+}
+
+/** A site a contract protects — every round visits each of them. */
+export interface ContractBranch {
+    id: number
+    name: string
+    address: string | null
+}
+
+/** One branch's work order within a maintenance round. */
+export interface ContractVisitJob {
+    id: number
+    code: string
+    status: TaskStatus
+    status_label: string
+    branch: string | null
+    technician: string | null
 }
 
 export interface Contract {
@@ -438,6 +459,10 @@ export interface Contract {
     assets?: Asset[]
     visits_count?: number
     visits?: ContractVisit[]
+    /** Live branches the contract covers, and branches × rounds for the year. */
+    branches_count?: number
+    jobs_per_year?: number
+    branches?: ContractBranch[]
     created_at: string | null
 }
 
@@ -1015,6 +1040,9 @@ export interface Asset {
     /** The catalogue item it was drawn from, when it came out of stock. */
     item_id: number | null
     customer?: Customer
+    /** The site it stands at — a contract's schedule prints per branch. */
+    branch_id: number | null
+    branch?: string | null
 
     site_address: string | null
     site_lat: number | null

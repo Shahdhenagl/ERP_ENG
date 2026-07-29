@@ -54,6 +54,46 @@ it('fans a due round out to one job per covered branch', function () {
         ->and($tasks->pluck('contract_visit_id')->unique()->all())->toBe([$visit->id]);
 });
 
+it('reports the coverage and each round\'s branch jobs to the screen', function () {
+    $contract = Contract::factory()->active()->for($this->customer)->create([
+        'starts_on' => now()->toDateString(),
+        'ends_on' => now()->addYear()->subDay()->toDateString(),
+        'visits_per_year' => 12,
+    ]);
+
+    foreach (['المعادي', 'مدينة نصر', 'الجيزة'] as $name) {
+        \App\Models\Branch::create([
+            'customer_id' => $this->customer->id, 'name' => $name, 'is_active' => true,
+        ]);
+    }
+
+    // An inactive site is not visited, so it must not inflate the promise.
+    \App\Models\Branch::create([
+        'customer_id' => $this->customer->id, 'name' => 'فرع مغلق', 'is_active' => false,
+    ]);
+
+    \App\Models\ContractVisit::create([
+        'contract_id' => $contract->id, 'sequence' => 1,
+        'planned_for' => now()->toDateString(), 'status' => VisitStatus::Planned,
+    ]);
+
+    $this->planner->materialiseDueVisits();
+
+    $body = actingAs($this->manager)
+        ->getJson("/api/contracts/{$contract->id}")
+        ->assertOk()
+        ->json('data');
+
+    // Three live branches × twelve rounds is the year's real workload.
+    expect($body['branches_count'])->toBe(3)
+        ->and($body['jobs_per_year'])->toBe(36)
+        ->and($body['branches'])->toHaveCount(3)
+        ->and($body['visits'][0]['jobs_count'])->toBe(3)
+        ->and($body['visits'][0]['jobs_done'])->toBe(0)
+        ->and(collect($body['visits'][0]['jobs'])->pluck('branch')->sort()->values()->all())
+        ->toBe(['الجيزة', 'المعادي', 'مدينة نصر']);
+});
+
 it('still cuts a single site job when the customer has no branches', function () {
     $contract = Contract::factory()->active()->for($this->customer)->create([
         'starts_on' => now()->toDateString(),

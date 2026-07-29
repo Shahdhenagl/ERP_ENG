@@ -5,7 +5,13 @@ import { useToast } from '@/components/Toast'
 import { Button, Field, Input, Select, Textarea } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { defaultContractTerms } from '@/lib/contractTemplate'
-import { useAssets, useCustomers, useSaveContract, useSettings } from '@/lib/queries'
+import {
+    useAssets,
+    useCustomerBranches,
+    useCustomers,
+    useSaveContract,
+    useSettings,
+} from '@/lib/queries'
 import type { Contract } from '@/types'
 
 const BILLING_LABEL: Record<string, string> = {
@@ -53,6 +59,19 @@ export function ContractForm({ open, onClose, contract, customerId, onSaved }: C
         customer_id: form.customer_id ? Number(form.customer_id) : undefined,
         per_page: 100,
     })
+
+    // A round visits every live branch, so the year's work is branches × visits.
+    // Saying it here stops "12 a year" from reading as twelve jobs when the
+    // customer has thirty sites.
+    const { data: branches } = useCustomerBranches(
+        form.customer_id ? Number(form.customer_id) : undefined,
+    )
+    const liveBranches = (branches ?? []).filter((branch) => branch.is_active).length
+    const perYear = Number(form.visits_per_year) || 0
+
+    const coverageHint = liveBranches
+        ? `العقد يغطي ${liveBranches} فرعًا — كل زيارة جولة على كل الفروع، أي ${liveBranches * perYear} مهمة في السنة.`
+        : 'تُوزَّع تلقائيًا على مدة العقد بمسافات متساوية.'
 
     const set = (key: keyof typeof form) => (value: string) =>
         setForm((current) => ({ ...current, [key]: value }))
@@ -180,7 +199,7 @@ export function ContractForm({ open, onClose, contract, customerId, onSaved }: C
                 <Field
                     label="عدد الزيارات سنويًا"
                     required
-                    hint="تُوزَّع تلقائيًا على مدة العقد بمسافات متساوية."
+                    hint={coverageHint}
                     error={errors.visits_per_year}
                 >
                     <Select

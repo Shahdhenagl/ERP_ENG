@@ -371,8 +371,13 @@ class ContractController extends Controller
     {
         return $contract->load([
             'customer',
-            'assets',
+            // The device schedule prints per site, so each unit needs its branch.
+            'assets.branch',
             'visits.task.technician',
+            // A round's branch jobs, so the screen can open one and show which
+            // sites are done rather than a single representative work order.
+            'visits.tasks.branch',
+            'visits.tasks.technician',
             'payments.invoice',
         ])->loadCount(['assets', 'visits']);
     }

@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\TaskStatus;
+use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -25,6 +27,28 @@ class ContractVisitResource extends JsonResource
 
             'task_id' => $this->task_id,
             'task' => new TaskResource($this->whenLoaded('task')),
+
+            // A round is one visit to every covered branch, so the honest unit
+            // of progress is "how many of its branches are done", not whether a
+            // single representative job closed.
+            'jobs_count' => $this->when(
+                $this->relationLoaded('tasks'),
+                fn () => $this->tasks->count(),
+            ),
+            'jobs_done' => $this->when(
+                $this->relationLoaded('tasks'),
+                fn () => $this->tasks->where('status', TaskStatus::Completed)->count(),
+            ),
+            'jobs' => $this->whenLoaded('tasks', fn () => $this->tasks
+                ->map(fn (Task $task) => [
+                    'id' => $task->id,
+                    'code' => $task->code,
+                    'status' => $task->status->value,
+                    'status_label' => $task->status->label(),
+                    'branch' => $task->branch?->name,
+                    'technician' => $task->technician?->name,
+                ])
+                ->values()),
         ];
     }
 }

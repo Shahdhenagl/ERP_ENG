@@ -4,6 +4,7 @@ import {
     Ban,
     CalendarClock,
     CalendarPlus,
+    ChevronDown,
     CircleCheck,
     Coins,
     HardDrive,
@@ -22,7 +23,14 @@ import { ConfirmDialog, Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, ErrorState, Field, Input, PageHeader, PageLoader, Select } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
-import { CONTRACT_STATUS, formatMoney, PAYMENT_METHOD, VISIT_STATUS, expiryChip } from '@/lib/domain'
+import {
+    CONTRACT_STATUS,
+    formatMoney,
+    PAYMENT_METHOD,
+    STATUS,
+    VISIT_STATUS,
+    expiryChip,
+} from '@/lib/domain'
 import { formatDate } from '@/lib/format'
 import { useArea } from '@/lib/nav'
 import { Attachments } from '@/components/Attachments'
@@ -69,6 +77,9 @@ export function ContractDetail() {
 
     const visits = contract.visits ?? []
     const done = visits.filter((visit) => visit.status === 'done').length
+    // Several branches turn each visit into a round of jobs — the plan below
+    // reads as rounds, not single calls.
+    const fansOut = (contract.branches_count ?? 0) > 1
     const heldVisits = new Set(contract.held_visit_sequences)
     // A contract with a value cannot go live until its first instalment is in.
     const canActivate = contract.first_payment_collected
@@ -113,6 +124,13 @@ export function ContractDetail() {
                 <span className="badge bg-navy-100 text-navy-600">
                     {contract.visits_per_year} زيارة سنويًا
                 </span>
+                {/* A round is a visit to every branch, so "12 a year" understates
+                    the work by the number of sites. Say the real figure. */}
+                {Boolean(contract.branches_count) && (
+                    <span className="badge bg-brand-50 text-brand-700 ring-1 ring-brand-200">
+                        {contract.branches_count} فرع · {contract.jobs_per_year} زيارة في السنة
+                    </span>
+                )}
             </div>
 
             {/* ── Lifecycle ──────────────────────────────────── */}
@@ -189,10 +207,12 @@ export function ContractDetail() {
                     {/* ── Visit plan ─────────────────────────── */}
                     <section className="card p-5">
                         <div className="mb-4 flex items-center justify-between gap-3">
-                            <h2 className="text-sm font-bold text-navy-900">خطة الزيارات</h2>
+                            <h2 className="text-sm font-bold text-navy-900">
+                                {fansOut ? 'جولات الصيانة' : 'خطة الزيارات'}
+                            </h2>
                             {visits.length > 0 && (
                                 <span className="text-xs font-semibold text-navy-400">
-                                    {done} من {visits.length} تمت
+                                    {done} من {visits.length} {fansOut ? 'جولة تمت' : 'تمت'}
                                 </span>
                             )}
                         </div>
@@ -352,6 +372,12 @@ function VisitRow({
     held?: boolean
 }) {
     const meta = VISIT_STATUS[visit.status]
+    const jobs = visit.jobs ?? []
+    // One round, one job per covered branch. With several sites the round is a
+    // container, not a visit — so it opens rather than jumping to whichever job
+    // happened to be cut first.
+    const fansOut = jobs.length > 1
+    const [open, setOpen] = useState(false)
 
     const body = (
         <>
@@ -363,11 +389,17 @@ function VisitRow({
                 <span className="block truncate text-sm font-bold text-navy-800">
                     {formatDate(visit.planned_for)}
                 </span>
-                {visit.task && (
-                    <span className="tabular block truncate text-[11px] text-navy-400">
-                        {visit.task.code}
-                        {visit.task.technician && ` · ${visit.task.technician.name}`}
+                {fansOut ? (
+                    <span className="block truncate text-[11px] text-navy-400">
+                        {visit.jobs_done} من {jobs.length} فرع تمت
                     </span>
+                ) : (
+                    visit.task && (
+                        <span className="tabular block truncate text-[11px] text-navy-400">
+                            {visit.task.code}
+                            {visit.task.technician && ` · ${visit.task.technician.name}`}
+                        </span>
+                    )
                 )}
             </span>
 
@@ -386,6 +418,58 @@ function VisitRow({
             <span className={clsx('badge shrink-0', meta.chip)}>{meta.label}</span>
         </>
     )
+
+    if (fansOut) {
+        return (
+            <li className="overflow-hidden rounded-xl bg-navy-50">
+                <button
+                    type="button"
+                    onClick={() => setOpen((was) => !was)}
+                    aria-expanded={open}
+                    className="tap flex w-full items-center gap-3 p-3 text-right transition hover:bg-navy-100"
+                >
+                    {body}
+                    <ChevronDown
+                        className={clsx(
+                            'size-4 shrink-0 text-navy-400 transition',
+                            open && 'rotate-180',
+                        )}
+                    />
+                </button>
+
+                {open && (
+                    <ul className="space-y-1.5 border-t border-navy-100 p-2">
+                        {jobs.map((job) => (
+                            <li key={job.id}>
+                                <Link
+                                    to={`${taskHref}/${job.id}`}
+                                    className="tap flex items-center gap-2 rounded-lg bg-white p-2.5 transition hover:bg-brand-50"
+                                >
+                                    <span className="min-w-0 flex-1">
+                                        <span className="block truncate text-xs font-bold text-navy-800">
+                                            {job.branch ?? 'الموقع الرئيسي'}
+                                        </span>
+                                        <span className="tabular block truncate text-[11px] text-navy-400">
+                                            {job.code}
+                                            {job.technician && ` · ${job.technician}`}
+                                        </span>
+                                    </span>
+                                    <span
+                                        className={clsx(
+                                            'badge shrink-0',
+                                            STATUS[job.status].chip,
+                                        )}
+                                    >
+                                        {job.status_label}
+                                    </span>
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </li>
+        )
+    }
 
     if (visit.task_id) {
         return (

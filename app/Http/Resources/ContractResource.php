@@ -82,6 +82,29 @@ class ContractResource extends JsonResource
             'visits_count' => $this->whenCounted('visits'),
             'visits' => ContractVisitResource::collection($this->whenLoaded('visits')),
 
+            // A contract answers for every live branch the customer has, and a
+            // round fans out to one job each — so the year's real workload is
+            // branches × rounds. Only sent where the customer is loaded; a list
+            // would pay for the count once per row to say nothing new.
+            'branches_count' => $this->when(
+                $this->relationLoaded('customer'),
+                fn () => $this->coveredBranchesCount(),
+            ),
+            'jobs_per_year' => $this->when(
+                $this->relationLoaded('customer'),
+                fn () => $this->jobsPerYear(),
+            ),
+            // Named, so the printed contract can schedule the sites it protects
+            // rather than assert a number.
+            'branches' => $this->when(
+                $this->relationLoaded('customer'),
+                fn () => $this->coveredBranches()->map(fn ($branch) => [
+                    'id' => $branch->id,
+                    'name' => $branch->name,
+                    'address' => $branch->address,
+                ])->values(),
+            ),
+
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }
