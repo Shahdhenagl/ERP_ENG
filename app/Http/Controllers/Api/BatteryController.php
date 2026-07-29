@@ -22,11 +22,14 @@ class BatteryController extends Controller
             ->when($request->string('status')->toString(), fn ($q, $s) => $q->where('status', $s))
             ->when($request->integer('asset_id'), fn ($q, $id) => $q->where('asset_id', $id))
             ->when($request->integer('customer_id'), fn ($q, $id) => $q->where('customer_id', $id))
+            // A customer with thirty branches makes "whose" too coarse an
+            // answer for a technician being sent to replace one.
+            ->when($request->integer('branch_id'), fn ($q, $id) => $q->where('branch_id', $id))
             ->when(
                 $request->has('due_within'),
                 fn ($q) => $q->dueWithin($request->integer('due_within', 30)),
             )
-            ->with(['asset', 'customer', 'replacement'])
+            ->with(['asset', 'customer', 'branch', 'replacement'])
             ->orderByRaw('DATE_ADD(installed_on, INTERVAL life_months MONTH) asc')
             ->get()
             ->map(fn (Battery $battery) => $this->present($battery));
@@ -88,14 +91,14 @@ class BatteryController extends Controller
 
         ActivityLog::record('battery.created', $battery, "تسجيل بطارية {$battery->code}");
 
-        return response()->json(['data' => $this->present($battery->load(['asset', 'customer']))], 201);
+        return response()->json(['data' => $this->present($battery->load(['asset', 'customer', 'branch']))], 201);
     }
 
     public function update(Request $request, Battery $battery): JsonResponse
     {
         $battery->update($this->validated($request));
 
-        return response()->json(['data' => $this->present($battery->fresh()->load(['asset', 'customer']))]);
+        return response()->json(['data' => $this->present($battery->fresh()->load(['asset', 'customer', 'branch']))]);
     }
 
     /**
@@ -121,6 +124,8 @@ class BatteryController extends Controller
             $fresh = Battery::create([
                 'asset_id' => $battery->asset_id,
                 'customer_id' => $battery->customer_id,
+            'branch_id' => $battery->branch_id,
+            'branch' => $battery->branch?->name,
                 'serial_number' => $data['serial_number'] ?? null,
                 'brand' => $battery->brand,
                 'model' => $battery->model,
@@ -149,7 +154,7 @@ class BatteryController extends Controller
             "استبدال بطارية {$battery->code} بـ {$fresh->code}",
         );
 
-        return response()->json(['data' => $this->present($fresh->load(['asset', 'customer']))], 201);
+        return response()->json(['data' => $this->present($fresh->load(['asset', 'customer', 'branch']))], 201);
     }
 
     public function destroy(Battery $battery): JsonResponse
@@ -228,6 +233,7 @@ class BatteryController extends Controller
         return $request->validate([
             'asset_id' => ['nullable', 'exists:assets,id'],
             'customer_id' => ['nullable', 'exists:customers,id'],
+            'branch_id' => ['nullable', 'exists:branches,id'],
             // The catalogue battery this bank is drawn from — its cells come off
             // the shelf when it is set.
             'item_id' => ['nullable', 'exists:items,id'],

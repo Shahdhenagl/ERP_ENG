@@ -4,6 +4,7 @@ import { useToast } from '@/components/Toast'
 import { Button, Field, Input, Select, Textarea } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { BATTERY_TYPES, formatQty } from '@/lib/domain'
+import { CustomerSitePicker } from '@/components/CustomerSitePicker'
 import { useAssets, useItems, useSaveBattery } from '@/lib/queries'
 import type { Item } from '@/types'
 
@@ -21,7 +22,14 @@ interface BatteryFormProps {
 export function BatteryForm({ onClose, stockItem, onSaved }: BatteryFormProps) {
     const toast = useToast()
     const save = useSaveBattery()
-    const { data: assets } = useAssets({ per_page: 500 })
+    const [customerId, setCustomerId] = useState('')
+    const [branchId, setBranchId] = useState('')
+
+    const { data: assets } = useAssets({
+        customer_id: customerId ? Number(customerId) : undefined,
+        branch_id: branchId ? Number(branchId) : undefined,
+        per_page: 500,
+    })
     const { data: batteryItems } = useItems({ category: 'battery', per_page: 200 })
     const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -107,6 +115,8 @@ export function BatteryForm({ onClose, stockItem, onSaved }: BatteryFormProps) {
                             try {
                                 await save.mutateAsync({
                                     asset_id: form.asset_id ? Number(form.asset_id) : null,
+                                    customer_id: customerId ? Number(customerId) : null,
+                                    branch_id: branchId ? Number(branchId) : null,
                                     item_id: form.item_id ? Number(form.item_id) : null,
                                     serial_number: form.serial_number || null,
                                     name: form.name || null,
@@ -164,6 +174,18 @@ export function BatteryForm({ onClose, stockItem, onSaved }: BatteryFormProps) {
                         ))}
                     </Select>
                 </Field>
+
+                {/* Whose bank this is, and where it stands. The device follows
+                    from those two rather than being hunted for in a flat list. */}
+                <CustomerSitePicker
+                    customerId={customerId}
+                    branchId={branchId}
+                    onChange={(next) => {
+                        setCustomerId(next.customerId)
+                        setBranchId(next.branchId)
+                        set('asset_id')('')
+                    }}
+                />
 
                 <Field label="الجهاز (UPS)" error={errors.asset_id} hint="يُنسب مالك البطارية من الجهاز">
                     <Select value={form.asset_id} onChange={(e) => set('asset_id')(e.target.value)}>

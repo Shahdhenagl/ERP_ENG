@@ -196,6 +196,7 @@ class TreasuryController extends Controller
             'cash_box_id' => ['required', 'exists:cash_boxes,id'],
             'amount' => ['required', 'numeric', 'gt:0'],
             'category' => ['nullable', 'string', 'max:64'],
+            'responsible_user_id' => ['nullable', 'exists:users,id'],
             'note' => ['nullable', 'string', 'max:1000'],
         ]);
 
@@ -271,7 +272,7 @@ class TreasuryController extends Controller
             404,
         );
 
-        $movement->load(['box', 'actor']);
+        $movement->load(['box', 'actor', 'responsible']);
         $isReceipt = $movement->direction === 'in';
 
         return response()->json([
@@ -285,6 +286,7 @@ class TreasuryController extends Controller
                 'cash_box' => $movement->box?->name,
                 'note' => $movement->note,
                 'actor' => $movement->actor?->name,
+                'responsible' => $movement->responsible?->name,
                 'date' => $movement->created_at?->toDateString(),
             ],
         ]);

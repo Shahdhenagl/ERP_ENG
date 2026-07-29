@@ -312,6 +312,10 @@ class BillingService
             'category' => $context['category'] ?? null,
             'note' => $context['note'] ?? null,
             'receipt_path' => $context['receipt_path'] ?? null,
+            // Who spent it, as against who typed it in — the manager recording
+            // fuel for a technician is both, and only one of them is the answer
+            // to "whose fuel was this".
+            'responsible_user_id' => $context['responsible_user_id'] ?? null,
             'user_id' => $actor->id,
         ]);
     }

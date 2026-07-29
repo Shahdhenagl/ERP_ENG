@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { CustomerSitePicker } from '@/components/CustomerSitePicker'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, Field, Input, Select, Textarea } from '@/components/ui'
@@ -21,7 +22,16 @@ export function WarrantyForm({
 }) {
     const toast = useToast()
     const register = useRegisterWarranty()
-    const { data: assets } = useAssets({ per_page: 200 })
+    const [customerId, setCustomerId] = useState('')
+    const [branchId, setBranchId] = useState('')
+
+    // Narrowed by whoever was chosen: a device belongs to one customer, and to
+    // one of their sites once they have more than one.
+    const { data: assets } = useAssets({
+        customer_id: customerId ? Number(customerId) : undefined,
+        branch_id: branchId ? Number(branchId) : undefined,
+        per_page: 200,
+    })
     const { data: suppliers } = useSuppliers({ per_page: 200 })
 
     const [errors, setErrors] = useState<Record<string, string>>({})
@@ -86,13 +96,31 @@ export function WarrantyForm({
             }
         >
             <div className="space-y-4">
+                {/* Customer, then site, then the machine standing at it. A flat
+                    list of every device in the country is not a way to find one
+                    when the person asking knows whose it is. */}
+                {!assetId && (
+                    <CustomerSitePicker
+                        customerId={customerId}
+                        branchId={branchId}
+                        onChange={(next) => {
+                            setCustomerId(next.customerId)
+                            setBranchId(next.branchId)
+                            // The old pick belongs to the previous customer.
+                            set('asset_id')('')
+                        }}
+                    />
+                )}
+
                 <Field label="الجهاز" required error={errors.asset_id}>
                     <Select
                         value={form.asset_id}
                         onChange={(e) => set('asset_id')(e.target.value)}
                         disabled={Boolean(assetId)}
                     >
-                        <option value="">— اختر الجهاز —</option>
+                        <option value="">
+                            {customerId ? '— اختر الجهاز —' : '— اختر العميل أولًا —'}
+                        </option>
                         {assets?.data.map((asset) => (
                             <option key={asset.id} value={asset.id}>
                                 {asset.code} · {asset.label}

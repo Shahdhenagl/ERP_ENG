@@ -29,6 +29,8 @@ class CashMovement extends Model
         // Which expense heading it belongs under, and which part of the
         // business wore it. Only ever set on a payment out.
         'account_id',
+        // The employee the expense was incurred for.
+        'responsible_user_id',
         'cost_center_id',
         'note',
         'receipt_path',
@@ -86,6 +88,12 @@ class CashMovement extends Model
     public function actor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /** Who the money was spent for, when that is somebody else. */
+    public function responsible(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'responsible_user_id');
     }
 
     /** Effect on the box's balance. Amounts are always stored positive. */

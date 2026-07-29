@@ -2541,6 +2541,9 @@ export type BatteryStatus = 'active' | 'replaced' | 'faulty'
 export interface Battery {
     id: number
     code: string
+    /** The site the bank stands at, beside the customer that owns it. */
+    branch_id?: number | null
+    branch?: string | null
     asset_id: number | null
     asset: string | null
     asset_label: string | null

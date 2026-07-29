@@ -4,7 +4,7 @@ import { useToast } from '@/components/Toast'
 import { Button, Field, Input, PageHeader, Select, Textarea } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { formatMoney } from '@/lib/domain'
-import { useCashBoxes, useTreasuryOperation } from '@/lib/queries'
+import { useCashBoxes, useTreasuryOperation, useUsers } from '@/lib/queries'
 import { RecurringExpensesSection } from '@/pages/treasury/RecurringExpensesSection'
 
 /**
@@ -80,9 +80,6 @@ function TransferCard({ boxes }: { boxes: Box[] }) {
             <Field label="المبلغ" required error={errors.amount}>
                 <Input type="number" min={0} step="any" value={form.amount} onChange={(e) => set('amount')(e.target.value)} dir="ltr" className="text-left" />
             </Field>
-            <Field label="ملاحظة" error={errors.note}>
-                <Textarea value={form.note} onChange={(e) => set('note')(e.target.value)} rows={2} />
-            </Field>
 
             <Button
                 icon={ArrowLeftRight}
@@ -116,8 +113,18 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
     const toast = useToast()
     const expense = useTreasuryOperation('expense')
     const [errors, setErrors] = useState<Record<string, string>>({})
-    const [form, setForm] = useState({ cash_box_id: '', amount: '', category: '', note: '' })
+    const [form, setForm] = useState({
+        cash_box_id: '',
+        amount: '',
+        category: '',
+        responsible_user_id: '',
+        note: '',
+    })
     const set = (k: keyof typeof form) => (v: string) => setForm((c) => ({ ...c, [k]: v }))
+
+    // Who the money was spent for. Separate from whoever is at the screen:
+    // a manager records a technician's fuel, and later the question is whose.
+    const { data: userPage } = useUsers({ active_only: 1, per_page: 200 })
 
     return (
         <div className="card space-y-4 p-5">
@@ -142,6 +149,24 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
             <Field label="المبلغ" required error={errors.amount}>
                 <Input type="number" min={0} step="any" value={form.amount} onChange={(e) => set('amount')(e.target.value)} dir="ltr" className="text-left" />
             </Field>
+            <Field
+                label="الموظف المسؤول"
+                error={errors.responsible_user_id}
+                hint="من صُرف عليه المصروف — اتركه فارغًا لو مصروف عام على الشركة."
+            >
+                <Select
+                    value={form.responsible_user_id}
+                    onChange={(e) => set('responsible_user_id')(e.target.value)}
+                >
+                    <option value="">— مصروف عام —</option>
+                    {userPage?.data.map((user) => (
+                        <option key={user.id} value={user.id}>
+                            {user.name}
+                            {user.role_label ? ` — ${user.role_label}` : ''}
+                        </option>
+                    ))}
+                </Select>
+            </Field>
             <Field label="ملاحظة" error={errors.note}>
                 <Textarea value={form.note} onChange={(e) => set('note')(e.target.value)} rows={2} />
             </Field>
@@ -159,10 +184,19 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
                             cash_box_id: Number(form.cash_box_id),
                             amount: Number(form.amount),
                             category: form.category || null,
+                            responsible_user_id: form.responsible_user_id
+                                ? Number(form.responsible_user_id)
+                                : null,
                             note: form.note || null,
                         })
                         toast.success('تم تسجيل المصروف.')
-                        setForm({ cash_box_id: '', amount: '', category: '', note: '' })
+                        setForm({
+                            cash_box_id: '',
+                            amount: '',
+                            category: '',
+                            responsible_user_id: '',
+                            note: '',
+                        })
                     } catch (caught) {
                         setErrors(fieldErrors(caught))
                         toast.error(errorMessage(caught, 'تعذّر التسجيل.'))
@@ -209,9 +243,6 @@ function DepositCard({ boxes }: { boxes: Box[] }) {
             </Field>
             <Field label="المبلغ" required error={errors.amount}>
                 <Input type="number" min={0} step="any" value={form.amount} onChange={(e) => set('amount')(e.target.value)} dir="ltr" className="text-left" />
-            </Field>
-            <Field label="ملاحظة" error={errors.note}>
-                <Textarea value={form.note} onChange={(e) => set('note')(e.target.value)} rows={2} />
             </Field>
 
             <Button

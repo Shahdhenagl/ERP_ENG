@@ -22,7 +22,7 @@ class Battery extends Model
     use HasAttachments, HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'code', 'asset_id', 'customer_id', 'item_id',
+        'code', 'asset_id', 'customer_id', 'branch_id', 'item_id',
         'serial_number', 'name', 'asset_tag', 'barcode',
         'brand', 'model', 'battery_type', 'size',
         'capacity_ah', 'voltage', 'energy_wh', 'count',
@@ -81,6 +81,12 @@ class Battery extends Model
     public function item(): BelongsTo
     {
         return $this->belongsTo(Item::class);
+    }
+
+    /** The site the bank stands at — inherited from its device when it has one. */
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
     }
 
     public function customer(): BelongsTo
