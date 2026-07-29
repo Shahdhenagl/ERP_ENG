@@ -1,34 +1,15 @@
 import { useParams } from 'react-router-dom'
 import { DocumentParty, DocumentShell, DocumentTotals } from '@/components/DocumentShell'
 import { ErrorState, PageLoader } from '@/components/ui'
-import { formatMoney, UPS_PHASES, UPS_TYPES } from '@/lib/domain'
+import { formatMoney } from '@/lib/domain'
+import { assetSpecRows } from '@/lib/specs'
 import { formatDate } from '@/lib/format'
 import { useContract } from '@/lib/queries'
 import type { Asset } from '@/types'
 
-/** The nameplate fields worth printing on a contract, in reading order. */
-function deviceSpecs(asset: Asset): Array<[string, string]> {
-    const rows: Array<[string, string | null | undefined]> = [
-        ['النوع', asset.ups_type ? UPS_TYPES[asset.ups_type] ?? asset.ups_type : null],
-        ['الأوجه', asset.phase ? UPS_PHASES[asset.phase] ?? asset.phase : null],
-        ['القدرة', asset.capacity],
-        ['جهد الدخل', asset.input_voltage],
-        ['جهد الخرج', asset.output_voltage],
-        ['التردد', asset.frequency],
-        ['الكفاءة', asset.efficiency],
-        ['معامل القدرة', asset.power_factor],
-        ['جهد البطاريات', asset.battery_voltage],
-        ['عدد البطاريات', asset.battery_count != null ? String(asset.battery_count) : null],
-        ['زمن التغذية', asset.backup_minutes != null ? `${asset.backup_minutes} دقيقة` : null],
-        ['منفذ الاتصال', asset.comm_port],
-    ]
-
-    return rows.filter((r): r is [string, string] => Boolean(r[1]))
-}
-
 /** One covered unit and its nameplate — printed flat, or under its branch. */
 function DeviceCard({ asset }: { asset: Asset }) {
-    const specs = deviceSpecs(asset)
+    const specs = assetSpecRows(asset)
 
     return (
         <div className="doc-keep rounded-lg border border-navy-200 p-3">

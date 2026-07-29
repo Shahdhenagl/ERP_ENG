@@ -1,10 +1,13 @@
+import clsx from 'clsx'
 import { Plus, Save, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, Field, Input, Select, Textarea } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
-import { DEFAULT_TAX_RATE, formatMoney } from '@/lib/domain'
+import { DEFAULT_TAX_RATE, formatMoney, formatQty, ITEM_CATEGORY } from '@/lib/domain'
+import { itemSpecRows } from '@/lib/specs'
+import { SpecSheet } from '@/components/SpecSheet'
 import { useItems, useSavePurchaseOrder, useSuppliers } from '@/lib/queries'
 import type { PurchaseOrder } from '@/types'
 
@@ -118,7 +121,8 @@ export function PurchaseOrderForm({
 
                 <div className="space-y-2">
                     {rows.map((row, index) => (
-                        <div key={index} className="flex flex-wrap gap-2 sm:flex-nowrap">
+                        <div key={index} className="space-y-2 rounded-2xl border border-navy-100 p-3">
+                        <div className="flex flex-wrap gap-2 sm:flex-nowrap">
                             <Select
                                 value={row.item_id}
                                 onChange={(e) => {
@@ -170,6 +174,34 @@ export function PurchaseOrderForm({
                             >
                                 <Trash2 className="size-4" />
                             </button>
+                        </div>
+
+                        {/* What is actually being ordered. A rating typed into
+                            the catalogue is worth nothing if it is invisible at
+                            the moment somebody picks the wrong 10kVA. */}
+                        {(() => {
+                            const item = items.find((i) => String(i.id) === row.item_id)
+
+                            if (!item) return null
+
+                            const specs = itemSpecRows(item.category, item.specs)
+
+                            return (
+                                <>
+                                    <p className="flex flex-wrap items-center gap-1.5 text-[11px] text-navy-500">
+                                        <span className={clsx('badge', ITEM_CATEGORY[item.category].chip)}>
+                                            {ITEM_CATEGORY[item.category].label}
+                                        </span>
+                                        {item.group && <span>{item.group}</span>}
+                                        <span className="tabular">
+                                            بالمخزن {formatQty(item.total_qty)} {item.unit}
+                                        </span>
+                                    </p>
+
+                                    {specs.length > 0 && <SpecSheet rows={specs} empty={null} />}
+                                </>
+                            )
+                        })()}
                         </div>
                     ))}
 

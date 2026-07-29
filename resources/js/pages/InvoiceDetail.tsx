@@ -7,8 +7,10 @@ import { ConfirmDialog, Modal } from '@/components/Modal'
 import { PaymentForm } from '@/components/PaymentForm'
 import { useToast } from '@/components/Toast'
 import { Button, ErrorState, Field, PageLoader, Select, Textarea } from '@/components/ui'
+import { itemSpecRows } from '@/lib/specs'
+import { SpecRowList } from '@/components/SpecSheet'
 import { errorMessage } from '@/lib/api'
-import { formatMoney, formatQty, itemSpecSummary, PAYMENT_STATE } from '@/lib/domain'
+import { formatMoney, formatQty, PAYMENT_STATE } from '@/lib/domain'
 import { formatDate, formatSmart } from '@/lib/format'
 import { useArea } from '@/lib/nav'
 import { useInvoice, useInvoiceAction, useReversePayment, useWarehouses } from '@/lib/queries'
@@ -201,7 +203,7 @@ export function InvoiceDetail() {
 
                 <div className="divide-y divide-navy-100">
                     {invoice.lines?.map((line) => {
-                        const specs = itemSpecSummary(line.item_category, line.item_specs)
+                        const specs = itemSpecRows(line.item_category, line.item_specs)
 
                         return (
                             <div key={line.id} className="flex items-start justify-between gap-3 p-4">
@@ -216,9 +218,7 @@ export function InvoiceDetail() {
                                             </span>
                                         )}
                                     </div>
-                                    {specs && (
-                                        <p className="tabular mt-0.5 text-[11px] text-navy-400">{specs}</p>
-                                    )}
+                                    {specs.length > 0 && <SpecRowList rows={specs} />}
                                     <p className="tabular mt-0.5 text-xs text-navy-400">
                                         {formatQty(line.qty)} {line.unit ?? ''} × {formatMoney(line.unit_price)}
                                     </p>

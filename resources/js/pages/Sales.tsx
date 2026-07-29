@@ -23,8 +23,10 @@ import { SalesReturnsTab } from '@/pages/sales/SalesReturnsTab'
 import { QuotationForm } from '@/components/QuotationForm'
 import { useToast } from '@/components/Toast'
 import { Button, EmptyState, Field, Input, PageHeader, SkeletonCard, Textarea } from '@/components/ui'
+import { itemSpecRows } from '@/lib/specs'
+import { SpecRowList } from '@/components/SpecSheet'
 import { errorMessage } from '@/lib/api'
-import { formatMoney, formatQty, itemSpecSummary, QUOTATION_STATUS, SALES_BILLING_STATE, SALES_ORDER_STATUS } from '@/lib/domain'
+import { formatMoney, formatQty, QUOTATION_STATUS, SALES_BILLING_STATE, SALES_ORDER_STATUS } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
 import { useArea } from '@/lib/nav'
 import {
@@ -317,7 +319,7 @@ function QuotationDetail({
 
                     <div className="overflow-hidden rounded-2xl border border-navy-100">
                         {quotation.lines?.map((line) => {
-                            const specs = itemSpecSummary(line.item_category, line.item_specs)
+                            const specs = itemSpecRows(line.item_category, line.item_specs)
 
                             return (
                                 <div
@@ -335,9 +337,7 @@ function QuotationDetail({
                                                 </span>
                                             )}
                                         </div>
-                                        {specs && (
-                                            <p className="tabular mt-0.5 text-[11px] text-navy-400">{specs}</p>
-                                        )}
+                                        {specs.length > 0 && <SpecRowList rows={specs} />}
                                         <p className="tabular mt-0.5 text-xs text-navy-400">
                                             {formatQty(line.qty)} {line.unit ?? ''} × {formatMoney(line.unit_price)}
                                         </p>
@@ -688,7 +688,7 @@ function OrderDetail({ id, onClose }: { id: number; onClose: () => void }) {
 
                     <div className="overflow-hidden rounded-2xl border border-navy-100">
                         {order.lines?.map((line) => {
-                            const specs = itemSpecSummary(line.item_category, line.item_specs)
+                            const specs = itemSpecRows(line.item_category, line.item_specs)
 
                             return (
                                 <div
@@ -706,9 +706,7 @@ function OrderDetail({ id, onClose }: { id: number; onClose: () => void }) {
                                                 </span>
                                             )}
                                         </div>
-                                        {specs && (
-                                            <p className="tabular mt-0.5 text-[11px] text-navy-400">{specs}</p>
-                                        )}
+                                        {specs.length > 0 && <SpecRowList rows={specs} />}
                                         <p className="tabular mt-0.5 text-xs text-navy-400">
                                             {formatQty(line.qty)} {line.unit ?? ''} × {formatMoney(line.unit_price)}
                                         </p>

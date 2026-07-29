@@ -6,8 +6,9 @@ import {
     DocumentTotals,
 } from '@/components/DocumentShell'
 import { ErrorState } from '@/components/ui'
-import { formatMoney, formatQty, itemSpecSummary } from '@/lib/domain'
+import { formatMoney, formatQty } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
+import { itemSpecRows } from '@/lib/specs'
 import { useQuotation, useSettings } from '@/lib/queries'
 
 export function QuotationPrint() {
@@ -65,7 +66,7 @@ export function QuotationPrint() {
                 </thead>
                 <tbody>
                     {quotation.lines?.map((line, index) => {
-                        const specs = itemSpecSummary(line.item_category, line.item_specs)
+                        const specs = itemSpecRows(line.item_category, line.item_specs)
 
                         return (
                             <tr key={line.id}>
@@ -77,8 +78,23 @@ export function QuotationPrint() {
                                             ({line.item_category_label})
                                         </span>
                                     )}
-                                    {specs && (
-                                        <span className="tabular block text-[11px] text-navy-500">{specs}</span>
+                                    {/* The whole nameplate on the document the
+                                        customer keeps — a rating agreed in
+                                        writing is not a rating on a screen. */}
+                                    {specs.length > 0 && (
+                                        <span className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5">
+                                            {specs.map(([label, value]) => (
+                                                <span
+                                                    key={label}
+                                                    className="tabular text-[11px] text-navy-500"
+                                                >
+                                                    {label}:{' '}
+                                                    <strong className="font-semibold text-navy-700">
+                                                        {value}
+                                                    </strong>
+                                                </span>
+                                            ))}
+                                        </span>
                                     )}
                                 </td>
                                 <td className="tabular text-center">

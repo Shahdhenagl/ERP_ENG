@@ -12,6 +12,7 @@ import {
     useSaveContract,
     useSettings,
 } from '@/lib/queries'
+import { assetSpecRows } from '@/lib/specs'
 import type { Contract } from '@/types'
 
 const BILLING_LABEL: Record<string, string> = {
@@ -297,26 +298,55 @@ export function ContractForm({ open, onClose, contract, customerId, onSaved }: C
                         hint="اتركها فارغة ليغطي العقد كل أجهزة العميل."
                         error={errors.asset_ids}
                     >
-                        <div className="max-h-44 space-y-1.5 overflow-y-auto rounded-xl bg-navy-50 p-2">
-                            {assets?.data.map((asset) => (
-                                <label
-                                    key={asset.id}
-                                    className="tap flex cursor-pointer items-center gap-2.5 rounded-lg bg-white p-2.5 text-sm"
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={assetIds.includes(asset.id)}
-                                        onChange={() => toggleAsset(asset.id)}
-                                        className="size-4 shrink-0 accent-brand-600"
-                                    />
-                                    <span className="min-w-0 flex-1 truncate font-semibold text-navy-800">
-                                        {asset.label}
-                                    </span>
-                                    <span className="tabular shrink-0 text-[11px] text-navy-400">
-                                        {asset.code}
-                                    </span>
-                                </label>
-                            ))}
+                        {/* Which machines the contract answers for. Picking one
+                            means picking a specific serial with specific ratings,
+                            so both are on the row rather than a name alone. */}
+                        <div className="max-h-72 space-y-1.5 overflow-y-auto rounded-xl bg-navy-50 p-2">
+                            {assets?.data.map((asset) => {
+                                const specs = assetSpecRows(asset)
+
+                                return (
+                                    <label
+                                        key={asset.id}
+                                        className="tap flex cursor-pointer gap-2.5 rounded-lg bg-white p-2.5 text-sm"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={assetIds.includes(asset.id)}
+                                            onChange={() => toggleAsset(asset.id)}
+                                            className="mt-0.5 size-4 shrink-0 accent-brand-600"
+                                        />
+
+                                        <span className="min-w-0 flex-1">
+                                            <span className="flex flex-wrap items-baseline justify-between gap-2">
+                                                <span className="truncate font-semibold text-navy-800">
+                                                    {asset.label}
+                                                </span>
+                                                <span className="tabular shrink-0 text-[11px] text-navy-400">
+                                                    {asset.code}
+                                                    {asset.serial && ` · ${asset.serial}`}
+                                                </span>
+                                            </span>
+
+                                            {specs.length > 0 && (
+                                                <span className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+                                                    {specs.map(([label, value]) => (
+                                                        <span
+                                                            key={label}
+                                                            className="tabular text-[11px] text-navy-500"
+                                                        >
+                                                            {label}:{' '}
+                                                            <strong className="font-semibold text-navy-700">
+                                                                {value}
+                                                            </strong>
+                                                        </span>
+                                                    ))}
+                                                </span>
+                                            )}
+                                        </span>
+                                    </label>
+                                )
+                            })}
                         </div>
                     </Field>
                 )}

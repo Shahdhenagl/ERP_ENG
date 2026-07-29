@@ -1,8 +1,10 @@
 import { useParams } from 'react-router-dom'
 import { DocumentParty, DocumentShell, DocumentSignatures } from '@/components/DocumentShell'
 import { ErrorState } from '@/components/ui'
-import { formatQty, itemSpecSummary } from '@/lib/domain'
+import { formatQty } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
+import { itemSpecRows } from '@/lib/specs'
+import { SpecRowList } from '@/components/SpecSheet'
 import { useSalesOrder } from '@/lib/queries'
 
 /**
@@ -63,7 +65,7 @@ export function DeliveryNotePrint() {
                 </thead>
                 <tbody>
                     {order.lines?.map((line, index) => {
-                        const specs = itemSpecSummary(line.item_category, line.item_specs)
+                        const specs = itemSpecRows(line.item_category, line.item_specs)
 
                         return (
                             <tr key={line.id ?? index}>
@@ -76,9 +78,7 @@ export function DeliveryNotePrint() {
                                             ({line.item_category_label})
                                         </span>
                                     )}
-                                    {specs && (
-                                        <span className="tabular block text-[11px] text-navy-500">{specs}</span>
-                                    )}
+                                    {specs.length > 0 && <SpecRowList rows={specs} />}
                                 </td>
                                 <td className="tabular text-center">
                                     {formatQty(line.qty)} {line.unit ?? ''}

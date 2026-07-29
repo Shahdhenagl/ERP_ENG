@@ -5,7 +5,9 @@ import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, Field, Input, Select } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
-import { formatMoney, formatQty, ITEM_CATEGORY, itemSpecSummary } from '@/lib/domain'
+import { formatMoney, formatQty, ITEM_CATEGORY } from '@/lib/domain'
+import { itemSpecRows } from '@/lib/specs'
+import { SpecSheet } from '@/components/SpecSheet'
 import { useItems, useSaveInvoice } from '@/lib/queries'
 import type { Invoice } from '@/types'
 
@@ -192,7 +194,7 @@ export function InvoiceForm({
                                 if (!item) return null
 
                                 const short = (Number(row.qty) || 0) > item.total_qty
-                                const specs = itemSpecSummary(item.category, item.specs)
+                                const specs = itemSpecRows(item.category, item.specs)
 
                                 return (
                                     <>
@@ -205,8 +207,12 @@ export function InvoiceForm({
                                             >
                                                 {ITEM_CATEGORY[item.category].label}
                                             </span>
-                                            {specs && <span className="tabular">{specs}</span>}
+                                            {item.group && <span>{item.group}</span>}
                                         </p>
+
+                                        {specs.length > 0 && (
+                                            <SpecSheet rows={specs} empty={null} />
+                                        )}
                                         <p
                                             className={clsx(
                                                 'tabular text-[11px] font-bold',

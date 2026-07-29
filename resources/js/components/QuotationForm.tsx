@@ -6,7 +6,9 @@ import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, Field, Input, Select, Textarea } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
-import { DEFAULT_TAX_RATE, formatMoney, formatQty, ITEM_CATEGORY, itemSpecSummary } from '@/lib/domain'
+import { DEFAULT_TAX_RATE, formatMoney, formatQty, ITEM_CATEGORY } from '@/lib/domain'
+import { itemSpecRows } from '@/lib/specs'
+import { SpecSheet } from '@/components/SpecSheet'
 import { useItems, useSaveQuotation } from '@/lib/queries'
 import type { Quotation } from '@/types'
 
@@ -239,20 +241,25 @@ export function QuotationForm({
                                 if (!item) return null
 
                                 const short = (Number(row.qty) || 0) > item.total_qty
-                                const specs = itemSpecSummary(item.category, item.specs)
+                                const specs = itemSpecRows(item.category, item.specs)
 
                                 return (
                                     <>
-                                        {/* The product's kind and nameplate, so the
-                                            person pricing the quote sees what it is. */}
+                                        {/* The whole nameplate, because 10kVA
+                                            single-phase and 10kVA three-phase are
+                                            not the same thing to price. */}
                                         <p className="flex flex-wrap items-center gap-1.5 text-[11px] text-navy-500">
                                             <span
                                                 className={clsx('badge', ITEM_CATEGORY[item.category].chip)}
                                             >
                                                 {ITEM_CATEGORY[item.category].label}
                                             </span>
-                                            {specs && <span className="tabular">{specs}</span>}
+                                            {item.group && <span>{item.group}</span>}
                                         </p>
+
+                                        {specs.length > 0 && (
+                                            <SpecSheet rows={specs} empty={null} />
+                                        )}
                                         <p
                                             className={clsx(
                                                 'tabular text-[11px] font-bold',
