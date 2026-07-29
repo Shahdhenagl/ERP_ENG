@@ -43,7 +43,14 @@ import {
     warrantyChip,
 } from '@/lib/domain'
 import { formatBytes, formatDateTime, formatSmart, telLink } from '@/lib/format'
-import { ExpenseBar, FlowRail, FlowStepCard, SiteCard } from '@/components/TaskFlow'
+import {
+    CompletedSummary,
+    ExpenseBar,
+    FlowRail,
+    FlowStepCard,
+    Requirement,
+    SiteCard,
+} from '@/components/TaskFlow'
 import { useArea } from '@/lib/nav'
 import { useIsPhone } from '@/lib/viewport'
 import {
@@ -79,6 +86,7 @@ export function TaskDetail() {
     const [deleteOpen, setDeleteOpen] = useState(false)
     const [expenseOpen, setExpenseOpen] = useState(false)
     const [routeOpen, setRouteOpen] = useState(false)
+    const [attachmentsOpen, setAttachmentsOpen] = useState(false)
 
     // A technician on a phone is doing one thing; a dispatcher at a desk is
     // looking at everything. Same job, two shapes.
@@ -150,23 +158,33 @@ export function TaskDetail() {
         }
     }
 
-    const stepAction = (() => {
-        const next = driveable.find((option) => option.value !== 'cancelled')
+    /**
+     * What a step will not let past.
+     *
+     * Starting work without a diagnosis and a photo of what was found loses the
+     * only record of the state the machine was in when it was reached; closing
+     * without a completion report and a photo loses the record of what was done
+     * about it. Both are unrecoverable the moment the technician drives away,
+     * so they are conditions of the step rather than reminders after it.
+     */
+    const photoCount = (task.attachments ?? []).length
 
-        if (!next) return null
+    const gateFor = (next: TaskStatus): string | null => {
+        if (next === 'in_progress') {
+            if (!diagnosisReport) return 'املأ تقرير المعاينة أولًا.'
+            if (photoCount === 0) return 'ارفع صورة واحدة على الأقل لحالة الجهاز عند الوصول.'
+        }
 
-        const blocked = needsReportBeforeCompleting(next.value)
+        if (next === 'completed') {
+            if (!completionReport) return 'املأ تقرير الإنهاء أولًا.'
+            if (photoCount === 0) return 'ارفع صورة واحدة على الأقل للعمل بعد إنجازه.'
+        }
 
-        return (
-            <Button
-                className="w-full"
-                loading={changeStatus.isPending}
-                onClick={() => void handleStatus(next.value)}
-            >
-                {blocked ? 'املأ تقرير الإنهاء' : next.label}
-            </Button>
-        )
-    })()
+        return null
+    }
+
+    const nextStep = driveable.find((option) => option.value !== 'cancelled')
+    const gate = nextStep ? gateFor(nextStep.value) : null
 
     if (phone && canDrive && task.status !== 'cancelled') {
         return (
@@ -176,50 +194,86 @@ export function TaskDetail() {
                     رجوع
                 </button>
 
-                <div className="mb-3">
+                <div className="mb-4">
                     <p className="tabular text-[11px] font-bold text-brand-600">{task.code}</p>
-                    <h1 className="text-lg font-extrabold text-navy-900">{task.title}</h1>
+                    <h1 className="mt-0.5 text-lg leading-snug font-extrabold text-navy-900">
+                        {task.title}
+                    </h1>
                 </div>
 
-                <FlowRail status={task.status} />
+                {task.status === 'completed' ? (
+                    <CompletedSummary task={task} />
+                ) : (
+                    <>
+                        <FlowRail status={task.status} />
 
-                <FlowStepCard task={task} action={stepAction}>
-                    <SiteCard task={task} />
+                        <FlowStepCard
+                            status={task.status}
+                            blockedBy={gate}
+                            action={
+                                nextStep && (
+                                    <Button
+                                        className="w-full"
+                                        loading={changeStatus.isPending}
+                                        disabled={Boolean(gate)}
+                                        onClick={() => void handleStatus(nextStep.value)}
+                                    >
+                                        {nextStep.label}
+                                    </Button>
+                                )
+                            }
+                        >
+                            <SiteCard task={task} />
 
-                    {task.description && (
-                        <p className="rounded-xl bg-navy-50 p-3 text-xs leading-relaxed text-navy-600">
-                            {task.description}
-                        </p>
-                    )}
+                            {task.description && (
+                                <p className="rounded-2xl bg-navy-50 p-3 text-xs leading-relaxed text-navy-600">
+                                    {task.description}
+                                </p>
+                            )}
 
-                    {/* From arrival onwards the field record is the work: photos
-                        of what was found, then the report that closes the job. */}
-                    {['on_the_way', 'in_progress', 'completed'].includes(task.status) && (
-                        <div className="flex flex-wrap gap-2">
-                            <Button
-                                variant="secondary"
-                                icon={FileText}
-                                className="flex-1 text-xs"
-                                onClick={() => setReportForm('diagnosis')}
-                            >
-                                تقرير المعاينة
-                            </Button>
-                            <Button
-                                variant="secondary"
-                                icon={ClipboardCheck}
-                                className="flex-1 text-xs"
-                                onClick={() => setReportForm('completion')}
-                            >
-                                تقرير الإنهاء
-                            </Button>
-                        </div>
-                    )}
-                </FlowStepCard>
+                            {/* Each step asks for its own record and no other:
+                                the diagnosis belongs to arrival, the completion
+                                report to the work, and offering both at once is
+                                how a report gets filled before its subject. */}
+                            {task.status === 'on_the_way' && (
+                                <>
+                                    <Requirement
+                                        done={Boolean(diagnosisReport)}
+                                        label="تقرير المعاينة"
+                                        hint="حالة الجهاز كما وجدته"
+                                        icon={FileText}
+                                        onClick={() => setReportForm('diagnosis')}
+                                    />
+                                    <Requirement
+                                        done={photoCount > 0}
+                                        label="صور الحالة عند الوصول"
+                                        hint={photoCount > 0 ? `${photoCount} صورة مرفوعة` : 'صورة واحدة على الأقل'}
+                                        icon={Camera}
+                                        onClick={() => setAttachmentsOpen(true)}
+                                    />
+                                </>
+                            )}
 
-                {['on_the_way', 'in_progress', 'completed'].includes(task.status) && (
-                    <div className="mt-4">
-                        <AttachmentsSection task={task} canEdit />
-                    </div>
+                            {task.status === 'in_progress' && (
+                                <>
+                                    <Requirement
+                                        done={Boolean(completionReport)}
+                                        label="تقرير الإنهاء"
+                                        hint="ما تم عمله والقطع المستخدمة"
+                                        icon={ClipboardCheck}
+                                        onClick={() => setReportForm('completion')}
+                                    />
+                                    <Requirement
+                                        done={photoCount > 0}
+                                        label="صور بعد العمل"
+                                        hint={photoCount > 0 ? `${photoCount} صورة مرفوعة` : 'صورة واحدة على الأقل'}
+                                        icon={Camera}
+                                        onClick={() => setAttachmentsOpen(true)}
+                                    />
+                                </>
+                            )}
+                        </FlowStepCard>
+                    </>
                 )}
 
                 <ExpenseBar
@@ -228,8 +282,19 @@ export function TaskDetail() {
                     onRoute={() => setRouteOpen(true)}
                 />
 
-                {/* The same two blocks the desk screen carries, opened as
-                    sheets so a step keeps its single question. */}
+                {/* The same blocks the desk screen carries, opened as sheets so
+                    a step keeps its single question. */}
+                {attachmentsOpen && (
+                    <Modal
+                        open
+                        onClose={() => setAttachmentsOpen(false)}
+                        title="الصور والمرفقات"
+                        size="sm"
+                    >
+                        <AttachmentsSection task={task} canEdit />
+                    </Modal>
+                )}
+
                 {expenseOpen && (
                     <Modal open onClose={() => setExpenseOpen(false)} title="مصروفات المهمة" size="sm">
                         <TaskExpenses task={task} canAdd />
