@@ -31,7 +31,15 @@ class SalesService
     public function recalculateQuotation(Quotation $quotation): Quotation
     {
         $subtotal = round((float) $quotation->lines()->sum('line_total'), 2);
-        $discount = min((float) $quotation->discount, $subtotal);
+        // A percentage is a rate on the subtotal, so it follows the lines when
+        // one is edited; a flat amount is the figure that was agreed. Either
+        // way `discount` ends up as money, which is all anything downstream —
+        // tax base, total, journal — has ever read.
+        $discount = $quotation->discount_percent !== null
+            ? round($subtotal * (float) $quotation->discount_percent / 100, 2)
+            : (float) $quotation->discount;
+
+        $discount = min($discount, $subtotal);
         $taxable = round($subtotal - $discount, 2);
         $tax = round($taxable * ((float) $quotation->tax_rate / 100), 2);
 
@@ -152,6 +160,7 @@ class SalesService
                 'quotation_id' => $quotation->id,
                 'order_date' => now()->toDateString(),
                 'discount' => $quotation->discount,
+                'discount_percent' => $quotation->discount_percent,
                 'tax_rate' => $quotation->tax_rate,
                 'currency' => $quotation->currency,
                 'notes' => $quotation->notes,
@@ -184,7 +193,15 @@ class SalesService
     public function recalculateOrder(SalesOrder $order): SalesOrder
     {
         $subtotal = round((float) $order->lines()->sum('line_total'), 2);
-        $discount = min((float) $order->discount, $subtotal);
+        // A percentage is a rate on the subtotal, so it follows the lines when
+        // one is edited; a flat amount is the figure that was agreed. Either
+        // way `discount` ends up as money, which is all anything downstream —
+        // tax base, total, journal — has ever read.
+        $discount = $order->discount_percent !== null
+            ? round($subtotal * (float) $order->discount_percent / 100, 2)
+            : (float) $order->discount;
+
+        $discount = min($discount, $subtotal);
         $taxable = round($subtotal - $discount, 2);
         $tax = round($taxable * ((float) $order->tax_rate / 100), 2);
 
@@ -261,6 +278,7 @@ class SalesService
                 'issue_date' => now()->toDateString(),
                 'due_date' => now()->addDays(15)->toDateString(),
                 'discount' => $order->discount,
+                'discount_percent' => $order->discount_percent,
                 'tax_rate' => $order->tax_rate,
                 'currency' => $order->currency,
                 'notes' => "عن أمر البيع {$order->code}",

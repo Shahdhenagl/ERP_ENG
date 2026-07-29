@@ -18,7 +18,8 @@ class Quotation extends Model
     protected $fillable = [
         'code', 'customer_id', 'branch_id', 'asset_id', 'task_id', 'title',
         'issue_date', 'valid_until', 'status',
-        'subtotal', 'discount', 'tax_rate', 'tax_amount', 'total', 'currency',
+        'subtotal', 'discount',
+        'discount_percent', 'tax_rate', 'tax_amount', 'total', 'currency',
         'terms', 'notes', 'reject_reason', 'sent_at', 'decided_at', 'created_by',
         'submitted_at', 'approved_at', 'approved_by', 'approval_note',
     ];
@@ -35,6 +36,7 @@ class Quotation extends Model
             'approved_at' => 'datetime',
             'subtotal' => 'decimal:2',
             'discount' => 'decimal:2',
+            'discount_percent' => 'decimal:2',
             'tax_rate' => 'decimal:2',
             'tax_amount' => 'decimal:2',
             'total' => 'decimal:2',

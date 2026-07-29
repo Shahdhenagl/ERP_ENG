@@ -2,6 +2,7 @@ import clsx from 'clsx'
 import { Plus, Save, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { CustomerSitePicker } from '@/components/CustomerSitePicker'
+import { DiscountField } from '@/components/DiscountField'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, Field, Input, Select, Textarea } from '@/components/ui'
@@ -45,6 +46,9 @@ export function QuotationForm({
     )
     const [taxRate, setTaxRate] = useState(String(quotation?.tax_rate ?? DEFAULT_TAX_RATE))
     const [discount, setDiscount] = useState(String(quotation?.discount ?? 0))
+    const [discountPercent, setDiscountPercent] = useState(
+        quotation?.discount_percent != null ? String(quotation.discount_percent) : '',
+    )
     const [terms, setTerms] = useState(quotation?.terms ?? '')
     const [notes, setNotes] = useState(quotation?.notes ?? '')
 
@@ -64,7 +68,14 @@ export function QuotationForm({
         (sum, row) => sum + (Number(row.qty) || 0) * (Number(row.unit_price) || 0),
         0,
     )
-    const afterDiscount = Math.max(subtotal - (Number(discount) || 0), 0)
+    const discountValue =
+        discountPercent === ''
+            ? Number(discount) || 0
+            : Math.min(
+                  Math.round(subtotal * (Number(discountPercent) || 0)) / 100,
+                  subtotal,
+              )
+    const afterDiscount = Math.max(subtotal - discountValue, 0)
     const total = afterDiscount + afterDiscount * ((Number(taxRate) || 0) / 100)
 
     const handleSave = async () => {
@@ -78,6 +89,7 @@ export function QuotationForm({
                 valid_until: validUntil || null,
                 tax_rate: Number(taxRate) || 0,
                 discount: Number(discount) || 0,
+                discount_percent: discountPercent === '' ? null : Number(discountPercent),
                 terms: terms || null,
                 notes: notes || null,
                 lines: rows
@@ -293,17 +305,16 @@ export function QuotationForm({
                 {errors.lines && <p className="text-xs font-medium text-red-600">{errors.lines}</p>}
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="الخصم" error={errors.discount}>
-                        <Input
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            value={discount}
-                            onChange={(e) => setDiscount(e.target.value)}
-                            dir="ltr"
-                            className="text-left"
-                        />
-                    </Field>
+                    <DiscountField
+                        amount={discount}
+                        percent={discountPercent}
+                        subtotal={subtotal}
+                        error={errors.discount ?? errors.discount_percent}
+                        onChange={(next) => {
+                            setDiscount(next.amount)
+                            setDiscountPercent(next.percent)
+                        }}
+                    />
 
                     <Field label="نسبة الضريبة %" error={errors.tax_rate}>
                         <Input

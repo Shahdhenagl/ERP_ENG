@@ -65,6 +65,7 @@ class SalesOrderController extends Controller
             'delivery_date' => ['nullable', 'date'],
             'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'discount' => ['nullable', 'numeric', 'min:0'],
+            'discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'lines' => ['required', 'array', 'min:1'],
             'lines.*.item_id' => ['nullable', 'exists:items,id'],
@@ -222,6 +223,9 @@ class SalesOrderController extends Controller
 
             'subtotal' => (float) $order->subtotal,
             'discount' => (float) $order->discount,
+            'discount_percent' => $order->discount_percent !== null
+                ? (float) $order->discount_percent
+                : null,
             'tax_rate' => (float) $order->tax_rate,
             'tax_amount' => (float) $order->tax_amount,
             'total' => (float) $order->total,

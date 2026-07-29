@@ -646,6 +646,8 @@ export interface Quotation {
 
     subtotal: number
     discount: number
+    /** Set when the discount was agreed as a rate on the subtotal. */
+    discount_percent: number | null
     tax_rate: number
     tax_amount: number
     total: number
@@ -695,6 +697,8 @@ export interface SalesOrder {
 
     subtotal: number
     discount: number
+    /** Set when the discount was agreed as a rate on the subtotal. */
+    discount_percent: number | null
     tax_rate: number
     tax_amount: number
     total: number
@@ -868,6 +872,8 @@ export interface Invoice {
 
     subtotal: number
     discount: number
+    /** Set when the discount was agreed as a rate on the subtotal. */
+    discount_percent: number | null
     tax_rate: number
     tax_amount: number
     total: number
@@ -1682,6 +1688,8 @@ export interface SupplierInvoice {
 
     subtotal: number
     discount: number
+    /** Set when the discount was agreed as a rate on the subtotal. */
+    discount_percent: number | null
     tax_rate: number
     tax_amount: number
     total: number
@@ -1804,6 +1812,8 @@ export interface SalesReport {
     invoices: number
     subtotal: number
     discount: number
+    /** Set when the discount was agreed as a rate on the subtotal. */
+    discount_percent: number | null
     tax: number
     total: number
     collected: number

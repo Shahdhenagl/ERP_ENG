@@ -54,6 +54,7 @@ class SupplierInvoiceController extends Controller
             'invoice_date' => ['nullable', 'date'],
             'due_date' => ['nullable', 'date'],
             'discount' => ['nullable', 'numeric', 'min:0'],
+            'discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'notes' => ['nullable', 'string', 'max:2000'],
 
@@ -91,6 +92,7 @@ class SupplierInvoiceController extends Controller
             'invoice_date' => ['nullable', 'date'],
             'due_date' => ['nullable', 'date'],
             'discount' => ['nullable', 'numeric', 'min:0'],
+            'discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'lines' => ['nullable', 'array'],

@@ -112,7 +112,14 @@ export function QuotationPrint() {
                 rows={[
                     ['الإجمالي قبل الخصم', formatMoney(quotation.subtotal)],
                     ...(quotation.discount > 0
-                        ? ([['الخصم', `− ${formatMoney(quotation.discount)}`]] as Array<[string, string]>)
+                        ? ([
+                              [
+                                  quotation.discount_percent != null
+                                      ? `الخصم (${quotation.discount_percent}%)`
+                                      : 'الخصم',
+                                  `− ${formatMoney(quotation.discount)}`,
+                              ],
+                          ] as Array<[string, string]>)
                         : []),
                     ...(quotation.tax_rate > 0
                         ? ([
@@ -124,6 +131,7 @@ export function QuotationPrint() {
                         : []),
                 ]}
                 total={formatMoney(quotation.total)}
+                inWords={quotation.total}
             />
 
             {terms && (

@@ -39,7 +39,15 @@ class SupplierBilling
     public function recalculate(SupplierInvoice $invoice): SupplierInvoice
     {
         $subtotal = round((float) $invoice->lines()->sum('line_total'), 2);
-        $discount = min((float) $invoice->discount, $subtotal);
+        // A percentage is a rate on the subtotal, so it follows the lines when
+        // one is edited; a flat amount is the figure that was agreed. Either
+        // way `discount` ends up as money, which is all anything downstream —
+        // tax base, total, journal — has ever read.
+        $discount = $invoice->discount_percent !== null
+            ? round($subtotal * (float) $invoice->discount_percent / 100, 2)
+            : (float) $invoice->discount;
+
+        $discount = min($discount, $subtotal);
         $taxable = round($subtotal - $discount, 2);
         $tax = round($taxable * ((float) $invoice->tax_rate / 100), 2);
 

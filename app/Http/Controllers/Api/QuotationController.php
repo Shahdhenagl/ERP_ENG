@@ -220,6 +220,9 @@ class QuotationController extends Controller
 
             'subtotal' => (float) $quotation->subtotal,
             'discount' => (float) $quotation->discount,
+            'discount_percent' => $quotation->discount_percent !== null
+                ? (float) $quotation->discount_percent
+                : null,
             'tax_rate' => (float) $quotation->tax_rate,
             'tax_amount' => (float) $quotation->tax_amount,
             'total' => (float) $quotation->total,
@@ -277,6 +280,7 @@ class QuotationController extends Controller
             'valid_until' => ['nullable', 'date'],
             'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'discount' => ['nullable', 'numeric', 'min:0'],
+            'discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'terms' => ['nullable', 'string', 'max:2000'],
             'notes' => ['nullable', 'string', 'max:2000'],
 

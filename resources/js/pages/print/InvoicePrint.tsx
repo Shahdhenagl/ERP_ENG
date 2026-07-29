@@ -107,7 +107,14 @@ export function InvoicePrint() {
                 rows={[
                     ['الإجمالي قبل الخصم', formatMoney(invoice.subtotal)],
                     ...(invoice.discount > 0
-                        ? ([['الخصم', `− ${formatMoney(invoice.discount)}`]] as Array<[string, string]>)
+                        ? ([
+                              [
+                                  invoice.discount_percent != null
+                                      ? `الخصم (${invoice.discount_percent}%)`
+                                      : 'الخصم',
+                                  `− ${formatMoney(invoice.discount)}`,
+                              ],
+                          ] as Array<[string, string]>)
                         : []),
                     ...(invoice.tax_rate > 0
                         ? ([
@@ -116,6 +123,7 @@ export function InvoicePrint() {
                         : []),
                 ]}
                 total={formatMoney(invoice.total)}
+                inWords={invoice.total}
             />
 
             {/* What is still owed matters more to the reader than what was

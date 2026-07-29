@@ -1,3 +1,4 @@
+import { amountInWords } from '@/lib/tafqit'
 import { ArrowRight, Printer } from 'lucide-react'
 import { useEffect, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -127,25 +128,38 @@ export function DocumentTotals({
     rows,
     total,
     totalLabel = 'الإجمالي',
+    inWords,
 }: {
     rows: Array<[string, string]>
     total: string
     totalLabel?: string
+    /** The total written out, when the document is one somebody signs. */
+    inWords?: number | null
 }) {
     return (
-        <div className="doc-keep mt-4 flex justify-start">
-            <div className="w-64 space-y-1 text-[13px]">
-                {rows.map(([label, value]) => (
-                    <div key={label} className="flex justify-between text-navy-600">
-                        <span>{label}</span>
-                        <span className="tabular">{value}</span>
+        <div className="doc-keep mt-4 space-y-3">
+            <div className="flex justify-start">
+                <div className="w-64 space-y-1 text-[13px]">
+                    {rows.map(([label, value]) => (
+                        <div key={label} className="flex justify-between text-navy-600">
+                            <span>{label}</span>
+                            <span className="tabular">{value}</span>
+                        </div>
+                    ))}
+                    <div className="flex justify-between border-t-2 border-navy-900 pt-1.5 font-extrabold text-navy-900">
+                        <span>{totalLabel}</span>
+                        <span className="tabular">{total}</span>
                     </div>
-                ))}
-                <div className="flex justify-between border-t-2 border-navy-900 pt-1.5 font-extrabold text-navy-900">
-                    <span>{totalLabel}</span>
-                    <span className="tabular">{total}</span>
                 </div>
             </div>
+
+            {/* The figure is what the document is checked against; the words are
+                what stop it being altered after it is signed. */}
+            {inWords != null && (
+                <p className="rounded-lg bg-navy-50 px-3 py-2 text-[12px] font-bold text-navy-700">
+                    {amountInWords(inWords)}
+                </p>
+            )}
         </div>
     )
 }

@@ -38,6 +38,11 @@ class InvoiceResource extends JsonResource
 
             'subtotal' => (float) $this->subtotal,
             'discount' => (float) $this->discount,
+            // Set when the discount was agreed as a rate; the amount above
+            // is what that rate came to against this subtotal.
+            'discount_percent' => $this->discount_percent !== null
+                ? (float) $this->discount_percent
+                : null,
             'tax_rate' => (float) $this->tax_rate,
             'tax_amount' => (float) $this->tax_amount,
             'total' => (float) $this->total,

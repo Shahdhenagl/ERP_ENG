@@ -16,7 +16,8 @@ class SalesOrder extends Model
 
     protected $fillable = [
         'code', 'customer_id', 'branch_id', 'quotation_id', 'order_date', 'delivery_date', 'status',
-        'subtotal', 'discount', 'tax_rate', 'tax_amount', 'total', 'currency',
+        'subtotal', 'discount',
+        'discount_percent', 'tax_rate', 'tax_amount', 'total', 'currency',
         'notes', 'cancel_reason', 'created_by',
     ];
 
@@ -28,6 +29,7 @@ class SalesOrder extends Model
             'delivery_date' => 'date',
             'subtotal' => 'decimal:2',
             'discount' => 'decimal:2',
+            'discount_percent' => 'decimal:2',
             'tax_rate' => 'decimal:2',
             'tax_amount' => 'decimal:2',
             'total' => 'decimal:2',

@@ -27,6 +27,9 @@ class SupplierInvoiceResource extends JsonResource
 
             'subtotal' => (float) $this->subtotal,
             'discount' => (float) $this->discount,
+            'discount_percent' => $this->discount_percent !== null
+                ? (float) $this->discount_percent
+                : null,
             'tax_rate' => (float) $this->tax_rate,
             'tax_amount' => (float) $this->tax_amount,
             'total' => (float) $this->total,

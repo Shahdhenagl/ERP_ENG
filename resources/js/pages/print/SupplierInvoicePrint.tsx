@@ -157,6 +157,7 @@ export function SupplierInvoicePrint() {
                 ]}
                 total={formatMoney(invoice.total)}
                 totalLabel="إجمالي الفاتورة"
+                inWords={invoice.total}
             />
 
             {invoice.notes && (

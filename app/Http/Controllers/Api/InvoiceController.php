@@ -48,6 +48,7 @@ class InvoiceController extends Controller
             'due_date' => ['nullable', 'date'],
             'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'discount' => ['nullable', 'numeric', 'min:0'],
+            'discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'customer_tax_id' => ['nullable', 'string', 'max:32'],
             'notes' => ['nullable', 'string', 'max:2000'],
 
@@ -93,6 +94,7 @@ class InvoiceController extends Controller
             'due_date' => ['nullable', 'date'],
             'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'discount' => ['nullable', 'numeric', 'min:0'],
+            'discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'customer_tax_id' => ['nullable', 'string', 'max:32'],
             'notes' => ['nullable', 'string', 'max:2000'],
 

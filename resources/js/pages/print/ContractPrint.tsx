@@ -272,6 +272,7 @@ export function ContractPrint() {
                 ]}
                 total={contract.value ? formatMoney(Number(contract.value)) : '—'}
                 totalLabel="قيمة العقد"
+                inWords={contract.value ? Number(contract.value) : null}
             />
         </DocumentShell>
     )
