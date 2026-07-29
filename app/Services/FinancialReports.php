@@ -253,27 +253,57 @@ class FinancialReports
     public function unposted(): array
     {
         return [
-            'invoices' => \App\Models\Invoice::query()
-                ->where('status', 'issued')
-                ->whereNotIn('id', $this->postedIds(\App\Models\Invoice::class, 'issued'))
-                ->count(),
-            'cash_movements' => \App\Models\CashMovement::query()
-                ->whereNotIn('id', $this->postedIds(\App\Models\CashMovement::class, 'posted'))
-                // A transfer's receiving leg is posted by its paying leg, and a
-                // leg with no counterpart has nowhere to post — both are
-                // expected to have no entry of their own.
-                ->where(fn (Builder $q) => $q
-                    ->whereNotIn('source', ['transfer', 'custody_advance', 'custody_settle'])
-                    ->orWhere(fn (Builder $paired) => $paired
-                        ->where('direction', 'out')
-                        ->whereNotNull('counterpart_box_id')))
-                ->count(),
-            'stock_movements' => \App\Models\StockMovement::query()
-                ->whereNotIn('id', $this->postedIds(\App\Models\StockMovement::class, 'posted'))
-                ->whereNot('type', 'transfer')
-                ->whereRaw('qty * unit_cost > 0.005')
-                ->count(),
+            'invoices' => $this->unpostedInvoices()->count(),
+            'cash_movements' => $this->unpostedCashMovements()->count(),
+            'stock_movements' => $this->unpostedStockMovements()->count(),
         ];
+    }
+
+    /**
+     * The documents behind those counts.
+     *
+     * Split out so the banner's number and the list explaining it can never
+     * disagree — a count derived one way and a list derived another is how
+     * "5 pending" ends up beside a button that posts none of them.
+     *
+     * @return \Illuminate\Support\Collection<int, \App\Models\Invoice>
+     */
+    public function unpostedInvoices(): \Illuminate\Support\Collection
+    {
+        return \App\Models\Invoice::query()
+            ->where('status', 'issued')
+            ->whereNotIn('id', $this->postedIds(\App\Models\Invoice::class, 'issued'))
+            ->orderBy('id')
+            ->get();
+    }
+
+    /** @return \Illuminate\Support\Collection<int, \App\Models\CashMovement> */
+    public function unpostedCashMovements(): \Illuminate\Support\Collection
+    {
+        return \App\Models\CashMovement::query()
+            ->whereNotIn('id', $this->postedIds(\App\Models\CashMovement::class, 'posted'))
+            // A transfer's receiving leg is posted by its paying leg, and a
+            // leg with no counterpart has nowhere to post — both are
+            // expected to have no entry of their own.
+            ->where(fn (Builder $q) => $q
+                ->whereNotIn('source', ['transfer', 'custody_advance', 'custody_settle'])
+                ->orWhere(fn (Builder $paired) => $paired
+                    ->where('direction', 'out')
+                    ->whereNotNull('counterpart_box_id')))
+            ->with(['box', 'counterpartBox'])
+            ->orderBy('id')
+            ->get();
+    }
+
+    /** @return \Illuminate\Support\Collection<int, \App\Models\StockMovement> */
+    public function unpostedStockMovements(): \Illuminate\Support\Collection
+    {
+        return \App\Models\StockMovement::query()
+            ->whereNotIn('id', $this->postedIds(\App\Models\StockMovement::class, 'posted'))
+            ->whereNot('type', 'transfer')
+            ->whereRaw('qty * unit_cost > 0.005')
+            ->orderBy('id')
+            ->get();
     }
 
     // ── Internals ────────────────────────────────────────────

@@ -384,9 +384,21 @@ class AccountingController extends Controller
     {
         $posted = $this->backfill->run($request->user());
 
+        // What is still missing after a full pass is not waiting to be posted —
+        // it cannot be. Saying "0 posted" and leaving the banner up is what
+        // makes the button look broken; name the remainder instead.
+        $stuck = array_sum($this->reports->unposted());
+        $count = array_sum($posted);
+
+        $message = "تم ترحيل {$count} قيد.";
+
+        if ($stuck > 0) {
+            $message .= " ولا يزال {$stuck} مستندًا بلا قيد — راجعها بأمر accounting:unposted.";
+        }
+
         return response()->json([
-            'message' => 'تم ترحيل '.array_sum($posted).' قيد.',
-            'data' => $posted,
+            'message' => $message,
+            'data' => [...$posted, 'still_unposted' => $stuck],
         ]);
     }
 
