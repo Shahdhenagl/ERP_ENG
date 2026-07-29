@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import { EMPTY_RANGE, MonthDayFilter, monthDayRange } from '@/components/MonthDayFilter'
 import type { DateRange } from '@/components/MonthDayFilter'
 import { Modal } from '@/components/Modal'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { useToast } from '@/components/Toast'
 import { Button, EmptyState, Field, Input, Select, SkeletonCard, Textarea } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
@@ -49,6 +50,7 @@ export function SupplierInvoicesTab() {
 
     const toast = useToast()
     const { path } = useArea()
+    const [view, setView] = useViewMode('supplier-invoices')
     const act = useSupplierInvoiceAction()
     const { data: suppliers } = useSuppliers()
 
@@ -126,6 +128,7 @@ export function SupplierInvoicesTab() {
                 </div>
 
                 {/* By the bill's own date — the month it was issued in. */}
+                <div className="flex flex-wrap items-end justify-between gap-2">
                 <MonthDayFilter
                     month={month}
                     day={day}
@@ -134,6 +137,8 @@ export function SupplierInvoicesTab() {
                     onDay={setDay}
                     onRange={setRange}
                 />
+                <ViewToggle view={view} onChange={setView} className="mb-0.5" />
+                </div>
             </div>
 
             {isLoading ? (
@@ -144,6 +149,63 @@ export function SupplierInvoicesTab() {
                     title="لا توجد فواتير موردين"
                     description="سجّل فاتورة على بضاعة تم استلامها لتتابع المستحق والسداد عليها."
                 />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="58rem"
+                    headers={[
+                        'الفاتورة',
+                        'المورّد',
+                        { label: 'التاريخ', className: 'w-28' },
+                        { label: 'الاستحقاق', className: 'w-28' },
+                        { label: 'الإجمالي', className: 'w-28' },
+                        { label: 'المتبقي', className: 'w-28' },
+                        { label: 'الحالة', className: 'w-28' },
+                        { label: '', className: 'w-20' },
+                    ]}
+                >
+                    {data.data.map((invoice) => (
+                        <tr key={invoice.id} className="border-t border-navy-100 hover:bg-navy-50/60">
+                            <td className="px-3 py-2.5">
+                                <span className="tabular block text-[11px] font-bold text-brand-600">
+                                    {invoice.code}
+                                </span>
+                                {invoice.supplier_ref && (
+                                    <span className="tabular block text-[11px] text-navy-400">
+                                        {invoice.supplier_ref}
+                                    </span>
+                                )}
+                            </td>
+                            <td className="px-3 py-2.5 text-navy-700">{invoice.supplier ?? '—'}</td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {invoice.invoice_date ? formatDate(invoice.invoice_date) : '—'}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {invoice.due_date ? formatDate(invoice.due_date) : '—'}
+                            </td>
+                            <td className="tabular px-3 py-2.5 font-bold text-navy-800">
+                                {formatMoney(invoice.total)}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-700">
+                                {formatMoney(invoice.balance)}
+                            </td>
+                            <td className="px-3 py-2.5">
+                                <span className={clsx('badge', STATE[invoice.payment_state])}>
+                                    {invoice.payment_state_label}
+                                </span>
+                            </td>
+                            <td className="px-3 py-2.5">
+                                <Link
+                                    to={`${path('/print/supplier-invoices')}/${invoice.id}`}
+                                    target="_blank"
+                                    className="tap grid place-items-center rounded-lg p-1.5 text-navy-400 transition hover:bg-white hover:text-brand-600"
+                                    aria-label={`طباعة ${invoice.code}`}
+                                >
+                                    <Printer className="size-4" />
+                                </Link>
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
                 <div className="space-y-2">
                     {data.data.map((invoice) => (

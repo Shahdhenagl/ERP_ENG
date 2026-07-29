@@ -6,10 +6,12 @@ import { AssetForm } from '@/components/AssetForm'
 import { ConfirmDialog } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { SectionTabs } from '@/components/SectionTabs'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { Button, EmptyState, ErrorState, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
 import { DEVICE_SECTIONS } from '@/lib/sections'
 import { errorMessage } from '@/lib/api'
 import { ASSET_STATUS, warrantyChip } from '@/lib/domain'
+import { assetSpecRows } from '@/lib/specs'
 import { useArea } from '@/lib/nav'
 import { useAssets, useDeleteAsset } from '@/lib/queries'
 import type { Asset } from '@/types'
@@ -17,6 +19,7 @@ import type { Asset } from '@/types'
 export function AssetList() {
     const toast = useToast()
     const { path } = useArea()
+    const [view, setView] = useViewMode('assets')
 
     const [search, setSearch] = useState('')
     const [status, setStatus] = useState('')
@@ -71,6 +74,10 @@ export function AssetList() {
             />
 
             <SectionTabs sections={DEVICE_SECTIONS} />
+
+            <div className="mb-3 flex justify-end">
+                <ViewToggle view={view} onChange={setView} />
+            </div>
 
             <div className="mb-4 space-y-3">
                 <div className="relative">
@@ -131,6 +138,60 @@ export function AssetList() {
                         </Button>
                     }
                 />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="60rem"
+                    headers={[
+                        'الجهاز',
+                        'السيريال',
+                        'العميل',
+                        'المواصفات',
+                        { label: 'الضمان', className: 'w-28' },
+                        { label: 'الحالة', className: 'w-24' },
+                        { label: 'الزيارات', className: 'w-20' },
+                    ]}
+                >
+                    {data.data.map((asset) => {
+                        const specs = assetSpecRows(asset)
+                            .filter(([label]) => label !== 'الماركة' && label !== 'الموديل')
+                            .slice(0, 3)
+
+                        return (
+                            <tr key={asset.id} className="border-t border-navy-100 hover:bg-navy-50/60">
+                                <td className="px-3 py-2.5">
+                                    <Link to={path(`/assets/${asset.id}`)} className="block">
+                                        <span className="block truncate font-semibold text-navy-800">
+                                            {asset.label}
+                                        </span>
+                                        <span className="tabular block text-[11px] font-bold text-brand-600">
+                                            {asset.code}
+                                        </span>
+                                    </Link>
+                                </td>
+                                <td className="tabular px-3 py-2.5 text-navy-600">
+                                    {asset.serial ?? '—'}
+                                </td>
+                                <td className="px-3 py-2.5 text-navy-600">
+                                    {asset.customer?.name ?? '—'}
+                                </td>
+                                <td className="px-3 py-2.5 text-[11px] text-navy-500">
+                                    {specs.length > 0
+                                        ? specs.map(([label, value]) => `${label}: ${value}`).join(' · ')
+                                        : '—'}
+                                </td>
+                                <td className="px-3 py-2.5 text-navy-600">{asset.warranty_label}</td>
+                                <td className="px-3 py-2.5">
+                                    <span className={clsx('badge', ASSET_STATUS[asset.status].chip)}>
+                                        {asset.status_label}
+                                    </span>
+                                </td>
+                                <td className="tabular px-3 py-2.5 text-navy-600">
+                                    {asset.tasks_count ?? 0}
+                                </td>
+                            </tr>
+                        )
+                    })}
+                </DataTable>
             ) : (
                 <div className="grid gap-3 sm:grid-cols-2">
                     {data.data.map((asset) => (

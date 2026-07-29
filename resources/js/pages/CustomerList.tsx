@@ -18,6 +18,7 @@ import { BranchForm } from '@/components/BranchForm'
 import { CustomerForm } from '@/components/CustomerForm'
 import { ConfirmDialog } from '@/components/Modal'
 import { StatStrip } from '@/components/StatStrip'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { useToast } from '@/components/Toast'
 import { Button, EmptyState, ErrorState, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
 import { errorMessage } from '@/lib/api'
@@ -47,6 +48,7 @@ export function CustomerList() {
     const [editingBranch, setEditingBranch] = useState<Branch | undefined>()
 
     const { path } = useArea()
+    const [view, setView] = useViewMode('customers')
     const { data, isLoading, isError, refetch } = useCustomers({
         search,
         type: type || undefined,
@@ -121,6 +123,10 @@ export function CustomerList() {
                 </Select>
             </div>
 
+            <div className="mb-3 flex justify-end">
+                <ViewToggle view={view} onChange={setView} />
+            </div>
+
             {data?.summary && (
                 <StatStrip
                     items={[
@@ -154,6 +160,58 @@ export function CustomerList() {
                         </Button>
                     }
                 />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="58rem"
+                    headers={[
+                        'العميل',
+                        'النوع',
+                        'الهاتف',
+                        'المحافظة / الحي',
+                        { label: 'العقود', className: 'w-20' },
+                        { label: 'المهام', className: 'w-20' },
+                        { label: 'الحالة', className: 'w-28' },
+                    ]}
+                >
+                    {data.data.map((customer) => (
+                        <tr key={customer.id} className="border-t border-navy-100 hover:bg-navy-50/60">
+                            <td className="px-3 py-2.5">
+                                <Link to={path(`/customers/${customer.id}`)} className="block">
+                                    <span className="block truncate font-semibold text-navy-800">
+                                        {customer.name}
+                                    </span>
+                                    <span className="tabular block text-[11px] font-bold text-brand-600">
+                                        {customer.code}
+                                    </span>
+                                </Link>
+                            </td>
+                            <td className="px-3 py-2.5 text-navy-600">{customer.type_label ?? '—'}</td>
+                            <td className="tabular px-3 py-2.5 text-navy-600" dir="ltr">
+                                <span className="block text-right">{customer.phone ?? '—'}</span>
+                            </td>
+                            <td className="px-3 py-2.5 text-navy-600">
+                                {[customer.governorate, customer.city].filter(Boolean).join(' — ') || '—'}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {customer.contracts_count ?? 0}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {customer.tasks_count ?? 0}
+                            </td>
+                            <td className="px-3 py-2.5">
+                                {customer.contract_standing && customer.contract_standing !== 'none' ? (
+                                    <span
+                                        className={clsx('badge', STANDING_CHIP[customer.contract_standing])}
+                                    >
+                                        {customer.contract_standing_label}
+                                    </span>
+                                ) : (
+                                    <span className="badge bg-navy-100 text-navy-500">بلا عقد</span>
+                                )}
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
                 <div className="grid gap-3 sm:grid-cols-2">
                     {data.data.map((customer) => (

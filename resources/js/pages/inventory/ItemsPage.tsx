@@ -1,12 +1,10 @@
 import clsx from 'clsx'
 import {
     AlertTriangle,
-    LayoutGrid,
     MapPin,
     Package,
     Pencil,
     Plus,
-    Rows3,
     Search,
     Trash2,
 } from 'lucide-react'
@@ -19,15 +17,10 @@ import { Button, EmptyState, ErrorState, Input, SkeletonCard } from '@/component
 import { errorMessage } from '@/lib/api'
 import { formatMoney, formatQty, ITEM_CATEGORY } from '@/lib/domain'
 import { useDeleteItem, useItemGroups, useItems } from '@/lib/queries'
+import { useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { useInventory } from '@/pages/inventory/InventoryLayout'
 import type { Item } from '@/types'
 
-type ViewMode = 'cards' | 'table'
-
-/** The chosen layout sticks between visits — a preference, not a filter. */
-function storedView(): ViewMode {
-    return localStorage.getItem('items.view') === 'table' ? 'table' : 'cards'
-}
 
 /** A one-line nameplate summary for a UPS or battery row. */
 function specSummary(item: Item): string | null {
@@ -52,7 +45,7 @@ export function ItemsPage() {
     // group they add or rename has to show up here.
     const [groupId, setGroupId] = useState<number | ''>('')
     const [lowOnly, setLowOnly] = useState(false)
-    const [view, setView] = useState<ViewMode>(storedView)
+    const [view, setViewMode] = useViewMode('items')
     const [deleting, setDeleting] = useState<Item | undefined>()
     // The UPS/battery being installed at a customer — drawn off the shelf on save.
     const [installing, setInstalling] = useState<Item | undefined>()
@@ -67,11 +60,6 @@ export function ItemsPage() {
         per_page: 50,
     })
     const remove = useDeleteItem()
-
-    const setViewMode = (mode: ViewMode) => {
-        localStorage.setItem('items.view', mode)
-        setView(mode)
-    }
 
     const timer = useRef<number>(0)
     const debounced = (value: string) => {
@@ -161,20 +149,7 @@ export function ItemsPage() {
                     </button>
 
                     {/* Table for scanning many at a glance, cards for the detail. */}
-                    <div className="mr-auto flex items-center gap-1 rounded-xl bg-navy-100 p-1">
-                        <ViewButton
-                            active={view === 'cards'}
-                            onClick={() => setViewMode('cards')}
-                            icon={LayoutGrid}
-                            label="كروت"
-                        />
-                        <ViewButton
-                            active={view === 'table'}
-                            onClick={() => setViewMode('table')}
-                            icon={Rows3}
-                            label="جدول"
-                        />
-                    </div>
+                    <ViewToggle view={view} onChange={setViewMode} className="mr-auto" />
 
                     {/* Adding while a group is selected files the item straight into it. */}
                     {groupId !== '' && (
@@ -348,31 +323,6 @@ export function ItemsPage() {
     )
 }
 
-function ViewButton({
-    active,
-    onClick,
-    icon: Icon,
-    label,
-}: {
-    active: boolean
-    onClick: () => void
-    icon: typeof LayoutGrid
-    label: string
-}) {
-    return (
-        <button
-            onClick={onClick}
-            aria-pressed={active}
-            className={clsx(
-                'tap flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-bold transition',
-                active ? 'bg-white text-navy-800 shadow-sm' : 'text-navy-500 hover:text-navy-700',
-            )}
-        >
-            <Icon className="size-3.5" />
-            {label}
-        </button>
-    )
-}
 
 /**
  * The dense view: every column the counter asks for on one row — name, group,

@@ -2,10 +2,8 @@ import clsx from 'clsx'
 import {
     FileSpreadsheet,
     Inbox,
-    LayoutGrid,
     Plus,
     Printer,
-    Rows3,
     Search,
     SlidersHorizontal,
     X,
@@ -13,6 +11,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { TaskCard } from '@/components/TaskCard'
+import { useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { Button, EmptyState, ErrorState, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
 import { api } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
@@ -23,7 +22,6 @@ import { useArea } from '@/lib/nav'
 import { useCustomers, useTasks, useTechnicians } from '@/lib/queries'
 import type { Task, TaskStatus } from '@/types'
 
-type ViewMode = 'cards' | 'table'
 
 const QUICK_FILTERS: Array<{ key: string; label: string; params: Record<string, string> }> = [
     { key: 'all', label: 'الكل', params: {} },
@@ -76,13 +74,7 @@ export function TaskList() {
     const { data: technicians } = useTechnicians()
     const { data: customerPage } = useCustomers({ active_only: 1, per_page: 200 })
 
-    const [view, setView] = useState<ViewMode>(
-        () => (localStorage.getItem('tasks.view') as ViewMode) ?? 'cards',
-    )
-    const setViewMode = (mode: ViewMode) => {
-        localStorage.setItem('tasks.view', mode)
-        setView(mode)
-    }
+    const [view, setViewMode] = useViewMode('tasks')
 
     // Export what the filters describe, not the page being looked at — a
     // spreadsheet of thirty rows out of four hundred is a trap.
@@ -229,26 +221,7 @@ export function TaskList() {
 
             {/* Table to scan many at once, cards for the detail on each. */}
             <div className="mb-3 flex justify-end">
-                <div className="flex items-center gap-1 rounded-xl bg-navy-100 p-1">
-                    {(
-                        [
-                            ['cards', 'كروت', LayoutGrid],
-                            ['table', 'جدول', Rows3],
-                        ] as Array<[ViewMode, string, typeof LayoutGrid]>
-                    ).map(([mode, label, Icon]) => (
-                        <button
-                            key={mode}
-                            onClick={() => setViewMode(mode)}
-                            className={clsx(
-                                'tap flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition',
-                                view === mode ? 'bg-white text-navy-900 shadow-sm' : 'text-navy-500',
-                            )}
-                        >
-                            <Icon className="size-3.5" />
-                            {label}
-                        </button>
-                    ))}
-                </div>
+                <ViewToggle view={view} onChange={setViewMode} />
             </div>
 
             {/* ── Quick status chips ─────────────────────────── */}

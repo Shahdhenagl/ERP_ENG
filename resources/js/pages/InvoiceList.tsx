@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import { EMPTY_RANGE, MonthDayFilter, monthDayRange } from '@/components/MonthDayFilter'
 import type { DateRange } from '@/components/MonthDayFilter'
 import { SectionTabs } from '@/components/SectionTabs'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { MONEY_SECTIONS } from '@/lib/sections'
 import { EmptyState, ErrorState, Input, PageHeader, SkeletonCard } from '@/components/ui'
 import { formatMoney, PAYMENT_STATE } from '@/lib/domain'
@@ -26,6 +27,7 @@ const SOURCES: Array<[string, string]> = [
 
 export function InvoiceList() {
     const { path } = useArea()
+    const [view, setView] = useViewMode('invoices')
     const [search, setSearch] = useState('')
     const [filter, setFilter] = useState<Filter>('all')
     const [month, setMonth] = useState('')
@@ -143,14 +145,17 @@ export function InvoiceList() {
                     ))}
                 </div>
 
-                <MonthDayFilter
-                    month={month}
-                    day={day}
-                    range={range}
-                    onMonth={setMonth}
-                    onDay={setDay}
-                    onRange={setRange}
-                />
+                <div className="flex flex-wrap items-end justify-between gap-2">
+                    <MonthDayFilter
+                        month={month}
+                        day={day}
+                        range={range}
+                        onMonth={setMonth}
+                        onDay={setDay}
+                        onRange={setRange}
+                    />
+                    <ViewToggle view={view} onChange={setView} className="mb-0.5" />
+                </div>
             </div>
 
             {isError ? (
@@ -167,6 +172,55 @@ export function InvoiceList() {
                     title="لا توجد فواتير"
                     description="تُنشأ الفاتورة من صفحة المهمة بعد انتهائها، بزر «إصدار فاتورة»."
                 />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="56rem"
+                    headers={[
+                        'الفاتورة',
+                        'العميل',
+                        { label: 'النوع', className: 'w-28' },
+                        { label: 'التاريخ', className: 'w-28' },
+                        { label: 'الاستحقاق', className: 'w-28' },
+                        { label: 'الإجمالي', className: 'w-28' },
+                        { label: 'السداد', className: 'w-28' },
+                    ]}
+                >
+                    {data.data.map((invoice) => {
+                        const state = PAYMENT_STATE[invoice.payment_state]
+
+                        return (
+                            <tr key={invoice.id} className="border-t border-navy-100 hover:bg-navy-50/60">
+                                <td className="px-3 py-2.5">
+                                    <Link
+                                        to={path(`/invoices/${invoice.id}`)}
+                                        className="tabular block text-[11px] font-bold text-brand-600"
+                                    >
+                                        {invoice.code}
+                                    </Link>
+                                </td>
+                                <td className="px-3 py-2.5 text-navy-700">
+                                    {invoice.customer?.name ?? '—'}
+                                </td>
+                                <td className="px-3 py-2.5 text-navy-600">{invoice.source_label}</td>
+                                <td className="tabular px-3 py-2.5 text-navy-600">
+                                    {invoice.issue_date ? formatDate(invoice.issue_date) : '—'}
+                                </td>
+                                <td className="tabular px-3 py-2.5 text-navy-600">
+                                    {invoice.due_date ? formatDate(invoice.due_date) : '—'}
+                                    {invoice.is_overdue && (
+                                        <AlertTriangle className="mr-1 inline size-3.5 text-red-500" />
+                                    )}
+                                </td>
+                                <td className="tabular px-3 py-2.5 font-bold text-navy-800">
+                                    {formatMoney(invoice.total)}
+                                </td>
+                                <td className="px-3 py-2.5">
+                                    <span className={clsx('badge', state.chip)}>{state.label}</span>
+                                </td>
+                            </tr>
+                        )
+                    })}
+                </DataTable>
             ) : (
                 <div className="space-y-3">
                     {data.data.map((invoice) => {

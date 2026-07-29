@@ -19,6 +19,7 @@ import {
 import { useEffect, useRef, useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { SectionTabs } from '@/components/SectionTabs'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { SalesReturnsTab } from '@/pages/sales/SalesReturnsTab'
 import { QuotationForm } from '@/components/QuotationForm'
 import { useToast } from '@/components/Toast'
@@ -78,6 +79,7 @@ function QuotationsTab() {
     const [formOpen, setFormOpen] = useState(false)
     const [editing, setEditing] = useState<Quotation | undefined>()
     const [detailId, setDetailId] = useState<number | null>(null)
+    const [view, setView] = useViewMode('quotations')
 
     const { data: quotations, isLoading } = useQuotations({
         search,
@@ -128,6 +130,8 @@ function QuotationsTab() {
                         className="pr-10"
                     />
                 </div>
+
+                <ViewToggle view={view} onChange={setView} />
             </div>
 
             {isLoading ? (
@@ -138,6 +142,57 @@ function QuotationsTab() {
                     title="لا توجد عروض أسعار"
                     description="سجّل ما تعرضه على العميل، ليتحول إلى أمر بيع بضغطة عند الموافقة."
                 />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="56rem"
+                    headers={[
+                        'العرض',
+                        'العميل',
+                        'الفرع',
+                        { label: 'التاريخ', className: 'w-28' },
+                        { label: 'صالح حتى', className: 'w-28' },
+                        { label: 'الإجمالي', className: 'w-28' },
+                        { label: 'الحالة', className: 'w-28' },
+                    ]}
+                >
+                    {quotations.map((quotation) => (
+                        <tr
+                            key={quotation.id}
+                            onClick={() => setDetailId(quotation.id)}
+                            className="cursor-pointer border-t border-navy-100 hover:bg-navy-50/60"
+                        >
+                            <td className="px-3 py-2.5">
+                                <span className="tabular block text-[11px] font-bold text-brand-600">
+                                    {quotation.code}
+                                </span>
+                                <span className="block truncate text-navy-800">
+                                    {quotation.title ?? '—'}
+                                </span>
+                            </td>
+                            <td className="px-3 py-2.5 text-navy-700">{quotation.customer ?? '—'}</td>
+                            <td className="px-3 py-2.5 text-navy-600">{quotation.branch ?? '—'}</td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {quotation.issue_date ? formatDate(quotation.issue_date) : '—'}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {quotation.valid_until ? formatDate(quotation.valid_until) : '—'}
+                            </td>
+                            <td className="tabular px-3 py-2.5 font-bold text-navy-800">
+                                {formatMoney(quotation.total)}
+                            </td>
+                            <td className="px-3 py-2.5">
+                                <span
+                                    className={clsx(
+                                        'badge',
+                                        QUOTATION_STATUS[quotation.effective_status].chip,
+                                    )}
+                                >
+                                    {quotation.effective_status_label}
+                                </span>
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
                 <div className="space-y-3">
                     {quotations.map((quotation) => (
@@ -559,6 +614,7 @@ function QuotationDetail({
 function OrdersTab() {
     const [uninvoiced, setUninvoiced] = useState(false)
     const [detailId, setDetailId] = useState<number | null>(null)
+    const [view, setView] = useViewMode('sales-orders')
 
     const { data: orders, isLoading } = useSalesOrders({
         uninvoiced: uninvoiced ? 1 : undefined,
@@ -578,6 +634,8 @@ function OrdersTab() {
                 >
                     لم تتم فوترته
                 </button>
+
+                <ViewToggle view={view} onChange={setView} className="mr-auto" />
             </div>
 
             {isLoading ? (
@@ -588,6 +646,51 @@ function OrdersTab() {
                     title="لا توجد أوامر بيع"
                     description="أوامر البيع تنشأ تلقائيًا عند موافقة العميل على عرض السعر."
                 />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="54rem"
+                    headers={[
+                        'الأمر',
+                        'العميل',
+                        'الفرع',
+                        { label: 'التاريخ', className: 'w-28' },
+                        { label: 'الإجمالي', className: 'w-28' },
+                        { label: 'الفوترة', className: 'w-28' },
+                        { label: 'الحالة', className: 'w-24' },
+                    ]}
+                >
+                    {orders.map((order) => (
+                        <tr
+                            key={order.id}
+                            onClick={() => setDetailId(order.id)}
+                            className="cursor-pointer border-t border-navy-100 hover:bg-navy-50/60"
+                        >
+                            <td className="tabular px-3 py-2.5 text-[11px] font-bold text-brand-600">
+                                {order.code}
+                            </td>
+                            <td className="px-3 py-2.5 text-navy-700">{order.customer ?? '—'}</td>
+                            <td className="px-3 py-2.5 text-navy-600">{order.branch ?? '—'}</td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {order.order_date ? formatDate(order.order_date) : '—'}
+                            </td>
+                            <td className="tabular px-3 py-2.5 font-bold text-navy-800">
+                                {formatMoney(order.total)}
+                            </td>
+                            <td className="px-3 py-2.5">
+                                <span
+                                    className={clsx('badge', SALES_BILLING_STATE[order.billing_state].chip)}
+                                >
+                                    {order.billing_state_label}
+                                </span>
+                            </td>
+                            <td className="px-3 py-2.5">
+                                <span className={clsx('badge', SALES_ORDER_STATUS[order.status].chip)}>
+                                    {order.status_label}
+                                </span>
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
                 <div className="space-y-3">
                     {orders.map((order) => (

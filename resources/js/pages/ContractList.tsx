@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/components/Modal'
 import { StatStrip } from '@/components/StatStrip'
 import { useToast } from '@/components/Toast'
 import { SectionTabs } from '@/components/SectionTabs'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { Button, EmptyState, ErrorState, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
 import { DEVICE_SECTIONS } from '@/lib/sections'
 import { errorMessage } from '@/lib/api'
@@ -19,6 +20,7 @@ import type { Contract } from '@/types'
 export function ContractList() {
     const toast = useToast()
     const { path } = useArea()
+    const [view, setView] = useViewMode('contracts')
 
     const [search, setSearch] = useState('')
     const [status, setStatus] = useState('')
@@ -73,6 +75,10 @@ export function ContractList() {
             />
 
             <SectionTabs sections={DEVICE_SECTIONS} />
+
+            <div className="mb-3 flex justify-end">
+                <ViewToggle view={view} onChange={setView} />
+            </div>
 
             <div className="mb-4 space-y-3">
                 <div className="relative">
@@ -145,6 +151,65 @@ export function ContractList() {
                         </Button>
                     }
                 />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="58rem"
+                    headers={[
+                        'العقد',
+                        'العميل',
+                        'الفترة',
+                        { label: 'الزيارات', className: 'w-24' },
+                        { label: 'القيمة', className: 'w-28' },
+                        { label: 'المتبقي', className: 'w-24' },
+                        { label: 'الحالة', className: 'w-24' },
+                    ]}
+                >
+                    {data.data.map((contract) => (
+                        <tr key={contract.id} className="border-t border-navy-100 hover:bg-navy-50/60">
+                            <td className="px-3 py-2.5">
+                                <Link to={path(`/contracts/${contract.id}`)} className="block">
+                                    <span className="tabular block text-[11px] font-bold text-brand-600">
+                                        {contract.code}
+                                    </span>
+                                    <span className="block truncate font-semibold text-navy-800">
+                                        {contract.title ?? contract.label}
+                                    </span>
+                                </Link>
+                            </td>
+                            <td className="px-3 py-2.5 text-navy-700">
+                                {contract.customer?.name ?? '—'}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {formatDate(contract.starts_on)} — {formatDate(contract.ends_on)}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {contract.visits_per_year} سنويًا
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-700">
+                                {contract.value ? formatMoney(Number(contract.value)) : '—'}
+                            </td>
+                            <td className="tabular px-3 py-2.5">
+                                {contract.effective_status === 'active' ? (
+                                    <span className={clsx('badge', expiryChip(contract.days_remaining))}>
+                                        {contract.days_remaining} يوم
+                                    </span>
+                                ) : (
+                                    <span className="text-navy-400">—</span>
+                                )}
+                            </td>
+                            <td className="px-3 py-2.5">
+                                <span
+                                    className={clsx(
+                                        'badge',
+                                        CONTRACT_STATUS[contract.effective_status].chip,
+                                    )}
+                                >
+                                    {contract.effective_status_label}
+                                </span>
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
                 <div className="grid gap-3 sm:grid-cols-2">
                     {data.data.map((contract) => (
