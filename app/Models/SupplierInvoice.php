@@ -191,14 +191,29 @@ class SupplierInvoice extends Model
 
     // ── Scopes ───────────────────────────────────────────────
 
+    /**
+     * Posted bills still owing something, after payments against them and any
+     * posted return. Done in SQL so the list paginates — and because "posted"
+     * alone was never the question: it kept every settled bill on the chase
+     * list, which is the one thing an outstanding filter must not do.
+     */
     public function scopeOutstanding(Builder $query): Builder
     {
-        return $query->where('status', 'posted');
+        return $query->where('status', 'posted')->whereRaw(
+            'supplier_invoices.total > ('
+            .'(select coalesce(sum(amount), 0) from supplier_payments'
+            .' where supplier_payments.supplier_invoice_id = supplier_invoices.id'
+            .' and supplier_payments.deleted_at is null)'
+            .' + (select coalesce(sum(total), 0) from purchase_returns'
+            .' where purchase_returns.supplier_invoice_id = supplier_invoices.id'
+            ." and purchase_returns.status = 'posted' and purchase_returns.deleted_at is null)"
+            .') + 0.005',
+        );
     }
 
     public function scopeOverdue(Builder $query): Builder
     {
-        return $query->where('status', 'posted')
+        return $query->outstanding()
             ->whereNotNull('due_date')
             ->whereDate('due_date', '<', now()->toDateString());
     }

@@ -545,8 +545,22 @@ function PaySupplierDialog({ supplier, onClose }: { supplier: Supplier; onClose:
     const [reference, setReference] = useState('')
 
     // Bills still owing something. Choosing one is what turns "3,000 paid" into
-    // "3,000 against SB-2026-0004" on the statement.
+    // "3,000 against SB-2026-0004" on the statement — and what lets that bill
+    // ever read as settled. On account is a real case, but it is the exception,
+    // so the oldest open bill is offered first rather than nothing.
     const open = bills?.data.filter((bill) => bill.balance > 0) ?? []
+
+    useEffect(() => {
+        if (!invoiceId && open.length > 0) {
+            const oldest = open[open.length - 1]
+
+            setInvoiceId(String(oldest.id))
+            setAmount(oldest.balance.toFixed(2))
+        }
+        // Only until the operator has touched it — re-running on every render
+        // would fight them every time they cleared the field.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open.length])
 
     // Held after a successful payment so the voucher can be printed on the
     // spot: paying and handing over the slip are one act at the counter.

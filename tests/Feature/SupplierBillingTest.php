@@ -547,3 +547,29 @@ it('keeps a technician out of supplier billing', function () {
         ->getJson("/api/suppliers/{$this->supplier->id}/statement")
         ->assertForbidden();
 });
+
+it('drops a bill off the outstanding list once it is paid', function () {
+    $invoice = \App\Models\SupplierInvoice::create([
+        'supplier_id' => $this->supplier->id,
+        'invoice_date' => now()->toDateString(),
+        'total' => 1000,
+        'status' => 'posted',
+        'created_by' => $this->manager->id,
+    ]);
+
+    expect(\App\Models\SupplierInvoice::outstanding()->pluck('id'))->toContain($invoice->id);
+
+    \App\Models\SupplierPayment::create([
+        'supplier_id' => $this->supplier->id,
+        'supplier_invoice_id' => $invoice->id,
+        'cash_box_id' => \App\Models\CashBox::default()->id,
+        'amount' => 1000,
+        'paid_on' => now()->toDateString(),
+        'method' => 'cash',
+        'created_by' => $this->manager->id,
+    ]);
+
+    // Settled bills used to stay on the chase list: the scope only asked
+    // whether the bill was posted, never whether anything was still owed.
+    expect(\App\Models\SupplierInvoice::outstanding()->pluck('id'))->not->toContain($invoice->id);
+});
