@@ -18,7 +18,6 @@ import {
     HardDrive,
     Landmark,
     LayoutDashboard,
-    ListChecks,
     MapPin,
     Package,
     PackageMinus,
@@ -147,7 +146,6 @@ export const NAV: NavItem[] = [
             { to: '/inventory/issue', permission: 'inventory.manage', label: 'إذن صرف', icon: PackageMinus },
             { to: '/inventory/transfers', permission: 'inventory.manage', label: 'تحويلات المخازن', icon: ArrowLeftRight },
             { to: '/inventory/stocktake', permission: 'inventory.manage', label: 'الجرد والتسويات', icon: ClipboardCheck },
-            { to: '/inventory/serials', permission: 'inventory.view', label: 'الباركود والأرقام التسلسلية', icon: ListChecks },
         ],
     },
 

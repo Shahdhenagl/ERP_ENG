@@ -37,7 +37,6 @@ import { MovementsPage } from '@/pages/inventory/MovementsPage'
 import { StocktakePage } from '@/pages/inventory/StocktakePage'
 import { StockIssuePage } from '@/pages/inventory/StockIssuePage'
 import { WarehouseTransferPage } from '@/pages/inventory/WarehouseTransferPage'
-import { SerialsPage } from '@/pages/inventory/SerialsPage'
 import { ItemGroupsPage } from '@/pages/inventory/ItemGroupsPage'
 import { WarehousesPage } from '@/pages/inventory/WarehousesPage'
 import { InvoiceDetail } from '@/pages/InvoiceDetail'
@@ -226,7 +225,6 @@ export function App() {
                                             the inventory shell's tabs. */}
                                         <Route path="inventory/issue" element={<StockIssuePage />} />
                                         <Route path="inventory/transfers" element={<WarehouseTransferPage />} />
-                                        <Route path="inventory/serials" element={<SerialsPage />} />
                                         <Route path="inventory/groups" element={<ItemGroupsPage />} />
                                         <Route path="custody/settle" element={<CustodySettlePage />} />
                                         <Route path="custody/statement" element={<CustodyStatementPage />} />
