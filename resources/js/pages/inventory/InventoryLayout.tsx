@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
-import { Outlet, useOutletContext } from 'react-router-dom'
+import { Outlet, useLocation, useOutletContext } from 'react-router-dom'
 import { ItemForm } from '@/components/ItemForm'
 import { SectionTabs } from '@/components/SectionTabs'
 import { Button, PageHeader } from '@/components/ui'
@@ -36,8 +36,28 @@ const SECTIONS = [
     ['/inventory/movements', 'سجل الحركة'],
 ] as const
 
+/**
+ * Each section names itself, and says whether the stock headline belongs above
+ * it.
+ *
+ * "المخزون" over a list of warehouses answers a question nobody asked there,
+ * and the value of all stock is not a fact about the stocktake screen. Only the
+ * items list is about the stock as a whole, so only it carries the figures and
+ * the button that adds to them.
+ */
+const SECTION_META: Record<string, { title: string; stock: boolean }> = {
+    items: { title: 'الأصناف', stock: true },
+    warehouses: { title: 'المخازن', stock: false },
+    movements: { title: 'إذن استلام', stock: false },
+    stocktake: { title: 'الجرد والتسويات', stock: false },
+}
+
 export function InventoryLayout() {
     const { data: summary } = useStockSummary()
+    const { pathname } = useLocation()
+
+    const section = pathname.split('/').filter(Boolean).pop() ?? 'items'
+    const meta = SECTION_META[section] ?? SECTION_META.items
 
     const [itemForm, setItemForm] = useState(false)
     const [editing, setEditing] = useState<Item | undefined>()
@@ -54,20 +74,22 @@ export function InventoryLayout() {
     return (
         <>
             <PageHeader
-                title="المخزون"
+                title={meta.title}
                 subtitle={
-                    summary
+                    meta.stock && summary
                         ? `${summary.items_count} صنف · ${formatMoney(summary.stock_value)}`
                         : undefined
                 }
                 actions={
-                    <Button icon={Plus} onClick={() => openItemForm()}>
-                        صنف جديد
-                    </Button>
+                    meta.stock ? (
+                        <Button icon={Plus} onClick={() => openItemForm()}>
+                            صنف جديد
+                        </Button>
+                    ) : undefined
                 }
             />
 
-            {summary && (
+            {meta.stock && summary && (
                 <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
                     <Stat label="قيمة المخزون" value={formatMoney(summary.stock_value)} />
                     <Stat label="عدد الأصناف" value={String(summary.items_count)} />

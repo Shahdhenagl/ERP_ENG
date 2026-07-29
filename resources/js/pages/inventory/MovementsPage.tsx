@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import { EMPTY_RANGE, MonthDayFilter, monthDayRange } from '@/components/MonthDayFilter'
 import type { DateRange } from '@/components/MonthDayFilter'
 import { EmptyState, SkeletonCard } from '@/components/ui'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { formatMoney, formatQty, MOVEMENT_TYPE, MOVEMENT_TYPE_FALLBACK } from '@/lib/domain'
 import { formatSmart } from '@/lib/format'
 import { useArea } from '@/lib/nav'
@@ -16,6 +17,7 @@ export function MovementsPage() {
     const [month, setMonth] = useState('')
     const [day, setDay] = useState('')
     const [range, setRange] = useState<DateRange>(EMPTY_RANGE)
+    const [view, setView] = useViewMode('movements')
 
     const { data, isLoading } = useMovements({ per_page: 50, ...monthDayRange(month, day, range) })
 
@@ -41,14 +43,71 @@ export function MovementsPage() {
                     <Printer className="size-4" />
                     طباعة
                 </Link>
+
+                <ViewToggle view={view} onChange={setView} className="mb-0.5" />
             </div>
 
             {isLoading ? (
                 <SkeletonCard />
             ) : !data?.data.length ? (
                 <EmptyState icon={ClipboardList} title="لا توجد حركات في هذه الفترة" />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="54rem"
+                    headers={[
+                        { label: 'النوع', className: 'w-28' },
+                        'الصنف',
+                        'من / إلى',
+                        { label: 'الكمية', className: 'w-24' },
+                        { label: 'القيمة', className: 'w-28' },
+                        { label: 'المستند', className: 'w-28' },
+                        { label: 'التاريخ', className: 'w-36' },
+                    ]}
+                >
+                    {data.data.map((movement) => {
+                        const meta = MOVEMENT_TYPE[movement.type] ?? MOVEMENT_TYPE_FALLBACK
+
+                        return (
+                            <tr
+                                key={movement.id}
+                                className="border-t border-navy-100 hover:bg-navy-50/60"
+                            >
+                                <td className="px-3 py-2.5">
+                                    <span className={clsx('badge', meta.chip)}>
+                                        {movement.type_label}
+                                    </span>
+                                </td>
+                                <td className="px-3 py-2.5 font-semibold text-navy-800">
+                                    {movement.item?.name ?? '—'}
+                                </td>
+                                <td className="px-3 py-2.5 text-navy-600">
+                                    {[movement.from, movement.to].filter(Boolean).join(' ← ') || '—'}
+                                    {movement.supplier && (
+                                        <span className="block text-[11px] text-navy-400">
+                                            {movement.supplier}
+                                        </span>
+                                    )}
+                                </td>
+                                <td className="tabular px-3 py-2.5 font-bold text-navy-800">
+                                    {meta.sign}
+                                    {formatQty(movement.qty)}
+                                </td>
+                                <td className="tabular px-3 py-2.5 text-navy-600">
+                                    {formatMoney(movement.value)}
+                                </td>
+                                <td className="tabular px-3 py-2.5 text-[11px] text-navy-500">
+                                    {movement.task_code ?? '—'}
+                                </td>
+                                <td className="tabular px-3 py-2.5 text-[11px] text-navy-500">
+                                    {formatSmart(movement.created_at)}
+                                    <span className="block text-navy-400">{movement.actor}</span>
+                                </td>
+                            </tr>
+                        )
+                    })}
+                </DataTable>
             ) : (
-                <div className="space-y-2">
+                <div className="grid gap-2 sm:grid-cols-2">
                     {data.data.map((movement) => {
                 const meta = MOVEMENT_TYPE[movement.type] ?? MOVEMENT_TYPE_FALLBACK
 
