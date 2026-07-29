@@ -18,9 +18,9 @@ import { useToast } from '@/components/Toast'
 import { Button, EmptyState, ErrorState, Input, SkeletonCard } from '@/components/ui'
 import { errorMessage } from '@/lib/api'
 import { formatMoney, formatQty, ITEM_CATEGORY } from '@/lib/domain'
-import { useDeleteItem, useItems } from '@/lib/queries'
+import { useDeleteItem, useItemGroups, useItems } from '@/lib/queries'
 import { useInventory } from '@/pages/inventory/InventoryLayout'
-import type { Item, ItemCategory } from '@/types'
+import type { Item } from '@/types'
 
 type ViewMode = 'cards' | 'table'
 
@@ -48,16 +48,21 @@ export function ItemsPage() {
     const { openItemForm } = useInventory()
 
     const [search, setSearch] = useState('')
-    const [category, setCategory] = useState<'' | ItemCategory>('')
+    // Filtering is by the group the store manages, not by the fixed kind — a
+    // group they add or rename has to show up here.
+    const [groupId, setGroupId] = useState<number | ''>('')
     const [lowOnly, setLowOnly] = useState(false)
     const [view, setView] = useState<ViewMode>(storedView)
     const [deleting, setDeleting] = useState<Item | undefined>()
     // The UPS/battery being installed at a customer — drawn off the shelf on save.
     const [installing, setInstalling] = useState<Item | undefined>()
 
+    const { data: groupList } = useItemGroups()
+    const groups = (groupList ?? []).filter((group) => group.is_active)
+
     const { data, isLoading, isError, refetch } = useItems({
         search,
-        category: category || undefined,
+        item_category_id: groupId || undefined,
         below_reorder: lowOnly ? 1 : undefined,
         per_page: 50,
     })
@@ -89,15 +94,13 @@ export function ItemsPage() {
     }
 
     const counts = data?.counts
-    const tabs: Array<{ value: '' | ItemCategory; label: string; count?: number }> = [
+    const tabs: Array<{ value: number | ''; label: string; count?: number }> = [
         { value: '', label: 'الكل', count: counts?.all },
-        ...(Object.entries(ITEM_CATEGORY) as [ItemCategory, { label: string }][]).map(
-            ([value, meta]) => ({
-                value,
-                label: meta.label,
-                count: counts?.by_category?.[value],
-            }),
-        ),
+        ...groups.map((group) => ({
+            value: group.id,
+            label: group.name,
+            count: counts?.by_group?.[group.id],
+        })),
     ]
 
     const items = data?.data ?? []
@@ -109,10 +112,10 @@ export function ItemsPage() {
                 {tabs.map((tab) => (
                     <button
                         key={tab.value || 'all'}
-                        onClick={() => setCategory(tab.value)}
+                        onClick={() => setGroupId(tab.value)}
                         className={clsx(
                             'tap flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold ring-1 transition',
-                            category === tab.value
+                            groupId === tab.value
                                 ? 'bg-brand-600 text-white ring-brand-600'
                                 : 'bg-white text-navy-500 ring-navy-200 hover:bg-navy-50',
                         )}
@@ -122,7 +125,7 @@ export function ItemsPage() {
                             <span
                                 className={clsx(
                                     'tabular rounded-md px-1.5 py-0.5 text-[10px]',
-                                    category === tab.value ? 'bg-white/20' : 'bg-navy-100 text-navy-500',
+                                    groupId === tab.value ? 'bg-white/20' : 'bg-navy-100 text-navy-500',
                                 )}
                             >
                                 {tab.count}
@@ -174,13 +177,13 @@ export function ItemsPage() {
                     </div>
 
                     {/* Adding while a group is selected files the item straight into it. */}
-                    {category && (
+                    {groupId !== '' && (
                         <Button
                             icon={Plus}
                             className="text-xs"
-                            onClick={() => openItemForm(undefined, category)}
+                            onClick={() => openItemForm(undefined, undefined, groupId)}
                         >
-                            {ITEM_CATEGORY[category].label} — صنف جديد
+                            {groups.find((group) => group.id === groupId)?.name} — صنف جديد
                         </Button>
                     )}
                 </div>
@@ -200,7 +203,10 @@ export function ItemsPage() {
                     title="لا توجد أصناف"
                     description="أضف الأجهزة والبطاريات وقطع الغيار التي تتعامل بها لتبدأ تتبّع الأرصدة."
                     action={
-                        <Button icon={Plus} onClick={() => openItemForm(undefined, category || undefined)}>
+                        <Button
+                            icon={Plus}
+                            onClick={() => openItemForm(undefined, undefined, groupId || undefined)}
+                        >
                             صنف جديد
                         </Button>
                     }
@@ -226,9 +232,12 @@ export function ItemsPage() {
                                                 {item.code}
                                             </span>
                                             <span
-                                                className={clsx('badge', ITEM_CATEGORY[item.category].chip)}
+                                                className={clsx(
+                                                    'badge',
+                                                    item.group_chip ?? ITEM_CATEGORY[item.category].chip,
+                                                )}
                                             >
-                                                {item.category_label}
+                                                {item.group ?? item.category_label}
                                             </span>
                                             {item.below_reorder_level && (
                                                 <span className="badge bg-amber-50 text-amber-700 ring-1 ring-amber-200">
@@ -419,8 +428,13 @@ function ItemsTable({
                                     )}
                                 </td>
                                 <td className="p-3">
-                                    <span className={clsx('badge', ITEM_CATEGORY[item.category].chip)}>
-                                        {item.category_label}
+                                    <span
+                                        className={clsx(
+                                            'badge',
+                                            item.group_chip ?? ITEM_CATEGORY[item.category].chip,
+                                        )}
+                                    >
+                                        {item.group ?? item.category_label}
                                     </span>
                                 </td>
                                 <td className="tabular p-3 text-navy-600" dir="ltr">

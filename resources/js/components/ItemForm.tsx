@@ -5,7 +5,7 @@ import { useToast } from '@/components/Toast'
 import { Button, Field, Input, Select, Textarea } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { BATTERY_TYPES, COMM_PORTS, ITEM_CATEGORY, UPS_PHASES, UPS_TYPES } from '@/lib/domain'
-import { useSaveItem, useWarehouses } from '@/lib/queries'
+import { useItemGroups, useSaveItem, useWarehouses } from '@/lib/queries'
 import type { Item, ItemCategory } from '@/types'
 
 interface ItemFormProps {
@@ -14,6 +14,8 @@ interface ItemFormProps {
     item?: Item
     /** Pre-selects the group when opened from one of the inventory tabs. */
     defaultCategory?: ItemCategory
+    /** Pre-selects the group when opened from that group's own button. */
+    defaultGroupId?: number
     onSaved?: (item: Item) => void
 }
 
@@ -32,10 +34,33 @@ const BATTERY_SPECS = [
 
 type SpecKey = (typeof UPS_SPECS)[number] | (typeof BATTERY_SPECS)[number]
 
-export function ItemForm({ open, onClose, item, defaultCategory, onSaved }: ItemFormProps) {
+export function ItemForm({
+    open,
+    onClose,
+    item,
+    defaultCategory,
+    defaultGroupId,
+    onSaved,
+}: ItemFormProps) {
     const toast = useToast()
     const save = useSaveItem(item?.id)
     const [errors, setErrors] = useState<Record<string, string>>({})
+
+    // The groups the store manages. Adding or renaming one has to reach this
+    // list, which is the whole point of them being editable.
+    const { data: groupList } = useItemGroups()
+    const groups = (groupList ?? []).filter((group) => group.is_active)
+
+    const [groupId, setGroupId] = useState(
+        String(item?.item_category_id ?? defaultGroupId ?? ''),
+    )
+
+    // Opened from a group's own "new item" button, or from an item filed before
+    // groups existed: settle on the group its fixed kind maps to.
+    const fallbackSlug = item?.category ?? defaultCategory
+    const effectiveGroup =
+        groups.find((group) => String(group.id) === groupId)
+        ?? (groupId ? undefined : groups.find((group) => group.slug === fallbackSlug))
 
     const [form, setForm] = useState({
         name: item?.name ?? '',
@@ -76,6 +101,14 @@ export function ItemForm({ open, onClose, item, defaultCategory, onSaved }: Item
     const handleSave = async () => {
         setErrors({})
 
+        // Saved without one, an item shows up under "الكل" and under no group
+        // at all — invisible on the tab anyone would look for it on.
+        if (! effectiveGroup) {
+            setErrors({ item_category_id: 'اختر المجموعة التي يُصنَّف تحتها الصنف.' })
+
+            return
+        }
+
         // Only the keys this category owns are sent; blanks are dropped server-side.
         const keys = isUps ? UPS_SPECS : isBattery ? BATTERY_SPECS : []
         const payloadSpecs = keys.reduce<Record<string, string>>((acc, key) => {
@@ -90,6 +123,7 @@ export function ItemForm({ open, onClose, item, defaultCategory, onSaved }: Item
                 sku: form.sku || null,
                 barcode: form.barcode || null,
                 category: form.category,
+                item_category_id: effectiveGroup?.id ?? null,
                 unit: form.unit,
                 sell_price: form.sell_price ? Number(form.sell_price) : null,
                 reorder_level: form.reorder_level ? Number(form.reorder_level) : 0,
@@ -118,7 +152,11 @@ export function ItemForm({ open, onClose, item, defaultCategory, onSaved }: Item
         <Modal
             open={open}
             onClose={onClose}
-            title={item ? `تعديل ${item.code}` : `${ITEM_CATEGORY[form.category].label} — صنف جديد`}
+            title={
+                item
+                    ? `تعديل ${item.code}`
+                    : `${effectiveGroup?.name ?? ITEM_CATEGORY[form.category].label} — صنف جديد`
+            }
             size={hasSpecs ? 'lg' : 'md'}
             footer={
                 <>
@@ -141,14 +179,29 @@ export function ItemForm({ open, onClose, item, defaultCategory, onSaved }: Item
                 </Field>
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="التصنيف" required error={errors.category}>
+                    {/* Picking a group also settles the kind: the four groups
+                        that came with the system carry a slug, and that slug is
+                        what decides whether a nameplate is asked for. A group
+                        the store invented behaves as a plain part. */}
+                    <Field label="التصنيف / المجموعة" required error={errors.item_category_id}>
                         <Select
-                            value={form.category}
-                            onChange={(event) => set('category')(event.target.value)}
+                            value={String(effectiveGroup?.id ?? '')}
+                            onChange={(event) => {
+                                const picked = groups.find(
+                                    (group) => String(group.id) === event.target.value,
+                                )
+
+                                setGroupId(event.target.value)
+                                setForm((current) => ({
+                                    ...current,
+                                    category: (picked?.slug ?? 'spare_part') as ItemCategory,
+                                }))
+                            }}
                         >
-                            {Object.entries(ITEM_CATEGORY).map(([value, meta]) => (
-                                <option key={value} value={value}>
-                                    {meta.label}
+                            <option value="">— اختر المجموعة —</option>
+                            {groups.map((group) => (
+                                <option key={group.id} value={group.id}>
+                                    {group.name}
                                 </option>
                             ))}
                         </Select>

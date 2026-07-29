@@ -24,8 +24,13 @@ class ItemResource extends JsonResource
                 : null,
             'name' => $this->name,
 
+            // The fixed kind decides which nameplate an item carries; the group
+            // is the word the store actually uses for it, and it is editable.
             'category' => $this->category->value,
             'category_label' => $this->category->label(),
+            'item_category_id' => $this->item_category_id,
+            'group' => $this->whenLoaded('group', fn () => $this->group?->name),
+            'group_chip' => $this->whenLoaded('group', fn () => $this->group?->chip()),
             'unit' => $this->unit,
 
             // The nameplate, present only on the kinds that carry one.

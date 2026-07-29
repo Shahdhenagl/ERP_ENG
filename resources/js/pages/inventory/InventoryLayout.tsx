@@ -1,25 +1,27 @@
 import clsx from 'clsx'
-import { ClipboardList, PackagePlus, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { useState } from 'react'
 import { Outlet, useOutletContext } from 'react-router-dom'
 import { ItemForm } from '@/components/ItemForm'
 import { SectionTabs } from '@/components/SectionTabs'
-import { StockOperationForm } from '@/components/StockOperationForm'
 import { Button, PageHeader } from '@/components/ui'
 import { formatMoney } from '@/lib/domain'
 import { useStockSummary } from '@/lib/queries'
 import type { Item, ItemCategory } from '@/types'
 
 /**
- * The shell every inventory section sits in: headline numbers, the actions
- * that move stock, and a sub-nav.
+ * The shell every inventory section sits in: headline numbers and a sub-nav.
+ *
+ * Receiving and stocktaking used to sit here as buttons, on every section. They
+ * have screens of their own in the sidebar, and a shortcut to them above the
+ * items list only made the page ask "what am I looking at" twice.
  *
  * The sections are routes rather than tabs so the sidebar can link straight
  * into one — a manager who wants custody should not land on items first.
  */
 
 interface InventoryContext {
-    openItemForm: (item?: Item, category?: ItemCategory) => void
+    openItemForm: (item?: Item, category?: ItemCategory, groupId?: number) => void
 }
 
 /** Lets a child open the item dialog the layout owns. */
@@ -40,11 +42,12 @@ export function InventoryLayout() {
     const [itemForm, setItemForm] = useState(false)
     const [editing, setEditing] = useState<Item | undefined>()
     const [newCategory, setNewCategory] = useState<ItemCategory | undefined>()
-    const [operation, setOperation] = useState<'receive' | 'transfer' | 'adjust' | null>(null)
+    const [newGroupId, setNewGroupId] = useState<number | undefined>()
 
-    const openItemForm = (item?: Item, category?: ItemCategory) => {
+    const openItemForm = (item?: Item, category?: ItemCategory, groupId?: number) => {
         setEditing(item)
         setNewCategory(category)
+        setNewGroupId(groupId)
         setItemForm(true)
     }
 
@@ -77,42 +80,18 @@ export function InventoryLayout() {
                 </div>
             )}
 
-            <div className="mb-5 flex flex-wrap gap-2">
-                <Button
-                    variant="secondary"
-                    icon={PackagePlus}
-                    onClick={() => setOperation('receive')}
-                >
-                    تسجيل وارد
-                </Button>
-                <Button
-                    variant="secondary"
-                    icon={ClipboardList}
-                    onClick={() => setOperation('adjust')}
-                >
-                    تسوية جرد
-                </Button>
-            </div>
-
             <SectionTabs sections={SECTIONS} />
 
             <Outlet context={{ openItemForm } satisfies InventoryContext} />
 
             {itemForm && (
                 <ItemForm
-                    key={editing?.id ?? `new-${newCategory ?? 'any'}`}
+                    key={editing?.id ?? `new-${newGroupId ?? newCategory ?? 'any'}`}
                     open={itemForm}
                     onClose={() => setItemForm(false)}
                     item={editing}
                     defaultCategory={newCategory}
-                />
-            )}
-
-            {operation && (
-                <StockOperationForm
-                    open={Boolean(operation)}
-                    onClose={() => setOperation(null)}
-                    operation={operation}
+                    defaultGroupId={newGroupId}
                 />
             )}
         </>

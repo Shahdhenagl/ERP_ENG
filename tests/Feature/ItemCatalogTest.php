@@ -122,17 +122,37 @@ it('updates a UPS nameplate without touching its stock', function () {
         ->and($item->fresh()->specs['capacity'])->toBe('30 kVA');
 });
 
-it('counts items per category for the tabs', function () {
+it('counts items per group for the tabs', function () {
     Item::factory()->create(['category' => 'ups']);
     Item::factory()->count(2)->create(['category' => 'battery']);
     Item::factory()->create(['category' => 'spare_part']);
 
+    // The tabs are the editable groups now, so the counts are keyed by group id.
+    $groupId = fn (string $slug) => (string) \App\Models\ItemCategory::where('slug', $slug)->value('id');
+
     $counts = actingAs($this->manager)->getJson('/api/items')->assertOk()->json('counts');
 
     expect($counts['all'])->toBe(4)
-        ->and($counts['by_category']['ups'])->toBe(1)
-        ->and($counts['by_category']['battery'])->toBe(2)
-        ->and($counts['by_category']['spare_part'])->toBe(1);
+        ->and($counts['by_group'][$groupId('ups')])->toBe(1)
+        ->and($counts['by_group'][$groupId('battery')])->toBe(2)
+        ->and($counts['by_group'][$groupId('spare_part')])->toBe(1);
+});
+
+it('filters the list down to one group', function () {
+    Item::factory()->create(['category' => 'ups', 'name' => 'وحدة UPS']);
+    Item::factory()->create(['category' => 'battery', 'name' => 'بنك بطاريات']);
+
+    $ups = \App\Models\ItemCategory::where('slug', 'ups')->value('id');
+
+    $response = actingAs($this->manager)
+        ->getJson("/api/items?item_category_id={$ups}")
+        ->assertOk();
+
+    expect($response->json('data'))->toHaveCount(1)
+        ->and($response->json('data.0.name'))->toBe('وحدة UPS')
+        // The group's own name, not the fixed kind's label — renaming it here
+        // is the whole reason groups are editable.
+        ->and($response->json('data.0.group'))->toBe('أجهزة UPS');
 });
 
 it('filters the list down to one category', function () {

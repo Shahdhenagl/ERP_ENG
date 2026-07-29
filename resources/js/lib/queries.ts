@@ -1034,7 +1034,8 @@ export function useCollectContractPayment(contractId: number) {
 export interface ItemsResponse extends Paginated<Item> {
     counts?: {
         all: number
-        by_category: Partial<Record<Item['category'], number>>
+        /** Keyed by group id; 0 holds items filed before groups existed. */
+        by_group: Record<number, number>
     }
 }
 

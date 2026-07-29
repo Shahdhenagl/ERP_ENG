@@ -152,8 +152,13 @@ export interface Item {
     barcode: string | null
     name: string
 
+    /** The fixed kind, which decides whether a nameplate is asked for. */
     category: ItemCategory
     category_label: string
+    /** The editable group the store files it under — what the screens show. */
+    item_category_id: number | null
+    group?: string | null
+    group_chip?: string | null
     unit: string
 
     /** The nameplate — only on UPS and battery items. Free-form key/value. */

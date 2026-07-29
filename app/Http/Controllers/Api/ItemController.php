@@ -20,8 +20,8 @@ class ItemController extends Controller
 
     public function index(Request $request): AnonymousResourceCollection
     {
-        // The same filters the page is looking at, minus the category — the tabs
-        // switch category, so their counts must not move when one is picked.
+        // The same filters the page is looking at, minus the group — the tabs
+        // switch group, so their counts must not move when one is picked.
         $base = fn () => Item::query()
             ->search($request->string('search')->toString())
             ->when($request->boolean('active_only'), fn ($q) => $q->active())
@@ -29,19 +29,25 @@ class ItemController extends Controller
 
         $items = $base()
             ->when($request->string('category')->toString(), fn ($q, $c) => $q->where('category', $c))
-            ->with('levels.warehouse')
+            ->when(
+                $request->integer('item_category_id'),
+                fn ($q, $id) => $q->where('item_category_id', $id),
+            )
+            ->with(['levels.warehouse', 'group'])
             ->orderBy('name')
             ->paginate($request->integer('per_page', 30));
 
+        // Counted by group, since that is what the page's tabs now are. Items
+        // filed before groups existed have none, and are counted under 0.
         $counts = $base()
-            ->selectRaw('category, count(*) as total')
-            ->groupBy('category')
-            ->pluck('total', 'category');
+            ->selectRaw('coalesce(item_category_id, 0) as gid, count(*) as total')
+            ->groupBy('gid')
+            ->pluck('total', 'gid');
 
         return ItemResource::collection($items)->additional([
             'counts' => [
                 'all' => (int) $counts->sum(),
-                'by_category' => $counts->map(fn ($n) => (int) $n),
+                'by_group' => $counts->map(fn ($n) => (int) $n),
             ],
         ]);
     }
@@ -157,6 +163,9 @@ class ItemController extends Controller
                 Rule::unique('items')->ignore($item?->id)->whereNull('deleted_at'),
             ],
             'category' => ['required', Rule::enum(ItemCategory::class)],
+            // The editable group. The fixed category above still decides which
+            // nameplate the item carries; the form derives it from the group.
+            'item_category_id' => ['nullable', 'exists:item_categories,id'],
             'unit' => ['required', 'string', 'max:24'],
             'tracks_serials' => ['boolean'],
             'sell_price' => ['nullable', 'numeric', 'min:0', 'max:99999999'],
