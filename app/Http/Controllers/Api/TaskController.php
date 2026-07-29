@@ -43,6 +43,10 @@ class TaskController extends Controller
             ->when($request->string('scheduled_after')->toString(), fn ($q, $d) => $q->whereDate('scheduled_at', '>=', $d))
             ->when($request->string('scheduled_before')->toString(), fn ($q, $d) => $q->whereDate('scheduled_at', '<=', $d))
             ->search($request->string('search')->toString())
+            // Live work first: what a technician is on now, then what is moving
+            // toward it, then what has not started. Finished and called-off jobs
+            // sit at the bottom — they are a record, not a queue.
+            ->orderByRaw("FIELD(status, 'in_progress','on_the_way','accepted','pending','completed','cancelled')")
             ->orderByRaw("FIELD(priority, 'urgent','high','normal','low')")
             ->orderByRaw('scheduled_at IS NULL, scheduled_at ASC')
             ->orderByDesc('id')

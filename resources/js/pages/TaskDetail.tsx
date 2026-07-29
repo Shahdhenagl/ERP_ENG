@@ -43,7 +43,9 @@ import {
     warrantyChip,
 } from '@/lib/domain'
 import { formatBytes, formatDateTime, formatSmart, telLink } from '@/lib/format'
+import { ExpenseBar, FlowRail, FlowStepCard, SiteCard } from '@/components/TaskFlow'
 import { useArea } from '@/lib/nav'
+import { useIsPhone } from '@/lib/viewport'
 import {
     useAssignTask,
     useChangeStatus,
@@ -75,6 +77,12 @@ export function TaskDetail() {
     const [cancelReason, setCancelReason] = useState('')
     const [assignOpen, setAssignOpen] = useState(false)
     const [deleteOpen, setDeleteOpen] = useState(false)
+    const [expenseOpen, setExpenseOpen] = useState(false)
+    const [routeOpen, setRouteOpen] = useState(false)
+
+    // A technician on a phone is doing one thing; a dispatcher at a desk is
+    // looking at everything. Same job, two shapes.
+    const phone = useIsPhone()
 
     if (isLoading) return <PageLoader />
     if (isError || !task) {
@@ -140,6 +148,116 @@ export function TaskDetail() {
         } catch (caught) {
             toast.error(errorMessage(caught, 'تعذّر إلغاء المهمة.'))
         }
+    }
+
+    const stepAction = (() => {
+        const next = driveable.find((option) => option.value !== 'cancelled')
+
+        if (!next) return null
+
+        const blocked = needsReportBeforeCompleting(next.value)
+
+        return (
+            <Button
+                className="w-full"
+                loading={changeStatus.isPending}
+                onClick={() => void handleStatus(next.value)}
+            >
+                {blocked ? 'املأ تقرير الإنهاء' : next.label}
+            </Button>
+        )
+    })()
+
+    if (phone && canDrive && task.status !== 'cancelled') {
+        return (
+            <>
+                <button onClick={() => navigate(-1)} className="btn-ghost -mr-2 mb-2 text-sm">
+                    <ArrowRight className="size-4" />
+                    رجوع
+                </button>
+
+                <div className="mb-3">
+                    <p className="tabular text-[11px] font-bold text-brand-600">{task.code}</p>
+                    <h1 className="text-lg font-extrabold text-navy-900">{task.title}</h1>
+                </div>
+
+                <FlowRail status={task.status} />
+
+                <FlowStepCard task={task} action={stepAction}>
+                    <SiteCard task={task} />
+
+                    {task.description && (
+                        <p className="rounded-xl bg-navy-50 p-3 text-xs leading-relaxed text-navy-600">
+                            {task.description}
+                        </p>
+                    )}
+
+                    {/* From arrival onwards the field record is the work: photos
+                        of what was found, then the report that closes the job. */}
+                    {['on_the_way', 'in_progress', 'completed'].includes(task.status) && (
+                        <div className="flex flex-wrap gap-2">
+                            <Button
+                                variant="secondary"
+                                icon={FileText}
+                                className="flex-1 text-xs"
+                                onClick={() => setReportForm('diagnosis')}
+                            >
+                                تقرير المعاينة
+                            </Button>
+                            <Button
+                                variant="secondary"
+                                icon={ClipboardCheck}
+                                className="flex-1 text-xs"
+                                onClick={() => setReportForm('completion')}
+                            >
+                                تقرير الإنهاء
+                            </Button>
+                        </div>
+                    )}
+                </FlowStepCard>
+
+                {['on_the_way', 'in_progress', 'completed'].includes(task.status) && (
+                    <div className="mt-4">
+                        <AttachmentsSection task={task} canEdit />
+                    </div>
+                )}
+
+                <ExpenseBar
+                    task={task}
+                    onAdd={() => setExpenseOpen(true)}
+                    onRoute={() => setRouteOpen(true)}
+                />
+
+                {/* The same two blocks the desk screen carries, opened as
+                    sheets so a step keeps its single question. */}
+                {expenseOpen && (
+                    <Modal open onClose={() => setExpenseOpen(false)} title="مصروفات المهمة" size="sm">
+                        <TaskExpenses task={task} canAdd />
+                    </Modal>
+                )}
+
+                {routeOpen && task.branch && (
+                    <Modal open onClose={() => setRouteOpen(false)} title="خط السير" size="sm">
+                        <RouteBlock
+                            branch={task.branch}
+                            taskId={task.id}
+                            taskCode={task.code}
+                            canRecord={canDrive}
+                        />
+                    </Modal>
+                )}
+
+                {reportForm && (
+                    <ReportForm
+                        open
+                        onClose={() => setReportForm(null)}
+                        task={task}
+                        type={reportForm}
+                        existing={reportForm === 'completion' ? completionReport : diagnosisReport}
+                    />
+                )}
+            </>
+        )
     }
 
     return (

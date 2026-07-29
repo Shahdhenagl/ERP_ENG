@@ -19,6 +19,7 @@ import { downloadCsv } from '@/lib/csv'
 import { PRIORITY, STATUS, STATUS_FLOW, TASK_TYPE } from '@/lib/domain'
 import { formatDateTime } from '@/lib/format'
 import { useArea } from '@/lib/nav'
+import { useIsPhone } from '@/lib/viewport'
 import { useCustomers, useTasks, useTechnicians } from '@/lib/queries'
 import type { Task, TaskStatus } from '@/types'
 
@@ -75,6 +76,12 @@ export function TaskList() {
     const { data: customerPage } = useCustomers({ active_only: 1, per_page: 200 })
 
     const [view, setViewMode] = useViewMode('tasks')
+
+    // A phone gets cards and is not asked. An eight-column table is not a
+    // narrow table on a small screen, it is the wrong control — and printing
+    // or exporting is not something anyone does from one.
+    const phone = useIsPhone()
+    const effectiveView = phone ? 'cards' : view
 
     // Export what the filters describe, not the page being looked at — a
     // spreadsheet of thirty rows out of four hundred is a trap.
@@ -167,22 +174,26 @@ export function TaskList() {
                 subtitle={data ? `${data.meta.total} مهمة` : undefined}
                 actions={
                     <div className="flex flex-wrap gap-2">
-                        <Button
-                            variant="secondary"
-                            icon={FileSpreadsheet}
-                            loading={exporting}
-                            onClick={() => void exportRows()}
-                        >
-                            تصدير Excel
-                        </Button>
-                        <Link
-                            to={`${path('/print/tasks')}?${searchParams.toString()}`}
-                            target="_blank"
-                            className="btn-secondary"
-                        >
-                            <Printer className="size-4" />
-                            طباعة
-                        </Link>
+                        {!phone && (
+                            <>
+                                <Button
+                                    variant="secondary"
+                                    icon={FileSpreadsheet}
+                                    loading={exporting}
+                                    onClick={() => void exportRows()}
+                                >
+                                    تصدير Excel
+                                </Button>
+                                <Link
+                                    to={`${path('/print/tasks')}?${searchParams.toString()}`}
+                                    target="_blank"
+                                    className="btn-secondary"
+                                >
+                                    <Printer className="size-4" />
+                                    طباعة
+                                </Link>
+                            </>
+                        )}
                         {canDispatch && (
                             <Link to={path('/tasks/new')} className="btn-primary">
                                 <Plus className="size-4" />
@@ -200,7 +211,7 @@ export function TaskList() {
                     <Input
                         defaultValue={searchParams.get('search') ?? ''}
                         onChange={(event) => debouncedSearch(event.target.value)}
-                        placeholder="ابحث برقم المهمة أو العنوان أو السيريال أو اسم العميل…"
+                        placeholder={phone ? 'ابحث…' : 'ابحث برقم المهمة أو العنوان أو السيريال أو اسم العميل…'}
                         className="pr-10"
                     />
                 </div>
@@ -220,12 +231,14 @@ export function TaskList() {
             </div>
 
             {/* Table to scan many at once, cards for the detail on each. */}
-            <div className="mb-3 flex justify-end">
-                <ViewToggle view={view} onChange={setViewMode} />
-            </div>
+            {!phone && (
+                <div className="mb-3 flex justify-end">
+                    <ViewToggle view={view} onChange={setViewMode} />
+                </div>
+            )}
 
             {/* ── Quick status chips ─────────────────────────── */}
-            <div className="no-scrollbar -mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+            <div className="no-scrollbar -mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:rounded-2xl sm:bg-navy-50/60 sm:px-2 sm:py-1.5">
                 {QUICK_FILTERS.map((filter) => (
                     <button
                         key={filter.key}
@@ -244,7 +257,7 @@ export function TaskList() {
 
             {/* ── Advanced filters ───────────────────────────── */}
             {showFilters && (
-                <div className="card animate-in mb-4 grid gap-3 p-4 sm:grid-cols-3">
+                <div className="card animate-in mb-4 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
                     <Select
                         value={searchParams.get('type') ?? ''}
                         onChange={(event) => setParam('type', event.target.value)}
@@ -371,7 +384,7 @@ export function TaskList() {
             ) : (
                 <>
                     <div className={clsx('transition-opacity', isFetching && 'opacity-60')}>
-                        {view === 'table' ? (
+                        {effectiveView === 'table' ? (
                             <TaskTable tasks={data.data} href={(id) => path(`/tasks/${id}`)} />
                         ) : (
                             <div className="space-y-3">
