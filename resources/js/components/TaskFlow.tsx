@@ -327,13 +327,19 @@ export function ExpenseBar({
 export function CompletedSummary({
     task,
     onOpenReport,
+    onOpenPhotos,
 }: {
     task: Task
     /** Opens a filed report to be read back. */
     onOpenReport: (type: 'diagnosis' | 'completion') => void
+    /** Opens the photo wall for the job. */
+    onOpenPhotos: () => void
 }) {
     const spent = task.expenses_total ?? 0
-    const photos = (task.attachments ?? []).length
+    const attachments = task.attachments ?? []
+    const photos = attachments.length
+    const before = attachments.filter((file) => file.kind === 'before').length
+    const after = attachments.filter((file) => file.kind === 'after').length
     const reports = task.reports ?? []
 
     const minutes =
@@ -375,6 +381,27 @@ export function CompletedSummary({
             </div>
 
             <SiteCard task={task} />
+
+            {/* Before and after, side by side — the pair is the evidence, and
+                either one alone says much less than both. */}
+            {photos > 0 && (
+                <button
+                    type="button"
+                    onClick={onOpenPhotos}
+                    className="card tap flex w-full items-center gap-3 p-3 text-right transition hover:bg-navy-50"
+                >
+                    <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-navy-100 text-navy-500">
+                        <Camera className="size-4.5" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-bold text-navy-900">صور قبل وبعد</span>
+                        <span className="block text-[11px] text-navy-400">
+                            {before} قبل · {after} بعد
+                        </span>
+                    </span>
+                    <Eye className="size-4 shrink-0 text-navy-400" />
+                </button>
+            )}
 
             {reports.length > 0 && (
                 <div className="card p-4">

@@ -3,6 +3,7 @@ import {
     ArrowRight,
     Battery,
     Camera,
+    Check,
     ClipboardCheck,
     Cpu,
     FileText,
@@ -214,7 +215,11 @@ export function TaskDetail() {
                 </div>
 
                 {task.status === 'completed' ? (
-                    <CompletedSummary task={task} onOpenReport={setViewingReport} />
+                    <CompletedSummary
+                        task={task}
+                        onOpenReport={setViewingReport}
+                        onOpenPhotos={() => setAttachmentsOpen(true)}
+                    />
                 ) : (
                     <>
                         <FlowRail status={task.status} />
@@ -342,6 +347,7 @@ export function TaskDetail() {
                             taskId={task.id}
                             taskCode={task.code}
                             canRecord={canDrive}
+                            expenses={task.expenses}
                         />
                     </Modal>
                 )}
@@ -536,6 +542,7 @@ export function TaskDetail() {
                                         taskId={task.id}
                                         taskCode={task.code}
                                         canRecord={canDrive}
+                                        expenses={task.expenses}
                                     />
                                 )}
 
@@ -1180,17 +1187,34 @@ function RouteBlock({
     taskId,
     taskCode,
     canRecord,
+    expenses = [],
 }: {
     branch: NonNullable<Task['branch']>
     taskId: number
     taskCode: string
     canRecord: boolean
+    /** The job's expenses, to see whether the route has already been booked. */
+    expenses?: Task['expenses']
 }) {
     const [confirming, setConfirming] = useState(false)
     const route = branch.route
     if (!route) return null
 
     const legs = route.legs ?? []
+
+    /**
+     * A route is confirmed once, not once per visit to this screen.
+     *
+     * It was bookable again and again — three presses put the same fare on the
+     * job three times, and nothing on screen said it had already been taken.
+     * So: recorded and fully priced closes it. Recorded with a leg still blank
+     * leaves it open, because that leg is money the technician has not been
+     * given a way to claim yet.
+     */
+    const recorded = (expenses ?? []).filter((expense) => expense.category === 'خط السير')
+    const recordedTotal = recorded.reduce((sum, expense) => sum + expense.amount, 0)
+    const everyLegPriced = legs.length > 0 && legs.every((leg) => leg.cost != null)
+    const closed = recorded.length > 0 && everyLegPriced
 
     return (
         <div className="rounded-xl border border-brand-100 bg-brand-50/40 p-3">
@@ -1236,16 +1260,23 @@ function RouteBlock({
                 </span>
             </div>
 
+            {recorded.length > 0 && (
+                <p className="mt-2 flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-2 text-[11px] font-bold text-emerald-800">
+                    <Check className="size-3.5 shrink-0" />
+                    سُجِّل خط السير — {formatMoney(recordedTotal)}
+                </p>
+            )}
+
             {/* The technician confirms the actual fares — same as planned, or
                 edited on the road — and it books as a خط السير expense. */}
-            {canRecord && (
+            {canRecord && !closed && (
                 <Button
                     variant="secondary"
                     icon={Route}
                     className="mt-2 w-full text-xs"
                     onClick={() => setConfirming(true)}
                 >
-                    تأكيد خط السير وتسجيله
+                    {recorded.length > 0 ? 'استكمال المحطات غير المسعّرة' : 'تأكيد خط السير وتسجيله'}
                 </Button>
             )}
 
