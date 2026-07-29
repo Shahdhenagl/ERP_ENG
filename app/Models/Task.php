@@ -163,6 +163,12 @@ class Task extends Model
         return $this->hasOne(SatisfactionSurvey::class);
     }
 
+    /** Set when the job was raised against a warranty rather than billed. */
+    public function warrantyClaim(): HasOne
+    {
+        return $this->hasOne(WarrantyClaim::class);
+    }
+
     /** The maintenance round this job belongs to, when it came from a contract. */
     public function contractVisit(): BelongsTo
     {

@@ -12,10 +12,20 @@ const MONTHS = [
     'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
 ]
 
+const SOURCE_LABELS: Record<string, string> = {
+    sales: 'مبيعات',
+    contract: 'عقود صيانة',
+    warranty: 'ضمان',
+    service: 'أوامر شغل',
+    manual: 'يدوية',
+}
+
 function filterSummary(params: URLSearchParams): string {
     const parts: string[] = []
     if (params.get('outstanding')) parts.push('غير محصّلة')
     if (params.get('overdue')) parts.push('متأخرة')
+    const source = params.get('source')
+    if (source && SOURCE_LABELS[source]) parts.push(SOURCE_LABELS[source])
     const month = params.get('month')
     const day = params.get('day')
     if (day) parts.push(formatDate(day))

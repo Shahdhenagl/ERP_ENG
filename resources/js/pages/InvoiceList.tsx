@@ -13,18 +13,30 @@ import { useInvoices, useTreasurySummary } from '@/lib/queries'
 
 type Filter = 'all' | 'outstanding' | 'overdue'
 
+/** The buckets Invoice::ofSource() partitions the table into. */
+const SOURCES: Array<[string, string]> = [
+    ['', 'كل الأنواع'],
+    ['sales', 'مبيعات'],
+    ['contract', 'عقود صيانة'],
+    ['warranty', 'ضمان'],
+    ['service', 'أوامر شغل'],
+    ['manual', 'يدوية'],
+]
+
 export function InvoiceList() {
     const { path } = useArea()
     const [search, setSearch] = useState('')
     const [filter, setFilter] = useState<Filter>('all')
     const [month, setMonth] = useState('')
     const [day, setDay] = useState('')
+    const [source, setSource] = useState('')
 
     const { data: summary } = useTreasurySummary()
     const { data, isLoading, isError, refetch } = useInvoices({
         search,
         outstanding: filter === 'outstanding' ? 1 : undefined,
         overdue: filter === 'overdue' ? 1 : undefined,
+        source: source || undefined,
         ...monthDayRange(month, day),
         per_page: 40,
     })
@@ -47,6 +59,7 @@ export function InvoiceList() {
                         to={`${path('/print/invoices-list')}?${new URLSearchParams({
                             ...(search ? { search } : {}),
                             ...(filter !== 'all' ? { [filter]: '1' } : {}),
+                            ...(source ? { source } : {}),
                             ...(month ? { month } : {}),
                             ...(day ? { day } : {}),
                         }).toString()}`}
@@ -106,6 +119,26 @@ export function InvoiceList() {
                     ))}
                 </div>
 
+                {/* What the invoice is for, beside when it was issued —
+                    "how much did contracts bill in March" is one question, not
+                    two screens. */}
+                <div className="flex flex-wrap gap-1.5">
+                    {SOURCES.map(([value, label]) => (
+                        <button
+                            key={value || 'all'}
+                            onClick={() => setSource(value)}
+                            className={clsx(
+                                'tap rounded-xl px-3 py-1.5 text-xs font-bold ring-1 transition',
+                                source === value
+                                    ? 'bg-brand-50 text-brand-700 ring-brand-200'
+                                    : 'bg-white text-navy-500 ring-navy-200 hover:bg-navy-50',
+                            )}
+                        >
+                            {label}
+                        </button>
+                    ))}
+                </div>
+
                 <MonthDayFilter month={month} day={day} onMonth={setMonth} onDay={setDay} />
             </div>
 
@@ -141,6 +174,11 @@ export function InvoiceList() {
                                                 {invoice.code}
                                             </span>
                                             <span className={clsx('badge', state.chip)}>{state.label}</span>
+                                            {/* Say what it is for, so a filtered
+                                                list is readable without it. */}
+                                            <span className="badge bg-navy-100 text-navy-600">
+                                                {invoice.source_label}
+                                            </span>
                                             {invoice.is_overdue && (
                                                 <AlertTriangle className="size-3.5 text-red-500" />
                                             )}

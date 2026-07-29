@@ -210,7 +210,70 @@ class Invoice extends Model
             && $this->balance() > 0.005;
     }
 
+    // ── Where the money came from ────────────────────────────
+
+    /**
+     * What this invoice is for, derived from what it hangs off rather than a
+     * column anyone has to remember to set. Order is deliberate: an order is a
+     * sale whatever else is attached, and warranty work is warranty work even
+     * though it reaches here as a job.
+     */
+    public function source(): string
+    {
+        if ($this->sales_order_id) {
+            return 'sales';
+        }
+
+        if ($this->task_id && $this->task?->warrantyClaim) {
+            return 'warranty';
+        }
+
+        if ($this->contract_id) {
+            return 'contract';
+        }
+
+        return $this->task_id ? 'service' : 'manual';
+    }
+
+    public function sourceLabel(): string
+    {
+        return static::SOURCES[$this->source()];
+    }
+
+    public const SOURCES = [
+        'sales' => 'مبيعات',
+        'contract' => 'عقود صيانة',
+        'warranty' => 'ضمان',
+        'service' => 'أوامر شغل',
+        'manual' => 'يدوية',
+    ];
+
     // ── Scopes ───────────────────────────────────────────────
+
+    /**
+     * The same buckets as source(), expressed in SQL so the list paginates.
+     * Each arm restates the ones above it as exclusions — the buckets have to
+     * partition the table, or a filtered total would not add up to the whole.
+     */
+    public function scopeOfSource(Builder $query, ?string $source): Builder
+    {
+        return match ($source) {
+            'sales' => $query->whereNotNull('sales_order_id'),
+            'warranty' => $query->whereNull('sales_order_id')
+                ->whereHas('task.warrantyClaim'),
+            'contract' => $query->whereNull('sales_order_id')
+                ->whereNotNull('contract_id')
+                ->whereDoesntHave('task.warrantyClaim'),
+            'service' => $query->whereNull('sales_order_id')
+                ->whereNull('contract_id')
+                ->whereNotNull('task_id')
+                ->whereDoesntHave('task.warrantyClaim'),
+            'manual' => $query->whereNull('sales_order_id')
+                ->whereNull('contract_id')
+                ->whereNull('task_id'),
+            default => $query,
+        };
+    }
 
     public function scopeReceivable(Builder $query): Builder
     {

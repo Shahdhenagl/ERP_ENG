@@ -830,6 +830,8 @@ export interface InvoiceLine {
     line_total: number
 }
 
+export type InvoiceSource = 'sales' | 'contract' | 'warranty' | 'service' | 'manual'
+
 export interface Invoice {
     /** The store the goods leave from when it is issued. Null = default store. */
     warehouse_id?: number | null
@@ -840,6 +842,10 @@ export interface Invoice {
     customer?: Customer
     task_id: number | null
     task_code?: string | null
+
+    /** What the invoice is for — derived from what it hangs off. */
+    source: InvoiceSource
+    source_label: string
 
     issue_date: string | null
     due_date: string | null

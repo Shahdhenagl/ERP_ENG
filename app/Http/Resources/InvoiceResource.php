@@ -19,6 +19,9 @@ class InvoiceResource extends JsonResource
             'customer' => new CustomerResource($this->whenLoaded('customer')),
             'warehouse_id' => $this->warehouse_id,
             'task_id' => $this->task_id,
+            // Derived from what the invoice hangs off — see Invoice::source().
+            'source' => $this->source(),
+            'source_label' => $this->sourceLabel(),
             'task_code' => $this->whenLoaded('task', fn () => $this->task?->code),
 
             'issue_date' => $this->issue_date?->toDateString(),

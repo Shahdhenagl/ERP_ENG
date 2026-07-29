@@ -24,11 +24,14 @@ class InvoiceController extends Controller
             ->when($request->integer('customer_id'), fn ($q, $id) => $q->where('customer_id', $id))
             ->when($request->string('status')->toString(), fn ($q, $s) => $q->where('status', $s))
             ->when($request->boolean('outstanding'), fn ($q) => $q->outstanding())
+            // What the invoice is for: a sale, a contract instalment, warranty
+            // work, a job, or raised by hand.
+            ->when($request->string('source')->toString(), fn ($q, $source) => $q->ofSource($source))
             ->when($request->boolean('overdue'), fn ($q) => $q->overdue())
             // A month or a single day, by the invoice's own date.
             ->when($request->date('from'), fn ($q, $from) => $q->whereDate('issue_date', '>=', $from))
             ->when($request->date('to'), fn ($q, $to) => $q->whereDate('issue_date', '<=', $to))
-            ->with(['customer', 'payments'])
+            ->with(['customer', 'payments', 'task.warrantyClaim'])
             ->orderByDesc('id')
             ->paginate($request->integer('per_page', 25));
 
