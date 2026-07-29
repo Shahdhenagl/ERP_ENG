@@ -1,15 +1,16 @@
+import clsx from 'clsx'
 import { Plus, Save, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
-import { Button, Field, Input } from '@/components/ui'
+import { Button, Field, Input, Select } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
-import { formatMoney } from '@/lib/domain'
-import { useSaveInvoice } from '@/lib/queries'
+import { formatMoney, formatQty, ITEM_CATEGORY, itemSpecSummary } from '@/lib/domain'
+import { useItems, useSaveInvoice } from '@/lib/queries'
 import type { Invoice } from '@/types'
 
 interface Row {
-    item_id: number | null
+    item_id: string
     description: string
     qty: string
     unit_price: string
@@ -33,9 +34,14 @@ export function InvoiceForm({
     const save = useSaveInvoice(invoice.id)
     const [errors, setErrors] = useState<Record<string, string>>({})
 
+    // The catalogue, so a line can name a real product rather than a sentence —
+    // and so the person billing sees the nameplate they are charging for.
+    const { data: itemPage } = useItems({ active_only: 1, per_page: 200 })
+    const items = itemPage?.data ?? []
+
     const [rows, setRows] = useState<Row[]>(
         (invoice.lines ?? []).map((line) => ({
-            item_id: line.item_id,
+            item_id: line.item_id ? String(line.item_id) : '',
             description: line.description,
             qty: String(line.qty),
             unit_price: String(line.unit_price),
@@ -64,7 +70,7 @@ export function InvoiceForm({
                 lines: rows
                     .filter((row) => row.description.trim())
                     .map((row) => ({
-                        item_id: row.item_id,
+                        item_id: row.item_id ? Number(row.item_id) : null,
                         description: row.description.trim(),
                         qty: Number(row.qty) || 1,
                         unit_price: Number(row.unit_price) || 0,
@@ -99,41 +105,120 @@ export function InvoiceForm({
             <div className="space-y-4">
                 <div className="space-y-2">
                     {rows.map((row, index) => (
-                        <div key={index} className="flex flex-wrap gap-2 sm:flex-nowrap">
-                            <Input
-                                value={row.description}
-                                onChange={(event) => patch(index, 'description', event.target.value)}
-                                placeholder="وصف البند"
-                                className="min-w-0 flex-1"
-                            />
-                            <Input
-                                type="number"
-                                min={0}
-                                step="0.001"
-                                value={row.qty}
-                                onChange={(event) => patch(index, 'qty', event.target.value)}
-                                className="w-20 text-center"
-                                dir="ltr"
-                                aria-label="الكمية"
-                            />
-                            <Input
-                                type="number"
-                                min={0}
-                                step="0.01"
-                                value={row.unit_price}
-                                onChange={(event) => patch(index, 'unit_price', event.target.value)}
-                                className="w-28 text-center"
-                                dir="ltr"
-                                aria-label="سعر الوحدة"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setRows((current) => current.filter((_, i) => i !== index))}
-                                className="tap grid shrink-0 place-items-center rounded-xl px-3 text-red-500 transition hover:bg-red-50"
-                                aria-label="حذف البند"
-                            >
-                                <Trash2 className="size-4" />
-                            </button>
+                        <div key={index} className="space-y-2 rounded-2xl border border-navy-100 p-3">
+                            <div className="flex flex-wrap gap-2 sm:flex-nowrap">
+                                {/* Picking a catalogue item names the product and
+                                    opens at its selling price — the same choice the
+                                    quote offers, so a bill raised by hand carries the
+                                    device rather than a free-text line. */}
+                                <Select
+                                    value={row.item_id}
+                                    onChange={(event) => {
+                                        const item = items.find(
+                                            (candidate) => String(candidate.id) === event.target.value,
+                                        )
+
+                                        setRows((current) =>
+                                            current.map((existing, i) =>
+                                                i === index
+                                                    ? {
+                                                          ...existing,
+                                                          item_id: event.target.value,
+                                                          description: item?.name ?? existing.description,
+                                                          unit_price:
+                                                              item && !Number(existing.unit_price)
+                                                                  ? String(item.sell_price ?? item.avg_cost)
+                                                                  : existing.unit_price,
+                                                      }
+                                                    : existing,
+                                            ),
+                                        )
+                                    }}
+                                    className="w-44 shrink-0"
+                                >
+                                    <option value="">بند حر</option>
+                                    {items.map((item) => (
+                                        <option key={item.id} value={item.id}>
+                                            {item.name}
+                                        </option>
+                                    ))}
+                                </Select>
+
+                                <Input
+                                    value={row.description}
+                                    onChange={(event) => patch(index, 'description', event.target.value)}
+                                    placeholder="وصف البند"
+                                    className="min-w-0 flex-1"
+                                />
+                                <Input
+                                    type="number"
+                                    min={0}
+                                    step="0.001"
+                                    value={row.qty}
+                                    onChange={(event) => patch(index, 'qty', event.target.value)}
+                                    className="w-20 text-center"
+                                    dir="ltr"
+                                    aria-label="الكمية"
+                                />
+                                <Input
+                                    type="number"
+                                    min={0}
+                                    step="0.01"
+                                    value={row.unit_price}
+                                    onChange={(event) => patch(index, 'unit_price', event.target.value)}
+                                    className="w-28 text-center"
+                                    dir="ltr"
+                                    aria-label="سعر الوحدة"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setRows((current) => current.filter((_, i) => i !== index))
+                                    }
+                                    className="tap grid shrink-0 place-items-center rounded-xl px-3 text-red-500 transition hover:bg-red-50"
+                                    aria-label="حذف البند"
+                                >
+                                    <Trash2 className="size-4" />
+                                </button>
+                            </div>
+
+                            {/* The kind, the nameplate and what is on the shelf —
+                                issuing the invoice is what draws the stock down. */}
+                            {(() => {
+                                const item = items.find(
+                                    (candidate) => String(candidate.id) === row.item_id,
+                                )
+
+                                if (!item) return null
+
+                                const short = (Number(row.qty) || 0) > item.total_qty
+                                const specs = itemSpecSummary(item.category, item.specs)
+
+                                return (
+                                    <>
+                                        <p className="flex flex-wrap items-center gap-1.5 text-[11px] text-navy-500">
+                                            <span
+                                                className={clsx(
+                                                    'badge',
+                                                    ITEM_CATEGORY[item.category].chip,
+                                                )}
+                                            >
+                                                {ITEM_CATEGORY[item.category].label}
+                                            </span>
+                                            {specs && <span className="tabular">{specs}</span>}
+                                        </p>
+                                        <p
+                                            className={clsx(
+                                                'tabular text-[11px] font-bold',
+                                                short ? 'text-red-600' : 'text-navy-400',
+                                            )}
+                                        >
+                                            المتاح بالمخزن: {formatQty(item.total_qty)} {item.unit}
+                                            {short && ' — أقل من الكمية المطلوبة'}
+                                        </p>
+                                    </>
+                                )
+                            })()}
                         </div>
                     ))}
 
@@ -144,7 +229,7 @@ export function InvoiceForm({
                         onClick={() =>
                             setRows((current) => [
                                 ...current,
-                                { item_id: null, description: '', qty: '1', unit_price: '0' },
+                                { item_id: '', description: '', qty: '1', unit_price: '0' },
                             ])
                         }
                     >
