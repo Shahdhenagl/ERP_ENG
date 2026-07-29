@@ -66,8 +66,12 @@ export function CustomerProfile() {
             {/* ── Identity ───────────────────────────────── */}
             <div className="card p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
+                    {/* The name first, then what identifies it: the code, then the
+                        kind of organisation. Reading the card should answer "who
+                        is this" before "what is it filed as". */}
                     <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
+                        <h1 className="text-xl font-extrabold text-navy-900">{c.name}</h1>
+                        <div className="mt-1.5 flex flex-wrap items-center gap-2">
                             <span className="tabular text-[11px] font-bold text-brand-600">{c.code}</span>
                             {c.type_label && (
                                 <span className="badge bg-brand-50 text-brand-700">{c.type_label}</span>
@@ -76,8 +80,7 @@ export function CustomerProfile() {
                                 <span className="badge bg-navy-100 text-navy-500">غير نشط</span>
                             )}
                         </div>
-                        <h1 className="mt-1 text-xl font-extrabold text-navy-900">{c.name}</h1>
-                        {c.company && <p className="text-sm text-navy-400">{c.company}</p>}
+                        {c.company && <p className="mt-1 text-sm text-navy-400">{c.company}</p>}
                     </div>
 
                     <div className="flex gap-2">

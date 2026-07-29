@@ -2,7 +2,8 @@ import clsx from 'clsx'
 import { ClipboardList, Printer } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { MonthDayFilter, monthDayRange } from '@/components/MonthDayFilter'
+import { EMPTY_RANGE, MonthDayFilter, monthDayRange } from '@/components/MonthDayFilter'
+import type { DateRange } from '@/components/MonthDayFilter'
 import { EmptyState, SkeletonCard } from '@/components/ui'
 import { formatMoney, formatQty, MOVEMENT_TYPE, MOVEMENT_TYPE_FALLBACK } from '@/lib/domain'
 import { formatSmart } from '@/lib/format'
@@ -14,13 +15,21 @@ export function MovementsPage() {
     const { path } = useArea()
     const [month, setMonth] = useState('')
     const [day, setDay] = useState('')
+    const [range, setRange] = useState<DateRange>(EMPTY_RANGE)
 
-    const { data, isLoading } = useMovements({ per_page: 50, ...monthDayRange(month, day) })
+    const { data, isLoading } = useMovements({ per_page: 50, ...monthDayRange(month, day, range) })
 
     return (
         <>
             <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
-                <MonthDayFilter month={month} day={day} onMonth={setMonth} onDay={setDay} />
+                <MonthDayFilter
+                    month={month}
+                    day={day}
+                    range={range}
+                    onMonth={setMonth}
+                    onDay={setDay}
+                    onRange={setRange}
+                />
                 <Link
                     to={`${path('/print/movements')}?${new URLSearchParams({
                         ...(month ? { month } : {}),

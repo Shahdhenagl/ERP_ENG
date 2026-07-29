@@ -2,7 +2,8 @@ import clsx from 'clsx'
 import { AlertTriangle, FileText, Printer, Search, Wallet } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { MonthDayFilter, monthDayRange } from '@/components/MonthDayFilter'
+import { EMPTY_RANGE, MonthDayFilter, monthDayRange } from '@/components/MonthDayFilter'
+import type { DateRange } from '@/components/MonthDayFilter'
 import { SectionTabs } from '@/components/SectionTabs'
 import { MONEY_SECTIONS } from '@/lib/sections'
 import { EmptyState, ErrorState, Input, PageHeader, SkeletonCard } from '@/components/ui'
@@ -29,6 +30,7 @@ export function InvoiceList() {
     const [filter, setFilter] = useState<Filter>('all')
     const [month, setMonth] = useState('')
     const [day, setDay] = useState('')
+    const [range, setRange] = useState<DateRange>(EMPTY_RANGE)
     const [source, setSource] = useState('')
 
     const { data: summary } = useTreasurySummary()
@@ -37,7 +39,7 @@ export function InvoiceList() {
         outstanding: filter === 'outstanding' ? 1 : undefined,
         overdue: filter === 'overdue' ? 1 : undefined,
         source: source || undefined,
-        ...monthDayRange(month, day),
+        ...monthDayRange(month, day, range),
         per_page: 40,
     })
 
@@ -62,6 +64,8 @@ export function InvoiceList() {
                             ...(source ? { source } : {}),
                             ...(month ? { month } : {}),
                             ...(day ? { day } : {}),
+                            ...(range.from ? { from: range.from } : {}),
+                            ...(range.to ? { to: range.to } : {}),
                         }).toString()}`}
                         target="_blank"
                         className="btn-secondary"
@@ -139,7 +143,14 @@ export function InvoiceList() {
                     ))}
                 </div>
 
-                <MonthDayFilter month={month} day={day} onMonth={setMonth} onDay={setDay} />
+                <MonthDayFilter
+                    month={month}
+                    day={day}
+                    range={range}
+                    onMonth={setMonth}
+                    onDay={setDay}
+                    onRange={setRange}
+                />
             </div>
 
             {isError ? (

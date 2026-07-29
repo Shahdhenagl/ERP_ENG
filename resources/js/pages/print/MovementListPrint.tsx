@@ -30,8 +30,9 @@ export function MovementListPrint() {
     const filters = useMemo(() => {
         const month = params.get('month') ?? ''
         const day = params.get('day') ?? ''
+        const range = { from: params.get('from') ?? '', to: params.get('to') ?? '' }
 
-        return { ...monthDayRange(month, day), per_page: '1000' }
+        return { ...monthDayRange(month, day, range), per_page: '1000' }
     }, [params])
 
     const { data, isLoading } = useMovements(filters)

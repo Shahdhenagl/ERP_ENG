@@ -1,13 +1,21 @@
-import { useId } from 'react'
+import { useState } from 'react'
 import { Field, Input, Select } from '@/components/ui'
 import { EGYPT_GOVERNORATES, GOVERNORATE_NAMES } from '@/lib/egypt'
 
+/** The district select's escape hatch, for an address the library lacks. */
+const OTHER = '__other'
+
 /**
- * The cascading address picker: a governorate, then its district. The district
- * is a datalist-backed input rather than a hard select, so the markaz/qism list
- * suggests without trapping — an address the library does not carry can still
- * be typed. Choosing a governorate does not wipe a district already entered,
- * which matters when editing an existing record.
+ * The cascading address picker: a governorate, then its district.
+ *
+ * Both are real selects. The district was a datalist-backed input, which left
+ * the browser drawing its own unstyled popup beside the app's own controls, and
+ * a district from the previous governorate stayed in the box after switching —
+ * so the field read as belonging to a governorate that no longer had it.
+ *
+ * Switching governorate now clears a district that does not belong to the new
+ * one, and keeps it when it does. An address the library does not carry is
+ * still typeable through "أخرى".
  */
 export function LocationSelect({
     governorate,
@@ -22,13 +30,33 @@ export function LocationSelect({
     onDistrict: (value: string) => void
     errors?: { governorate?: string; city?: string }
 }) {
-    const listId = useId()
     const districts = EGYPT_GOVERNORATES[governorate] ?? []
+
+    // A value entered before the library existed, or one it does not carry.
+    const isOffList = Boolean(district) && !districts.includes(district)
+    const [typing, setTyping] = useState(isOffList)
+
+    const showFreeText = typing || isOffList || districts.length === 0
 
     return (
         <>
             <Field label="المحافظة" error={errors?.governorate}>
-                <Select value={governorate} onChange={(e) => onGovernorate(e.target.value)}>
+                <Select
+                    value={governorate}
+                    onChange={(event) => {
+                        const next = event.target.value
+                        const nextDistricts = EGYPT_GOVERNORATES[next] ?? []
+
+                        onGovernorate(next)
+
+                        // A markaz does not follow its governorate to another
+                        // one: keep it only where it still exists.
+                        if (district && !nextDistricts.includes(district)) {
+                            onDistrict('')
+                            setTyping(false)
+                        }
+                    }}
+                >
                     <option value="">— اختر المحافظة —</option>
                     {GOVERNORATE_NAMES.map((name) => (
                         <option key={name} value={name}>
@@ -43,18 +71,38 @@ export function LocationSelect({
             </Field>
 
             <Field label="الحي / المركز" error={errors?.city}>
-                <Input
-                    value={district}
-                    onChange={(e) => onDistrict(e.target.value)}
-                    list={districts.length ? listId : undefined}
-                    placeholder={governorate ? 'اختر أو اكتب الحي' : 'اختر المحافظة أولًا'}
-                />
                 {districts.length > 0 && (
-                    <datalist id={listId}>
-                        {districts.map((d) => (
-                            <option key={d} value={d} />
+                    <Select
+                        value={showFreeText ? OTHER : district}
+                        onChange={(event) => {
+                            if (event.target.value === OTHER) {
+                                setTyping(true)
+                                onDistrict('')
+
+                                return
+                            }
+
+                            setTyping(false)
+                            onDistrict(event.target.value)
+                        }}
+                    >
+                        <option value="">— اختر الحي / المركز —</option>
+                        {districts.map((name) => (
+                            <option key={name} value={name}>
+                                {name}
+                            </option>
                         ))}
-                    </datalist>
+                        <option value={OTHER}>أخرى — اكتبه يدويًا</option>
+                    </Select>
+                )}
+
+                {showFreeText && (
+                    <Input
+                        value={district}
+                        onChange={(event) => onDistrict(event.target.value)}
+                        placeholder={governorate ? 'اكتب الحي أو المركز' : 'اختر المحافظة أولًا'}
+                        className={districts.length > 0 ? 'mt-2' : undefined}
+                    />
                 )}
             </Field>
         </>

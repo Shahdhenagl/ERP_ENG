@@ -1,4 +1,5 @@
-import { MapPin, Pencil, Phone, Plus, Trash2 } from 'lucide-react'
+import clsx from 'clsx'
+import { ChevronDown, HardDrive, MapPin, Pencil, Phone, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { ConfirmDialog, Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
@@ -12,9 +13,10 @@ import {
     Textarea,
 } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
+import { formatDate } from '@/lib/format'
 import { EGYPT_GOVERNORATES, formatMoney } from '@/lib/domain'
-import { useCustomerBranches, useDeleteBranch, useSaveBranch } from '@/lib/queries'
-import type { Branch } from '@/types'
+import { useAssets, useCustomerBranches, useDeleteBranch, useSaveBranch } from '@/lib/queries'
+import type { Asset, Branch } from '@/types'
 
 /**
  * A customer's sites across the country. Devices sit at one, jobs are sent to
@@ -107,6 +109,8 @@ export function BranchesSection({ customerId }: { customerId: number }) {
                                     </button>
                                 </div>
                             </div>
+
+                            <BranchAssets branchId={branch.id} />
                         </div>
                     ))}
                 </div>
@@ -384,5 +388,120 @@ function BranchForm({
                 </label>
             </div>
         </Modal>
+    )
+}
+
+/**
+ * Every device standing at one site, with the nameplate and the record that
+ * says how it has behaved: serial, ratings, warranty, and how many jobs it has
+ * pulled. Loaded when the drawer opens — a customer with thirty branches must
+ * not fetch thirty device lists to render a page nobody has scrolled yet.
+ */
+function BranchAssets({ branchId }: { branchId: number }) {
+    const [open, setOpen] = useState(false)
+
+    return (
+        <div className="mt-3 border-t border-navy-100 pt-2">
+            <button
+                type="button"
+                onClick={() => setOpen((was) => !was)}
+                aria-expanded={open}
+                className="tap flex w-full items-center gap-1.5 text-[11px] font-bold text-navy-500 transition hover:text-navy-800"
+            >
+                <HardDrive className="size-3.5 text-navy-300" />
+                أجهزة الفرع
+                <ChevronDown
+                    className={clsx('mr-auto size-3.5 transition', open && 'rotate-180')}
+                />
+            </button>
+
+            {/* Mounted only once opened, so the fetch belongs to the drawer
+                rather than firing for every branch on the page. */}
+            {open && <BranchAssetList branchId={branchId} />}
+        </div>
+    )
+}
+
+function BranchAssetList({ branchId }: { branchId: number }) {
+    const { data, isLoading } = useAssets({ branch_id: branchId, per_page: 100 })
+    const assets = data?.data ?? []
+
+    if (isLoading) {
+        return <p className="py-2 text-center text-[11px] text-navy-400">جارٍ التحميل…</p>
+    }
+
+    if (assets.length === 0) {
+        return <p className="py-2 text-[11px] text-navy-400">لا توجد أجهزة مسجّلة على هذا الفرع.</p>
+    }
+
+    return (
+        <ul className="mt-2 space-y-2">
+            {assets.map((asset) => (
+                <AssetLine key={asset.id} asset={asset} />
+            ))}
+        </ul>
+    )
+}
+
+function AssetLine({ asset }: { asset: Asset }) {
+    const specs: Array<[string, string | null]> = [
+        ['القدرة', asset.capacity],
+        ['النوع', asset.ups_type],
+        ['الأوجه', asset.phase],
+        ['جهد الدخل', asset.input_voltage],
+        ['جهد الخرج', asset.output_voltage],
+        ['البطاريات', asset.battery_count != null ? `${asset.battery_count} × ${asset.battery_voltage ?? '—'}` : null],
+        ['زمن التغذية', asset.backup_minutes != null ? `${asset.backup_minutes} دقيقة` : null],
+    ]
+    const shown = specs.filter((row): row is [string, string] => Boolean(row[1]))
+
+    return (
+        <li className="rounded-xl bg-navy-50 p-2.5">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <span className="text-xs font-bold text-navy-800">
+                    {asset.label}
+                    {(asset.brand || asset.model) && (
+                        <span className="mr-1.5 font-normal text-navy-500">
+                            {[asset.brand, asset.model].filter(Boolean).join(' ')}
+                        </span>
+                    )}
+                </span>
+                <span className="tabular text-[11px] text-navy-500">
+                    {asset.code}
+                    {asset.serial && ` · ${asset.serial}`}
+                </span>
+            </div>
+
+            {shown.length > 0 && (
+                <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5">
+                    {shown.map(([label, value]) => (
+                        <span key={label} className="tabular text-[11px] text-navy-500">
+                            {label}: <strong className="font-semibold text-navy-700">{value}</strong>
+                        </span>
+                    ))}
+                </div>
+            )}
+
+            {/* How it has behaved, not just what it is: warranty standing, how
+                much work it has pulled, and when it went in. */}
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                <span className="badge bg-white text-navy-600 ring-1 ring-navy-200">
+                    {asset.status_label}
+                </span>
+                <span className="badge bg-white text-navy-600 ring-1 ring-navy-200">
+                    {asset.warranty_label}
+                </span>
+                {typeof asset.tasks_count === 'number' && (
+                    <span className="badge bg-white text-navy-600 ring-1 ring-navy-200">
+                        {asset.tasks_count} زيارة
+                    </span>
+                )}
+                {asset.installed_at && (
+                    <span className="text-[11px] text-navy-400">
+                        رُكِّب {formatDate(asset.installed_at)}
+                    </span>
+                )}
+            </div>
+        </li>
     )
 }

@@ -44,9 +44,13 @@ export function InvoiceListPrint() {
 
     const filters = useMemo(() => {
         const entries = Object.fromEntries(params.entries())
-        const { month, day, page, ...rest } = entries
+        const { month, day, from, to, page, ...rest } = entries
 
-        return { ...rest, ...monthDayRange(month ?? '', day ?? ''), per_page: '1000' }
+        return {
+            ...rest,
+            ...monthDayRange(month ?? '', day ?? '', { from: from ?? '', to: to ?? '' }),
+            per_page: '1000',
+        }
     }, [params])
 
     const { data, isLoading } = useInvoices(filters)

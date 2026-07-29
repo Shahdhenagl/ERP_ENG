@@ -24,9 +24,11 @@ class AssetController extends Controller
         $assets = Asset::query()
             ->search($request->string('search')->toString())
             ->when($request->integer('customer_id'), fn ($q, $id) => $q->where('customer_id', $id))
+            // The customer's file lists its devices site by site.
+            ->when($request->integer('branch_id'), fn ($q, $id) => $q->where('branch_id', $id))
             ->when($request->string('status')->toString(), fn ($q, $status) => $q->where('status', $status))
             ->when($request->boolean('under_warranty'), fn ($q) => $q->underWarranty())
-            ->with('customer')
+            ->with(['customer', 'branch'])
             ->withCount('tasks')
             ->orderByDesc('id')
             ->paginate($request->integer('per_page', 25));

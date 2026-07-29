@@ -1,14 +1,29 @@
 import clsx from 'clsx'
-import { Inbox, Plus, Printer, Search, SlidersHorizontal, X } from 'lucide-react'
+import {
+    FileSpreadsheet,
+    Inbox,
+    LayoutGrid,
+    Plus,
+    Printer,
+    Rows3,
+    Search,
+    SlidersHorizontal,
+    X,
+} from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { TaskCard } from '@/components/TaskCard'
 import { Button, EmptyState, ErrorState, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
+import { api } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
+import { downloadCsv } from '@/lib/csv'
 import { PRIORITY, STATUS, STATUS_FLOW, TASK_TYPE } from '@/lib/domain'
+import { formatDateTime } from '@/lib/format'
 import { useArea } from '@/lib/nav'
-import { useTasks, useTechnicians } from '@/lib/queries'
-import type { TaskStatus } from '@/types'
+import { useCustomers, useTasks, useTechnicians } from '@/lib/queries'
+import type { Task, TaskStatus } from '@/types'
+
+type ViewMode = 'cards' | 'table'
 
 const QUICK_FILTERS: Array<{ key: string; label: string; params: Record<string, string> }> = [
     { key: 'all', label: 'الكل', params: {} },
@@ -39,10 +54,14 @@ export function TaskList() {
         // `month` (YYYY-MM) and `day` (YYYY-MM-DD) are the UI's own filters; the
         // API knows a scheduled-date range, so translate before sending. A day
         // narrows to itself; otherwise a month spans its whole length.
-        const { month, day, ...rest } = entries
+        // A hand-picked span wins, then a single day, then the month it sits in.
+        const { month, day, from, to, ...rest } = entries
         const range: Record<string, string> = {}
 
-        if (day) {
+        if (from || to) {
+            if (from) range.scheduled_after = from
+            if (to) range.scheduled_before = to
+        } else if (day) {
             range.scheduled_after = day
             range.scheduled_before = day
         } else if (month) {
@@ -55,6 +74,45 @@ export function TaskList() {
 
     const { data, isLoading, isError, refetch, isFetching } = useTasks(filters)
     const { data: technicians } = useTechnicians()
+    const { data: customerPage } = useCustomers({ active_only: 1, per_page: 200 })
+
+    const [view, setView] = useState<ViewMode>(
+        () => (localStorage.getItem('tasks.view') as ViewMode) ?? 'cards',
+    )
+    const setViewMode = (mode: ViewMode) => {
+        localStorage.setItem('tasks.view', mode)
+        setView(mode)
+    }
+
+    // Export what the filters describe, not the page being looked at — a
+    // spreadsheet of thirty rows out of four hundred is a trap.
+    const [exporting, setExporting] = useState(false)
+    const exportRows = async () => {
+        setExporting(true)
+
+        try {
+            const { data: page } = await api.get<{ data: Task[] }>('/tasks', {
+                params: { ...filters, per_page: 1000 },
+            })
+
+            downloadCsv(
+                `tasks-${new Date().toISOString().slice(0, 10)}`,
+                ['المهمة', 'العنوان', 'الحالة', 'العميل', 'الفرع', 'الفني', 'بداية التنفيذ', 'انتهاء التنفيذ'],
+                page.data.map((task) => [
+                    task.code,
+                    task.title,
+                    STATUS[task.status].label,
+                    task.customer?.name,
+                    task.branch?.name,
+                    task.technician?.name,
+                    task.started_at ? formatDateTime(task.started_at) : '',
+                    task.completed_at ? formatDateTime(task.completed_at) : '',
+                ]),
+            )
+        } finally {
+            setExporting(false)
+        }
+    }
 
     const setParam = (key: string, value: string) => {
         const next = new URLSearchParams(searchParams)
@@ -94,8 +152,11 @@ export function TaskList() {
         searchParams.get('type') ||
             searchParams.get('priority') ||
             searchParams.get('assigned_to') ||
+            searchParams.get('customer_id') ||
             searchParams.get('month') ||
-            searchParams.get('day'),
+            searchParams.get('day') ||
+            searchParams.get('from') ||
+            searchParams.get('to'),
     )
 
     // Wait for a pause in typing before hitting the API.
@@ -113,7 +174,15 @@ export function TaskList() {
                 title="المهام"
                 subtitle={data ? `${data.meta.total} مهمة` : undefined}
                 actions={
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
+                        <Button
+                            variant="secondary"
+                            icon={FileSpreadsheet}
+                            loading={exporting}
+                            onClick={() => void exportRows()}
+                        >
+                            تصدير Excel
+                        </Button>
                         <Link
                             to={`${path('/print/tasks')}?${searchParams.toString()}`}
                             target="_blank"
@@ -156,6 +225,30 @@ export function TaskList() {
                 >
                     <SlidersHorizontal className="size-4" />
                 </button>
+            </div>
+
+            {/* Table to scan many at once, cards for the detail on each. */}
+            <div className="mb-3 flex justify-end">
+                <div className="flex items-center gap-1 rounded-xl bg-navy-100 p-1">
+                    {(
+                        [
+                            ['cards', 'كروت', LayoutGrid],
+                            ['table', 'جدول', Rows3],
+                        ] as Array<[ViewMode, string, typeof LayoutGrid]>
+                    ).map(([mode, label, Icon]) => (
+                        <button
+                            key={mode}
+                            onClick={() => setViewMode(mode)}
+                            className={clsx(
+                                'tap flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition',
+                                view === mode ? 'bg-white text-navy-900 shadow-sm' : 'text-navy-500',
+                            )}
+                        >
+                            <Icon className="size-3.5" />
+                            {label}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* ── Quick status chips ─────────────────────────── */}
@@ -217,8 +310,20 @@ export function TaskList() {
                         </Select>
                     )}
 
-                    {/* Filter by the task's scheduled date — a whole month, or a
-                        single day which takes precedence over it. */}
+                    <Select
+                        value={searchParams.get('customer_id') ?? ''}
+                        onChange={(event) => setParam('customer_id', event.target.value)}
+                    >
+                        <option value="">كل العملاء</option>
+                        {customerPage?.data.map((customer) => (
+                            <option key={customer.id} value={customer.id}>
+                                {customer.name}
+                            </option>
+                        ))}
+                    </Select>
+
+                    {/* By the task's scheduled date. Most specific wins: a picked
+                        span, then a single day, then the month around it. */}
                     <label className="flex flex-col gap-1">
                         <span className="text-[11px] font-bold text-navy-400">الشهر</span>
                         <Input
@@ -234,6 +339,24 @@ export function TaskList() {
                             type="date"
                             value={searchParams.get('day') ?? ''}
                             onChange={(event) => setParam('day', event.target.value)}
+                        />
+                    </label>
+
+                    <label className="flex flex-col gap-1">
+                        <span className="text-[11px] font-bold text-navy-400">من تاريخ</span>
+                        <Input
+                            type="date"
+                            value={searchParams.get('from') ?? ''}
+                            onChange={(event) => setParam('from', event.target.value)}
+                        />
+                    </label>
+
+                    <label className="flex flex-col gap-1">
+                        <span className="text-[11px] font-bold text-navy-400">إلى تاريخ</span>
+                        <Input
+                            type="date"
+                            value={searchParams.get('to') ?? ''}
+                            onChange={(event) => setParam('to', event.target.value)}
                         />
                     </label>
 
@@ -274,10 +397,16 @@ export function TaskList() {
                 />
             ) : (
                 <>
-                    <div className={clsx('space-y-3 transition-opacity', isFetching && 'opacity-60')}>
-                        {data.data.map((task) => (
-                            <TaskCard key={task.id} task={task} showTechnician={canDispatch} />
-                        ))}
+                    <div className={clsx('transition-opacity', isFetching && 'opacity-60')}>
+                        {view === 'table' ? (
+                            <TaskTable tasks={data.data} href={(id) => path(`/tasks/${id}`)} />
+                        ) : (
+                            <div className="space-y-3">
+                                {data.data.map((task) => (
+                                    <TaskCard key={task.id} task={task} showTechnician={canDispatch} />
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     {data.meta.last_page > 1 && (
@@ -326,3 +455,60 @@ function Pagination({
 }
 
 export type { TaskStatus }
+
+/**
+ * The jobs as rows: what it is, whose it is, where it went, and the two times
+ * that say how long it actually took.
+ *
+ * Scrolls inside itself rather than widening the page — eight columns do not
+ * fit a phone, and a horizontally scrolling body loses the sidebar with it.
+ */
+function TaskTable({ tasks, href }: { tasks: Task[]; href: (id: number) => string }) {
+    return (
+        <div className="card overflow-x-auto">
+            <table className="w-full min-w-[52rem] text-right text-sm">
+                <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
+                    <tr>
+                        <th className="px-3 py-2.5">المهمة</th>
+                        <th className="px-3 py-2.5">العميل</th>
+                        <th className="px-3 py-2.5">الفرع</th>
+                        <th className="w-28 px-3 py-2.5">الحالة</th>
+                        <th className="w-40 px-3 py-2.5">بداية التنفيذ</th>
+                        <th className="w-40 px-3 py-2.5">انتهاء التنفيذ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {tasks.map((task) => {
+                        const meta = STATUS[task.status]
+
+                        return (
+                            <tr key={task.id} className="border-t border-navy-100 hover:bg-navy-50/60">
+                                <td className="px-3 py-2.5">
+                                    <Link to={href(task.id)} className="block">
+                                        <span className="tabular block text-[11px] font-bold text-brand-600">
+                                            {task.code}
+                                        </span>
+                                        <span className="block truncate font-semibold text-navy-800">
+                                            {task.title}
+                                        </span>
+                                    </Link>
+                                </td>
+                                <td className="px-3 py-2.5 text-navy-700">{task.customer?.name ?? '—'}</td>
+                                <td className="px-3 py-2.5 text-navy-600">{task.branch?.name ?? '—'}</td>
+                                <td className="px-3 py-2.5">
+                                    <span className={clsx('badge', meta.chip)}>{meta.label}</span>
+                                </td>
+                                <td className="tabular px-3 py-2.5 text-navy-600">
+                                    {task.started_at ? formatDateTime(task.started_at) : '—'}
+                                </td>
+                                <td className="tabular px-3 py-2.5 text-navy-600">
+                                    {task.completed_at ? formatDateTime(task.completed_at) : '—'}
+                                </td>
+                            </tr>
+                        )
+                    })}
+                </tbody>
+            </table>
+        </div>
+    )
+}
