@@ -1,12 +1,14 @@
 import clsx from 'clsx'
-import { FileText, Plus, Search, Undo2 } from 'lucide-react'
+import { FileText, Plus, Printer, Search, Undo2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, EmptyState, Field, Input, Select, SkeletonCard, Textarea } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { formatMoney, formatQty } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
+import { useArea } from '@/lib/nav'
 import {
     useSaveSupplierInvoice,
     useSupplierInvoiceAction,
@@ -32,6 +34,7 @@ export function SupplierInvoicesTab() {
     const [voiding, setVoiding] = useState<SupplierInvoice | null>(null)
 
     const toast = useToast()
+    const { path } = useArea()
     const act = useSupplierInvoiceAction()
     const { data, isLoading } = useSupplierInvoices({
         search,
@@ -155,6 +158,17 @@ export function SupplierInvoicesTab() {
                             </div>
 
                             <div className="mt-3 flex flex-wrap gap-2 border-t border-navy-100 pt-3">
+                                {/* The sheet is checked against the deliveries
+                                    behind it, so it prints them alongside. */}
+                                <Link
+                                    to={`${path('/print/supplier-invoices')}/${invoice.id}`}
+                                    target="_blank"
+                                    className="tap inline-flex items-center gap-1.5 rounded-lg bg-navy-50 px-3 py-1.5 text-xs font-bold text-navy-600 transition hover:bg-navy-100"
+                                >
+                                    <Printer className="size-3.5" />
+                                    طباعة
+                                </Link>
+
                                 {invoice.status === 'draft' && (
                                     <>
                                         <button

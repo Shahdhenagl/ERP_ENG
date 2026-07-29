@@ -75,7 +75,7 @@ class SupplierInvoiceController extends Controller
     public function show(SupplierInvoice $supplierInvoice): SupplierInvoiceResource
     {
         return new SupplierInvoiceResource(
-            $supplierInvoice->load(['lines.item', 'supplier', 'order', 'payments'])
+            $supplierInvoice->load(['lines.item', 'supplier', 'order', 'payments', 'receipts.item'])
                 ->loadCount('receipts'),
         );
     }

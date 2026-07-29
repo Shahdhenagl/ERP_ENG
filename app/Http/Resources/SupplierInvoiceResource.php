@@ -49,6 +49,18 @@ class SupplierInvoiceResource extends JsonResource
 
             'lines' => SupplierInvoiceLineResource::collection($this->whenLoaded('lines')),
             'receipts_count' => $this->whenCounted('receipts'),
+            // The deliveries behind the bill: what arrived, when, and at what
+            // cost — the printed sheet is checked against these, not the total.
+            'receipts' => $this->whenLoaded('receipts', fn () => $this->receipts->map(fn ($r) => [
+                'id' => $r->id,
+                'item' => $r->item?->name,
+                'item_code' => $r->item?->code,
+                'qty' => (float) $r->qty,
+                'unit_cost' => (float) $r->unit_cost,
+                'total' => round((float) $r->qty * (float) $r->unit_cost, 2),
+                'reference' => $r->reference,
+                'moved_on' => $r->created_at?->toDateString(),
+            ])->values()),
 
             'notes' => $this->notes,
             'created_at' => $this->created_at?->toIso8601String(),

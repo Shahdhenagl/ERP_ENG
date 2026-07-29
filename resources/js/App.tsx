@@ -59,6 +59,7 @@ import { DeliveryNotesPage } from '@/pages/sales/DeliveryNotesPage'
 import { Settings } from '@/pages/Settings'
 import { InvoicePrint } from '@/pages/print/InvoicePrint'
 import { QuotationPrint } from '@/pages/print/QuotationPrint'
+import { SupplierInvoicePrint } from '@/pages/print/SupplierInvoicePrint'
 import { ServiceReportPrint } from '@/pages/print/ServiceReportPrint'
 import { StatementPrint } from '@/pages/print/StatementPrint'
 import { CustomerTasksPrint } from '@/pages/print/CustomerTasksPrint'
@@ -155,6 +156,10 @@ export function App() {
                                 >
                                     <Route path="invoices/:id" element={<InvoicePrint />} />
                                     <Route path="quotations/:id" element={<QuotationPrint />} />
+                                    <Route
+                                        path="supplier-invoices/:id"
+                                        element={<SupplierInvoicePrint />}
+                                    />
                                     <Route path="statements/:id" element={<StatementPrint />} />
                                     <Route path="customer-tasks/:id" element={<CustomerTasksPrint />} />
                                     <Route path="customer-ledger/:id" element={<CustomerLedgerPrint />} />

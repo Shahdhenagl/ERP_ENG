@@ -1703,6 +1703,17 @@ export interface SupplierInvoice {
 
     lines?: SupplierInvoiceLine[]
     receipts_count?: number
+    /** The deliveries this bill covers, as booked in by the storekeeper. */
+    receipts?: Array<{
+        id: number
+        item: string | null
+        item_code: string | null
+        qty: number
+        unit_cost: number
+        total: number
+        reference: string | null
+        moved_on: string | null
+    }>
 
     notes: string | null
     created_at: string | null
