@@ -83,7 +83,7 @@ export function WarrantyRegisterPage() {
                     description="سجّل ضمانًا لأي جهاز لتبدأ متابعة المطالبات والتجديدات."
                 />
             ) : (
-                <div className="space-y-2">
+                <div className="grid gap-2 sm:grid-cols-2">
                     {data.data.map((warranty) => {
                         const state = WARRANTY_STATUS[warranty.effective_status]
 

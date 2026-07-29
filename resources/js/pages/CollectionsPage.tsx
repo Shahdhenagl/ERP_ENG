@@ -72,7 +72,7 @@ export function CollectionsPage() {
                     description="تظهر هنا سندات القبض من العملاء بمجرد تسجيلها على الفواتير."
                 />
             ) : (
-                <div className="space-y-2">
+                <div className="grid gap-2 sm:grid-cols-2">
                     {rows.map((payment) => (
                         <div key={payment.id} className="card p-3.5">
                             <div className="flex items-start justify-between gap-3">

@@ -2,6 +2,7 @@ import { HardHat, Phone, Search, Wrench } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { EmptyState, Input, PageHeader, SkeletonCard } from '@/components/ui'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { useArea } from '@/lib/nav'
 import { useTechnicians } from '@/lib/queries'
 
@@ -15,6 +16,7 @@ import { useTechnicians } from '@/lib/queries'
  */
 export function TechniciansPage() {
     const { path } = useArea()
+    const [view, setView] = useViewMode('technicians')
     const { data: technicians, isLoading } = useTechnicians()
     const [search, setSearch] = useState('')
 
@@ -49,6 +51,10 @@ export function TechniciansPage() {
                 />
             </div>
 
+            <div className="mb-3 flex justify-end">
+                <ViewToggle view={view} onChange={setView} />
+            </div>
+
             {isLoading ? (
                 <SkeletonCard />
             ) : !rows.length ? (
@@ -57,8 +63,38 @@ export function TechniciansPage() {
                     title="لا يوجد فنيون"
                     description="يظهر هنا كل من له دور فني ونشط في النظام."
                 />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="42rem"
+                    headers={[
+                        'الفني',
+                        'المسمى',
+                        'الهاتف',
+                        { label: 'مهام مفتوحة', className: 'w-28' },
+                    ]}
+                >
+                    {rows.map((tech) => (
+                        <tr key={tech.id} className="border-t border-navy-100 hover:bg-navy-50/60">
+                            <td className="px-3 py-2.5">
+                                <Link
+                                    to={path(`/technicians/${tech.id}`)}
+                                    className="block truncate font-semibold text-navy-800"
+                                >
+                                    {tech.name}
+                                </Link>
+                            </td>
+                            <td className="px-3 py-2.5 text-navy-600">{tech.job_title ?? 'فني'}</td>
+                            <td className="tabular px-3 py-2.5 text-navy-600" dir="ltr">
+                                <span className="block text-right">{tech.phone ?? '—'}</span>
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-700">
+                                {tech.open_tasks_count ?? 0}
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
-                <div className="space-y-2">
+                <div className="grid gap-2 sm:grid-cols-2">
                     {rows.map((tech) => (
                         <Link
                             key={tech.id}

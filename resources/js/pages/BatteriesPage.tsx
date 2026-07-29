@@ -67,7 +67,7 @@ export function BatteriesPage() {
                     description="سجّل بنك البطاريات لكل جهاز لمتابعة عمره الافتراضي وموعد استبداله."
                 />
             ) : (
-                <div className="space-y-2">
+                <div className="grid gap-2 sm:grid-cols-2">
                     {data.data.map((battery) => (
                         <BatteryRow
                             key={battery.id}

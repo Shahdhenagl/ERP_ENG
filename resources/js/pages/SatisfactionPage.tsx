@@ -111,7 +111,7 @@ export function SatisfactionPage() {
                     description="افتح استطلاعًا لأمر عمل منتهٍ لتسجيل رأي العميل في الخدمة."
                 />
             ) : (
-                <div className="space-y-2">
+                <div className="grid gap-2 sm:grid-cols-2">
                     {data.data.map((survey) => (
                         <div key={survey.id} className="card p-3.5">
                             <div className="flex items-start justify-between gap-3">

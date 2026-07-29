@@ -99,7 +99,7 @@ export function ContactsPage() {
                     {grouped.map((group) => (
                         <div key={group.customer}>
                             <p className="mb-2 text-xs font-extrabold text-navy-400">{group.customer}</p>
-                            <div className="space-y-2">
+                            <div className="grid gap-2 sm:grid-cols-2">
                                 {group.rows.map((contact) => (
                                     <button
                                         key={contact.id}

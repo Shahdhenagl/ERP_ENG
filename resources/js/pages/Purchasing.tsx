@@ -3,6 +3,7 @@ import { Ban, PackageCheck, Pencil, Plus, Printer, ScrollText, Search, Send, Tru
 import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { Modal } from '@/components/Modal'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { PeriodPicker, usePeriod } from '@/components/PeriodPicker'
 import { SectionTabs } from '@/components/SectionTabs'
 import { PurchaseReturnsTab } from '@/pages/purchasing/PurchaseReturnsTab'
@@ -80,6 +81,8 @@ function OrdersTab() {
     const [editing, setEditing] = useState<PurchaseOrder | undefined>()
     const [detailId, setDetailId] = useState<number | null>(null)
 
+    const [view, setView] = useViewMode('purchase-orders')
+
     const { data: orders, isLoading } = usePurchaseOrders({ open: openOnly ? 1 : undefined })
 
     const run = async (fn: () => Promise<unknown>, success: string) => {
@@ -115,6 +118,8 @@ function OrdersTab() {
                 >
                     المفتوحة فقط
                 </button>
+
+                <ViewToggle view={view} onChange={setView} className="mr-auto" />
             </div>
 
             {isLoading ? (
@@ -125,8 +130,51 @@ function OrdersTab() {
                     title="لا توجد أوامر شراء"
                     description="أنشئ أمر شراء بالأصناف المطلوبة، ثم سجّل الاستلام عليه عند وصول البضاعة."
                 />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="52rem"
+                    headers={[
+                        { label: 'الكود', className: 'w-28' },
+                        'المورّد',
+                        { label: 'التاريخ', className: 'w-28' },
+                        { label: 'الأصناف', className: 'w-20' },
+                        { label: 'الإجمالي', className: 'w-28' },
+                        { label: 'الاستحقاق', className: 'w-28' },
+                        { label: 'الاستلام', className: 'w-28' },
+                    ]}
+                >
+                    {orders.map((order) => (
+                        <tr
+                            key={order.id}
+                            onClick={() => setDetailId(order.id)}
+                            className="cursor-pointer border-t border-navy-100 hover:bg-navy-50/60"
+                        >
+                            <td className="tabular px-3 py-2.5 text-[11px] font-bold text-brand-600">
+                                {order.code}
+                            </td>
+                            <td className="px-3 py-2.5 text-navy-700">{order.supplier ?? '—'}</td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {order.order_date ? formatDate(order.order_date) : '—'}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {order.lines?.length ?? 0}
+                            </td>
+                            <td className="tabular px-3 py-2.5 font-bold text-navy-800">
+                                {formatMoney(order.total)}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {order.expected_date ? formatDate(order.expected_date) : '—'}
+                            </td>
+                            <td className="px-3 py-2.5">
+                                <span className={clsx('badge', FULFILMENT_CHIP[order.fulfilment])}>
+                                    {order.fulfilment_label}
+                                </span>
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
-                <div className="space-y-3">
+                <div className="grid gap-3 sm:grid-cols-2">
                     {orders.map((order) => (
                         <div key={order.id} className="card p-4">
                             <div className="flex items-start justify-between gap-3">
@@ -371,6 +419,8 @@ function SuppliersTab() {
     const [paying, setPaying] = useState<Supplier | null>(null)
     const [statementFor, setStatementFor] = useState<Supplier | null>(null)
 
+    const [view, setView] = useViewMode('suppliers')
+
     const { data: suppliers, isLoading } = useSuppliers({
         search,
         owing: owingOnly ? 1 : undefined,
@@ -409,6 +459,8 @@ function SuppliersTab() {
                     >
                         المستحق عليهم فقط
                     </button>
+
+                    <ViewToggle view={view} onChange={setView} className="mr-auto" />
                 </div>
 
                 <div className="relative">
@@ -430,6 +482,44 @@ function SuppliersTab() {
                     title="لا يوجد موردون"
                     description="سجّل الموردين لتعرف كل بضاعة جاءت من أين وما المستحق عليهم."
                 />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="50rem"
+                    headers={[
+                        { label: 'الكود', className: 'w-28' },
+                        'المورّد',
+                        'الهاتف',
+                        { label: 'المستحق عليه', className: 'w-32' },
+                    ]}
+                >
+                    {suppliers.map((supplier) => (
+                        <tr
+                            key={supplier.id}
+                            onClick={() => setStatementFor(supplier)}
+                            className="cursor-pointer border-t border-navy-100 hover:bg-navy-50/60"
+                        >
+                            <td className="tabular px-3 py-2.5 text-[11px] font-bold text-brand-600">
+                                {supplier.code}
+                            </td>
+                            <td className="px-3 py-2.5">
+                                <span className="block truncate font-semibold text-navy-800">
+                                    {supplier.name}
+                                </span>
+                                {supplier.company && (
+                                    <span className="block truncate text-[11px] text-navy-400">
+                                        {supplier.company}
+                                    </span>
+                                )}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-600" dir="ltr">
+                                <span className="block text-right">{supplier.phone ?? '—'}</span>
+                            </td>
+                            <td className="tabular px-3 py-2.5 font-bold text-amber-700">
+                                {formatMoney(supplier.balance)}
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
                 <div className="grid gap-3 sm:grid-cols-2">
                     {suppliers.map((supplier) => (

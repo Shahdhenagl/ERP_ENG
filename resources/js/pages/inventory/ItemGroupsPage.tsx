@@ -46,7 +46,7 @@ export function ItemGroupsPage() {
             ) : !groups?.length ? (
                 <EmptyState icon={Boxes} title="لا توجد مجموعات" />
             ) : (
-                <div className="space-y-2">
+                <div className="grid gap-2 sm:grid-cols-2">
                     {groups.map((group) => (
                         <div key={group.id} className="card flex items-center gap-3 p-3.5">
                             <span

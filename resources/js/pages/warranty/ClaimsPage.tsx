@@ -74,7 +74,7 @@ export function ClaimsPage() {
                     description="افتح بلاغًا عندما يعطل جهاز داخل فترة الضمان."
                 />
             ) : (
-                <div className="space-y-2">
+                <div className="grid gap-2 sm:grid-cols-2">
                     {data.data.map((claim) => {
                         const state = CLAIM_STATUS[claim.status]
 

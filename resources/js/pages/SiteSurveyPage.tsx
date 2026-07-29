@@ -85,7 +85,7 @@ export function SiteSurveyPage() {
                     description="سجّل زيارة الموقع بالحمل والأطوار ومدة الاستقلالية لتبني عليها عرض السعر."
                 />
             ) : (
-                <div className="space-y-2">
+                <div className="grid gap-2 sm:grid-cols-2">
                     {data.map((survey) => (
                         <button
                             key={survey.id}

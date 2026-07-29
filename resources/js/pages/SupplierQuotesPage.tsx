@@ -96,7 +96,7 @@ export function SupplierQuotesPage() {
                                     {group.rows.length} عروض
                                 </span>
                             </p>
-                            <div className="space-y-2">
+                            <div className="grid gap-2 sm:grid-cols-2">
                                 {group.rows.map((quote, index) => (
                                     <QuoteRow key={quote.id} quote={quote} best={index === 0} />
                                 ))}
@@ -107,7 +107,7 @@ export function SupplierQuotesPage() {
                     {Boolean(singles.length) && (
                         <div>
                             <p className="mb-2 text-xs font-extrabold text-navy-400">عروض مفردة</p>
-                            <div className="space-y-2">
+                            <div className="grid gap-2 sm:grid-cols-2">
                                 {singles.map((quote) => (
                                     <QuoteRow key={quote.id} quote={quote} />
                                 ))}
@@ -386,7 +386,7 @@ function QuoteForm({ onClose }: { onClose: () => void }) {
 
                 <div>
                     <p className="mb-2 text-xs font-bold text-navy-400">الأصناف</p>
-                    <div className="space-y-2">
+                    <div className="grid gap-2 sm:grid-cols-2">
                         {lines.map((line, index) => (
                             <div key={index} className="flex items-center gap-2">
                                 <Select

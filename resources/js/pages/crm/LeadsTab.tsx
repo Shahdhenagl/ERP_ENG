@@ -102,7 +102,7 @@ export function LeadsTab() {
                     description="سجّل كل فرصة بيع هنا وتابعها حتى تُكسب أو تُغلق."
                 />
             ) : (
-                <div className="space-y-2">
+                <div className="grid gap-2 sm:grid-cols-2">
                     {data.data.map((lead) => (
                         <button
                             key={lead.id}

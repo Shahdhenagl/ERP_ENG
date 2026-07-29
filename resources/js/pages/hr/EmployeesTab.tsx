@@ -541,7 +541,7 @@ function EmployeeForm({ employee, onClose }: { employee: Employee | null; onClos
                             إضافة بدل
                         </button>
                     </div>
-                    <div className="space-y-2">
+                    <div className="grid gap-2 sm:grid-cols-2">
                         {allowances.map((allowance, index) => (
                             <div key={index} className="flex items-center gap-2">
                                 <Input

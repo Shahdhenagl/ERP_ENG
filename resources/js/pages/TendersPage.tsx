@@ -115,7 +115,7 @@ export function TendersPage() {
                     description="سجّل العطاءات لمتابعة مواعيد التقديم ونتائجها ونسبة الفوز."
                 />
             ) : (
-                <div className="space-y-2">
+                <div className="grid gap-2 sm:grid-cols-2">
                     {data.data.map((tender) => (
                         <TenderRow
                             key={tender.id}

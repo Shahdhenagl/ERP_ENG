@@ -29,7 +29,7 @@ export function RepairOrdersPage() {
                     description="عند اعتماد مطالبة ضمان وإصدار أمر إصلاح لها، يظهر هنا."
                 />
             ) : (
-                <div className="space-y-2">
+                <div className="grid gap-2 sm:grid-cols-2">
                     {data.data.map((claim) => {
                         const state = CLAIM_STATUS[claim.status]
 

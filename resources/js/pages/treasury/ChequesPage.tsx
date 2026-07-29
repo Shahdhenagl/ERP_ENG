@@ -164,7 +164,7 @@ export function ChequesPage() {
                     description="سجّل الشيكات الواردة والصادرة لتتابع مواعيدها قبل أن تفاجئك."
                 />
             ) : (
-                <div className="space-y-2">
+                <div className="grid gap-2 sm:grid-cols-2">
                     {data.data.map((cheque) => (
                         <div
                             key={cheque.id}

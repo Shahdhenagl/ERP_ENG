@@ -37,7 +37,7 @@ export function ContractRenewalsPage() {
                     description="العقود التي تنتهي خلال 60 يومًا تظهر هنا لتجديدها."
                 />
             ) : (
-                <div className="space-y-2">
+                <div className="grid gap-2 sm:grid-cols-2">
                     {rows.map((contract) => {
                         const overdue = contract.days_remaining < 0
 
