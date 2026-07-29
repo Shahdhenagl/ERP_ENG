@@ -112,6 +112,7 @@ class SalesReturn extends Model
     {
         return round((float) $this->lines()
             ->where('restock', true)
+            ->reorder()
             ->selectRaw('coalesce(sum(qty * unit_cost), 0) as total')
             ->value('total'), 2);
     }

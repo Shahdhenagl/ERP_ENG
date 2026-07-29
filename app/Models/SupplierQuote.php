@@ -84,6 +84,7 @@ class SupplierQuote extends Model
     public function subtotal(): float
     {
         return round((float) $this->lines()
+            ->reorder()
             ->selectRaw('coalesce(sum(qty * unit_price), 0) as total')
             ->value('total'), 2);
     }

@@ -70,7 +70,11 @@ class PurchaseOrder extends Model
 
     public function subtotal(): float
     {
+        // reorder() strips the relation's default `order by sort`: a scalar
+        // aggregate with an ORDER BY and no GROUP BY is rejected outright by
+        // MySQL in ONLY_FULL_GROUP_BY (strict) mode, which is how production runs.
         return round((float) $this->lines()
+            ->reorder()
             ->selectRaw('coalesce(sum(qty * unit_price), 0) as total')
             ->value('total'), 2);
     }
@@ -99,7 +103,7 @@ class PurchaseOrder extends Model
     /** How much of each line is still outstanding. */
     public function outstandingFor(int $itemId): float
     {
-        $ordered = (float) $this->lines()->where('item_id', $itemId)->sum('qty');
+        $ordered = (float) $this->lines()->where('item_id', $itemId)->reorder()->sum('qty');
 
         return round($ordered - ($this->receivedByItem()[$itemId] ?? 0), 3);
     }
