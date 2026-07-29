@@ -611,3 +611,61 @@ it('splits the list into what is owed and what is settled', function () {
     expect(collect($outstanding)->pluck('id')->all())->toBe([$owing->id])
         ->and(collect($settled)->pluck('id')->all())->toBe([$paid->id]);
 });
+
+it('settles the bill the payment names', function () {
+    $invoice = \App\Models\SupplierInvoice::create([
+        'supplier_id' => $this->supplier->id,
+        'invoice_date' => now()->toDateString(),
+        'total' => 700,
+        'status' => 'posted',
+        'created_by' => $this->manager->id,
+    ]);
+
+    // Fund the box the same way the treasury does, so the payment clears its
+    // sufficient-balance check.
+    \App\Models\CashMovement::create([
+        'cash_box_id' => \App\Models\CashBox::default()->id,
+        'direction' => 'in',
+        'amount' => 5000,
+        'source' => 'opening',
+        'created_by' => $this->manager->id,
+    ]);
+
+    // The picker has always sent this; the endpoint used to drop it on the
+    // floor, so every payment landed on account and no bill ever closed.
+    actingAs($this->manager)
+        ->postJson('/api/supplier-payments', [
+            'supplier_id' => $this->supplier->id,
+            'supplier_invoice_id' => $invoice->id,
+            'amount' => 700,
+        ])
+        ->assertCreated();
+
+    expect($invoice->fresh()->paymentState())->toBe('paid');
+});
+
+it('allocates payments left on account to the bills they cover', function () {
+    $invoice = \App\Models\SupplierInvoice::create([
+        'supplier_id' => $this->supplier->id,
+        'invoice_date' => now()->toDateString(),
+        'total' => 500,
+        'status' => 'posted',
+        'created_by' => $this->manager->id,
+    ]);
+
+    $payment = \App\Models\SupplierPayment::create([
+        'supplier_id' => $this->supplier->id,
+        'cash_box_id' => \App\Models\CashBox::default()->id,
+        'amount' => 500,
+        'paid_on' => now()->toDateString(),
+        'method' => 'cash',
+        'created_by' => $this->manager->id,
+    ]);
+
+    expect($invoice->fresh()->paymentState())->toBe('unpaid');
+
+    $this->artisan('suppliers:allocate-payments')->assertSuccessful();
+
+    expect($payment->fresh()->supplier_invoice_id)->toBe($invoice->id)
+        ->and($invoice->fresh()->paymentState())->toBe('paid');
+});

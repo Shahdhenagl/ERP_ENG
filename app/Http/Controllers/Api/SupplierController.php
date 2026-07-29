@@ -98,6 +98,11 @@ class SupplierController extends Controller
     {
         $data = $request->validate([
             'supplier_id' => ['required', 'exists:suppliers,id'],
+            // Which bill the money settles. Missing from this list, it was
+            // stripped before paySupplier ever saw it — the picker in the dialog
+            // sent it, the service knew what to do with it, and every payment
+            // still landed on account.
+            'supplier_invoice_id' => ['nullable', 'exists:supplier_invoices,id'],
             'cash_box_id' => ['nullable', 'exists:cash_boxes,id'],
             'amount' => ['required', 'numeric', 'gt:0'],
             'method' => ['nullable', Rule::enum(\App\Enums\PaymentMethod::class)],

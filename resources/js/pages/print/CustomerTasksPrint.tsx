@@ -60,6 +60,7 @@ export function CustomerTasksPrint() {
                             <th className="w-28">العميل</th>
                             <th className="w-28">الجهاز</th>
                             <th className="w-24">الفرع</th>
+                            <th className="w-20">الموعد</th>
                             <th className="w-24">بداية التنفيذ</th>
                             <th className="w-24">انتهاء التنفيذ</th>
                             <th className="w-20">الحالة</th>
@@ -79,6 +80,9 @@ export function CustomerTasksPrint() {
                                 <td className="text-navy-600">{task.customer ?? '—'}</td>
                                 <td className="text-navy-600">{task.asset ?? '—'}</td>
                                 <td className="text-navy-600">{task.branch ?? '—'}</td>
+                                <td className="tabular text-navy-600">
+                                    {task.date ? formatDate(task.date) : '—'}
+                                </td>
                                 <td className="tabular text-navy-600">
                                     {task.started_at ? formatDateTime(task.started_at) : '—'}
                                 </td>

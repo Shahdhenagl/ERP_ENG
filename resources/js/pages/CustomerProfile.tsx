@@ -330,13 +330,14 @@ function CustomerTasksSection({ customerId }: { customerId: number }) {
                     {/* One row per visit, each opening the job behind it — the
                         history is where a question about a visit starts. */}
                     <div className="overflow-x-auto rounded-2xl border border-navy-100">
-                        <table className="w-full min-w-[60rem] text-right text-sm">
+                        <table className="w-full min-w-[66rem] text-right text-sm">
                             <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
                                 <tr>
                                     <th className="px-3 py-2.5">المهمة</th>
                                     <th className="px-3 py-2.5">العميل</th>
                                     <th className="px-3 py-2.5">الجهاز</th>
                                     <th className="px-3 py-2.5">الفرع</th>
+                                    <th className="w-28 px-3 py-2.5">الموعد</th>
                                     <th className="w-32 px-3 py-2.5">بداية التنفيذ</th>
                                     <th className="w-32 px-3 py-2.5">انتهاء التنفيذ</th>
                                     <th className="w-28 px-3 py-2.5">الحالة</th>
@@ -360,6 +361,12 @@ function CustomerTasksSection({ customerId }: { customerId: number }) {
                                         <td className="px-3 py-2.5 text-navy-700">{task.customer ?? '—'}</td>
                                         <td className="px-3 py-2.5 text-navy-600">{task.asset ?? '—'}</td>
                                         <td className="px-3 py-2.5 text-navy-600">{task.branch ?? '—'}</td>
+                                        {/* When it was booked for — the promised
+                                            date, which is what a maintenance round
+                                            is judged against. */}
+                                        <td className="tabular px-3 py-2.5 text-navy-600">
+                                            {task.date ? formatDate(task.date) : '—'}
+                                        </td>
                                         <td className="tabular px-3 py-2.5 text-navy-600">
                                             {task.started_at ? formatDateTime(task.started_at) : '—'}
                                         </td>
