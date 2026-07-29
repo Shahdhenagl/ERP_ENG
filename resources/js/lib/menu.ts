@@ -250,13 +250,13 @@ export const NAV: NavItem[] = [
 
     /* 12 ── عهد الموظفين ───────────────────────────────────── */
     {
-        to: '/inventory/custody',
+        to: '/custody',
         label: 'عهد الموظفين',
         icon: HandCoins,
         roles: ['admin', 'manager'],
         short: 'عهد',
         children: [
-            { to: '/inventory/custody', permission: 'inventory.manage', label: 'إنشاء وصرف العهدة', icon: HandCoins },
+            { to: '/custody', permission: 'inventory.manage', label: 'إنشاء وصرف العهدة', icon: HandCoins },
             { to: '/custody/settle', permission: 'inventory.manage', label: 'تسجيل مصروفات / تسوية', icon: ClipboardCheck },
             { to: '/custody/statement', permission: 'inventory.manage', label: 'كشف حساب الموظف', icon: FileClock },
         ],

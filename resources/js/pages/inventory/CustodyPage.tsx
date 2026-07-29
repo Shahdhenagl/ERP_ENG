@@ -3,7 +3,16 @@ import { Banknote, HandCoins, HardDrive, Package, Undo2, Wallet } from 'lucide-r
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
-import { Button, EmptyState, Field, Input, Select, SkeletonCard, Textarea } from '@/components/ui'
+import {
+    Button,
+    EmptyState,
+    Field,
+    Input,
+    PageHeader,
+    Select,
+    SkeletonCard,
+    Textarea,
+} from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { formatMoney, formatQty } from '@/lib/domain'
 import { useAssets, useCashBoxes, useCustody, useCustodyCash, useCustodyDevice, useUsers } from '@/lib/queries'
@@ -26,24 +35,27 @@ export function CustodyPage() {
 
     return (
         <>
-            {/* The two ways custody goes out live at the top, always reachable —
+            {/* The two ways custody goes out live in the header, always reachable —
                 a float to anyone on staff, or a device — so a first advance never
                 depends on the person already having a card. */}
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <p className="text-sm text-navy-500">
-                    إجمالي العهد المفتوحة:{' '}
-                    <strong className="tabular text-navy-900">{formatMoney(totalOut)}</strong>
-                </p>
-
-                <div className="flex gap-2">
-                    <Button icon={Wallet} onClick={() => setCashOpen(true)}>
-                        صرف عهدة نقدية
-                    </Button>
-                    <Button variant="secondary" icon={HardDrive} onClick={() => setDeviceOpen(true)}>
-                        تسليم جهاز
-                    </Button>
-                </div>
-            </div>
+            <PageHeader
+                title="عهد الموظفين"
+                subtitle={`إجمالي العهد المفتوحة: ${formatMoney(totalOut)}`}
+                actions={
+                    <>
+                        <Button icon={Wallet} onClick={() => setCashOpen(true)}>
+                            صرف عهدة نقدية
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            icon={HardDrive}
+                            onClick={() => setDeviceOpen(true)}
+                        >
+                            تسليم جهاز
+                        </Button>
+                    </>
+                }
+            />
 
             {isLoading ? (
                 <SkeletonCard />

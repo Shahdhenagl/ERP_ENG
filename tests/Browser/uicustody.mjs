@@ -217,7 +217,7 @@ check('custody statement lists the device', device.holdsTheNewOne)
 
 /* ── The page shows all three forms together ─────────────── */
 
-await page.goto(`${BASE}/manager/inventory/custody`, { waitUntil: 'domcontentloaded' })
+await page.goto(`${BASE}/manager/custody`, { waitUntil: 'domcontentloaded' })
 await page.waitForSelector('text=إجمالي العهد المفتوحة', { timeout: 20000 })
 await settled(page)
 
@@ -229,7 +229,7 @@ check('custody page shows devices', custodyText.includes('أجهزة'))
 /* ── A technician sees none of it ────────────────────────── */
 
 await login(page, 'tech1@cityeng.local')
-await page.goto(`${BASE}/manager/inventory/custody`, { waitUntil: 'domcontentloaded' })
+await page.goto(`${BASE}/manager/custody`, { waitUntil: 'domcontentloaded' })
 const bounced = await page
     .waitForFunction(() => location.pathname.startsWith('/tech'), { timeout: 15000 })
     .then(() => true)

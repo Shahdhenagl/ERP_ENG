@@ -215,7 +215,12 @@ export function App() {
                                             <Route index element={<Navigate to="items" replace />} />
                                             <Route path="items" element={<ItemsPage />} />
                                             <Route path="warehouses" element={<WarehousesPage />} />
-                                            <Route path="custody" element={<CustodyPage />} />
+                                            {/* Custody moved out of the shell; keep the
+                                                old link working. */}
+                                            <Route
+                                                path="custody"
+                                                element={<Navigate to="/manager/custody" replace />}
+                                            />
                                             <Route path="movements" element={<MovementsPage />} />
                                             <Route path="stocktake" element={<StocktakePage />} />
                                         </Route>
@@ -226,6 +231,7 @@ export function App() {
                                         <Route path="inventory/issue" element={<StockIssuePage />} />
                                         <Route path="inventory/transfers" element={<WarehouseTransferPage />} />
                                         <Route path="inventory/groups" element={<ItemGroupsPage />} />
+                                        <Route path="custody" element={<CustodyPage />} />
                                         <Route path="custody/settle" element={<CustodySettlePage />} />
                                         <Route path="custody/statement" element={<CustodyStatementPage />} />
                                         <Route path="warranties" element={<WarrantyLayout />}>

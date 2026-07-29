@@ -30,7 +30,6 @@ export function useInventory(): InventoryContext {
 const SECTIONS = [
     ['/inventory/items', 'الأصناف'],
     ['/inventory/warehouses', 'المخازن'],
-    ['/inventory/custody', 'العهد'],
     ['/inventory/stocktake', 'الجرد'],
     ['/inventory/movements', 'سجل الحركة'],
 ] as const
