@@ -228,15 +228,29 @@ class SalesReturnService
     /* ── Internals ───────────────────────────────────────── */
 
     /**
-     * What this item cost when it left, taken from the issue movement on the
-     * job the invoice was raised from.
+     * What this item cost when it left.
      *
-     * Falling back to today's average is honest rather than clever: an invoice
-     * with no job behind it never consumed stock through the ledger, so there
-     * is no historical cost to find.
+     * The invoice's own sale movement first: issuing an invoice draws the goods
+     * off the shelf at that day's average, and that figure is what the journal
+     * charged to cost of sales. Reversing at anything else leaves a residue in
+     * cogs for goods that all came back.
+     *
+     * Then the job's issue movement, for an invoice raised on a task whose
+     * parts were consumed there. Then today's average, which is a guess but an
+     * honest one when the document drew no stock at all.
      */
     protected function costOfSale(SalesReturn $return, int $itemId, float $fallback): float
     {
+        $sold = StockMovement::where('invoice_id', $return->invoice_id)
+            ->where('item_id', $itemId)
+            ->where('type', 'sale')
+            ->orderByDesc('id')
+            ->value('unit_cost');
+
+        if ($sold !== null) {
+            return round((float) $sold, 2);
+        }
+
         $taskId = $return->invoice?->task_id;
 
         if (! $taskId) {

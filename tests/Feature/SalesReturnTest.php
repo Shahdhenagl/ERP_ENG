@@ -251,9 +251,11 @@ it('values the goods at what they cost when they were sold', function () {
     $task = Task::factory()->create(['customer_id' => $this->customer->id]);
     $this->stock->issueToTask($this->item, $this->store, 2, $task, $this->manager);
 
+    // Buys two more at 700 before invoicing, so the shelf averages 460 and the
+    // sale draws at that — which is the figure cost of sales was charged.
     $invoice = sold(1000, 2, ['task_id' => $task->id]);
 
-    // A later purchase moves the average well away from 400.
+    // A later purchase moves the average well away again.
     $this->stock->receive($this->item, $this->store, 10, 900, $this->manager);
 
     $return = $this->returns->draft([
@@ -264,7 +266,7 @@ it('values the goods at what they cost when they were sold', function () {
 
     $this->returns->post($return, $this->manager);
 
-    expect((float) $return->fresh()->lines[0]->unit_cost)->toBe(400.0);
+    expect((float) $return->fresh()->lines[0]->unit_cost)->toBe(460.0);
 });
 
 it('refuses to post the same return twice', function () {
@@ -425,9 +427,11 @@ it('reverses cost of sales by what the goods cost', function () {
 
     app(ChartOfAccounts::class)->ensure();
 
-    // 800 out on the job, 800 back on the return — nothing left in cost of
-    // sales for a job whose goods all came back.
-    expect(round(Account::key('cogs')->balance(), 2))->toBe(0.0);
+    // Two draws, not one: the job consumed two units when they were issued to
+    // it, and issuing the invoice drew two more off the shelf. The return
+    // reverses the sale at exactly what the sale charged, so what is left in
+    // cost of sales is the job's own parts — which were fitted, not returned.
+    expect(round(Account::key('cogs')->balance(), 2))->toBe(800.0);
 });
 
 /* ── Through the API ─────────────────────────────────────── */

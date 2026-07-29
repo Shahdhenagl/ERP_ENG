@@ -401,6 +401,21 @@ class LedgerPoster
                     ['account' => 'inventory', 'credit' => $value],
                 ],
 
+                // Goods leaving against an invoice. The revenue side is posted
+                // by the invoice itself; this is the cost side of the same sale,
+                // and without it stock leaves the balance sheet with nothing
+                // taking its place in the income statement.
+                MovementType::Sale => [
+                    ['account' => 'cogs', 'debit' => $value, 'memo' => $memo],
+                    ['account' => 'inventory', 'credit' => $value],
+                ],
+
+                // That invoice torn up: the goods are back and so is their cost.
+                MovementType::SaleVoid => [
+                    ['account' => 'inventory', 'debit' => $value, 'memo' => $memo],
+                    ['account' => 'cogs', 'credit' => $value],
+                ],
+
                 MovementType::Return => [
                     ['account' => 'inventory', 'debit' => $value, 'memo' => $memo],
                     ['account' => 'cogs', 'credit' => $value],
