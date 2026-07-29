@@ -323,6 +323,76 @@ class MaintenancePlanner
             ->exists();
     }
 
+    /**
+     * Cut the branch jobs a materialised round is missing.
+     *
+     * Fan-out happens once, at materialisation, which freezes the branch list at
+     * that moment. A site opened afterwards — or a round cut before rounds fanned
+     * out at all — leaves a branch holding a promise nobody scheduled. This
+     * closes that gap.
+     *
+     * Nothing anyone has started is touched: a job already accepted or assigned
+     * is left exactly where it is, and a finished round is history.
+     *
+     * @return int jobs created
+     */
+    public function topUpBranchJobs(?Contract $only = null): int
+    {
+        return DB::transaction(function () use ($only) {
+            $visits = ContractVisit::query()
+                ->whereNotNull('task_id')
+                ->whereIn('status', [VisitStatus::Planned->value, VisitStatus::Scheduled->value])
+                ->when($only, fn ($q, $contract) => $q->where('contract_id', $contract->id))
+                ->whereHas('contract', fn ($q) => $q->activeOn(now()->toDateString()))
+                ->with(['contract.customer', 'contract.assets', 'tasks'])
+                ->get();
+
+            $created = 0;
+
+            foreach ($visits as $visit) {
+                $branches = $visit->contract->customer?->branches()->active()->get() ?? collect();
+
+                if ($branches->isEmpty()) {
+                    continue;
+                }
+
+                $live = $visit->tasks->reject(fn (Task $task) => $task->status === TaskStatus::Cancelled);
+                $covered = $live->pluck('branch_id')->filter()->all();
+                $missing = $branches->reject(fn (Branch $branch) => in_array($branch->id, $covered, true));
+
+                if ($missing->isEmpty()) {
+                    continue;
+                }
+
+                // A round cut before the fan-out carries one site-wide job. Point
+                // it at the first uncovered branch rather than leaving it beside
+                // the new ones, where it would double that round's first visit —
+                // but only while it is still untouched.
+                $legacy = $live->first(fn (Task $task) => $task->branch_id === null
+                    && $task->status === TaskStatus::Pending
+                    && $task->assigned_to === null);
+
+                if ($legacy) {
+                    $branch = $missing->shift();
+                    $assets = $visit->contract->assets->where('branch_id', $branch->id)->values();
+
+                    $legacy->update([
+                        'branch_id' => $branch->id,
+                        'asset_id' => $assets->count() === 1 ? $assets->first()->id : null,
+                        'title' => 'زيارة صيانة دورية — '.$visit->contract->code.' — '.$branch->name,
+                    ]);
+                }
+
+                foreach ($missing as $branch) {
+                    $this->createTaskFor($visit, $branch);
+                    $created++;
+                }
+            }
+
+            return $created;
+        });
+    }
+
     protected function createTaskFor(ContractVisit $visit, ?Branch $branch = null): Task
     {
         $contract = $visit->contract;

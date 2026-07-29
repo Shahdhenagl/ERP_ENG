@@ -94,6 +94,84 @@ it('reports the coverage and each round\'s branch jobs to the screen', function 
         ->toBe(['الجيزة', 'المعادي', 'مدينة نصر']);
 });
 
+it('tops up a round that missed a branch, and leaves started work alone', function () {
+    $contract = Contract::factory()->active()->for($this->customer)->create([
+        'starts_on' => now()->toDateString(),
+        'ends_on' => now()->addYear()->subDay()->toDateString(),
+        'visits_per_year' => 12,
+    ]);
+
+    $first = \App\Models\Branch::create([
+        'customer_id' => $this->customer->id, 'name' => 'المعادي', 'is_active' => true,
+    ]);
+
+    $visit = \App\Models\ContractVisit::create([
+        'contract_id' => $contract->id, 'sequence' => 1,
+        'planned_for' => now()->toDateString(), 'status' => VisitStatus::Planned,
+    ]);
+
+    $this->planner->materialiseDueVisits();
+    expect(Task::where('contract_visit_id', $visit->id)->count())->toBe(1);
+
+    // The site opens two more branches after the round was already cut.
+    foreach (['مدينة نصر', 'الجيزة'] as $name) {
+        \App\Models\Branch::create([
+            'customer_id' => $this->customer->id, 'name' => $name, 'is_active' => true,
+        ]);
+    }
+
+    // A technician has already been put on the first branch's job.
+    $started = Task::where('contract_visit_id', $visit->id)->firstOrFail();
+    $started->update(['assigned_to' => User::factory()->technician()->create()->id]);
+
+    expect($this->planner->topUpBranchJobs())->toBe(2);
+
+    $tasks = Task::where('contract_visit_id', $visit->id)->get();
+
+    expect($tasks)->toHaveCount(3)
+        ->and($tasks->pluck('branch_id')->filter()->unique()->count())->toBe(3)
+        // The assigned job kept its branch and its technician.
+        ->and($started->fresh()->branch_id)->toBe($first->id)
+        ->and($started->fresh()->assigned_to)->not->toBeNull();
+
+    // Running it again finds nothing left to do.
+    expect($this->planner->topUpBranchJobs())->toBe(0);
+});
+
+it('points a pre-fan-out round\'s site-wide job at a branch instead of duplicating it', function () {
+    $contract = Contract::factory()->active()->for($this->customer)->create([
+        'starts_on' => now()->toDateString(),
+        'ends_on' => now()->addYear()->subDay()->toDateString(),
+        'visits_per_year' => 12,
+    ]);
+
+    $visit = \App\Models\ContractVisit::create([
+        'contract_id' => $contract->id, 'sequence' => 1,
+        'planned_for' => now()->toDateString(), 'status' => VisitStatus::Planned,
+    ]);
+
+    // Cut while the customer had no branches on file: one job, no site.
+    $this->planner->materialiseDueVisits();
+    $legacy = Task::where('contract_visit_id', $visit->id)->firstOrFail();
+    expect($legacy->branch_id)->toBeNull();
+
+    foreach (['المعادي', 'مدينة نصر'] as $name) {
+        \App\Models\Branch::create([
+            'customer_id' => $this->customer->id, 'name' => $name, 'is_active' => true,
+        ]);
+    }
+
+    // Two branches, one existing job — so only one new one is cut, and the
+    // round ends up with exactly one visit per site rather than three jobs.
+    expect($this->planner->topUpBranchJobs())->toBe(1);
+
+    $tasks = Task::where('contract_visit_id', $visit->id)->get();
+
+    expect($tasks)->toHaveCount(2)
+        ->and($tasks->pluck('branch_id')->filter()->unique()->count())->toBe(2)
+        ->and($legacy->fresh()->branch_id)->not->toBeNull();
+});
+
 it('still cuts a single site job when the customer has no branches', function () {
     $contract = Contract::factory()->active()->for($this->customer)->create([
         'starts_on' => now()->toDateString(),
