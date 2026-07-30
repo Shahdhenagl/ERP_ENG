@@ -23,6 +23,12 @@ class InvoiceResource extends JsonResource
             'source' => $this->source(),
             'source_label' => $this->sourceLabel(),
             'task_code' => $this->whenLoaded('task', fn () => $this->task?->code),
+            // Which site was visited and which machine was worked on. A bill
+            // for "أجر زيارة وأعمال فنية" says nothing about either, and a
+            // customer with thirty branches cannot check it without them.
+            'branch' => $this->whenLoaded('task', fn () => $this->task?->branch?->name),
+            'asset' => $this->whenLoaded('task', fn () => $this->task?->asset?->label()),
+            'asset_serial' => $this->whenLoaded('task', fn () => $this->task?->asset?->serial),
 
             'issue_date' => $this->issue_date?->toDateString(),
             'due_date' => $this->due_date?->toDateString(),

@@ -59,11 +59,19 @@ class Setting extends Model
      */
     public static function values(): array
     {
-        return Cache::rememberForever('settings', function () {
-            $stored = static::query()->pluck('value', 'key')->all();
+        // Only the stored rows are cached, and the defaults are laid under them
+        // on every read. Caching the merged array meant a default added in a
+        // release stayed invisible until somebody cleared the cache by hand —
+        // and `rememberForever` means nobody ever would.
+        $stored = Cache::rememberForever(
+            'settings',
+            fn () => array_filter(
+                static::query()->pluck('value', 'key')->all(),
+                fn ($value) => $value !== null && $value !== '',
+            ),
+        );
 
-            return [...static::DEFAULTS, ...array_filter($stored, fn ($v) => $v !== null && $v !== '')];
-        });
+        return [...static::DEFAULTS, ...$stored];
     }
 
     public static function get(string $key, ?string $fallback = null): ?string

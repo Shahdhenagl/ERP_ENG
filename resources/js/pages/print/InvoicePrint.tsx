@@ -34,6 +34,8 @@ export function InvoicePrint() {
                         ['الشركة', invoice.customer?.company],
                         ['الهاتف', invoice.customer?.phone],
                         ['العنوان', invoice.customer?.address],
+                        // Where the visit went, on the sheet the customer keeps.
+                        ['الفرع', invoice.branch],
                         ['الرقم الضريبي', invoice.customer_tax_id],
                     ]}
                 />
@@ -45,6 +47,12 @@ export function InvoicePrint() {
                         ['التاريخ', invoice.issue_date ? formatDate(invoice.issue_date) : null],
                         ['الاستحقاق', invoice.due_date ? formatDate(invoice.due_date) : null],
                         ['أمر الشغل', invoice.task_code],
+                        [
+                            'الجهاز',
+                            invoice.asset
+                                ? `${invoice.asset}${invoice.asset_serial ? ` · ${invoice.asset_serial}` : ''}`
+                                : null,
+                        ],
                         ['الحالة', invoice.payment_state_label],
                     ]}
                 />

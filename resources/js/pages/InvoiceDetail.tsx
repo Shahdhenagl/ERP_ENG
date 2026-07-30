@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { ArrowRight, Ban, Building2, CheckCircle2, Pencil, Printer, Wallet } from 'lucide-react'
+import { ArrowRight, Ban, Building2, CheckCircle2, HardDrive, MapPin, Pencil, Printer, Wallet } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { InvoiceForm } from '@/components/InvoiceForm'
@@ -97,6 +97,32 @@ export function InvoiceDetail() {
                             {invoice.due_date && ` · تستحق ${formatDate(invoice.due_date)}`}
                             {invoice.task_code && ` · ${invoice.task_code}`}
                         </p>
+
+                        {/* Which site was visited and which machine was worked
+                            on. "أجر زيارة وأعمال فنية" names neither, and a
+                            customer with thirty branches cannot check a bill
+                            that does not say where it went. */}
+                        {(invoice.branch || invoice.asset) && (
+                            <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-navy-500">
+                                {invoice.branch && (
+                                    <span className="inline-flex items-center gap-1">
+                                        <MapPin className="size-3.5 text-navy-300" />
+                                        {invoice.branch}
+                                    </span>
+                                )}
+                                {invoice.asset && (
+                                    <span className="inline-flex items-center gap-1">
+                                        <HardDrive className="size-3.5 text-navy-300" />
+                                        {invoice.asset}
+                                        {invoice.asset_serial && (
+                                            <span className="tabular text-navy-400">
+                                                · {invoice.asset_serial}
+                                            </span>
+                                        )}
+                                    </span>
+                                )}
+                            </p>
+                        )}
                     </div>
 
                     <div className="text-left">
@@ -201,34 +227,56 @@ export function InvoiceDetail() {
             <section className="card mt-5 overflow-hidden">
                 <h2 className="border-b border-navy-100 p-4 text-sm font-bold text-navy-800">البنود</h2>
 
-                <div className="divide-y divide-navy-100">
-                    {invoice.lines?.map((line) => {
-                        const specs = itemSpecRows(line.item_category, line.item_specs)
+                {/* A table, because that is what the lines are — and the
+                    document the customer holds prints them as one. */}
+                <div className="overflow-x-auto">
+                    <table className="w-full min-w-[40rem] text-right text-sm">
+                        <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
+                            <tr>
+                                <th className="w-10 px-3 py-2.5">#</th>
+                                <th className="px-3 py-2.5">البيان</th>
+                                <th className="w-24 px-3 py-2.5">الكمية</th>
+                                <th className="w-28 px-3 py-2.5">سعر الوحدة</th>
+                                <th className="w-28 px-3 py-2.5 text-left">الإجمالي</th>
+                            </tr>
+                        </thead>
 
-                        return (
-                            <div key={line.id} className="flex items-start justify-between gap-3 p-4">
-                                <div className="min-w-0">
-                                    <div className="flex flex-wrap items-center gap-1.5">
-                                        <p className="truncate text-sm font-bold text-navy-900">
-                                            {line.description}
-                                        </p>
-                                        {line.item_category_label && (
-                                            <span className="badge bg-navy-100 text-navy-600">
-                                                {line.item_category_label}
-                                            </span>
-                                        )}
-                                    </div>
-                                    {specs.length > 0 && <SpecRowList rows={specs} />}
-                                    <p className="tabular mt-0.5 text-xs text-navy-400">
-                                        {formatQty(line.qty)} {line.unit ?? ''} × {formatMoney(line.unit_price)}
-                                    </p>
-                                </div>
-                                <p className="tabular shrink-0 text-sm font-bold text-navy-900">
-                                    {formatMoney(line.line_total)}
-                                </p>
-                            </div>
-                        )
-                    })}
+                        <tbody>
+                            {invoice.lines?.map((line, index) => {
+                                const specs = itemSpecRows(line.item_category, line.item_specs)
+
+                                return (
+                                    <tr key={line.id} className="border-t border-navy-100 align-top">
+                                        <td className="tabular px-3 py-3 text-navy-400">{index + 1}</td>
+
+                                        <td className="px-3 py-3">
+                                            <div className="flex flex-wrap items-center gap-1.5">
+                                                <span className="font-bold text-navy-900">
+                                                    {line.description}
+                                                </span>
+                                                {line.item_category_label && (
+                                                    <span className="badge bg-navy-100 text-navy-600">
+                                                        {line.item_category_label}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {specs.length > 0 && <SpecRowList rows={specs} />}
+                                        </td>
+
+                                        <td className="tabular px-3 py-3 text-navy-600">
+                                            {formatQty(line.qty)}
+                                        </td>
+                                        <td className="tabular px-3 py-3 text-navy-600">
+                                            {formatMoney(line.unit_price)}
+                                        </td>
+                                        <td className="tabular px-3 py-3 text-left font-bold text-navy-900">
+                                            {formatMoney(line.line_total)}
+                                        </td>
+                                    </tr>
+                                )
+                            })}
+                        </tbody>
+                    </table>
                 </div>
 
                 <div className="space-y-1.5 bg-navy-50 p-4 text-sm">

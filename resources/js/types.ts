@@ -860,6 +860,10 @@ export interface Invoice {
     customer?: Customer
     task_id: number | null
     task_code?: string | null
+    /** The site visited and the machine worked on, when a job is behind it. */
+    branch?: string | null
+    asset?: string | null
+    asset_serial?: string | null
 
     /** What the invoice is for — derived from what it hangs off. */
     source: InvoiceSource

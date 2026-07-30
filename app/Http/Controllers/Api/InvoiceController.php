@@ -69,13 +69,20 @@ class InvoiceController extends Controller
 
         ActivityLog::record('invoice.created', $invoice, "تم إنشاء الفاتورة {$invoice->code}");
 
-        return response()->json(new InvoiceResource($invoice->load(['customer', 'lines.item'])), 201);
+        return response()->json(new InvoiceResource($invoice->load(['customer', 'lines.item', 'task.branch', 'task.asset'])), 201);
     }
 
     public function show(Invoice $invoice): InvoiceResource
     {
         return new InvoiceResource(
-            $invoice->load(['customer', 'task', 'lines.item', 'payments.box', 'payments.actor']),
+            $invoice->load([
+                'customer',
+                'task.branch',
+                'task.asset',
+                'lines.item',
+                'payments.box',
+                'payments.actor',
+            ]),
         );
     }
 
@@ -109,7 +116,7 @@ class InvoiceController extends Controller
         $this->syncLines($invoice, $data['lines']);
         $invoice = $this->billing->recalculate($invoice);
 
-        return response()->json(new InvoiceResource($invoice->load(['customer', 'lines.item'])));
+        return response()->json(new InvoiceResource($invoice->load(['customer', 'lines.item', 'task.branch', 'task.asset'])));
     }
 
     public function issue(Request $request, Invoice $invoice): InvoiceResource
@@ -137,7 +144,7 @@ class InvoiceController extends Controller
 
         ActivityLog::record('invoice.voided', $voided, "تم إلغاء الفاتورة {$voided->code}");
 
-        return new InvoiceResource($voided->load(['customer', 'lines.item']));
+        return new InvoiceResource($voided->load(['customer', 'lines.item', 'task.branch', 'task.asset']));
     }
 
     /** Draft an invoice for a finished job from the parts it consumed. */
@@ -149,7 +156,7 @@ class InvoiceController extends Controller
 
         ActivityLog::record('invoice.created', $invoice, "تم إنشاء الفاتورة {$invoice->code} من {$task->code}");
 
-        return response()->json(new InvoiceResource($invoice->load(['customer', 'lines.item'])), 201);
+        return response()->json(new InvoiceResource($invoice->load(['customer', 'lines.item', 'task.branch', 'task.asset'])), 201);
     }
 
     public function destroy(Invoice $invoice): JsonResponse

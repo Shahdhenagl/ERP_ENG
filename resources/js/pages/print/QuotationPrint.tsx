@@ -130,26 +130,33 @@ export function QuotationPrint() {
 
             {/* The conditions the offer closes on, read label-first the way the
                 sheet is scanned: down the right column, then across. */}
+            {/* The conditions the offer closes on, in a box beside the
+                signature. A condition with a value states it; one without is a
+                dotted rule, because a quote is often agreed at a desk and the
+                terms written on the sheet by whoever agreed them. */}
             {conditions.length > 0 && (
-                <div className="doc-keep mt-6 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5">
-                    <ul className="space-y-1.5">
-                        {conditions.map((condition) => (
-                            <li
-                                key={condition.label}
-                                className="text-[13px] font-bold text-navy-800 underline underline-offset-4"
-                            >
-                                {condition.label} :-
-                            </li>
-                        ))}
-                    </ul>
+                <div className="doc-keep mt-6 rounded-xl border border-navy-200 bg-navy-50/50 p-4">
+                    <p className="mb-2.5 text-[13px] font-extrabold text-navy-800">الشروط والأحكام</p>
 
-                    <ul className="space-y-1.5">
+                    <dl className="space-y-2">
                         {conditions.map((condition) => (
-                            <li key={condition.label} className="text-[13px] text-navy-700">
-                                * {condition.value}
-                            </li>
+                            <div key={condition.label} className="flex items-baseline gap-2 text-[12.5px]">
+                                <dt className="shrink-0 font-bold text-navy-700">{condition.label}:</dt>
+                                <dd className="min-w-0 flex-1">
+                                    {condition.value ? (
+                                        <span className="text-navy-700">{condition.value}</span>
+                                    ) : (
+                                        <span
+                                            className="block border-b border-dotted border-navy-300"
+                                            aria-hidden
+                                        >
+                                            &nbsp;
+                                        </span>
+                                    )}
+                                </dd>
+                            </div>
                         ))}
-                    </ul>
+                    </dl>
                 </div>
             )}
 
