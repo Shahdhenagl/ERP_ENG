@@ -8,10 +8,9 @@ import { useArea } from '@/lib/nav'
  *
  * The bottom bar carries top-level destinations alone, so without this strip a
  * nested section would be unreachable. It hides only where the sidebar is
- * genuinely there to replace it — an admin above `lg`; a manager keeps it at
- * every width, because a manager never gets a sidebar at all. Every module now
- * lists its sections in the sidebar, so the strip is purely the small-screen
- * and manager fallback.
+ * genuinely there to replace it — anyone who dispatches, above `lg`. Below that
+ * width, and for a technician at any width, the strip is the only way into a
+ * module's sections.
  */
 export function SectionTabs({
     sections,
@@ -19,13 +18,15 @@ export function SectionTabs({
     sections: ReadonlyArray<readonly [string, string]>
 }) {
     const { path } = useArea()
-    const { user } = useAuth()
+    const { canDispatch } = useAuth()
 
     return (
         <div
             className={clsx(
                 'mb-4 flex gap-1 overflow-x-auto rounded-xl bg-navy-100 p-1',
-                user?.role === 'admin' && 'lg:hidden',
+                // Hidden only where the sidebar genuinely replaces it, which
+                // is now anyone who dispatches — not admins alone.
+                canDispatch && 'lg:hidden',
             )}
         >
             {sections.map(([to, label]) => (

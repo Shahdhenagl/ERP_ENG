@@ -41,10 +41,19 @@ export function AppLayout() {
         item.children ? { ...item, children: item.children.filter(allowed) } : item,
     )
 
-    // Admins carry the whole system in their nav, which is more than a bar can
-    // hold without shrinking the labels past reading. They get the sidebar back
-    // on wide screens; managers and technicians never do.
-    const hasSidebar = user?.role === 'admin'
+    /**
+     * Who gets the sidebar on a wide screen.
+     *
+     * A manager's nav is nearly the whole system too — sales, purchasing,
+     * stock, contracts, treasury — and a bar cannot hold that without shrinking
+     * the labels past reading. Restricting the sidebar to admins left every
+     * manager on a desktop using the phone layout: a bottom bar and no way to
+     * see where they were in a module.
+     *
+     * A technician's does not: four destinations, used one-handed in a van, and
+     * a bar is the right control for that at any width.
+     */
+    const hasSidebar = canDispatch
 
     // The compose button belongs in the middle of the bar, so the items split
     // around it rather than trailing off one end.
@@ -59,7 +68,7 @@ export function AppLayout() {
 
     return (
         <div className="min-h-dvh bg-navy-50" dir="rtl">
-            {/* ══ Admin sidebar (wide screens only) ════════════ */}
+            {/* ══ Office sidebar (wide screens only) ═══════════ */}
             {hasSidebar && (
                 <aside className="surface-brand fixed inset-y-0 right-0 z-30 hidden w-72 flex-col lg:flex">
                     <div className="flex items-center gap-3 px-6 py-7">
