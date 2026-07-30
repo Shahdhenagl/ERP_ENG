@@ -1,8 +1,9 @@
 import clsx from 'clsx'
-import { Plus, Save, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { Save, Trash2 } from 'lucide-react'
+import { Fragment, useState } from 'react'
 import { CustomerSitePicker } from '@/components/CustomerSitePicker'
 import { DiscountField } from '@/components/DiscountField'
+import { LineCell, LineDetailRow, LineItems, LineRow } from '@/components/LineItems'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, Field, Input, Select } from '@/components/ui'
@@ -133,99 +134,142 @@ export function InvoiceForm({
                     />
                 )}
 
-                <div className="space-y-2">
-                    {rows.map((row, index) => (
-                        <div key={index} className="space-y-2 rounded-2xl border border-navy-100 p-3">
-                            <div className="flex flex-wrap gap-2 sm:flex-nowrap">
-                                {/* Picking a catalogue item names the product and
-                                    opens at its selling price — the same choice the
-                                    quote offers, so a bill raised by hand carries the
-                                    device rather than a free-text line. */}
-                                <Select
-                                    value={row.item_id}
-                                    onChange={(event) => {
-                                        const item = items.find(
-                                            (candidate) => String(candidate.id) === event.target.value,
-                                        )
+                <LineItems
+                    columns={[
+                        { label: 'الصنف', className: 'w-44' },
+                        { label: 'الكود', className: 'w-24' },
+                        { label: 'البيان' },
+                        { label: 'الكمية', className: 'w-24' },
+                        { label: 'سعر الوحدة', className: 'w-28' },
+                        { label: 'الإجمالي', className: 'w-28' },
+                    ]}
+                    error={errors.lines}
+                    onAdd={() =>
+                        setRows((current) => [
+                            ...current,
+                            { item_id: '', description: '', qty: '1', unit_price: '0' },
+                        ])
+                    }
+                >
+                    {rows.map((row, index) => {
+                        const item = items.find((candidate) => String(candidate.id) === row.item_id)
+                        const short = item ? (Number(row.qty) || 0) > item.total_qty : false
+                        const specs = item ? itemSpecRows(item.category, item.specs) : []
 
-                                        setRows((current) =>
-                                            current.map((existing, i) =>
-                                                i === index
-                                                    ? {
-                                                          ...existing,
-                                                          item_id: event.target.value,
-                                                          description: item?.name ?? existing.description,
-                                                          unit_price:
-                                                              item && !Number(existing.unit_price)
-                                                                  ? String(item.sell_price ?? item.avg_cost)
-                                                                  : existing.unit_price,
-                                                      }
-                                                    : existing,
-                                            ),
-                                        )
-                                    }}
-                                    className="w-44 shrink-0"
-                                >
-                                    <option value="">بند حر</option>
-                                    {items.map((item) => (
-                                        <option key={item.id} value={item.id}>
-                                            {item.name}
-                                        </option>
-                                    ))}
-                                </Select>
+                        return (
+                            <Fragment key={index}>
+                                <LineRow>
+                                    <LineCell>
+                                        {/* Picking a catalogue item names the line
+                                            and opens at its selling price, so a bill
+                                            raised by hand carries the device rather
+                                            than a sentence. */}
+                                        <Select
+                                            value={row.item_id}
+                                            onChange={(event) => {
+                                                const picked = items.find(
+                                                    (candidate) =>
+                                                        String(candidate.id) === event.target.value,
+                                                )
 
-                                <Input
-                                    value={row.description}
-                                    onChange={(event) => patch(index, 'description', event.target.value)}
-                                    placeholder="وصف البند"
-                                    className="min-w-0 flex-1"
-                                />
-                                <Input
-                                    type="number"
-                                    min={0}
-                                    step="0.001"
-                                    value={row.qty}
-                                    onChange={(event) => patch(index, 'qty', event.target.value)}
-                                    className="w-20 text-center"
-                                    dir="ltr"
-                                    aria-label="الكمية"
-                                />
-                                <Input
-                                    type="number"
-                                    min={0}
-                                    step="0.01"
-                                    value={row.unit_price}
-                                    onChange={(event) => patch(index, 'unit_price', event.target.value)}
-                                    className="w-28 text-center"
-                                    dir="ltr"
-                                    aria-label="سعر الوحدة"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setRows((current) => current.filter((_, i) => i !== index))
-                                    }
-                                    className="tap grid shrink-0 place-items-center rounded-xl px-3 text-red-500 transition hover:bg-red-50"
-                                    aria-label="حذف البند"
-                                >
-                                    <Trash2 className="size-4" />
-                                </button>
-                            </div>
+                                                setRows((current) =>
+                                                    current.map((existing, i) =>
+                                                        i === index
+                                                            ? {
+                                                                  ...existing,
+                                                                  item_id: event.target.value,
+                                                                  description:
+                                                                      picked?.name ??
+                                                                      existing.description,
+                                                                  unit_price:
+                                                                      picked &&
+                                                                      !Number(existing.unit_price)
+                                                                          ? String(
+                                                                                picked.sell_price ??
+                                                                                    picked.avg_cost,
+                                                                            )
+                                                                          : existing.unit_price,
+                                                              }
+                                                            : existing,
+                                                    ),
+                                                )
+                                            }}
+                                        >
+                                            <option value="">بند حر</option>
+                                            {items.map((option) => (
+                                                <option key={option.id} value={option.id}>
+                                                    {option.name}
+                                                </option>
+                                            ))}
+                                        </Select>
+                                    </LineCell>
 
-                            {/* The kind, the nameplate and what is on the shelf —
-                                issuing the invoice is what draws the stock down. */}
-                            {(() => {
-                                const item = items.find(
-                                    (candidate) => String(candidate.id) === row.item_id,
-                                )
+                                    <LineCell className="tabular text-[11px] text-navy-500">
+                                        {item?.code ?? '—'}
+                                    </LineCell>
 
-                                if (!item) return null
+                                    <LineCell>
+                                        <Input
+                                            value={row.description}
+                                            onChange={(event) =>
+                                                patch(index, 'description', event.target.value)
+                                            }
+                                            placeholder="وصف البند"
+                                        />
+                                    </LineCell>
 
-                                const short = (Number(row.qty) || 0) > item.total_qty
-                                const specs = itemSpecRows(item.category, item.specs)
+                                    <LineCell>
+                                        <Input
+                                            type="number"
+                                            min={0}
+                                            step="0.001"
+                                            value={row.qty}
+                                            onChange={(event) => patch(index, 'qty', event.target.value)}
+                                            className="text-center"
+                                            dir="ltr"
+                                            aria-label="الكمية"
+                                        />
+                                    </LineCell>
 
-                                return (
-                                    <>
+                                    <LineCell>
+                                        <Input
+                                            type="number"
+                                            min={0}
+                                            step="0.01"
+                                            value={row.unit_price}
+                                            onChange={(event) =>
+                                                patch(index, 'unit_price', event.target.value)
+                                            }
+                                            className="text-center"
+                                            dir="ltr"
+                                            aria-label="سعر الوحدة"
+                                        />
+                                    </LineCell>
+
+                                    <LineCell className="tabular pt-4 text-left font-bold text-navy-800">
+                                        {formatMoney(
+                                            (Number(row.qty) || 0) * (Number(row.unit_price) || 0),
+                                        )}
+                                    </LineCell>
+
+                                    <LineCell>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setRows((current) =>
+                                                    current.filter((_, i) => i !== index),
+                                                )
+                                            }
+                                            className="tap grid place-items-center rounded-lg p-2 text-red-500 transition hover:bg-red-50"
+                                            aria-label="حذف البند"
+                                        >
+                                            <Trash2 className="size-4" />
+                                        </button>
+                                    </LineCell>
+                                </LineRow>
+
+                                {item && (
+                                    <LineDetailRow span={6}>
                                         <p className="flex flex-wrap items-center gap-1.5 text-[11px] text-navy-500">
                                             <span
                                                 className={clsx(
@@ -236,40 +280,26 @@ export function InvoiceForm({
                                                 {ITEM_CATEGORY[item.category].label}
                                             </span>
                                             {item.group && <span>{item.group}</span>}
+                                            <span
+                                                className={clsx(
+                                                    'tabular font-bold',
+                                                    short ? 'text-red-600' : 'text-navy-400',
+                                                )}
+                                            >
+                                                المتاح بالمخزن: {formatQty(item.total_qty)} {item.unit}
+                                                {short && ' — أقل من الكمية المطلوبة'}
+                                            </span>
                                         </p>
 
                                         {specs.length > 0 && (
-                                            <SpecSheet rows={specs} empty={null} />
+                                            <SpecSheet rows={specs} empty={null} className="mt-2" />
                                         )}
-                                        <p
-                                            className={clsx(
-                                                'tabular text-[11px] font-bold',
-                                                short ? 'text-red-600' : 'text-navy-400',
-                                            )}
-                                        >
-                                            المتاح بالمخزن: {formatQty(item.total_qty)} {item.unit}
-                                            {short && ' — أقل من الكمية المطلوبة'}
-                                        </p>
-                                    </>
-                                )
-                            })()}
-                        </div>
-                    ))}
-
-                    <Button
-                        variant="ghost"
-                        icon={Plus}
-                        className="text-xs"
-                        onClick={() =>
-                            setRows((current) => [
-                                ...current,
-                                { item_id: '', description: '', qty: '1', unit_price: '0' },
-                            ])
-                        }
-                    >
-                        إضافة بند
-                    </Button>
-                </div>
+                                    </LineDetailRow>
+                                )}
+                            </Fragment>
+                        )
+                    })}
+                </LineItems>
 
                 {errors.lines && <p className="text-xs font-medium text-red-600">{errors.lines}</p>}
 

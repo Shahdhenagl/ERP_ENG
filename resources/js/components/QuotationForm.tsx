@@ -1,8 +1,9 @@
 import clsx from 'clsx'
-import { Plus, Save, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { Save, Trash2 } from 'lucide-react'
+import { Fragment, useState } from 'react'
 import { CustomerSitePicker } from '@/components/CustomerSitePicker'
 import { DiscountField } from '@/components/DiscountField'
+import { LineCell, LineDetailRow, LineItems, LineRow } from '@/components/LineItems'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, Field, Input, Select, Textarea } from '@/components/ui'
@@ -159,150 +160,164 @@ export function QuotationForm({
                     />
                 </Field>
 
-                <div className="space-y-2">
-                    {rows.map((row, index) => (
-                        <div key={index} className="space-y-2 rounded-2xl border border-navy-100 p-3">
-                            <div className="flex gap-2">
-                                {/* Picking a catalogue item fills the description and
-                                    opens at its selling price — the cost is what the
-                                    company paid, and quoting it is how a sale goes out
-                                    at no margin. Falls back to cost only when no
-                                    selling price has been set on the item yet. */}
-                                <Select
-                                    value={row.item_id}
-                                    onChange={(e) => {
-                                        const item = items.find((i) => String(i.id) === e.target.value)
+                <LineItems
+                    columns={[
+                        { label: 'الصنف', className: 'w-44' },
+                        { label: 'الكود', className: 'w-24' },
+                        { label: 'البيان' },
+                        { label: 'الكمية', className: 'w-24' },
+                        { label: 'سعر الوحدة', className: 'w-28' },
+                        { label: 'الإجمالي', className: 'w-28' },
+                    ]}
+                    error={errors.lines}
+                    onAdd={() =>
+                        setRows((c) => [
+                            ...c,
+                            { item_id: '', description: '', qty: '1', unit_price: '0' },
+                        ])
+                    }
+                >
+                    {rows.map((row, index) => {
+                        const item = items.find((i) => String(i.id) === row.item_id)
+                        const short = item ? (Number(row.qty) || 0) > item.total_qty : false
+                        const specs = item ? itemSpecRows(item.category, item.specs) : []
 
-                                        setRows((current) =>
-                                            current.map((r, i) =>
-                                                i === index
-                                                    ? {
-                                                          ...r,
-                                                          item_id: e.target.value,
-                                                          description: item?.name ?? r.description,
-                                                          unit_price:
-                                                              item && !Number(r.unit_price)
-                                                                  ? String(item.sell_price ?? item.avg_cost)
-                                                                  : r.unit_price,
-                                                      }
-                                                    : r,
-                                            ),
-                                        )
-                                    }}
-                                    className="w-44 shrink-0"
-                                >
-                                    <option value="">بند حر</option>
-                                    {items.map((item) => (
-                                        <option key={item.id} value={item.id}>
-                                            {item.name}
-                                        </option>
-                                    ))}
-                                </Select>
+                        return (
+                            <Fragment key={index}>
+                                <LineRow>
+                                    <LineCell>
+                                        {/* Picking a catalogue item fills the
+                                            description and opens at its selling
+                                            price — the cost is what the company
+                                            paid, and quoting that is how a sale
+                                            goes out at no margin. */}
+                                        <Select
+                                            value={row.item_id}
+                                            onChange={(e) => {
+                                                const picked = items.find(
+                                                    (i) => String(i.id) === e.target.value,
+                                                )
 
-                                <Input
-                                    value={row.description}
-                                    onChange={(e) => patch(index, 'description', e.target.value)}
-                                    placeholder="وصف البند"
-                                    className="min-w-0 flex-1"
-                                />
+                                                setRows((current) =>
+                                                    current.map((r, i) =>
+                                                        i === index
+                                                            ? {
+                                                                  ...r,
+                                                                  item_id: e.target.value,
+                                                                  description:
+                                                                      picked?.name ?? r.description,
+                                                                  unit_price:
+                                                                      picked && !Number(r.unit_price)
+                                                                          ? String(
+                                                                                picked.sell_price ??
+                                                                                    picked.avg_cost,
+                                                                            )
+                                                                          : r.unit_price,
+                                                              }
+                                                            : r,
+                                                    ),
+                                                )
+                                            }}
+                                        >
+                                            <option value="">بند حر</option>
+                                            {items.map((option) => (
+                                                <option key={option.id} value={option.id}>
+                                                    {option.name}
+                                                </option>
+                                            ))}
+                                        </Select>
+                                    </LineCell>
 
-                                <button
-                                    type="button"
-                                    onClick={() => setRows((c) => c.filter((_, i) => i !== index))}
-                                    className="tap grid shrink-0 place-items-center rounded-xl px-3 text-red-500 transition hover:bg-red-50"
-                                    aria-label="حذف السطر"
-                                >
-                                    <Trash2 className="size-4" />
-                                </button>
-                            </div>
+                                    <LineCell className="tabular text-[11px] text-navy-500">
+                                        {item?.code ?? '—'}
+                                    </LineCell>
 
-                            <div className="flex items-center gap-2">
-                                <Input
-                                    type="number"
-                                    min={0}
-                                    step="0.001"
-                                    value={row.qty}
-                                    onChange={(e) => patch(index, 'qty', e.target.value)}
-                                    className="w-20 text-center"
-                                    dir="ltr"
-                                    aria-label="الكمية"
-                                />
-                                <span className="text-xs text-navy-400">×</span>
-                                <Input
-                                    type="number"
-                                    min={0}
-                                    step="0.01"
-                                    value={row.unit_price}
-                                    onChange={(e) => patch(index, 'unit_price', e.target.value)}
-                                    className="w-32 text-center"
-                                    dir="ltr"
-                                    aria-label="سعر الوحدة"
-                                />
-                                <span className="tabular flex-1 text-left text-sm font-bold text-navy-700">
-                                    {formatMoney((Number(row.qty) || 0) * (Number(row.unit_price) || 0))}
-                                </span>
-                            </div>
+                                    <LineCell>
+                                        <Input
+                                            value={row.description}
+                                            onChange={(e) => patch(index, 'description', e.target.value)}
+                                            placeholder="وصف البند"
+                                        />
+                                    </LineCell>
 
-                            {/* What is actually on the shelf. The invoice is what
-                                draws it down, and issuing one the store cannot cover
-                                is refused — better to see the shortage while the
-                                quote is still being priced. */}
-                            {(() => {
-                                const item = items.find((i) => String(i.id) === row.item_id)
+                                    <LineCell>
+                                        <Input
+                                            type="number"
+                                            min={0}
+                                            step="0.001"
+                                            value={row.qty}
+                                            onChange={(e) => patch(index, 'qty', e.target.value)}
+                                            className="text-center"
+                                            dir="ltr"
+                                            aria-label="الكمية"
+                                        />
+                                    </LineCell>
 
-                                if (!item) return null
+                                    <LineCell>
+                                        <Input
+                                            type="number"
+                                            min={0}
+                                            step="0.01"
+                                            value={row.unit_price}
+                                            onChange={(e) => patch(index, 'unit_price', e.target.value)}
+                                            className="text-center"
+                                            dir="ltr"
+                                            aria-label="سعر الوحدة"
+                                        />
+                                    </LineCell>
 
-                                const short = (Number(row.qty) || 0) > item.total_qty
-                                const specs = itemSpecRows(item.category, item.specs)
+                                    <LineCell className="tabular pt-4 text-left font-bold text-navy-800">
+                                        {formatMoney(
+                                            (Number(row.qty) || 0) * (Number(row.unit_price) || 0),
+                                        )}
+                                    </LineCell>
 
-                                return (
-                                    <>
-                                        {/* The whole nameplate, because 10kVA
-                                            single-phase and 10kVA three-phase are
-                                            not the same thing to price. */}
+                                    <LineCell>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setRows((c) => c.filter((_, i) => i !== index))
+                                            }
+                                            className="tap grid place-items-center rounded-lg p-2 text-red-500 transition hover:bg-red-50"
+                                            aria-label="حذف السطر"
+                                        >
+                                            <Trash2 className="size-4" />
+                                        </button>
+                                    </LineCell>
+                                </LineRow>
+
+                                {item && (
+                                    <LineDetailRow span={6}>
                                         <p className="flex flex-wrap items-center gap-1.5 text-[11px] text-navy-500">
                                             <span
-                                                className={clsx('badge', ITEM_CATEGORY[item.category].chip)}
+                                                className={clsx(
+                                                    'badge',
+                                                    ITEM_CATEGORY[item.category].chip,
+                                                )}
                                             >
                                                 {ITEM_CATEGORY[item.category].label}
                                             </span>
                                             {item.group && <span>{item.group}</span>}
+                                            <span
+                                                className={clsx(
+                                                    'tabular font-bold',
+                                                    short ? 'text-red-600' : 'text-navy-400',
+                                                )}
+                                            >
+                                                المتاح بالمخزن: {formatQty(item.total_qty)} {item.unit}
+                                                {short && ' — أقل من الكمية المعروضة'}
+                                            </span>
                                         </p>
 
                                         {specs.length > 0 && (
-                                            <SpecSheet rows={specs} empty={null} />
+                                            <SpecSheet rows={specs} empty={null} className="mt-2" />
                                         )}
-                                        <p
-                                            className={clsx(
-                                                'tabular text-[11px] font-bold',
-                                                short ? 'text-red-600' : 'text-navy-400',
-                                            )}
-                                        >
-                                            المتاح بالمخزن: {formatQty(item.total_qty)} {item.unit}
-                                            {short && ' — أقل من الكمية المعروضة'}
-                                        </p>
-                                    </>
-                                )
-                            })()}
-                        </div>
-                    ))}
-
-                    <Button
-                        variant="ghost"
-                        icon={Plus}
-                        className="text-xs"
-                        onClick={() =>
-                            setRows((c) => [
-                                ...c,
-                                { item_id: '', description: '', qty: '1', unit_price: '0' },
-                            ])
-                        }
-                    >
-                        إضافة بند
-                    </Button>
-                </div>
-
-                {errors.lines && <p className="text-xs font-medium text-red-600">{errors.lines}</p>}
+                                    </LineDetailRow>
+                                )}
+                            </Fragment>
+                        )
+                    })}
+                </LineItems>
 
                 <div className="grid gap-4 sm:grid-cols-2">
                     <DiscountField

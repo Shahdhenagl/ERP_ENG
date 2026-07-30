@@ -9,6 +9,7 @@ import { ErrorState } from '@/components/ui'
 import { formatMoney, formatQty } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
 import { itemSpecRows } from '@/lib/specs'
+import { SpecRowList } from '@/components/SpecSheet'
 import { useQuotation, useSettings } from '@/lib/queries'
 
 export function QuotationPrint() {
@@ -88,21 +89,7 @@ export function QuotationPrint() {
                                     {/* The whole nameplate on the document the
                                         customer keeps — a rating agreed in
                                         writing is not a rating on a screen. */}
-                                    {specs.length > 0 && (
-                                        <span className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5">
-                                            {specs.map(([label, value]) => (
-                                                <span
-                                                    key={label}
-                                                    className="tabular text-[11px] text-navy-500"
-                                                >
-                                                    {label}:{' '}
-                                                    <strong className="font-semibold text-navy-700">
-                                                        {value}
-                                                    </strong>
-                                                </span>
-                                            ))}
-                                        </span>
-                                    )}
+                                    {specs.length > 0 && <SpecRowList rows={specs} />}
                                 </td>
                                 <td className="tabular text-center">
                                     {formatQty(line.qty)}

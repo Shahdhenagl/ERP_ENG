@@ -1,6 +1,7 @@
 import clsx from 'clsx'
-import { Plus, Save, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { Save, Trash2 } from 'lucide-react'
+import { Fragment, useState } from 'react'
+import { LineCell, LineDetailRow, LineItems, LineRow } from '@/components/LineItems'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, Field, Input, Select, Textarea } from '@/components/ui'
@@ -119,103 +120,123 @@ export function PurchaseOrderForm({
                     </Field>
                 </div>
 
-                <div className="space-y-2">
-                    {rows.map((row, index) => (
-                        <div key={index} className="space-y-2 rounded-2xl border border-navy-100 p-3">
-                        <div className="flex flex-wrap gap-2 sm:flex-nowrap">
-                            <Select
-                                value={row.item_id}
-                                onChange={(e) => {
-                                    patch(index, 'item_id', e.target.value)
+                <LineItems
+                    columns={[
+                        { label: 'الصنف', className: 'w-56' },
+                        { label: 'الكود', className: 'w-24' },
+                        { label: 'الكمية', className: 'w-24' },
+                        { label: 'سعر الوحدة', className: 'w-28' },
+                        { label: 'الإجمالي', className: 'w-28' },
+                    ]}
+                    error={errors.lines}
+                    addLabel="إضافة صنف"
+                    onAdd={() => setRows((c) => [...c, { item_id: '', qty: '1', unit_price: '0' }])}
+                >
+                    {rows.map((row, index) => {
+                        const item = items.find((i) => String(i.id) === row.item_id)
+                        const specs = item ? itemSpecRows(item.category, item.specs) : []
 
-                                    // Last purchase price is the sensible opener;
-                                    // an unbought item has no price to suggest.
-                                    const item = items.find((i) => String(i.id) === e.target.value)
+                        return (
+                            <Fragment key={index}>
+                                <LineRow>
+                                    <LineCell>
+                                        <Select
+                                            value={row.item_id}
+                                            onChange={(e) => {
+                                                patch(index, 'item_id', e.target.value)
 
-                                    if (item && item.avg_cost > 0 && !Number(row.unit_price)) {
-                                        patch(index, 'unit_price', String(item.avg_cost))
-                                    }
-                                }}
-                                className="min-w-0 flex-1"
-                            >
-                                <option value="">— اختر الصنف —</option>
-                                {items.map((item) => (
-                                    <option key={item.id} value={item.id}>
-                                        {item.name}
-                                    </option>
-                                ))}
-                            </Select>
+                                                // Last purchase price is the
+                                                // sensible opener; an unbought
+                                                // item has none to suggest.
+                                                const picked = items.find(
+                                                    (i) => String(i.id) === e.target.value,
+                                                )
 
-                            <Input
-                                type="number"
-                                min={0}
-                                step="0.001"
-                                value={row.qty}
-                                onChange={(e) => patch(index, 'qty', e.target.value)}
-                                className="w-20 text-center"
-                                dir="ltr"
-                                aria-label="الكمية"
-                            />
-                            <Input
-                                type="number"
-                                min={0}
-                                step="0.01"
-                                value={row.unit_price}
-                                onChange={(e) => patch(index, 'unit_price', e.target.value)}
-                                className="w-28 text-center"
-                                dir="ltr"
-                                aria-label="سعر الوحدة"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setRows((c) => c.filter((_, i) => i !== index))}
-                                className="tap grid shrink-0 place-items-center rounded-xl px-3 text-red-500 transition hover:bg-red-50"
-                                aria-label="حذف السطر"
-                            >
-                                <Trash2 className="size-4" />
-                            </button>
-                        </div>
+                                                if (picked && picked.avg_cost > 0 && !Number(row.unit_price)) {
+                                                    patch(index, 'unit_price', String(picked.avg_cost))
+                                                }
+                                            }}
+                                        >
+                                            <option value="">— اختر الصنف —</option>
+                                            {items.map((option) => (
+                                                <option key={option.id} value={option.id}>
+                                                    {option.name}
+                                                </option>
+                                            ))}
+                                        </Select>
+                                    </LineCell>
 
-                        {/* What is actually being ordered. A rating typed into
-                            the catalogue is worth nothing if it is invisible at
-                            the moment somebody picks the wrong 10kVA. */}
-                        {(() => {
-                            const item = items.find((i) => String(i.id) === row.item_id)
+                                    <LineCell className="tabular text-[11px] text-navy-500">
+                                        {item?.code ?? '—'}
+                                    </LineCell>
 
-                            if (!item) return null
+                                    <LineCell>
+                                        <Input
+                                            type="number"
+                                            min={0}
+                                            step="0.001"
+                                            value={row.qty}
+                                            onChange={(e) => patch(index, 'qty', e.target.value)}
+                                            className="text-center"
+                                            dir="ltr"
+                                            aria-label="الكمية"
+                                        />
+                                    </LineCell>
 
-                            const specs = itemSpecRows(item.category, item.specs)
+                                    <LineCell>
+                                        <Input
+                                            type="number"
+                                            min={0}
+                                            step="0.01"
+                                            value={row.unit_price}
+                                            onChange={(e) => patch(index, 'unit_price', e.target.value)}
+                                            className="text-center"
+                                            dir="ltr"
+                                            aria-label="سعر الوحدة"
+                                        />
+                                    </LineCell>
 
-                            return (
-                                <>
-                                    <p className="flex flex-wrap items-center gap-1.5 text-[11px] text-navy-500">
-                                        <span className={clsx('badge', ITEM_CATEGORY[item.category].chip)}>
-                                            {ITEM_CATEGORY[item.category].label}
-                                        </span>
-                                        {item.group && <span>{item.group}</span>}
-                                        <span className="tabular">
-                                            بالمخزن {formatQty(item.total_qty)} {item.unit}
-                                        </span>
-                                    </p>
+                                    <LineCell className="tabular pt-4 text-left font-bold text-navy-800">
+                                        {formatMoney(
+                                            (Number(row.qty) || 0) * (Number(row.unit_price) || 0),
+                                        )}
+                                    </LineCell>
 
-                                    {specs.length > 0 && <SpecSheet rows={specs} empty={null} />}
-                                </>
-                            )
-                        })()}
-                        </div>
-                    ))}
+                                    <LineCell>
+                                        <button
+                                            type="button"
+                                            onClick={() => setRows((c) => c.filter((_, i) => i !== index))}
+                                            className="tap grid place-items-center rounded-lg p-2 text-red-500 transition hover:bg-red-50"
+                                            aria-label="حذف السطر"
+                                        >
+                                            <Trash2 className="size-4" />
+                                        </button>
+                                    </LineCell>
+                                </LineRow>
 
-                    <Button
-                        variant="ghost"
-                        icon={Plus}
-                        className="text-xs"
-                        onClick={() =>
-                            setRows((c) => [...c, { item_id: '', qty: '1', unit_price: '0' }])
-                        }
-                    >
-                        إضافة صنف
-                    </Button>
-                </div>
+                                {item && (
+                                    <LineDetailRow span={5}>
+                                        <p className="flex flex-wrap items-center gap-1.5 text-[11px] text-navy-500">
+                                            <span
+                                                className={clsx('badge', ITEM_CATEGORY[item.category].chip)}
+                                            >
+                                                {ITEM_CATEGORY[item.category].label}
+                                            </span>
+                                            {item.group && <span>{item.group}</span>}
+                                            <span className="tabular">
+                                                بالمخزن {formatQty(item.total_qty)} {item.unit}
+                                            </span>
+                                        </p>
+
+                                        {specs.length > 0 && (
+                                            <SpecSheet rows={specs} empty={null} className="mt-2" />
+                                        )}
+                                    </LineDetailRow>
+                                )}
+                            </Fragment>
+                        )
+                    })}
+                </LineItems>
 
                 {errors.lines && <p className="text-xs font-medium text-red-600">{errors.lines}</p>}
 
