@@ -347,7 +347,7 @@ function ItemsTable({
                     <tr className="border-b border-navy-100 bg-navy-50 text-right text-[11px] font-bold text-navy-500">
                         <th className="p-3">الصنف</th>
                         <th className="p-3">الفئة</th>
-                        <th className="p-3">الباركود</th>
+                        <th className="p-3">السيريال</th>
                         <th className="p-3 text-left">المتاح</th>
                         <th className="p-3 text-left">متوسط الشراء</th>
                         <th className="p-3 text-left">سعر البيع</th>

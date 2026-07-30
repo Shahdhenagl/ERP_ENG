@@ -64,7 +64,6 @@ export function ItemForm({
 
     const [form, setForm] = useState({
         name: item?.name ?? '',
-        sku: item?.sku ?? '',
         barcode: item?.barcode ?? '',
         category: (item?.category ?? defaultCategory ?? 'spare_part') as ItemCategory,
         unit: item?.unit ?? 'قطعة',
@@ -120,7 +119,6 @@ export function ItemForm({
         try {
             const saved = await save.mutateAsync({
                 name: form.name,
-                sku: form.sku || null,
                 barcode: form.barcode || null,
                 category: form.category,
                 item_category_id: effectiveGroup?.id ?? null,
@@ -215,16 +213,16 @@ export function ItemForm({
                         />
                     </Field>
 
-                    <Field label="كود المورّد" error={errors.sku}>
-                        <Input
-                            value={form.sku}
-                            onChange={(event) => set('sku')(event.target.value)}
-                            dir="ltr"
-                            className="text-left"
-                        />
-                    </Field>
-
-                    <Field label="الباركود / QR" error={errors.barcode}>
+                    {/* One code per item, and on the shelf it is the number
+                        stamped on the device. A second "supplier code" beside
+                        it was asked for once and filled in never — two boxes
+                        for one number is how half a catalogue ends up coded
+                        under the wrong one. */}
+                    <Field
+                        label="سيريال الجهاز"
+                        error={errors.barcode}
+                        hint="السيريال أو الباركود المطبوع على الجهاز"
+                    >
                         <Input
                             value={form.barcode}
                             onChange={(event) => set('barcode')(event.target.value)}

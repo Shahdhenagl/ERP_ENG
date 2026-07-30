@@ -229,7 +229,7 @@ export interface WarehouseSummary {
 export interface StocktakeSheetLine {
     item_id: number
     name: string
-    sku: string | null
+    code: string | null
     unit: string | null
     book_qty: number
     unit_cost: number

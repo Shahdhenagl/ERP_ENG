@@ -326,7 +326,9 @@ class StockController extends Controller
             'items' => $items->map(fn (Item $item) => [
                 'item_id' => $item->id,
                 'name' => $item->name,
-                'sku' => $item->sku,
+                // The serial the item carries, falling back to the
+                // supplier code older rows were coded under.
+                'code' => $item->barcode ?: $item->sku,
                 'unit' => $item->unit,
                 'book_qty' => round($item->qtyIn($warehouse), 3),
                 'unit_cost' => (float) $item->avg_cost,

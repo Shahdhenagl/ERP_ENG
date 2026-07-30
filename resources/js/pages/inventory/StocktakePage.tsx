@@ -56,7 +56,7 @@ export function StocktakePage() {
         return items.filter(
             (line) =>
                 line.name.toLowerCase().includes(term) ||
-                (line.sku ?? '').toLowerCase().includes(term),
+                (line.code ?? '').toLowerCase().includes(term),
         )
     }, [sheet, search])
 
@@ -186,7 +186,7 @@ export function StocktakePage() {
                                             {line.name}
                                         </p>
                                         <p className="tabular text-[11px] text-navy-400">
-                                            {line.sku ?? '—'}
+                                            {line.code ?? '—'}
                                             {line.unit ? ` · ${line.unit}` : ''}
                                             {` · ${formatMoney(line.unit_cost)}`}
                                         </p>
