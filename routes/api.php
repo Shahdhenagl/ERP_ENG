@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\LeaveController;
 use App\Http\Controllers\Api\PayrollController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\InvoiceController;
+use App\Http\Controllers\Api\JobRoleController;
 use App\Http\Controllers\Api\ItemCategoryController;
 use App\Http\Controllers\Api\ItemController;
 use App\Http\Controllers\Api\ItemSerialController;
@@ -581,6 +582,12 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     // The catalogue lives in code; only the departures from a role are
     // stored, and only an admin may set them.
     Route::get('permissions', [PermissionController::class, 'index'])->middleware('can:users.manage');
+
+    // Roles an administrator writes. The permissions on offer stay in code;
+    // which of them a job carries is theirs to decide.
+    Route::apiResource('job-roles', JobRoleController::class)
+        ->only(['index', 'store', 'update', 'destroy'])
+        ->middleware('can:users.manage');
     Route::get('users/{user}/permissions', [PermissionController::class, 'show'])->middleware('can:users.manage');
     Route::put('users/{user}/permissions', [PermissionController::class, 'update'])->middleware('can:users.manage');
 

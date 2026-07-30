@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Enums\UserRole;
 use App\Services\PermissionRegistry;
-use App\Services\PositionRegistry;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -165,8 +164,8 @@ class User extends Authenticatable
      */
     public function defaultPermissions(): array
     {
-        if ($this->position && PositionRegistry::exists($this->position)) {
-            return PositionRegistry::permissionsFor($this->position);
+        if ($this->position && JobRole::exists($this->position)) {
+            return JobRole::permissionsFor($this->position);
         }
 
         return PermissionRegistry::defaultsFor($this->role);

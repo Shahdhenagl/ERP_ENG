@@ -2318,6 +2318,22 @@ export interface Reconciliation {
 
 /* ── Permissions ─────────────────────────────────────────── */
 
+export interface JobRole {
+    id: number
+    /** What an account stores. Fixed at creation, so renaming is safe. */
+    key: string
+    name: string
+    base_role: Role
+    base_role_label: string
+    permissions: string[]
+    users_count: number
+}
+
+export interface JobRoleCatalogue {
+    roles: JobRole[]
+    groups: PermissionCatalogue['groups']
+}
+
 export interface PermissionCatalogue {
     groups: Array<{
         group: string

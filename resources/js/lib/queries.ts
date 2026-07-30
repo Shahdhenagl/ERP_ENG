@@ -15,6 +15,8 @@ import type {
     Payslip,
     Lead,
     FollowUp,
+    JobRole,
+    JobRoleCatalogue,
     PermissionCatalogue,
     UserPermissions,
     AlertGroup,
@@ -118,6 +120,7 @@ export const keys = {
     contract: (id: number | string) => ['contract', Number(id)] as const,
     users: (filters?: Record<string, unknown>) => ['users', filters ?? {}] as const,
     permissionCatalogue: ['permission-catalogue'] as const,
+    jobRoles: ['job-roles'] as const,
     userPermissions: (id: number | string) => ['user-permissions', Number(id)] as const,
     technicians: ['technicians'] as const,
     employees: (f?: Record<string, unknown>) => ['employees', f ?? {}] as const,
@@ -3252,6 +3255,42 @@ function invalidateCheques(client: ReturnType<typeof useQueryClient>): void {
 }
 
 /* ── Permissions ─────────────────────────────────────────── */
+
+export function useJobRoles() {
+    const { isAdmin } = useAuth()
+
+    return useQuery({
+        queryKey: keys.jobRoles,
+        queryFn: async () => (await api.get<JobRoleCatalogue>('/job-roles')).data,
+        enabled: isAdmin,
+    })
+}
+
+export function useSaveJobRole() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ id, ...payload }: Partial<JobRole> & { id?: number }) =>
+            id
+                ? (await api.put(`/job-roles/${id}`, payload)).data
+                : (await api.post('/job-roles', payload)).data,
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: keys.jobRoles })
+            // A role's permissions are the baseline every holder is measured
+            // against, so their effective set moves with it.
+            void client.invalidateQueries({ queryKey: ['users'] })
+        },
+    })
+}
+
+export function useDeleteJobRole() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id: number) => (await api.delete(`/job-roles/${id}`)).data,
+        onSuccess: () => void client.invalidateQueries({ queryKey: keys.jobRoles }),
+    })
+}
 
 export function usePermissionCatalogue() {
     const { isAdmin } = useAuth()

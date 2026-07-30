@@ -8,9 +8,8 @@ import { SectionTabs } from '@/components/SectionTabs'
 import { Button, EmptyState, ErrorState, Field, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
 import { ADMIN_SECTIONS } from '@/lib/sections'
 import { errorMessage, fieldErrors } from '@/lib/api'
-import { POSITIONS } from '@/lib/domain'
 import { useAuth } from '@/lib/auth'
-import { useDeleteUser, useSaveUser, useUsers } from '@/lib/queries'
+import { useDeleteUser, useJobRoles, useSaveUser, useUsers } from '@/lib/queries'
 import type { Role, User } from '@/types'
 
 const ROLE_STYLES: Record<Role, string> = {
@@ -214,6 +213,7 @@ function UserFormDialog({
 }) {
     const toast = useToast()
     const save = useSaveUser(user?.id)
+    const { data: roles } = useJobRoles()
     const [errors, setErrors] = useState<Record<string, string>>({})
 
     const [form, setForm] = useState({
@@ -303,19 +303,19 @@ function UserFormDialog({
                     </Field>
 
                     <Field
-                        label="المسمى الوظيفي"
+                        label="الدور"
                         required
                         error={errors.position ?? errors.role}
-                        hint="يحدد صلاحيات المستخدم الافتراضية"
+                        hint="الدور يحدد التطبيق والصلاحيات — ويُعرَّف من شاشة الأدوار"
                     >
                         <Select
                             value={form.position}
                             onChange={(event) => set('position', event.target.value)}
                         >
-                            <option value="">— اختر المسمى —</option>
-                            {Object.entries(POSITIONS).map(([value, label]) => (
-                                <option key={value} value={value}>
-                                    {label}
+                            <option value="">— اختر الدور —</option>
+                            {(roles?.roles ?? []).map((role) => (
+                                <option key={role.key} value={role.key}>
+                                    {role.name}
                                 </option>
                             ))}
                         </Select>

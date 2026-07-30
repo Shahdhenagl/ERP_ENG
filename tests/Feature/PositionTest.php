@@ -23,7 +23,7 @@ it('gives an accountant the office app and the money permissions', function () {
 
     expect($response->json('role'))->toBe('manager')
         ->and($response->json('position'))->toBe('accountant')
-        ->and($response->json('position_label'))->toBe('المحاسب');
+        ->and($response->json('position_label'))->toBe('الحسابات');
 
     $user = User::where('email', 'accountant@example.com')->first();
     expect($user->hasPermission('invoices.manage'))->toBeTrue()

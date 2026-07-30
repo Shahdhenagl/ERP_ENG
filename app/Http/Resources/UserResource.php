@@ -18,7 +18,7 @@ class UserResource extends JsonResource
             'role' => $this->role->value,
             'position' => $this->position,
             'position_label' => $this->position
-                ? \App\Services\PositionRegistry::label($this->position)
+                ? \App\Models\JobRole::label($this->position)
                 : null,
             // What this user may actually do. The nav is built from it, so a
             // screen nobody may open is never offered in the first place.

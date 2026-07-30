@@ -8,10 +8,10 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Models\ActivityLog;
+use App\Models\JobRole;
 use App\Models\Attendance;
 use App\Models\Payslip;
 use App\Models\User;
-use App\Services\PositionRegistry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -184,7 +184,7 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:120'],
             'email' => ['required', 'email', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8'],
-            'position' => ['nullable', Rule::in(PositionRegistry::keys())],
+            'position' => ['nullable', Rule::in(JobRole::keys())],
             'role' => ['required_without:position', Rule::enum(UserRole::class)],
             'phone' => ['nullable', 'string', 'max:32'],
             'whatsapp' => ['nullable', 'string', 'max:32'],
@@ -214,7 +214,7 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:120'],
             'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
             'password' => ['nullable', 'string', 'min:8'],
-            'position' => ['nullable', Rule::in(PositionRegistry::keys())],
+            'position' => ['nullable', Rule::in(JobRole::keys())],
             'role' => ['required_without:position', Rule::enum(UserRole::class)],
             'phone' => ['nullable', 'string', 'max:32'],
             'whatsapp' => ['nullable', 'string', 'max:32'],
@@ -245,7 +245,7 @@ class UserController extends Controller
     protected function applyPosition(array $data): array
     {
         if (! empty($data['position'])) {
-            $data['role'] = PositionRegistry::roleFor($data['position'])->value;
+            $data['role'] = JobRole::roleFor($data['position'])->value;
         }
 
         return $data;
