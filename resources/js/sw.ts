@@ -50,6 +50,13 @@ self.addEventListener('push', (event) => {
             dir: 'rtl',
             lang: 'ar',
             vibrate: [180, 80, 180],
+            // Stays on screen until it is dealt with. A toast that fades after
+            // five seconds is invisible to somebody working in another window,
+            // which is the only situation a push exists for.
+            requireInteraction: true,
+            // Explicit, because a silent notification also skips the sound the
+            // operating system would otherwise play.
+            silent: false,
             data: payload.data ?? {},
         } as NotificationOptions),
     )

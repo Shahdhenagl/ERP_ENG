@@ -115,3 +115,38 @@ export async function disablePush(): Promise<void> {
     await api.delete('/push-subscriptions', { data: { endpoint: subscription.endpoint } })
     await subscription.unsubscribe()
 }
+
+/**
+ * Fire a notification from this device, without the server.
+ *
+ * The one question a technician or a manager cannot answer alone is "did it not
+ * arrive, or did it arrive and Windows swallowed it". This takes the network,
+ * the push service and the subscription out of the picture: if this one does
+ * not appear on screen, nothing sent from a server ever will, and the fix is in
+ * the browser or the operating system rather than here.
+ */
+export async function testLocalNotification(): Promise<{ ok: boolean; reason?: string }> {
+    if (!pushSupported()) return { ok: false, reason: 'المتصفح لا يدعم الإشعارات.' }
+
+    if (Notification.permission !== 'granted') {
+        return { ok: false, reason: 'لم يُمنح إذن الإشعارات بعد.' }
+    }
+
+    try {
+        const registration = await navigator.serviceWorker.ready
+
+        await registration.showNotification('اختبار الإشعارات', {
+            body: 'لو ظهر هذا الإشعار، جهازك يستقبل الإشعارات ✅',
+            icon: '/brand/icon-192.png',
+            badge: '/brand/badge.png',
+            requireInteraction: true,
+            dir: 'rtl',
+            lang: 'ar',
+            data: { url: '/' },
+        } as NotificationOptions)
+
+        return { ok: true }
+    } catch (error) {
+        return { ok: false, reason: error instanceof Error ? error.message : 'تعذّر عرض الإشعار.' }
+    }
+}

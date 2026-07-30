@@ -7,7 +7,7 @@ import { Button, EmptyState, Spinner } from '@/components/ui'
 import { useToast } from '@/components/Toast'
 import { formatRelative } from '@/lib/format'
 import { useArea } from '@/lib/nav'
-import { enablePush, isIos, isStandalone, pushPermission } from '@/lib/push'
+import { enablePush, isIos, isStandalone, pushPermission, testLocalNotification } from '@/lib/push'
 import { useMarkAllRead, useNotifications } from '@/lib/queries'
 
 export function NotificationPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -67,6 +67,28 @@ export function NotificationPanel({ open, onClose }: { open: boolean; onClose: (
             }
         >
             {/* Push opt-in prompt */}
+            {/* Granted, and still nothing arriving, is the case nobody can
+                diagnose alone — so offer a notification raised by this device,
+                with no server between. */}
+            {permission === 'granted' && (
+                <button
+                    type="button"
+                    onClick={async () => {
+                        const result = await testLocalNotification()
+
+                        if (result.ok) {
+                            toast.info('أُرسل إشعار تجريبي — إن لم يظهر فالمشكلة في إعدادات الجهاز.')
+                        } else {
+                            toast.error(result.reason ?? 'تعذّر عرض الإشعار.')
+                        }
+                    }}
+                    className="tap mb-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-navy-50 py-2 text-[11px] font-bold text-navy-500 transition hover:bg-navy-100"
+                >
+                    <BellRing className="size-3.5" />
+                    جرّب إشعارًا على هذا الجهاز
+                </button>
+            )}
+
             {permission !== 'granted' && (
                 <div className="mb-4 rounded-2xl border border-brand-200 bg-brand-50 p-4">
                     <div className="flex items-start gap-3">
