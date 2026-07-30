@@ -96,7 +96,7 @@ export function TaskList() {
 
             downloadCsv(
                 `tasks-${new Date().toISOString().slice(0, 10)}`,
-                ['المهمة', 'العنوان', 'الحالة', 'العميل', 'الفرع', 'الفني', 'بداية التنفيذ', 'انتهاء التنفيذ'],
+                ['كود المهمة', 'العنوان', 'الحالة', 'العميل', 'الفرع', 'الفني', 'بداية التنفيذ', 'انتهاء التنفيذ'],
                 page.data.map((task) => [
                     task.code,
                     task.title,
@@ -452,9 +452,10 @@ export type { TaskStatus }
 function TaskTable({ tasks, href }: { tasks: Task[]; href: (id: number) => string }) {
     return (
         <div className="card overflow-x-auto">
-            <table className="w-full min-w-[52rem] text-right text-sm">
+            <table className="w-full min-w-[58rem] text-right text-sm">
                 <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
                     <tr>
+                        <th className="w-32 px-3 py-2.5">كود المهمة</th>
                         <th className="px-3 py-2.5">المهمة</th>
                         <th className="px-3 py-2.5">العميل</th>
                         <th className="px-3 py-2.5">الفرع</th>
@@ -469,14 +470,18 @@ function TaskTable({ tasks, href }: { tasks: Task[]; href: (id: number) => strin
 
                         return (
                             <tr key={task.id} className="border-t border-navy-100 hover:bg-navy-50/60">
+                                {/* The code is what gets quoted on the phone and
+                                    written on the sheet, so it is a column that can
+                                    be scanned down — not a caption over the title. */}
+                                <td className="tabular px-3 py-2.5 font-bold text-brand-600">
+                                    <Link to={href(task.id)}>{task.code}</Link>
+                                </td>
                                 <td className="px-3 py-2.5">
-                                    <Link to={href(task.id)} className="block">
-                                        <span className="tabular block text-[11px] font-bold text-brand-600">
-                                            {task.code}
-                                        </span>
-                                        <span className="block truncate font-semibold text-navy-800">
-                                            {task.title}
-                                        </span>
+                                    <Link
+                                        to={href(task.id)}
+                                        className="block truncate font-semibold text-navy-800"
+                                    >
+                                        {task.title}
                                     </Link>
                                 </td>
                                 <td className="px-3 py-2.5 text-navy-700">{task.customer?.name ?? '—'}</td>
