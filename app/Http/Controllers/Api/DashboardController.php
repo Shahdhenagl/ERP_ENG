@@ -15,13 +15,17 @@ use App\Models\Task;
 use App\Models\User;
 use App\Models\Warranty;
 use App\Services\MaintenancePlanner;
+use App\Services\OperationsAlertDispatcher;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    public function __construct(protected MaintenancePlanner $planner) {}
+    public function __construct(
+        protected MaintenancePlanner $planner,
+        protected OperationsAlertDispatcher $alerts,
+    ) {}
 
     public function __invoke(Request $request): JsonResponse
     {
@@ -31,6 +35,10 @@ class DashboardController extends Controller
         // orders off the back of traffic. Throttled to once every 15 minutes,
         // so most requests pay nothing for this.
         $this->planner->tick();
+        // Conditions become alerts here too. Nothing schedules alerts:sweep
+        // on this host, so an overdue invoice would sit on the board for
+        // ever and never ring a bell.
+        $this->alerts->tick();
         $scoped = fn () => Task::query()->when(
             $user->isTechnician(),
             fn ($q) => $q->forTechnician($user->id),

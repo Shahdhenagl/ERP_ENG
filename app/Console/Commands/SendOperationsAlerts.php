@@ -2,10 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Models\AlertDispatch;
-use App\Models\User;
-use App\Notifications\OperationsAlert;
-use App\Services\OperationsAlertScanner;
+use App\Services\OperationsAlertDispatcher;
 use Illuminate\Console\Command;
 
 /**
@@ -24,39 +21,16 @@ class SendOperationsAlerts extends Command
 
     protected $description = 'رصد الأعطال والصيانة والضمانات والفواتير وقطع الغيار وإطلاق التنبيهات';
 
-    public function __construct(protected OperationsAlertScanner $scanner)
+    public function __construct(protected OperationsAlertDispatcher $dispatcher)
     {
         parent::__construct();
     }
 
     public function handle(): int
     {
-        $alerts = $this->scanner->scan();
+        $sent = $this->dispatcher->dispatch();
 
-        $recipients = User::query()
-            ->whereIn('role', ['admin', 'manager'])
-            ->where('is_active', true)
-            ->get();
-
-        $sent = 0;
-
-        foreach ($alerts as $alert) {
-            // Insert once per condition; a key that already exists was already
-            // alerted, so there is nothing new to send.
-            if (! AlertDispatch::firstOrCreate(['key' => $alert['key']])->wasRecentlyCreated) {
-                continue;
-            }
-
-            foreach ($recipients as $user) {
-                $user->notify(new OperationsAlert(
-                    $alert['type'], $alert['title'], $alert['body'], $alert['url'], $alert['tag'],
-                ));
-            }
-
-            $sent++;
-        }
-
-        $this->info("تنبيهات جديدة: {$sent} من {$alerts->count()} حالة مرصودة.");
+        $this->info("تنبيهات جديدة: {$sent}.");
 
         return self::SUCCESS;
     }
