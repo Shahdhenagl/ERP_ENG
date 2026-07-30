@@ -1,15 +1,16 @@
 import clsx from 'clsx'
-import { AlertTriangle, FileText, Printer, Search, Wallet } from 'lucide-react'
+import { AlertTriangle, FileText, Plus, Printer, Search, Wallet } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { EMPTY_RANGE, MonthDayFilter, monthDayRange } from '@/components/MonthDayFilter'
 import type { DateRange } from '@/components/MonthDayFilter'
 import { ExportButton } from '@/components/ExportButton'
 import { api } from '@/lib/api'
+import { InvoiceForm } from '@/components/InvoiceForm'
 import { SectionTabs } from '@/components/SectionTabs'
 import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { MONEY_SECTIONS } from '@/lib/sections'
-import { EmptyState, ErrorState, Input, PageHeader, SkeletonCard } from '@/components/ui'
+import { Button, EmptyState, ErrorState, Input, PageHeader, SkeletonCard } from '@/components/ui'
 import { formatMoney, PAYMENT_STATE } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
 import { useArea } from '@/lib/nav'
@@ -31,6 +32,7 @@ const SOURCES: Array<[string, string]> = [
 export function InvoiceList() {
     const { path } = useArea()
     const [view, setView] = useViewMode('invoices')
+    const [creating, setCreating] = useState(false)
     const [search, setSearch] = useState('')
     const [filter, setFilter] = useState<Filter>('all')
     const [month, setMonth] = useState('')
@@ -107,6 +109,12 @@ export function InvoiceList() {
                         <Printer className="size-4" />
                         طباعة
                     </Link>
+                    {/* Most bills arrive from a quote or a finished job, but not
+                        every sale passes through one — a counter sale has no
+                        document ahead of it to convert. */}
+                    <Button icon={Plus} onClick={() => setCreating(true)}>
+                        فاتورة جديدة
+                    </Button>
                     </>
                 }
             />
@@ -190,6 +198,8 @@ export function InvoiceList() {
                     <ViewToggle view={view} onChange={setView} className="mb-0.5" />
                 </div>
             </div>
+
+            {creating && <InvoiceForm open onClose={() => setCreating(false)} />}
 
             {isError ? (
                 <ErrorState message="تعذّر تحميل الفواتير." onRetry={() => void refetch()} />

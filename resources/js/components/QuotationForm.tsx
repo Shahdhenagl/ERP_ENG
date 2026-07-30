@@ -340,8 +340,14 @@ export function QuotationForm({
 
                 <div className="space-y-1.5 rounded-2xl bg-navy-50 p-4 text-sm">
                     <Row label="الإجمالي قبل الخصم" value={formatMoney(subtotal)} />
-                    {Number(discount) > 0 && (
-                        <Row label="الخصم" value={`− ${formatMoney(Number(discount))}`} />
+                    {/* Read the resolved figure, not the field: with a rate in
+                        the box the amount field holds zero, and the deduction
+                        vanished from the summary while still being applied. */}
+                    {discountValue > 0 && (
+                        <Row
+                            label={discountPercent === '' ? 'الخصم' : `الخصم (${discountPercent}%)`}
+                            value={`− ${formatMoney(discountValue)}`}
+                        />
                     )}
                     {Number(taxRate) > 0 && (
                         <Row

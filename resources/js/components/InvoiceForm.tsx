@@ -1,12 +1,13 @@
 import clsx from 'clsx'
 import { Plus, Save, Trash2 } from 'lucide-react'
 import { useState } from 'react'
+import { CustomerSitePicker } from '@/components/CustomerSitePicker'
 import { DiscountField } from '@/components/DiscountField'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, Field, Input, Select } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
-import { formatMoney, formatQty, ITEM_CATEGORY } from '@/lib/domain'
+import { DEFAULT_TAX_RATE, formatMoney, formatQty, ITEM_CATEGORY } from '@/lib/domain'
 import { itemSpecRows } from '@/lib/specs'
 import { SpecSheet } from '@/components/SpecSheet'
 import { useItems, useSaveInvoice } from '@/lib/queries'
@@ -31,10 +32,15 @@ export function InvoiceForm({
 }: {
     open: boolean
     onClose: () => void
-    invoice: Invoice
+    /** Omit to raise a new draft rather than edit an existing one. */
+    invoice?: Invoice
 }) {
     const toast = useToast()
-    const save = useSaveInvoice(invoice.id)
+    const save = useSaveInvoice(invoice?.id)
+
+    // A bill raised by hand needs to say whose it is; one being edited already
+    // knows, and the customer is not something an issued document may change.
+    const [customerId, setCustomerId] = useState(String(invoice?.customer_id ?? ''))
     const [errors, setErrors] = useState<Record<string, string>>({})
 
     // The catalogue, so a line can name a real product rather than a sentence —
@@ -43,19 +49,19 @@ export function InvoiceForm({
     const items = itemPage?.data ?? []
 
     const [rows, setRows] = useState<Row[]>(
-        (invoice.lines ?? []).map((line) => ({
+        (invoice?.lines ?? []).map((line) => ({
             item_id: line.item_id ? String(line.item_id) : '',
             description: line.description,
             qty: String(line.qty),
             unit_price: String(line.unit_price),
         })),
     )
-    const [discount, setDiscount] = useState(String(invoice.discount ?? 0))
+    const [discount, setDiscount] = useState(String(invoice?.discount ?? 0))
     const [discountPercent, setDiscountPercent] = useState(
-        invoice.discount_percent != null ? String(invoice.discount_percent) : '',
+        invoice?.discount_percent != null ? String(invoice.discount_percent) : '',
     )
-    const [taxRate, setTaxRate] = useState(String(invoice.tax_rate ?? 0))
-    const [dueDate, setDueDate] = useState(invoice.due_date ?? '')
+    const [taxRate, setTaxRate] = useState(String(invoice?.tax_rate ?? DEFAULT_TAX_RATE))
+    const [dueDate, setDueDate] = useState(invoice?.due_date ?? '')
 
     const patch = (index: number, key: keyof Row, value: string) =>
         setRows((current) => current.map((row, i) => (i === index ? { ...row, [key]: value } : row)))
@@ -77,6 +83,7 @@ export function InvoiceForm({
 
         try {
             await save.mutateAsync({
+                ...(invoice ? {} : { customer_id: Number(customerId) }),
                 due_date: dueDate || null,
                 discount: Number(discount) || 0,
                 discount_percent: discountPercent === '' ? null : Number(discountPercent),
@@ -91,7 +98,7 @@ export function InvoiceForm({
                     })),
             })
 
-            toast.success('تم حفظ المسودة.')
+            toast.success(invoice ? 'تم حفظ المسودة.' : 'تم إنشاء الفاتورة كمسودة.')
             onClose()
         } catch (caught) {
             setErrors(fieldErrors(caught))
@@ -103,7 +110,7 @@ export function InvoiceForm({
         <Modal
             open={open}
             onClose={onClose}
-            title={`تعديل ${invoice.code}`}
+            title={invoice ? `تعديل ${invoice.code}` : 'فاتورة جديدة'}
             size="lg"
             footer={
                 <>
@@ -117,6 +124,15 @@ export function InvoiceForm({
             }
         >
             <div className="space-y-4">
+                {!invoice && (
+                    <CustomerSitePicker
+                        customerId={customerId}
+                        branchId=""
+                        onChange={(next) => setCustomerId(next.customerId)}
+                        customerError={errors.customer_id}
+                    />
+                )}
+
                 <div className="space-y-2">
                     {rows.map((row, index) => (
                         <div key={index} className="space-y-2 rounded-2xl border border-navy-100 p-3">
@@ -296,6 +312,29 @@ export function InvoiceForm({
                         <span className="text-navy-500">قبل الخصم</span>
                         <span className="tabular font-semibold">{formatMoney(subtotal)}</span>
                     </div>
+
+                    {/* The resolved figure, not the field: with a rate in the
+                        box the amount field holds zero. */}
+                    {discountValue > 0 && (
+                        <div className="mt-1 flex items-center justify-between">
+                            <span className="text-navy-500">
+                                {discountPercent === '' ? 'الخصم' : `الخصم (${discountPercent}%)`}
+                            </span>
+                            <span className="tabular font-semibold">
+                                − {formatMoney(discountValue)}
+                            </span>
+                        </div>
+                    )}
+
+                    {Number(taxRate) > 0 && (
+                        <div className="mt-1 flex items-center justify-between">
+                            <span className="text-navy-500">ضريبة {taxRate}%</span>
+                            <span className="tabular font-semibold">
+                                {formatMoney(taxable * (Number(taxRate) / 100))}
+                            </span>
+                        </div>
+                    )}
+
                     <div className="mt-2 flex items-center justify-between border-t border-navy-200 pt-2">
                         <span className="font-bold text-navy-800">الإجمالي</span>
                         <span className="tabular text-lg font-extrabold text-navy-900">
