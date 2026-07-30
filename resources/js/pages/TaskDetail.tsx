@@ -180,17 +180,21 @@ export function TaskDetail() {
      * about it. Both are unrecoverable the moment the technician drives away,
      * so they are conditions of the step rather than reminders after it.
      */
-    const photoCount = (task.attachments ?? []).length
+    // Counted per shelf, not in total: "before" photos already uploaded would
+    // otherwise satisfy the requirement for photos of the finished work, and
+    // the gate would pass on evidence of the wrong thing.
+    const photosBefore = (task.attachments ?? []).filter((file) => file.kind === 'before').length
+    const photosAfter = (task.attachments ?? []).filter((file) => file.kind === 'after').length
 
     const gateFor = (next: TaskStatus): string | null => {
         if (next === 'in_progress') {
             if (!diagnosisReport) return 'املأ تقرير المعاينة أولًا.'
-            if (photoCount === 0) return 'ارفع صورة واحدة على الأقل لحالة الجهاز عند الوصول.'
+            if (photosBefore === 0) return 'ارفع صورة واحدة على الأقل لحالة الجهاز عند الوصول.'
         }
 
         if (next === 'completed') {
             if (!completionReport) return 'املأ تقرير الإنهاء أولًا.'
-            if (photoCount === 0) return 'ارفع صورة واحدة على الأقل للعمل بعد إنجازه.'
+            if (photosAfter === 0) return 'ارفع صورة واحدة على الأقل للعمل بعد إنجازه.'
         }
 
         return null
@@ -262,9 +266,13 @@ export function TaskDetail() {
                                         onClick={() => setReportForm('diagnosis')}
                                     />
                                     <Requirement
-                                        done={photoCount > 0}
+                                        done={photosBefore > 0}
                                         label="صور الحالة عند الوصول"
-                                        hint={photoCount > 0 ? `${photoCount} صورة مرفوعة` : 'صورة واحدة على الأقل'}
+                                        hint={
+                                            photosBefore > 0
+                                                ? `${photosBefore} صورة مرفوعة`
+                                                : 'صورة واحدة على الأقل'
+                                        }
                                         icon={Camera}
                                         onClick={() => setAttachmentsOpen(true)}
                                     />
@@ -281,9 +289,13 @@ export function TaskDetail() {
                                         onClick={() => setReportForm('completion')}
                                     />
                                     <Requirement
-                                        done={photoCount > 0}
+                                        done={photosAfter > 0}
                                         label="صور بعد العمل"
-                                        hint={photoCount > 0 ? `${photoCount} صورة مرفوعة` : 'صورة واحدة على الأقل'}
+                                        hint={
+                                            photosAfter > 0
+                                                ? `${photosAfter} صورة مرفوعة`
+                                                : 'صورة واحدة على الأقل'
+                                        }
                                         icon={Camera}
                                         onClick={() => setAttachmentsOpen(true)}
                                     />
@@ -308,7 +320,11 @@ export function TaskDetail() {
                         title="الصور والمرفقات"
                         size="sm"
                     >
-                        <AttachmentsSection task={task} canEdit />
+                        <AttachmentsSection
+                            task={task}
+                            canEdit
+                            defaultKind={task.status === 'on_the_way' ? 'before' : 'after'}
+                        />
                     </Modal>
                 )}
 
@@ -1515,12 +1531,29 @@ function BeforeAfter({ before, after }: { before: TaskReport; after: TaskReport 
     )
 }
 
-function AttachmentsSection({ task, canEdit }: { task: Task; canEdit: boolean }) {
+function AttachmentsSection({
+    task,
+    canEdit,
+    defaultKind = 'before',
+}: {
+    task: Task
+    canEdit: boolean
+    /**
+     * Which shelf an upload lands on unless it is changed.
+     *
+     * "Before" is right while the technician is standing at a machine they have
+     * not touched; once the work is under way every photo is of what was done,
+     * and leaving the picker on "before" files the evidence under the wrong
+     * heading by default — which is the one thing nobody notices until they are
+     * looking for it.
+     */
+    defaultKind?: AttachmentKind
+}) {
     const toast = useToast()
     const upload = useUploadAttachments(task.id)
     const remove = useDeleteAttachment(task.id)
     const inputRef = useRef<HTMLInputElement>(null)
-    const [kind, setKind] = useState<AttachmentKind>('before')
+    const [kind, setKind] = useState<AttachmentKind>(defaultKind)
 
     const attachments = task.attachments ?? []
     const groups: Array<{ kind: AttachmentKind; label: string }> = [
