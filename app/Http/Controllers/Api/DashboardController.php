@@ -109,6 +109,10 @@ class DashboardController extends Controller
             ->with(['customer', 'technician', 'asset'])
             ->open()
             ->actionable()
+            // Live work first. Ordered by date alone, a job being driven to
+            // fell below eight rows of things scheduled sooner — which is the
+            // one row a technician opening this screen is looking for.
+            ->orderByRaw("FIELD(status, 'in_progress','on_the_way','accepted','pending')")
             ->orderByRaw("FIELD(priority, 'urgent','high','normal','low')")
             ->orderByRaw('scheduled_at IS NULL, scheduled_at ASC')
             ->limit(8)

@@ -254,7 +254,16 @@ class Task extends Model
     {
         return $query->where(function (Builder $q) use ($horizonDays) {
             $q->whereNull('scheduled_at')
-                ->orWhere('scheduled_at', '<=', now()->addDays($horizonDays));
+                ->orWhere('scheduled_at', '<=', now()->addDays($horizonDays))
+                // A job somebody has already accepted, set out for, or started
+                // is actionable whatever its planned date says. The horizon is
+                // there to keep a year of contract visits out of the queue, not
+                // to hide the one a technician is driving to right now.
+                ->orWhereIn('status', [
+                    TaskStatus::Accepted->value,
+                    TaskStatus::OnTheWay->value,
+                    TaskStatus::InProgress->value,
+                ]);
         });
     }
 
