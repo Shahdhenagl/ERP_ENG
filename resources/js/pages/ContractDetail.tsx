@@ -20,6 +20,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ContractForm } from '@/components/ContractForm'
 import { ConfirmDialog, Modal } from '@/components/Modal'
+import { CashBoxSelect, CollectorSelect } from '@/components/MoneyFields'
 import { useToast } from '@/components/Toast'
 import { Button, ErrorState, Field, Input, PageHeader, PageLoader, Select } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
@@ -35,7 +36,6 @@ import { formatDate } from '@/lib/format'
 import { useArea } from '@/lib/nav'
 import { Attachments } from '@/components/Attachments'
 import {
-    useCashBoxes,
     useCollectContractPayment,
     useContract,
     useContractAction,
@@ -598,9 +598,9 @@ function CollectDialog({
 }) {
     const toast = useToast()
     const collect = useCollectContractPayment(contractId)
-    const { data: boxes } = useCashBoxes()
     const [boxId, setBoxId] = useState('')
     const [method, setMethod] = useState('cash')
+    const [collector, setCollector] = useState('')
     const [reference, setReference] = useState('')
 
     return (
@@ -626,6 +626,7 @@ function CollectDialog({
                                     paymentId: payment.id,
                                     cash_box_id: boxId ? Number(boxId) : null,
                                     method,
+                                    collected_by_user_id: collector ? Number(collector) : null,
                                     reference: reference || null,
                                 })
                                 toast.success('تم تحصيل الدفعة.')
@@ -641,16 +642,12 @@ function CollectDialog({
             }
         >
             <div className="space-y-4">
-                <Field label="الخزينة" hint="تُترك فارغة لتذهب للخزينة الرئيسية.">
-                    <Select value={boxId} onChange={(e) => setBoxId(e.target.value)}>
-                        <option value="">الخزينة الرئيسية</option>
-                        {boxes?.map((box) => (
-                            <option key={box.id} value={box.id}>
-                                {box.name} ({formatMoney(box.balance)})
-                            </option>
-                        ))}
-                    </Select>
-                </Field>
+                <CashBoxSelect
+                    value={boxId}
+                    onChange={setBoxId}
+                    placeholder="الخزينة الرئيسية"
+                    hint="نقدًا تذهب لخزينة، وتحويلًا تذهب للحساب البنكي الذي وصلت إليه."
+                />
 
                 <Field label="طريقة الدفع">
                     <Select value={method} onChange={(e) => setMethod(e.target.value)}>
@@ -661,6 +658,8 @@ function CollectDialog({
                         ))}
                     </Select>
                 </Field>
+
+                <CollectorSelect value={collector} onChange={setCollector} />
 
                 <Field label="مرجع (اختياري)">
                     <Input

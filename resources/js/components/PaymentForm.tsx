@@ -1,5 +1,6 @@
 import { Save } from 'lucide-react'
 import { useState } from 'react'
+import { CashBoxSelect, CollectorSelect } from '@/components/MoneyFields'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, Field, Input, Select, Textarea } from '@/components/ui'
@@ -25,6 +26,7 @@ export function PaymentForm({ open, onClose, invoice }: PaymentFormProps) {
         amount: invoice.balance.toFixed(2),
         cash_box_id: '',
         method: 'cash' as PaymentMethod,
+        collected_by_user_id: '',
         paid_at: new Date().toISOString().slice(0, 10),
         reference: '',
         note: '',
@@ -45,6 +47,9 @@ export function PaymentForm({ open, onClose, invoice }: PaymentFormProps) {
                 cash_box_id: Number(form.cash_box_id || boxes?.[0]?.id),
                 amount,
                 method: form.method,
+                collected_by_user_id: form.collected_by_user_id
+                    ? Number(form.collected_by_user_id)
+                    : null,
                 paid_at: form.paid_at,
                 reference: form.reference || null,
                 note: form.note || null,
@@ -111,18 +116,12 @@ export function PaymentForm({ open, onClose, invoice }: PaymentFormProps) {
                 </Field>
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="الخزينة" required error={errors.cash_box_id}>
-                        <Select
-                            value={form.cash_box_id}
-                            onChange={(event) => set('cash_box_id')(event.target.value)}
-                        >
-                            {boxes?.map((box) => (
-                                <option key={box.id} value={box.id}>
-                                    {box.name} ({formatMoney(box.balance)})
-                                </option>
-                            ))}
-                        </Select>
-                    </Field>
+                    <CashBoxSelect
+                        value={form.cash_box_id}
+                        onChange={set('cash_box_id')}
+                        error={errors.cash_box_id}
+                        required
+                    />
 
                     <Field label="طريقة الدفع" required error={errors.method}>
                         <Select value={form.method} onChange={(event) => set('method')(event.target.value)}>
@@ -141,6 +140,12 @@ export function PaymentForm({ open, onClose, invoice }: PaymentFormProps) {
                             onChange={(event) => set('paid_at')(event.target.value)}
                         />
                     </Field>
+
+                    <CollectorSelect
+                        value={form.collected_by_user_id}
+                        onChange={set('collected_by_user_id')}
+                        error={errors.collected_by_user_id}
+                    />
 
                     <Field label="رقم الشيك / التحويل" error={errors.reference}>
                         <Input

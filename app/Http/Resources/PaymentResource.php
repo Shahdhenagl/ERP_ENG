@@ -32,6 +32,7 @@ class PaymentResource extends JsonResource
             'note' => $this->note,
 
             'actor' => $this->whenLoaded('actor', fn () => $this->actor?->name),
+            'collected_by' => $this->whenLoaded('collector', fn () => $this->collector?->name),
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }

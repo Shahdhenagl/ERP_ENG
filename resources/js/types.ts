@@ -915,7 +915,10 @@ export interface Payment {
     paid_at: string | null
     reference: string | null
     note: string | null
+    /** Whoever recorded the receipt. */
     actor?: string | null
+    /** The employee who physically took the money, when not the one above. */
+    collected_by?: string | null
     created_at: string | null
 }
 

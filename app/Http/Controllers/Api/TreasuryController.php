@@ -34,7 +34,7 @@ class TreasuryController extends Controller
             ->when($request->integer('customer_id'), fn ($q, $id) => $q->where('customer_id', $id))
             ->when($request->integer('invoice_id'), fn ($q, $id) => $q->where('invoice_id', $id))
             ->when($request->integer('cash_box_id'), fn ($q, $id) => $q->where('cash_box_id', $id))
-            ->with(['customer', 'invoice', 'box', 'actor'])
+            ->with(['customer', 'invoice', 'box', 'actor', 'collector'])
             ->orderByDesc('id')
             ->paginate($request->integer('per_page', 30));
 
@@ -44,7 +44,7 @@ class TreasuryController extends Controller
     /** One receipt on its own — for the printable voucher. */
     public function showPayment(Payment $payment): PaymentResource
     {
-        return new PaymentResource($payment->load(['customer', 'invoice', 'box', 'actor']));
+        return new PaymentResource($payment->load(['customer', 'invoice', 'box', 'actor', 'collector']));
     }
 
     public function receive(Request $request): JsonResponse
@@ -60,6 +60,7 @@ class TreasuryController extends Controller
             'paid_at' => ['nullable', 'date'],
             'reference' => ['nullable', 'string', 'max:64'],
             'note' => ['nullable', 'string', 'max:1000'],
+            'collected_by_user_id' => ['nullable', 'exists:users,id'],
         ]);
 
         $payment = $this->billing->receivePayment($data, $request->user());

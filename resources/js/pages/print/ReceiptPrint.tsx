@@ -70,6 +70,12 @@ export function ReceiptPrint() {
                         {receipt.note}
                     </p>
                 )}
+                {receipt.collected_by && (
+                    <p>
+                        <span className="text-navy-400">استلمه: </span>
+                        {receipt.collected_by}
+                    </p>
+                )}
                 {receipt.actor && (
                     <p>
                         <span className="text-navy-400">حرّره: </span>

@@ -121,6 +121,7 @@ export const keys = {
     users: (filters?: Record<string, unknown>) => ['users', filters ?? {}] as const,
     permissionCatalogue: ['permission-catalogue'] as const,
     jobRoles: ['job-roles'] as const,
+    staff: ['staff'] as const,
     userPermissions: (id: number | string) => ['user-permissions', Number(id)] as const,
     technicians: ['technicians'] as const,
     employees: (f?: Record<string, unknown>) => ['employees', f ?? {}] as const,
@@ -3255,6 +3256,21 @@ function invalidateCheques(client: ReturnType<typeof useQueryClient>): void {
 }
 
 /* ── Permissions ─────────────────────────────────────────── */
+
+export interface StaffMember {
+    id: number
+    name: string
+    label: string
+}
+
+/** Colleagues by name, for the fields that have to say who did something. */
+export function useStaff() {
+    return useQuery({
+        queryKey: keys.staff,
+        queryFn: async () => (await api.get<StaffMember[]>('/staff')).data,
+        staleTime: 5 * 60 * 1000,
+    })
+}
 
 export function useJobRoles() {
     const { isAdmin } = useAuth()

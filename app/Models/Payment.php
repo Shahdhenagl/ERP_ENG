@@ -24,6 +24,7 @@ class Payment extends Model
         'reference',
         'note',
         'user_id',
+        'collected_by_user_id',
     ];
 
     protected function casts(): array
@@ -72,6 +73,17 @@ class Payment extends Model
     }
 
     /** Money taken in without naming an invoice — sits against the customer. */
+    /**
+     * The employee who physically took the money.
+     *
+     * Distinct from `actor`, which is whoever recorded the receipt. Null when
+     * they are the same person, which at a desk they usually are.
+     */
+    public function collector(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'collected_by_user_id');
+    }
+
     public function scopeOnAccount(Builder $query): Builder
     {
         return $query->whereNull('invoice_id');

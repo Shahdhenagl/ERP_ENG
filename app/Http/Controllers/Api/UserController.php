@@ -8,8 +8,8 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Models\ActivityLog;
-use App\Models\JobRole;
 use App\Models\Attendance;
+use App\Models\JobRole;
 use App\Models\Payslip;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -39,6 +39,32 @@ class UserController extends Controller
     }
 
     /** Lightweight list for the "assign to" picker. */
+    /**
+     * The staff roster — names only, open to anyone signed in.
+     *
+     * Every screen that has to name a colleague needs this: who took the cash,
+     * who the expense was for, who holds the custody. The full users index sits
+     * behind `users.manage`, so a treasurer asking it for a list of names got a
+     * 403 and an empty dropdown — a field that silently offers nothing to
+     * exactly the people meant to fill it in.
+     */
+    public function roster(): JsonResponse
+    {
+        return response()->json(
+            User::query()
+                ->active()
+                ->orderBy('name')
+                ->get(['id', 'name', 'role', 'position'])
+                ->map(fn (User $user) => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'label' => $user->position
+                        ? JobRole::label($user->position)
+                        : $user->role->label(),
+                ])
+        );
+    }
+
     public function technicians(): AnonymousResourceCollection
     {
         $technicians = User::query()

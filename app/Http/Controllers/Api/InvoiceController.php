@@ -82,6 +82,7 @@ class InvoiceController extends Controller
                 'lines.item',
                 'payments.box',
                 'payments.actor',
+                'payments.collector',
             ]),
         );
     }

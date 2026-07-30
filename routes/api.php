@@ -205,6 +205,11 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::delete('batteries/{battery}', [BatteryController::class, 'destroy'])->middleware('can:assets.manage');
 
     Route::get('technicians', [UserController::class, 'technicians']);
+
+    // Colleagues by name, for the fields that have to say who did something.
+    // Names only, and no permission: the alternative is the users index, which
+    // an admin alone may read.
+    Route::get('staff', [UserController::class, 'roster']);
     // The full monthly read on one technician — carries the salary, so it sits
     // behind the same permission as the rest of HR.
     Route::get('technicians/{user}/profile', [UserController::class, 'technicianProfile'])

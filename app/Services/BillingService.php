@@ -246,6 +246,8 @@ class BillingService
                 'reference' => $data['reference'] ?? null,
                 'note' => $data['note'] ?? null,
                 'user_id' => $actor->id,
+                // Who took the money, when that is not who keyed it in.
+                'collected_by_user_id' => $data['collected_by_user_id'] ?? null,
             ]);
 
             CashMovement::create([

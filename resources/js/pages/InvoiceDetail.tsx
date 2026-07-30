@@ -321,6 +321,11 @@ export function InvoiceDetail() {
                                         {payment.cash_box && ` · ${payment.cash_box}`}
                                         {payment.paid_at && ` · ${formatSmart(payment.paid_at)}`}
                                     </p>
+                                    {payment.collected_by && (
+                                        <p className="mt-0.5 text-[11px] text-navy-400">
+                                            استلمه {payment.collected_by}
+                                        </p>
+                                    )}
                                 </div>
 
                                 <button

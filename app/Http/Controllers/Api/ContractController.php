@@ -219,6 +219,7 @@ class ContractController extends Controller
             'method' => ['nullable', Rule::enum(\App\Enums\PaymentMethod::class)],
             'reference' => ['nullable', 'string', 'max:120'],
             'note' => ['nullable', 'string', 'max:500'],
+            'collected_by_user_id' => ['nullable', 'exists:users,id'],
         ]);
 
         $count = $contract->payments()->count();
@@ -252,6 +253,7 @@ class ContractController extends Controller
                 'method' => $data['method'] ?? 'cash',
                 'reference' => $data['reference'] ?? null,
                 'note' => $data['note'] ?? $label,
+                'collected_by_user_id' => $data['collected_by_user_id'] ?? null,
             ], $request->user());
 
             $payment->update([
