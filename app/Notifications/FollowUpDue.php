@@ -3,8 +3,6 @@
 namespace App\Notifications;
 
 use App\Models\FollowUp;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 use NotificationChannels\WebPush\WebPushChannel;
 use NotificationChannels\WebPush\WebPushMessage;
@@ -17,10 +15,8 @@ use NotificationChannels\WebPush\WebPushMessage;
  * It lands in the bell and, if the device allowed it, as a push — both of which
  * a person chooses to look at.
  */
-class FollowUpDue extends Notification implements ShouldQueue
+class FollowUpDue extends Notification
 {
-    use Queueable;
-
     public function __construct(public FollowUp $followUp) {}
 
     /** @return array<int, string> */

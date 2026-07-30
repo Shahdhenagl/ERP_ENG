@@ -3,17 +3,13 @@
 namespace App\Notifications;
 
 use App\Models\Task;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use NotificationChannels\WebPush\WebPushChannel;
 use NotificationChannels\WebPush\WebPushMessage;
 
-class TaskAssigned extends Notification implements ShouldQueue
+class TaskAssigned extends Notification
 {
-    use Queueable;
-
     public function __construct(public Task $task) {}
 
     /** @return array<int, string> */

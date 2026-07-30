@@ -2,8 +2,6 @@
 
 namespace App\Notifications;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 use NotificationChannels\WebPush\WebPushChannel;
 use NotificationChannels\WebPush\WebPushMessage;
@@ -15,11 +13,16 @@ use NotificationChannels\WebPush\WebPushMessage;
  *
  * No mail: a daily email per alert is how a mailbox learns to hide the sender.
  * It lands in the bell and, where allowed, as a push.
+ *
+ * Sent inline rather than queued. This host has no worker — the same reason
+ * maintenance rides on request traffic — so a queued notification is a row in
+ * `jobs` and nothing more: no bell entry, no push, no error. A push is one HTTP
+ * call to the browser's push service and every caller already treats it as
+ * best-effort, so the cost of sending it where it is raised is a fraction of a
+ * second and the alternative is not sending it at all.
  */
-class OperationsAlert extends Notification implements ShouldQueue
+class OperationsAlert extends Notification
 {
-    use Queueable;
-
     public function __construct(
         public string $type,
         public string $title,

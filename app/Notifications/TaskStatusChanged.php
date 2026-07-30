@@ -5,17 +5,13 @@ namespace App\Notifications;
 use App\Enums\TaskStatus;
 use App\Models\Task;
 use App\Models\User;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use NotificationChannels\WebPush\WebPushChannel;
 use NotificationChannels\WebPush\WebPushMessage;
 
-class TaskStatusChanged extends Notification implements ShouldQueue
+class TaskStatusChanged extends Notification
 {
-    use Queueable;
-
     public function __construct(
         public Task $task,
         public TaskStatus $from,
