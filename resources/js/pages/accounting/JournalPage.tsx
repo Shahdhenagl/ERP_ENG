@@ -94,7 +94,7 @@ export function JournalPage() {
                         <button
                             key={entry.id}
                             onClick={() => setOpen(entry)}
-                            className="card-interactive w-full p-3.5 text-right"
+                            className="card-interactive w-full p-3.5 text-start"
                         >
                             <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">

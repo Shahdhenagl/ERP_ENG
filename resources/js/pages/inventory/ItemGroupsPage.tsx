@@ -55,7 +55,7 @@ export function ItemGroupsPage() {
                             />
                             <button
                                 onClick={() => setEditing(group)}
-                                className="min-w-0 flex-1 text-right"
+                                className="min-w-0 flex-1 text-start"
                             >
                                 <p className="font-bold text-navy-900">{group.name}</p>
                                 <p className="text-[11px] text-navy-400">

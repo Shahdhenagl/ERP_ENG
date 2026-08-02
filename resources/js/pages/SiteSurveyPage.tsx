@@ -90,7 +90,7 @@ export function SiteSurveyPage() {
                         <button
                             key={survey.id}
                             onClick={() => setEditing(survey)}
-                            className="card-interactive block w-full p-3.5 text-right"
+                            className="card-interactive block w-full p-3.5 text-start"
                         >
                             <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">

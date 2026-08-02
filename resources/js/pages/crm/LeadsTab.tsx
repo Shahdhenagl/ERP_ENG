@@ -196,7 +196,7 @@ export function LeadsTab() {
                         <button
                             key={lead.id}
                             onClick={() => setOpenId(lead.id)}
-                            className="card flex w-full items-center justify-between gap-3 p-4 text-right transition hover:bg-navy-50"
+                            className="card flex w-full items-center justify-between gap-3 p-4 text-start transition hover:bg-navy-50"
                         >
                             <div className="min-w-0">
                                 <div className="flex flex-wrap items-center gap-2">
@@ -248,7 +248,7 @@ export function LeadsTab() {
 function LeadTable({ leads, onOpen }: { leads: Lead[]; onOpen: (id: number) => void }) {
     return (
         <div className="card overflow-x-auto">
-            <table className="w-full min-w-[52rem] text-right text-sm">
+            <table className="w-full min-w-[52rem] text-start text-sm">
                 <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
                     <tr>
                         <th className="w-28 px-3 py-2.5">الكود</th>

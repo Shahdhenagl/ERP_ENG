@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { useT } from '@/lib/i18n'
 import { AlertCircle, CheckCircle2, Info, X } from 'lucide-react'
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
@@ -28,6 +29,9 @@ const STYLES: Record<ToastKind, { icon: typeof Info; className: string }> = {
 let nextId = 1
 
 export function ToastProvider({ children }: { children: ReactNode }) {
+    // Every confirmation and failure in the app arrives through here, so
+    // translating at the one place they are drawn covers all of them.
+    const t = useT()
     const [toasts, setToasts] = useState<Toast[]>([])
 
     const dismiss = useCallback((id: number) => {
@@ -70,7 +74,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                                 role="status"
                             >
                                 <Icon className="mt-0.5 size-5 shrink-0" />
-                                <p className="flex-1 leading-relaxed">{toast.message}</p>
+                                <p className="flex-1 leading-relaxed">{t(toast.message)}</p>
                                 <button
                                     onClick={() => dismiss(toast.id)}
                                     className="-m-1 shrink-0 rounded-lg p-1 opacity-70 transition hover:opacity-100"

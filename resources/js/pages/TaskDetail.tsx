@@ -1505,7 +1505,7 @@ function BeforeAfter({ before, after }: { before: TaskReport; after: TaskReport 
             <table className="w-full text-sm">
                 <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
                     <tr>
-                        <th className="px-3 py-2 text-right">القراءة</th>
+                        <th className="px-3 py-2 text-start">القراءة</th>
                         <th className="px-3 py-2 text-center">قبل</th>
                         <th className="px-3 py-2 text-center">بعد</th>
                     </tr>

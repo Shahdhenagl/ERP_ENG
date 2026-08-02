@@ -330,7 +330,7 @@ function CustomerTasksSection({ customerId }: { customerId: number }) {
                     {/* One row per visit, each opening the job behind it — the
                         history is where a question about a visit starts. */}
                     <div className="overflow-x-auto rounded-2xl border border-navy-100">
-                        <table className="w-full min-w-[66rem] text-right text-sm">
+                        <table className="w-full min-w-[66rem] text-start text-sm">
                             <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
                                 <tr>
                                     <th className="px-3 py-2.5">المهمة</th>

@@ -452,7 +452,7 @@ export type { TaskStatus }
 function TaskTable({ tasks, href }: { tasks: Task[]; href: (id: number) => string }) {
     return (
         <div className="card overflow-x-auto">
-            <table className="w-full min-w-[58rem] text-right text-sm">
+            <table className="w-full min-w-[58rem] text-start text-sm">
                 <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
                     <tr>
                         <th className="w-32 px-3 py-2.5">كود المهمة</th>

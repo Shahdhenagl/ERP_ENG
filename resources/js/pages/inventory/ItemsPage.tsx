@@ -344,7 +344,7 @@ function ItemsTable({
         <div className="overflow-x-auto rounded-2xl border border-navy-100">
             <table className="w-full text-sm">
                 <thead>
-                    <tr className="border-b border-navy-100 bg-navy-50 text-right text-[11px] font-bold text-navy-500">
+                    <tr className="border-b border-navy-100 bg-navy-50 text-start text-[11px] font-bold text-navy-500">
                         <th className="p-3">الصنف</th>
                         <th className="p-3">الفئة</th>
                         <th className="p-3">السيريال</th>
@@ -388,7 +388,7 @@ function ItemsTable({
                                     </span>
                                 </td>
                                 <td className="tabular p-3 text-navy-600" dir="ltr">
-                                    <span className="block text-right">{item.barcode || '—'}</span>
+                                    <span className="block text-start">{item.barcode || '—'}</span>
                                 </td>
                                 <td className="tabular p-3 text-left">
                                     <span

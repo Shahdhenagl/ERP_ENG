@@ -81,7 +81,7 @@ export function DataTable({
 }) {
     return (
         <div className="card overflow-x-auto">
-            <table className="w-full text-right text-sm" style={{ minWidth }}>
+            <table className="w-full text-start text-sm" style={{ minWidth }}>
                 <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
                     <tr>
                         {headers.map((header, index) => {

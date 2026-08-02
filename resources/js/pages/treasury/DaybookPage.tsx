@@ -71,8 +71,8 @@ export function DaybookPage() {
                             <table className="w-full min-w-[560px] text-sm">
                                 <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
                                     <tr>
-                                        <th className="px-3 py-2 text-right">التاريخ</th>
-                                        <th className="px-3 py-2 text-right">البيان</th>
+                                        <th className="px-3 py-2 text-start">التاريخ</th>
+                                        <th className="px-3 py-2 text-start">البيان</th>
                                         <th className="w-24 px-3 py-2 text-left">وارد</th>
                                         <th className="w-24 px-3 py-2 text-left">منصرف</th>
                                         <th className="w-24 px-3 py-2 text-left">الرصيد</th>

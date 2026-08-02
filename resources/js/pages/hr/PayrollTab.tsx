@@ -56,7 +56,7 @@ export function PayrollTab() {
                         <button
                             key={run.id}
                             onClick={() => setOpenId(run.id)}
-                            className="card flex w-full items-center justify-between gap-3 p-4 text-right transition hover:bg-navy-50"
+                            className="card flex w-full items-center justify-between gap-3 p-4 text-start transition hover:bg-navy-50"
                         >
                             <div className="min-w-0">
                                 <div className="flex items-center gap-2">

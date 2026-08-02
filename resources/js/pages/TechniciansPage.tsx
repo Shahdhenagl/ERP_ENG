@@ -85,7 +85,7 @@ export function TechniciansPage() {
                             </td>
                             <td className="px-3 py-2.5 text-navy-600">{tech.job_title ?? 'فني'}</td>
                             <td className="tabular px-3 py-2.5 text-navy-600" dir="ltr">
-                                <span className="block text-right">{tech.phone ?? '—'}</span>
+                                <span className="block text-start">{tech.phone ?? '—'}</span>
                             </td>
                             <td className="tabular px-3 py-2.5 text-navy-700">
                                 {tech.open_tasks_count ?? 0}

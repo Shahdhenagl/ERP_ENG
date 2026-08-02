@@ -34,6 +34,8 @@ export function Button({
     disabled,
     ...props
 }: ButtonProps) {
+    const t = useT()
+
     return (
         <button
             className={clsx(VARIANTS[variant], block && 'w-full', className)}
@@ -45,7 +47,7 @@ export function Button({
             ) : (
                 Icon && <Icon className="size-4 shrink-0" />
             )}
-            {children}
+            {typeof children === 'string' ? t(children) : children}
         </button>
     )
 }
@@ -75,18 +77,39 @@ export function Field({ label, error, hint, required, className, children }: Fie
                 </label>
             )}
             {children}
-            {hint && !error && <p className="mt-1 text-xs text-navy-400">{hint}</p>}
+            {hint && !error && <p className="mt-1 text-xs text-navy-400">{t(hint)}</p>}
             {error && <p className="mt-1 text-xs font-medium text-red-600">{error}</p>}
         </div>
     )
 }
 
-export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
-    return <input className={clsx('input', className)} {...props} />
+export function Input({ className, placeholder, ...props }: InputHTMLAttributes<HTMLInputElement>) {
+    const t = useT()
+
+    return (
+        <input
+            className={clsx('input', className)}
+            placeholder={placeholder ? t(placeholder) : placeholder}
+            {...props}
+        />
+    )
 }
 
-export function Textarea({ className, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
-    return <textarea className={clsx('input resize-y', className)} rows={3} {...props} />
+export function Textarea({
+    className,
+    placeholder,
+    ...props
+}: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+    const t = useT()
+
+    return (
+        <textarea
+            className={clsx('input resize-y', className)}
+            placeholder={placeholder ? t(placeholder) : placeholder}
+            rows={3}
+            {...props}
+        />
+    )
 }
 
 export function Select({ className, children, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {

@@ -235,7 +235,7 @@ export function Requirement({
             type="button"
             onClick={onClick}
             className={clsx(
-                'tap flex w-full items-center gap-3 rounded-2xl p-3 text-right ring-1 transition',
+                'tap flex w-full items-center gap-3 rounded-2xl p-3 text-start ring-1 transition',
                 done
                     ? 'bg-emerald-50 ring-emerald-200'
                     : 'bg-surface ring-navy-200 hover:bg-navy-50',
@@ -289,7 +289,7 @@ export function ExpenseBar({
                 <button
                     type="button"
                     onClick={onAdd}
-                    className="tap flex items-center gap-2.5 rounded-2xl bg-brand-600 px-3 py-2.5 text-right text-white shadow-lg shadow-brand-600/20 transition active:scale-[0.98]"
+                    className="tap flex items-center gap-2.5 rounded-2xl bg-brand-600 px-3 py-2.5 text-start text-white shadow-lg shadow-brand-600/20 transition active:scale-[0.98]"
                 >
                     <Receipt className="size-4 shrink-0" />
                     <span className="min-w-0">
@@ -304,7 +304,7 @@ export function ExpenseBar({
                     type="button"
                     onClick={onRoute}
                     disabled={!task.branch}
-                    className="tap flex items-center gap-2.5 rounded-2xl bg-navy-100 px-3 py-2.5 text-right text-navy-800 transition active:scale-[0.98] disabled:opacity-40"
+                    className="tap flex items-center gap-2.5 rounded-2xl bg-navy-100 px-3 py-2.5 text-start text-navy-800 transition active:scale-[0.98] disabled:opacity-40"
                 >
                     <Route className="size-4 shrink-0" />
                     <span className="min-w-0">
@@ -388,7 +388,7 @@ export function CompletedSummary({
                 <button
                     type="button"
                     onClick={onOpenPhotos}
-                    className="card tap flex w-full items-center gap-3 p-3 text-right transition hover:bg-navy-50"
+                    className="card tap flex w-full items-center gap-3 p-3 text-start transition hover:bg-navy-50"
                 >
                     <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-navy-100 text-navy-500">
                         <Camera className="size-4.5" />
@@ -414,7 +414,7 @@ export function CompletedSummary({
                                 key={report.id}
                                 type="button"
                                 onClick={() => onOpenReport(report.type)}
-                                className="tap flex w-full items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2.5 text-right text-xs font-bold text-emerald-800 transition hover:bg-emerald-100"
+                                className="tap flex w-full items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2.5 text-start text-xs font-bold text-emerald-800 transition hover:bg-emerald-100"
                             >
                                 <Check className="size-3.5 shrink-0" />
                                 <span className="flex-1">

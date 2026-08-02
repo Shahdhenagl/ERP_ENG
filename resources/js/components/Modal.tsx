@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { useT } from '@/lib/i18n'
 import { X } from 'lucide-react'
 import { useEffect, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
@@ -21,6 +22,8 @@ const SIZES = {
 }
 
 export function Modal({ open, onClose, title, description, size = 'md', footer, children }: ModalProps) {
+    const t = useT()
+
     // Close on Escape, and stop the page behind from scrolling.
     useEffect(() => {
         if (!open) return
@@ -65,8 +68,8 @@ export function Modal({ open, onClose, title, description, size = 'md', footer, 
 
                 <header className="flex items-start justify-between gap-4 border-b border-navy-100 px-6 py-4">
                     <div>
-                        <h2 className="text-lg font-bold text-navy-900">{title}</h2>
-                        {description && <p className="mt-0.5 text-sm text-navy-400">{description}</p>}
+                        <h2 className="text-lg font-bold text-navy-900">{t(title)}</h2>
+                        {description && <p className="mt-0.5 text-sm text-navy-400">{t(description)}</p>}
                     </div>
                     <button
                         onClick={onClose}
@@ -111,6 +114,8 @@ export function ConfirmDialog({
     danger,
     loading,
 }: ConfirmProps) {
+    const t = useT()
+
     return (
         <Modal
             open={open}
@@ -120,19 +125,19 @@ export function ConfirmDialog({
             footer={
                 <>
                     <button className="btn-secondary" onClick={onClose} disabled={loading}>
-                        إلغاء
+                        {t('إلغاء')}
                     </button>
                     <button
                         className={danger ? 'btn-danger' : 'btn-primary'}
                         onClick={onConfirm}
                         disabled={loading}
                     >
-                        {confirmLabel}
+                        {t(confirmLabel)}
                     </button>
                 </>
             }
         >
-            <p className="text-sm leading-relaxed text-navy-600">{message}</p>
+            <p className="text-sm leading-relaxed text-navy-600">{t(message)}</p>
         </Modal>
     )
 }

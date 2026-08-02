@@ -108,7 +108,7 @@ export function CustomerSitePicker({
                                         onClick={() =>
                                             onChange({ customerId: String(customer.id), branchId: '' })
                                         }
-                                        className="tap flex w-full items-center gap-2 border-b border-navy-50 p-2.5 text-right transition last:border-0 hover:bg-navy-50"
+                                        className="tap flex w-full items-center gap-2 border-b border-navy-50 p-2.5 text-start transition last:border-0 hover:bg-navy-50"
                                     >
                                         <span className="min-w-0 flex-1">
                                             <span className="block truncate text-sm font-semibold text-navy-800">

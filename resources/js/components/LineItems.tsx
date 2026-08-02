@@ -37,7 +37,7 @@ export function LineItems({
     return (
         <div className="space-y-1.5">
             <div className="overflow-x-auto rounded-2xl border border-navy-200">
-                <table className="w-full min-w-[50rem] table-fixed text-right text-sm">
+                <table className="w-full min-w-[50rem] table-fixed text-start text-sm">
                     <thead className="bg-ink-soft text-[11px] font-bold text-white">
                         <tr>
                             {columns.map((column) => (

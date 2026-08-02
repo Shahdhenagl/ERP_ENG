@@ -39,12 +39,12 @@ export function PartsUsedPage() {
                     <table className="w-full min-w-[640px] text-sm">
                         <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
                             <tr>
-                                <th className="px-3 py-2 text-right">الصنف</th>
+                                <th className="px-3 py-2 text-start">الصنف</th>
                                 <th className="w-20 px-2 py-2 text-center">الكمية</th>
                                 <th className="w-24 px-2 py-2 text-left">التكلفة</th>
-                                <th className="px-3 py-2 text-right">أمر العمل</th>
-                                <th className="px-3 py-2 text-right">العميل</th>
-                                <th className="w-24 px-2 py-2 text-right">التاريخ</th>
+                                <th className="px-3 py-2 text-start">أمر العمل</th>
+                                <th className="px-3 py-2 text-start">العميل</th>
+                                <th className="w-24 px-2 py-2 text-start">التاريخ</th>
                             </tr>
                         </thead>
                         <tbody>

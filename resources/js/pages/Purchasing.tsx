@@ -180,7 +180,7 @@ function OrdersTab() {
                             <div className="flex items-start justify-between gap-3">
                                 <button
                                     onClick={() => setDetailId(order.id)}
-                                    className="min-w-0 flex-1 text-right"
+                                    className="min-w-0 flex-1 text-start"
                                 >
                                     <div className="flex flex-wrap items-center gap-2">
                                         <span className="tabular text-[11px] font-bold text-brand-600">
@@ -512,7 +512,7 @@ function SuppliersTab() {
                                 )}
                             </td>
                             <td className="tabular px-3 py-2.5 text-navy-600" dir="ltr">
-                                <span className="block text-right">{supplier.phone ?? '—'}</span>
+                                <span className="block text-start">{supplier.phone ?? '—'}</span>
                             </td>
                             <td className="tabular px-3 py-2.5 font-bold text-amber-700">
                                 {formatMoney(supplier.balance)}

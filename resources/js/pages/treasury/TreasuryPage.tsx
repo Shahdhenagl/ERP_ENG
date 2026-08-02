@@ -153,7 +153,7 @@ export function TreasuryPage() {
                         <button
                             key={box.id}
                             onClick={() => setOpenBox(box)}
-                            className="card-interactive p-4 text-right"
+                            className="card-interactive p-4 text-start"
                         >
                             <div className="flex items-center justify-between gap-3">
                                 <div className="flex min-w-0 items-center gap-3">

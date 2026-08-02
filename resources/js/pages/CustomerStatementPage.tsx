@@ -173,6 +173,6 @@ function Tile({ label, value, tone }: { label: string; value: string; tone?: 'du
 
 function Th({ children, align }: { children: ReactNode; align?: 'left' }) {
     return (
-        <th className={'px-3 py-2 ' + (align === 'left' ? 'text-left' : 'text-right')}>{children}</th>
+        <th className={'px-3 py-2 ' + (align === 'left' ? 'text-left' : 'text-start')}>{children}</th>
     )
 }

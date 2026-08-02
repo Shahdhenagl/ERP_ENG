@@ -426,7 +426,7 @@ function VisitRow({
                     type="button"
                     onClick={() => setOpen((was) => !was)}
                     aria-expanded={open}
-                    className="tap flex w-full items-center gap-3 p-3 text-right transition hover:bg-navy-100"
+                    className="tap flex w-full items-center gap-3 p-3 text-start transition hover:bg-navy-100"
                 >
                     {body}
                     <ChevronDown

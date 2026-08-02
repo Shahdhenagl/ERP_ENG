@@ -110,7 +110,7 @@ function SummaryView({ filters }: { filters: { year: number; month: number } }) 
             <table className="w-full min-w-[620px] text-sm">
                 <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
                     <tr>
-                        <th className="px-3 py-2 text-right">الموظف</th>
+                        <th className="px-3 py-2 text-start">الموظف</th>
                         <th className="w-16 px-2 py-2 text-center">حاضر</th>
                         <th className="w-16 px-2 py-2 text-center">متأخر</th>
                         <th className="w-16 px-2 py-2 text-center">غائب</th>
@@ -207,8 +207,8 @@ function LogView({ filters }: { filters: { year: number; month: number } }) {
                     <table className="w-full min-w-[720px] text-sm">
                         <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
                             <tr>
-                                <th className="px-3 py-2 text-right">الموظف</th>
-                                <th className="w-24 px-2 py-2 text-right">التاريخ</th>
+                                <th className="px-3 py-2 text-start">الموظف</th>
+                                <th className="w-24 px-2 py-2 text-start">التاريخ</th>
                                 <th className="w-16 px-2 py-2 text-center">الحالة</th>
                                 <th className="w-28 px-2 py-2 text-center">حضور</th>
                                 <th className="w-28 px-2 py-2 text-center">انصراف</th>

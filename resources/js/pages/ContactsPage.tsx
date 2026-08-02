@@ -104,7 +104,7 @@ export function ContactsPage() {
                                     <button
                                         key={contact.id}
                                         onClick={() => setEditing(contact)}
-                                        className="card-interactive block w-full p-3.5 text-right"
+                                        className="card-interactive block w-full p-3.5 text-start"
                                     >
                                         <div className="flex items-center gap-3">
                                             <span className="grid size-10 shrink-0 place-items-center rounded-full bg-brand-50 text-sm font-bold text-brand-700">

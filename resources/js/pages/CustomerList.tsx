@@ -229,7 +229,7 @@ export function CustomerList() {
                             </td>
                             <td className="px-3 py-2.5 text-navy-600">{customer.type_label ?? '—'}</td>
                             <td className="tabular px-3 py-2.5 text-navy-600" dir="ltr">
-                                <span className="block text-right">{customer.phone ?? '—'}</span>
+                                <span className="block text-start">{customer.phone ?? '—'}</span>
                             </td>
                             <td className="px-3 py-2.5 text-navy-600">
                                 {[customer.governorate, customer.city].filter(Boolean).join(' — ') || '—'}

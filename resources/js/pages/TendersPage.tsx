@@ -160,7 +160,7 @@ function TenderRow({
     return (
         <div className="card p-3.5">
             <div className="flex items-start justify-between gap-3">
-                <button onClick={onEdit} className="min-w-0 flex-1 text-right">
+                <button onClick={onEdit} className="min-w-0 flex-1 text-start">
                     <div className="flex flex-wrap items-center gap-2">
                         <span className="tabular text-[11px] font-bold text-brand-600">{tender.code}</span>
                         <span className={clsx('badge', STATUS[tender.status])}>{tender.status_label}</span>

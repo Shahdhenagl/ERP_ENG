@@ -85,7 +85,7 @@ export function EmployeesTab() {
                             <div className="flex items-start justify-between gap-3">
                                 <button
                                     onClick={() => setViewing(employee)}
-                                    className="min-w-0 flex-1 text-right"
+                                    className="min-w-0 flex-1 text-start"
                                 >
                                     <div className="flex flex-wrap items-center gap-2">
                                         <span className="tabular text-[11px] font-bold text-brand-600">

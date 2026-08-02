@@ -203,7 +203,7 @@ function QuotationsTab() {
                         <button
                             key={quotation.id}
                             onClick={() => setDetailId(quotation.id)}
-                            className="card-interactive block w-full p-4 text-right"
+                            className="card-interactive block w-full p-4 text-start"
                         >
                             <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0 flex-1">
@@ -828,7 +828,7 @@ function OrdersTab() {
                         <button
                             key={order.id}
                             onClick={() => setDetailId(order.id)}
-                            className="card-interactive block w-full p-4 text-right"
+                            className="card-interactive block w-full p-4 text-start"
                         >
                             <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0 flex-1">

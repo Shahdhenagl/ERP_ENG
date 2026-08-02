@@ -146,7 +146,7 @@ function QuoteRow({ quote, best }: { quote: SupplierQuote; best?: boolean }) {
         <>
             <div className={clsx('card p-3.5', best && quote.status === 'received' && 'ring-1 ring-emerald-200')}>
                 <div className="flex items-start justify-between gap-3">
-                    <button onClick={() => setDetail(true)} className="min-w-0 flex-1 text-right">
+                    <button onClick={() => setDetail(true)} className="min-w-0 flex-1 text-start">
                         <div className="flex flex-wrap items-center gap-2">
                             <span className="tabular text-[11px] font-bold text-brand-600">{quote.code}</span>
                             <span className={clsx('badge', STATUS[quote.status])}>{quote.status_label}</span>
