@@ -386,6 +386,24 @@ export const UPS_PHASES: Record<string, string> = {
 /** Communication ports a UPS commonly exposes. */
 export const COMM_PORTS = ['USB', 'RS232', 'SNMP', 'USB + RS232', 'USB + SNMP'] as const
 
+/** Where a lead came from. */
+export const LEAD_SOURCE: Record<string, string> = {
+    referral: 'ترشيح',
+    call: 'اتصال',
+    walk_in: 'زيارة',
+    social: 'سوشيال ميديا',
+    website: 'الموقع',
+    other: 'أخرى',
+}
+
+/** How hard a lead is worth chasing — which of thirty to ring first. */
+export const LEAD_PRIORITY: Record<string, { label: string; chip: string; dot: string }> = {
+    urgent: { label: 'عاجلة', chip: 'bg-red-50 text-red-700 ring-1 ring-red-200', dot: 'bg-red-500' },
+    high: { label: 'عالية', chip: 'bg-orange-50 text-orange-700 ring-1 ring-orange-200', dot: 'bg-orange-500' },
+    normal: { label: 'عادية', chip: 'bg-navy-50 text-navy-500 ring-1 ring-navy-200', dot: 'bg-navy-300' },
+    low: { label: 'منخفضة', chip: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200', dot: 'bg-slate-300' },
+}
+
 /** Battery chemistry / construction. */
 export const BATTERY_TYPES: Record<string, string> = {
     vrla: 'VRLA',

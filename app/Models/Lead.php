@@ -30,6 +30,7 @@ class Lead extends Model
         'email',
         'source',
         'status',
+        'priority',
         'est_value',
         'notes',
         'lost_reason',
@@ -50,6 +51,9 @@ class Lead extends Model
         static::creating(function (self $lead) {
             $lead->code ??= static::nextCode();
             $lead->status ??= 'new';
+            // Set here as well as in the column default, so the instance returned
+            // from a create() already knows its own priority.
+            $lead->priority ??= 'normal';
         });
     }
 
@@ -107,6 +111,16 @@ class Lead extends Model
         };
     }
 
+    public function priorityLabel(): string
+    {
+        return match ($this->priority) {
+            'urgent' => 'عاجلة',
+            'high' => 'عالية',
+            'low' => 'منخفضة',
+            default => 'عادية',
+        };
+    }
+
     public function sourceLabel(): ?string
     {
         return match ($this->source) {
@@ -121,6 +135,19 @@ class Lead extends Model
     }
 
     // ── Scopes ───────────────────────────────────────────────
+
+    /**
+     * Hottest first, then newest.
+     *
+     * Ordered in SQL rather than in the client: the list is paginated, and
+     * sorting one page of thirty puts the urgent lead on page two.
+     */
+    public function scopeByPriority(Builder $query): Builder
+    {
+        return $query
+            ->orderByRaw("FIELD(priority, 'urgent', 'high', 'normal', 'low')")
+            ->orderByDesc('id');
+    }
 
     /** Still in play — not yet won or lost. */
     public function scopeOpen(Builder $query): Builder

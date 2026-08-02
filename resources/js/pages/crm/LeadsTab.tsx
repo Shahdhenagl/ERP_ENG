@@ -10,14 +10,17 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { ExportButton } from '@/components/ExportButton'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
+import { useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { Button, EmptyState, Field, Input, Select, SkeletonCard, Textarea } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
-import { formatMoney } from '@/lib/domain'
+import { api } from '@/lib/api'
+import { formatMoney, LEAD_PRIORITY, LEAD_SOURCE } from '@/lib/domain'
 import { useArea } from '@/lib/nav'
 import { useLead, useLeads, useLeadStatus, useSaveLead } from '@/lib/queries'
-import type { Lead, LeadStatus } from '@/types'
+import type { Lead, LeadPriority, LeadStatus } from '@/types'
 import { LeadFollowUps } from '@/pages/crm/LeadFollowUps'
 
 const STATUS: Record<LeadStatus, string> = {
@@ -39,14 +42,28 @@ export function LeadsTab() {
     const [creating, setCreating] = useState(false)
     const [openId, setOpenId] = useState<number | null>(null)
     const [status, setStatus] = useState<LeadStatus | ''>('')
+    const [priority, setPriority] = useState<LeadPriority | ''>('')
+    const [source, setSource] = useState('')
+    const [from, setFrom] = useState('')
+    const [to, setTo] = useState('')
     const [search, setSearch] = useState('')
+    const [view, setView] = useViewMode('leads')
 
-    const { data, isLoading } = useLeads({
+    // The stage buttons narrow to one stage; everything else is a separate
+    // question about the same set, so it stacks rather than replaces.
+    const filters = {
         search: search || undefined,
         status: status || undefined,
+        priority: priority || undefined,
+        source: source || undefined,
+        from: from || undefined,
+        to: to || undefined,
+        // "All" means the open pipeline, not the archive: a board that opens on
+        // three years of won and lost deals is not a board.
         open: status ? undefined : 1,
-        per_page: 50,
-    })
+    }
+
+    const { data, isLoading } = useLeads({ ...filters, per_page: 50 })
 
     if (openId !== null) {
         return <LeadDetail id={openId} onBack={() => setOpenId(null)} />
@@ -81,17 +98,87 @@ export function LeadsTab() {
                         </button>
                     ))}
                 </div>
+                <ViewToggle view={view} onChange={setView} />
+
+                <ExportButton
+                    filename="leads"
+                    headers={[
+                        'الكود',
+                        'الاسم',
+                        'الشركة',
+                        'الهاتف',
+                        'الحالة',
+                        'الأولوية',
+                        'المصدر',
+                        'القيمة المتوقعة',
+                        'المسؤول',
+                    ]}
+                    rows={async () => {
+                        const { data: page } = await api.get<{ data: Lead[] }>('/leads', {
+                            params: { ...filters, per_page: 1000 },
+                        })
+
+                        return page.data.map((lead) => [
+                            lead.code,
+                            lead.name,
+                            lead.company,
+                            lead.phone,
+                            lead.status_label,
+                            lead.priority_label,
+                            lead.source_label,
+                            lead.est_value,
+                            lead.owner,
+                        ])
+                    }}
+                />
+
                 <Button icon={Plus} onClick={() => setCreating(true)}>
                     عميل محتمل
                 </Button>
             </div>
 
-            <Input
-                placeholder="بحث بالاسم أو الشركة أو الهاتف…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="mb-4"
-            />
+            <div className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+                <Input
+                    placeholder="بحث بالاسم أو الشركة أو الهاتف…"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="sm:col-span-2 lg:col-span-1"
+                />
+
+                <Select
+                    value={priority}
+                    onChange={(e) => setPriority(e.target.value as LeadPriority | '')}
+                >
+                    <option value="">كل الأولويات</option>
+                    {Object.entries(LEAD_PRIORITY).map(([value, meta]) => (
+                        <option key={value} value={value}>
+                            {meta.label}
+                        </option>
+                    ))}
+                </Select>
+
+                <Select value={source} onChange={(e) => setSource(e.target.value)}>
+                    <option value="">كل المصادر</option>
+                    {Object.entries(LEAD_SOURCE).map(([value, label]) => (
+                        <option key={value} value={value}>
+                            {label}
+                        </option>
+                    ))}
+                </Select>
+
+                <Input
+                    type="date"
+                    value={from}
+                    onChange={(e) => setFrom(e.target.value)}
+                    aria-label="من تاريخ"
+                />
+                <Input
+                    type="date"
+                    value={to}
+                    onChange={(e) => setTo(e.target.value)}
+                    aria-label="إلى تاريخ"
+                />
+            </div>
 
             {isLoading ? (
                 <SkeletonCard />
@@ -101,6 +188,8 @@ export function LeadsTab() {
                     title="لا يوجد عملاء محتملون"
                     description="سجّل كل فرصة بيع هنا وتابعها حتى تُكسب أو تُغلق."
                 />
+            ) : view === 'table' ? (
+                <LeadTable leads={data.data} onOpen={setOpenId} />
             ) : (
                 <div className="grid gap-2 sm:grid-cols-2">
                     {data.data.map((lead) => (
@@ -115,6 +204,13 @@ export function LeadsTab() {
                                     <span className={clsx('badge', STATUS[lead.status])}>
                                         {lead.status_label}
                                     </span>
+                                    {lead.priority !== 'normal' && (
+                                        <span
+                                            className={clsx('badge', LEAD_PRIORITY[lead.priority]?.chip)}
+                                        >
+                                            {lead.priority_label}
+                                        </span>
+                                    )}
                                     {(lead.open_follow_ups ?? 0) > 0 && (
                                         <span className="badge bg-navy-100 text-navy-500">
                                             {lead.open_follow_ups} متابعة
@@ -139,6 +235,74 @@ export function LeadsTab() {
 
             {creating && <LeadForm onClose={() => setCreating(false)} onSaved={setOpenId} />}
         </>
+    )
+}
+
+/**
+ * The pipeline as rows.
+ *
+ * A card carries enough of one lead to judge it alone; this is for reading
+ * thirty at once — down the priority column, down the value column — which is
+ * the only way to decide who to ring this morning.
+ */
+function LeadTable({ leads, onOpen }: { leads: Lead[]; onOpen: (id: number) => void }) {
+    return (
+        <div className="card overflow-x-auto">
+            <table className="w-full min-w-[52rem] text-right text-sm">
+                <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
+                    <tr>
+                        <th className="w-28 px-3 py-2.5">الكود</th>
+                        <th className="px-3 py-2.5">الاسم</th>
+                        <th className="px-3 py-2.5">الشركة</th>
+                        <th className="w-32 px-3 py-2.5">الهاتف</th>
+                        <th className="w-28 px-3 py-2.5">الحالة</th>
+                        <th className="w-24 px-3 py-2.5">الأولوية</th>
+                        <th className="w-24 px-3 py-2.5">المصدر</th>
+                        <th className="w-28 px-3 py-2.5 text-left">القيمة المتوقعة</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {leads.map((lead) => (
+                        <tr
+                            key={lead.id}
+                            onClick={() => onOpen(lead.id)}
+                            className="cursor-pointer border-t border-navy-100 transition hover:bg-navy-50/60"
+                        >
+                            <td className="tabular px-3 py-2.5 font-bold text-brand-600">
+                                {lead.code}
+                            </td>
+                            <td className="px-3 py-2.5 font-semibold text-navy-800">
+                                {lead.name}
+                                {(lead.open_follow_ups ?? 0) > 0 && (
+                                    <span className="badge mr-1.5 bg-navy-100 text-navy-500">
+                                        {lead.open_follow_ups} متابعة
+                                    </span>
+                                )}
+                            </td>
+                            <td className="px-3 py-2.5 text-navy-600">{lead.company ?? '—'}</td>
+                            <td className="tabular px-3 py-2.5 text-navy-600" dir="ltr">
+                                {lead.phone ?? '—'}
+                            </td>
+                            <td className="px-3 py-2.5">
+                                <span className={clsx('badge', STATUS[lead.status])}>
+                                    {lead.status_label}
+                                </span>
+                            </td>
+                            <td className="px-3 py-2.5">
+                                <span className={clsx('badge', LEAD_PRIORITY[lead.priority]?.chip)}>
+                                    {lead.priority_label}
+                                </span>
+                            </td>
+                            <td className="px-3 py-2.5 text-navy-600">{lead.source_label ?? '—'}</td>
+                            <td className="tabular px-3 py-2.5 text-left font-bold text-navy-800">
+                                {lead.est_value ? formatMoney(lead.est_value) : '—'}
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
     )
 }
 
@@ -342,6 +506,7 @@ function LeadForm({
         whatsapp: lead?.whatsapp ?? '',
         email: lead?.email ?? '',
         source: lead?.source ?? '',
+        priority: lead?.priority ?? 'normal',
         est_value: lead?.est_value != null ? String(lead.est_value) : '',
         notes: lead?.notes ?? '',
     })
@@ -372,6 +537,7 @@ function LeadForm({
                                     whatsapp: form.whatsapp || null,
                                     email: form.email || null,
                                     source: form.source || null,
+                                    priority: form.priority,
                                     est_value: form.est_value ? Number(form.est_value) : null,
                                     notes: form.notes || null,
                                 })
@@ -420,6 +586,23 @@ function LeadForm({
                             <option value="other">أخرى</option>
                         </Select>
                     </Field>
+                    <Field
+                        label="الأولوية"
+                        error={errors.priority}
+                        hint="ترتّب القائمة — الأعجل أولاً"
+                    >
+                        <Select
+                            value={form.priority}
+                            onChange={(e) => set('priority')(e.target.value)}
+                        >
+                            {Object.entries(LEAD_PRIORITY).map(([value, meta]) => (
+                                <option key={value} value={value}>
+                                    {meta.label}
+                                </option>
+                            ))}
+                        </Select>
+                    </Field>
+
                     <Field label="القيمة المتوقعة" error={errors.est_value}>
                         <Input
                             type="number"

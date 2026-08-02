@@ -20,9 +20,13 @@ class LeadController extends Controller
             ->when($request->string('status')->toString(), fn ($q, $s) => $q->where('status', $s))
             ->when($request->boolean('open'), fn ($q) => $q->open())
             ->when($request->integer('owner_id'), fn ($q, $id) => $q->where('owner_id', $id))
+            ->when($request->string('priority')->toString(), fn ($q, $p) => $q->where('priority', $p))
+            ->when($request->string('source')->toString(), fn ($q, $s) => $q->where('source', $s))
+            ->when($request->date('from'), fn ($q, $d) => $q->whereDate('created_at', '>=', $d))
+            ->when($request->date('to'), fn ($q, $d) => $q->whereDate('created_at', '<=', $d))
             ->with(['owner', 'customer'])
             ->withCount(['followUps as open_follow_ups_count' => fn ($q) => $q->open()])
-            ->orderByDesc('id')
+            ->byPriority()
             ->paginate($request->integer('per_page', 30));
 
         return response()->json([
@@ -119,6 +123,7 @@ class LeadController extends Controller
             'whatsapp' => ['nullable', 'string', 'max:32'],
             'email' => ['nullable', 'email', 'max:160'],
             'source' => ['nullable', 'in:referral,call,walk_in,social,website,other'],
+            'priority' => ['nullable', 'in:urgent,high,normal,low'],
             'est_value' => ['nullable', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'owner_id' => ['nullable', 'exists:users,id'],
@@ -142,6 +147,8 @@ class LeadController extends Controller
             'source_label' => $lead->sourceLabel(),
             'status' => $lead->status,
             'status_label' => $lead->statusLabel(),
+            'priority' => $lead->priority,
+            'priority_label' => $lead->priorityLabel(),
             'est_value' => $lead->est_value,
             'notes' => $lead->notes,
             'lost_reason' => $lead->lost_reason,

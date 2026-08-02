@@ -2881,6 +2881,7 @@ export interface PayrollRun {
 
 export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'won' | 'lost'
 export type LeadSource = 'referral' | 'call' | 'walk_in' | 'social' | 'website' | 'other'
+export type LeadPriority = 'urgent' | 'high' | 'normal' | 'low'
 export type FollowUpType = 'call' | 'visit' | 'whatsapp' | 'email' | 'note'
 export type FollowUpStatus = 'pending' | 'overdue' | 'done'
 
@@ -2916,6 +2917,8 @@ export interface Lead {
     source_label: string | null
     status: LeadStatus
     status_label: string
+    priority: LeadPriority
+    priority_label: string
     est_value: number | null
     notes: string | null
     lost_reason: string | null
