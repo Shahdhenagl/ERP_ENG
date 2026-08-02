@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { useT } from '@/lib/i18n'
 import { LayoutGrid, Rows3 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -74,16 +75,22 @@ export function DataTable({
     headers,
     minWidth = '52rem',
     children,
+    lead,
 }: {
     headers: Array<string | { label: string; className?: string }>
     minWidth?: string
     children: React.ReactNode
+    /** Rendered as a first column — the select-all box, when a list has one. */
+    lead?: React.ReactNode
 }) {
+    const t = useT()
+
     return (
         <div className="card overflow-x-auto">
             <table className="w-full text-start text-sm" style={{ minWidth }}>
                 <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
                     <tr>
+                        {lead !== undefined && <th className="w-10 px-3 py-2.5">{lead}</th>}
                         {headers.map((header, index) => {
                             const isText = typeof header === 'string'
 
@@ -92,7 +99,7 @@ export function DataTable({
                                     key={isText ? header : (header.label || String(index))}
                                     className={clsx('px-3 py-2.5', !isText && header.className)}
                                 >
-                                    {isText ? header : header.label}
+                                    {t(isText ? header : header.label)}
                                 </th>
                             )
                         })}

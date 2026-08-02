@@ -13,7 +13,7 @@ import {
     Trash2,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { BranchForm } from '@/components/BranchForm'
 import { ExportButton } from '@/components/ExportButton'
 import { api } from '@/lib/api'
@@ -50,14 +50,26 @@ export function CustomerList() {
     const [editingBranch, setEditingBranch] = useState<Branch | undefined>()
 
     const { path } = useArea()
+    const navigate = useNavigate()
     const [view, setView] = useViewMode('customers')
-    const { data, isLoading, isError, refetch } = useCustomers({
+    const [terms, setTerms] = useState('')
+    const [perPage, setPerPage] = useState(25)
+    // Kept as ids rather than rows: a page reload or a filter change should not
+    // leave a selection holding customers no longer on screen.
+    const [picked, setPicked] = useState<number[]>([])
+
+    const filters = {
         search,
         type: type || undefined,
         contract: contract || undefined,
+        payment_terms: terms || undefined,
         active: active === '' ? undefined : active,
-        per_page: 40,
-    })
+    }
+
+    const { data, isLoading, isError, refetch } = useCustomers({ ...filters, per_page: perPage })
+
+    const pageIds = data?.data.map((customer) => customer.id) ?? []
+    const allPicked = pageIds.length > 0 && pageIds.every((id) => picked.includes(id))
     const remove = useDeleteCustomer()
 
     const timer = useRef<number>(0)
@@ -161,6 +173,33 @@ export function CustomerList() {
                     <option value="1">النشطون</option>
                     <option value="0">غير النشطين</option>
                 </Select>
+
+                <Select
+                    value={terms}
+                    onChange={(e) => setTerms(e.target.value)}
+                    aria-label="طريقة الدفع"
+                >
+                    <option value="">كل طرق الدفع</option>
+                    <option value="cash">نقدي</option>
+                    <option value="credit">آجل</option>
+                </Select>
+
+                <Select
+                    value={String(perPage)}
+                    onChange={(e) => {
+                        setPerPage(Number(e.target.value))
+                        // A selection made on a page of 25 means nothing on a
+                        // page of 100 with different rows on it.
+                        setPicked([])
+                    }}
+                    aria-label="عدد الصفوف"
+                >
+                    {[10, 20, 25, 50, 100].map((size) => (
+                        <option key={size} value={size}>
+                            {size} صف
+                        </option>
+                    ))}
+                </Select>
             </div>
 
             <div className="mb-3 flex justify-end">
@@ -173,12 +212,62 @@ export function CustomerList() {
                         { label: 'إجمالي العملاء', value: data.summary.total, tone: 'brand' },
                         { label: 'نشط', value: data.summary.active, tone: 'up' },
                         {
-                            label: 'مستحقات',
+                            // What was invoiced and never collected — the figure
+                            // a collections call is actually about.
+                            label: 'المديونيات',
                             value: formatMoney(data.summary.outstanding),
                             tone: data.summary.outstanding > 0 ? 'down' : 'slate',
                         },
+                        {
+                            label: 'إجمالي المدفوعات',
+                            value: formatMoney(data.summary.collected ?? 0),
+                            tone: 'up',
+                        },
+                        {
+                            label: 'إجمالي المرتجعات',
+                            value: formatMoney(data.summary.returned ?? 0),
+                            tone: 'slate',
+                        },
                     ]}
                 />
+            )}
+
+            {/* A tick with nothing to do is decoration. What a selected set is
+                for here is being taken out of the system as a list. */}
+            {picked.length > 0 && (
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-brand-50 px-4 py-2.5 ring-1 ring-brand-200">
+                    <span className="text-xs font-bold text-brand-700">
+                        {picked.length} عميل محدد
+                    </span>
+
+                    <div className="flex items-center gap-2">
+                        <ExportButton
+                            filename="customers-selected"
+                            headers={['الكود', 'العميل', 'النوع', 'طريقة الدفع', 'الهاتف', 'المحافظة']}
+                            rows={async () =>
+                                (data?.data ?? [])
+                                    .filter((customer) => picked.includes(customer.id))
+                                    .map((customer) => [
+                                        customer.code,
+                                        customer.name,
+                                        customer.type_label,
+                                        customer.payment_terms_label,
+                                        customer.phone,
+                                        customer.governorate,
+                                    ])
+                            }
+                            label="تصدير المحدد"
+                        />
+
+                        <button
+                            type="button"
+                            onClick={() => setPicked([])}
+                            className="tap rounded-lg px-2 py-1 text-xs font-bold text-navy-500 transition hover:bg-surface"
+                        >
+                            إلغاء التحديد
+                        </button>
+                    </div>
+                </div>
             )}
 
             {isError ? (
@@ -202,11 +291,21 @@ export function CustomerList() {
                 />
             ) : view === 'table' ? (
                 <DataTable
-                    minWidth="58rem"
+                    minWidth="64rem"
+                    lead={
+                        <input
+                            type="checkbox"
+                            className="size-4"
+                            aria-label="تحديد الكل"
+                            checked={allPicked}
+                            onChange={() => setPicked(allPicked ? [] : pageIds)}
+                        />
+                    }
                     headers={[
                         { label: 'الكود', className: 'w-28' },
                         'العميل',
                         'النوع',
+                        { label: 'طريقة الدفع', className: 'w-24' },
                         'الهاتف',
                         'المحافظة / الحي',
                         { label: 'العقود', className: 'w-20' },
@@ -215,19 +314,50 @@ export function CustomerList() {
                     ]}
                 >
                     {data.data.map((customer) => (
-                        <tr key={customer.id} className="border-t border-navy-100 hover:bg-navy-50/60">
+                        <tr
+                            key={customer.id}
+                            // The whole row opens the customer. Aiming for the
+                            // name alone is a target the width of a word in a
+                            // row the width of the screen.
+                            onClick={() => navigate(path(`/customers/${customer.id}`))}
+                            className="cursor-pointer border-t border-navy-100 hover:bg-navy-50/60"
+                        >
+                            <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
+                                <input
+                                    type="checkbox"
+                                    className="size-4"
+                                    aria-label={`تحديد ${customer.name}`}
+                                    checked={picked.includes(customer.id)}
+                                    onChange={() =>
+                                        setPicked((current) =>
+                                            current.includes(customer.id)
+                                                ? current.filter((id) => id !== customer.id)
+                                                : [...current, customer.id],
+                                        )
+                                    }
+                                />
+                            </td>
                             <td className="tabular px-3 py-2.5 text-[11px] font-bold text-brand-600">
                                 {customer.code}
                             </td>
                             <td className="px-3 py-2.5">
-                                <Link
-                                    to={path(`/customers/${customer.id}`)}
-                                    className="block truncate font-semibold text-navy-800"
-                                >
+                                <span className="block truncate font-semibold text-navy-800">
                                     {customer.name}
-                                </Link>
+                                </span>
                             </td>
                             <td className="px-3 py-2.5 text-navy-600">{customer.type_label ?? '—'}</td>
+                            <td className="px-3 py-2.5">
+                                <span
+                                    className={clsx(
+                                        'badge',
+                                        customer.payment_terms === 'credit'
+                                            ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
+                                            : 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
+                                    )}
+                                >
+                                    {customer.payment_terms_label ?? 'نقدي'}
+                                </span>
+                            </td>
                             <td className="tabular px-3 py-2.5 text-navy-600" dir="ltr">
                                 <span className="block text-start">{customer.phone ?? '—'}</span>
                             </td>

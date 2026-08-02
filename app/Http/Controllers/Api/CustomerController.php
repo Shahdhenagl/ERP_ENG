@@ -26,6 +26,10 @@ class CustomerController extends Controller
             // `active` as a tri-state: unset shows all, 1 active, 0 inactive.
             ->when($request->filled('active'), fn ($q) => $q->where('is_active', $request->boolean('active')))
             ->ofType($request->string('type')->toString() ?: null)
+            ->when(
+                $request->string('payment_terms')->toString(),
+                fn ($q, $terms) => $q->where('payment_terms', $terms),
+            )
             ->contractStanding($request->string('contract')->toString() ?: null)
             ->withCount([
                 'tasks',
@@ -37,16 +41,38 @@ class CustomerController extends Controller
             ->paginate($request->integer('per_page', 25));
 
         return CustomerResource::collection($customers)->additional([
-            'summary' => [
-                'total' => Customer::count(),
-                'active' => Customer::query()->active()->count(),
-                'outstanding' => round(
-                    (float) \App\Models\Invoice::where('status', 'issued')->sum('total')
-                    - (float) \Illuminate\Support\Facades\DB::table('payments')->sum('amount'),
-                    2,
-                ),
-            ],
+            'summary' => $this->summary(),
         ]);
+    }
+
+    /**
+     * The board above the list: how many accounts, and where the money stands.
+     *
+     * Debt is what has been invoiced and not yet collected — the figure a
+     * collections call is made about. Payments and returns are shown beside it
+     * because the debt on its own says nothing about whether the month was
+     * good: the same balance means one thing after heavy collection and
+     * another after none.
+     *
+     * @return array<string, mixed>
+     */
+    protected function summary(): array
+    {
+        $invoiced = (float) \App\Models\Invoice::where('status', 'issued')->sum('total');
+        $collected = (float) \Illuminate\Support\Facades\DB::table('payments')
+            ->whereNull('deleted_at')
+            ->sum('amount');
+        $returned = (float) \Illuminate\Support\Facades\DB::table('sales_returns')
+            ->where('status', 'posted')
+            ->sum('total');
+
+        return [
+            'total' => Customer::count(),
+            'active' => Customer::query()->active()->count(),
+            'outstanding' => round($invoiced - $collected, 2),
+            'collected' => round($collected, 2),
+            'returned' => round($returned, 2),
+        ];
     }
 
     public function store(Request $request): JsonResponse
@@ -257,6 +283,8 @@ class CustomerController extends Controller
             'name_en' => ['nullable', 'string', 'max:160'],
             'company' => ['nullable', 'string', 'max:160'],
             'type' => ['nullable', Rule::in(array_keys(Customer::TYPES))],
+            // How the account settles. Cash unless somebody grants credit.
+            'payment_terms' => ['nullable', 'in:cash,credit'],
             // Unique across customers — one number, one file. On edit the
             // customer's own row is excused so re-saving is not blocked.
             'phone' => [

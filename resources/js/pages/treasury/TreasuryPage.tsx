@@ -18,7 +18,7 @@ import { PeriodPicker, usePeriod } from '@/components/PeriodPicker'
 import { SectionTabs } from '@/components/SectionTabs'
 import { MONEY_SECTIONS } from '@/lib/sections'
 import { useToast } from '@/components/Toast'
-import { Button, EmptyState, Field, Input, PageHeader, Select, SkeletonCard, Textarea } from '@/components/ui'
+import { Button, EmptyState, Field, Input, PageHeader, Select, SkeletonCard, Textarea, Th } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { formatMoney } from '@/lib/domain'
 import { formatDate, formatSmart } from '@/lib/format'
@@ -618,11 +618,11 @@ function StatementDialog({
                             <table className="doc-table">
                                 <thead>
                                     <tr>
-                                        <th className="w-24">التاريخ</th>
-                                        <th>البيان</th>
-                                        <th className="w-24 text-left">وارد</th>
-                                        <th className="w-24 text-left">منصرف</th>
-                                        <th className="w-28 text-left">الرصيد</th>
+                                        <Th className="w-24">التاريخ</Th>
+                                        <Th>البيان</Th>
+                                        <Th className="w-24 text-left">وارد</Th>
+                                        <Th className="w-24 text-left">منصرف</Th>
+                                        <Th className="w-28 text-left">الرصيد</Th>
                                     </tr>
                                 </thead>
                                 <tbody>

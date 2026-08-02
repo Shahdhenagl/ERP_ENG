@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import { CalendarRange, FileText } from 'lucide-react'
 import { useState } from 'react'
-import { EmptyState, Field, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
+import { EmptyState, Field, Input, PageHeader, Select, SkeletonCard, Th } from '@/components/ui'
 import { formatMoney } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
 import { useCashBoxes, useTreasuryStatement } from '@/lib/queries'
@@ -71,11 +71,11 @@ export function DaybookPage() {
                             <table className="w-full min-w-[560px] text-sm">
                                 <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
                                     <tr>
-                                        <th className="px-3 py-2 text-start">التاريخ</th>
-                                        <th className="px-3 py-2 text-start">البيان</th>
-                                        <th className="w-24 px-3 py-2 text-left">وارد</th>
-                                        <th className="w-24 px-3 py-2 text-left">منصرف</th>
-                                        <th className="w-24 px-3 py-2 text-left">الرصيد</th>
+                                        <Th className="px-3 py-2 text-start">التاريخ</Th>
+                                        <Th className="px-3 py-2 text-start">البيان</Th>
+                                        <Th className="w-24 px-3 py-2 text-left">وارد</Th>
+                                        <Th className="w-24 px-3 py-2 text-left">منصرف</Th>
+                                        <Th className="w-24 px-3 py-2 text-left">الرصيد</Th>
                                     </tr>
                                 </thead>
                                 <tbody>

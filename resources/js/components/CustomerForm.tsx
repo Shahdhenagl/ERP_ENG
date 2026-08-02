@@ -26,6 +26,7 @@ export function CustomerForm({ open, onClose, customer, onSaved }: CustomerFormP
         name_en: customer?.name_en ?? '',
         company: customer?.company ?? '',
         type: customer?.type ?? '',
+        payment_terms: customer?.payment_terms ?? 'cash',
         phone: customer?.phone ?? '',
         whatsapp: customer?.whatsapp ?? '',
         email: customer?.email ?? '',
@@ -89,6 +90,7 @@ export function CustomerForm({ open, onClose, customer, onSaved }: CustomerFormP
                 name_en: form.name_en || null,
                 company: form.company || null,
                 type: form.type || null,
+                payment_terms: form.payment_terms,
                 whatsapp: form.whatsapp || null,
                 email: form.email || null,
                 tax_id: form.tax_id || null,
@@ -153,6 +155,20 @@ export function CustomerForm({ open, onClose, customer, onSaved }: CustomerFormP
                             onChange={(event) => set('company')(event.target.value)}
                             placeholder="اسم الشركة (اختياري)"
                         />
+                    </Field>
+
+                    <Field
+                        label="طريقة الدفع"
+                        error={errors.payment_terms}
+                        hint="آجل يعني يُفوتر ويُتابع تحصيله"
+                    >
+                        <Select
+                            value={form.payment_terms}
+                            onChange={(event) => set('payment_terms')(event.target.value)}
+                        >
+                            <option value="cash">نقدي</option>
+                            <option value="credit">آجل</option>
+                        </Select>
                     </Field>
 
                     <Field label="نوع المؤسسة" error={errors.type}>

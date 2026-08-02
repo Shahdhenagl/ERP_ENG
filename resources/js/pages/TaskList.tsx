@@ -12,7 +12,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { TaskCard } from '@/components/TaskCard'
 import { useViewMode, ViewToggle } from '@/components/ViewToggle'
-import { Button, EmptyState, ErrorState, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
+import { Button, EmptyState, ErrorState, Input, PageHeader, Select, SkeletonCard, Th } from '@/components/ui'
 import { api } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import { downloadCsv } from '@/lib/csv'
@@ -455,13 +455,13 @@ function TaskTable({ tasks, href }: { tasks: Task[]; href: (id: number) => strin
             <table className="w-full min-w-[58rem] text-start text-sm">
                 <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
                     <tr>
-                        <th className="w-32 px-3 py-2.5">كود المهمة</th>
-                        <th className="px-3 py-2.5">المهمة</th>
-                        <th className="px-3 py-2.5">العميل</th>
-                        <th className="px-3 py-2.5">الفرع</th>
-                        <th className="w-28 px-3 py-2.5">الحالة</th>
-                        <th className="w-40 px-3 py-2.5">بداية التنفيذ</th>
-                        <th className="w-40 px-3 py-2.5">انتهاء التنفيذ</th>
+                        <Th className="w-32 px-3 py-2.5">كود المهمة</Th>
+                        <Th className="px-3 py-2.5">المهمة</Th>
+                        <Th className="px-3 py-2.5">العميل</Th>
+                        <Th className="px-3 py-2.5">الفرع</Th>
+                        <Th className="w-28 px-3 py-2.5">الحالة</Th>
+                        <Th className="w-40 px-3 py-2.5">بداية التنفيذ</Th>
+                        <Th className="w-40 px-3 py-2.5">انتهاء التنفيذ</Th>
                     </tr>
                 </thead>
                 <tbody>

@@ -13,7 +13,7 @@ import { AssetForm } from '@/components/AssetForm'
 import { BatteryForm } from '@/components/BatteryForm'
 import { ConfirmDialog } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
-import { Button, EmptyState, ErrorState, Input, SkeletonCard } from '@/components/ui'
+import { Button, EmptyState, ErrorState, Input, SkeletonCard, Th } from '@/components/ui'
 import { errorMessage } from '@/lib/api'
 import { formatMoney, formatQty, ITEM_CATEGORY } from '@/lib/domain'
 import { useDeleteItem, useItemGroups, useItems } from '@/lib/queries'
@@ -345,13 +345,13 @@ function ItemsTable({
             <table className="w-full text-sm">
                 <thead>
                     <tr className="border-b border-navy-100 bg-navy-50 text-start text-[11px] font-bold text-navy-500">
-                        <th className="p-3">الصنف</th>
-                        <th className="p-3">الفئة</th>
-                        <th className="p-3">السيريال</th>
-                        <th className="p-3 text-left">المتاح</th>
-                        <th className="p-3 text-left">متوسط الشراء</th>
-                        <th className="p-3 text-left">سعر البيع</th>
-                        <th className="w-20 p-3" />
+                        <Th className="p-3">الصنف</Th>
+                        <Th className="p-3">الفئة</Th>
+                        <Th className="p-3">السيريال</Th>
+                        <Th className="p-3 text-left">المتاح</Th>
+                        <Th className="p-3 text-left">متوسط الشراء</Th>
+                        <Th className="p-3 text-left">سعر البيع</Th>
+                        <Th className="w-20 p-3" />
                     </tr>
                 </thead>
                 <tbody>

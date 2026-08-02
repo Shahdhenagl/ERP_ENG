@@ -12,16 +12,7 @@ import { useParams } from 'react-router-dom'
 import { Modal } from '@/components/Modal'
 import { SectionTabs } from '@/components/SectionTabs'
 import { useToast } from '@/components/Toast'
-import {
-    Button,
-    EmptyState,
-    Field,
-    Input,
-    PageHeader,
-    Select,
-    SkeletonCard,
-    Textarea,
-} from '@/components/ui'
+import { Button, EmptyState, Field, Input, PageHeader, Select, SkeletonCard, Textarea, Th } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { formatMoney } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
@@ -214,11 +205,11 @@ function StatementModal({ box, onClose }: { box: CashBoxSummary; onClose: () => 
                             <table className="w-full min-w-[520px] text-sm">
                                 <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
                                     <tr>
-                                        <th className="px-3 py-2 text-start">التاريخ</th>
-                                        <th className="px-3 py-2 text-start">البيان</th>
-                                        <th className="w-24 px-3 py-2 text-left">وارد</th>
-                                        <th className="w-24 px-3 py-2 text-left">منصرف</th>
-                                        <th className="w-24 px-3 py-2 text-left">الرصيد</th>
+                                        <Th className="px-3 py-2 text-start">التاريخ</Th>
+                                        <Th className="px-3 py-2 text-start">البيان</Th>
+                                        <Th className="w-24 px-3 py-2 text-left">وارد</Th>
+                                        <Th className="w-24 px-3 py-2 text-left">منصرف</Th>
+                                        <Th className="w-24 px-3 py-2 text-left">الرصيد</Th>
                                     </tr>
                                 </thead>
                                 <tbody>

@@ -20,6 +20,7 @@ class Customer extends Model
         'name_en',
         'company',
         'type',
+        'payment_terms',
         'phone',
         'whatsapp',
         'email',
@@ -35,6 +36,21 @@ class Customer extends Model
         'is_active',
         'created_by',
     ];
+
+    /**
+     * How the account settles. Stored value, shown label.
+     *
+     * @var array<string, string>
+     */
+    public const PAYMENT_TERMS = [
+        'cash' => 'نقدي',
+        'credit' => 'آجل',
+    ];
+
+    public function paymentTermsLabel(): string
+    {
+        return self::PAYMENT_TERMS[$this->payment_terms] ?? self::PAYMENT_TERMS['cash'];
+    }
 
     /**
      * The kinds of account a standby-power company serves, in the vernacular
@@ -69,6 +85,9 @@ class Customer extends Model
     {
         static::creating(function (self $customer) {
             $customer->code ??= static::nextCode();
+            // Set here as well as in the column default, so the instance
+            // returned from a create() already knows its own terms.
+            $customer->payment_terms ??= 'cash';
         });
     }
 

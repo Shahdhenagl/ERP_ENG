@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Wrench } from 'lucide-react'
-import { EmptyState, PageHeader, SkeletonCard } from '@/components/ui'
+import { EmptyState, PageHeader, SkeletonCard, Th } from '@/components/ui'
 import { formatMoney, formatQty } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
 import { useArea } from '@/lib/nav'
@@ -39,12 +39,12 @@ export function PartsUsedPage() {
                     <table className="w-full min-w-[640px] text-sm">
                         <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
                             <tr>
-                                <th className="px-3 py-2 text-start">الصنف</th>
-                                <th className="w-20 px-2 py-2 text-center">الكمية</th>
-                                <th className="w-24 px-2 py-2 text-left">التكلفة</th>
-                                <th className="px-3 py-2 text-start">أمر العمل</th>
-                                <th className="px-3 py-2 text-start">العميل</th>
-                                <th className="w-24 px-2 py-2 text-start">التاريخ</th>
+                                <Th className="px-3 py-2 text-start">الصنف</Th>
+                                <Th className="w-20 px-2 py-2 text-center">الكمية</Th>
+                                <Th className="w-24 px-2 py-2 text-left">التكلفة</Th>
+                                <Th className="px-3 py-2 text-start">أمر العمل</Th>
+                                <Th className="px-3 py-2 text-start">العميل</Th>
+                                <Th className="w-24 px-2 py-2 text-start">التاريخ</Th>
                             </tr>
                         </thead>
                         <tbody>

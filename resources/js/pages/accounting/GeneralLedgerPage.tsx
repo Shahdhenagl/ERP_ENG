@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import { BookOpen } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
-import { EmptyState, Field, Select, SkeletonCard } from '@/components/ui'
+import { EmptyState, Field, Select, SkeletonCard, Th } from '@/components/ui'
 import { formatMoney } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
 import { useAccountLedger, useAccounts } from '@/lib/queries'
@@ -59,12 +59,12 @@ export function GeneralLedgerPage() {
                             <table className="doc-table">
                                 <thead>
                                     <tr>
-                                        <th className="w-24">التاريخ</th>
-                                        <th className="w-28">القيد</th>
-                                        <th>البيان</th>
-                                        <th className="w-28 text-left">مدين</th>
-                                        <th className="w-28 text-left">دائن</th>
-                                        <th className="w-32 text-left">الرصيد</th>
+                                        <Th className="w-24">التاريخ</Th>
+                                        <Th className="w-28">القيد</Th>
+                                        <Th>البيان</Th>
+                                        <Th className="w-28 text-left">مدين</Th>
+                                        <Th className="w-28 text-left">دائن</Th>
+                                        <Th className="w-32 text-left">الرصيد</Th>
                                     </tr>
                                 </thead>
                                 <tbody>

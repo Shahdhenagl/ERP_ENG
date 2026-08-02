@@ -13,7 +13,7 @@ import { PurchaseOrderForm } from '@/components/PurchaseOrderForm'
 import { ReceiveOrderForm } from '@/components/ReceiveOrderForm'
 import { SupplierForm } from '@/components/SupplierForm'
 import { useToast } from '@/components/Toast'
-import { Button, EmptyState, Field, Input, PageHeader, Select, SkeletonCard, Textarea } from '@/components/ui'
+import { Button, EmptyState, Field, Input, PageHeader, Select, SkeletonCard, Textarea, Th } from '@/components/ui'
 import { errorMessage } from '@/lib/api'
 import { formatMoney, formatQty, PAYMENT_METHOD } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
@@ -863,12 +863,12 @@ function SupplierStatementDialog({
                             <table className="doc-table">
                                 <thead>
                                     <tr>
-                                        <th className="w-24">التاريخ</th>
-                                        <th className="w-28">النوع</th>
-                                        <th>البيان</th>
-                                        <th className="w-24 text-left">عليه</th>
-                                        <th className="w-24 text-left">له</th>
-                                        <th className="w-28 text-left">الرصيد</th>
+                                        <Th className="w-24">التاريخ</Th>
+                                        <Th className="w-28">النوع</Th>
+                                        <Th>البيان</Th>
+                                        <Th className="w-24 text-left">عليه</Th>
+                                        <Th className="w-24 text-left">له</Th>
+                                        <Th className="w-28 text-left">الرصيد</Th>
                                     </tr>
                                 </thead>
                                 <tbody>

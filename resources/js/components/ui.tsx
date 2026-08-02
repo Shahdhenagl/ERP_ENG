@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { Children, cloneElement, isValidElement } from 'react'
 import { useT } from '@/lib/i18n'
 import { Loader2, type LucideIcon } from 'lucide-react'
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
@@ -112,10 +113,28 @@ export function Textarea({
     )
 }
 
+/**
+ * A dropdown whose options translate themselves.
+ *
+ * Options are the second-largest body of text in the app after headings — 352
+ * of them across 72 screens, most of them a single Arabic word inside a tag.
+ * Walking the children here reaches all of them at once; the alternative is
+ * editing seventy files to wrap a word each.
+ */
 export function Select({ className, children, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
+    const t = useT()
+
+    const translated = Children.map(children, (child) => {
+        if (!isValidElement(child) || child.type !== 'option') return child
+
+        const label = (child.props as { children?: ReactNode }).children
+
+        return typeof label === 'string' ? cloneElement(child, {}, t(label)) : child
+    })
+
     return (
         <select className={clsx('input select', className)} {...props}>
-            {children}
+            {translated}
         </select>
     )
 }
@@ -176,6 +195,22 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
             )}
         </div>
     )
+}
+
+/**
+ * A table heading that translates itself.
+ *
+ * A hundred of these are written as markup inside the pages rather than passed
+ * to anything, so there was no single place to reach them. This is that place:
+ * a `<th>` in every respect, one that knows what language the page is in.
+ */
+export function Th({
+    children,
+    ...props
+}: React.ThHTMLAttributes<HTMLTableCellElement>) {
+    const t = useT()
+
+    return <th {...props}>{typeof children === 'string' ? t(children) : children}</th>
 }
 
 export function Badge({ className, children }: { className?: string; children: ReactNode }) {

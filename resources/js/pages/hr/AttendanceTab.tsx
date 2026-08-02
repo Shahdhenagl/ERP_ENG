@@ -3,7 +3,7 @@ import { CalendarCheck, Clock, MapPin, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
-import { Button, EmptyState, Field, Input, Select, SkeletonCard, Textarea } from '@/components/ui'
+import { Button, EmptyState, Field, Input, Select, SkeletonCard, Textarea, Th } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { formatDate } from '@/lib/format'
 import {
@@ -110,13 +110,13 @@ function SummaryView({ filters }: { filters: { year: number; month: number } }) 
             <table className="w-full min-w-[620px] text-sm">
                 <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
                     <tr>
-                        <th className="px-3 py-2 text-start">الموظف</th>
-                        <th className="w-16 px-2 py-2 text-center">حاضر</th>
-                        <th className="w-16 px-2 py-2 text-center">متأخر</th>
-                        <th className="w-16 px-2 py-2 text-center">غائب</th>
-                        <th className="w-16 px-2 py-2 text-center">إجازة</th>
-                        <th className="w-20 px-2 py-2 text-center">دقائق تأخير</th>
-                        <th className="w-20 px-2 py-2 text-left">ساعات العمل</th>
+                        <Th className="px-3 py-2 text-start">الموظف</Th>
+                        <Th className="w-16 px-2 py-2 text-center">حاضر</Th>
+                        <Th className="w-16 px-2 py-2 text-center">متأخر</Th>
+                        <Th className="w-16 px-2 py-2 text-center">غائب</Th>
+                        <Th className="w-16 px-2 py-2 text-center">إجازة</Th>
+                        <Th className="w-20 px-2 py-2 text-center">دقائق تأخير</Th>
+                        <Th className="w-20 px-2 py-2 text-left">ساعات العمل</Th>
                     </tr>
                 </thead>
                 <tbody>
@@ -207,13 +207,13 @@ function LogView({ filters }: { filters: { year: number; month: number } }) {
                     <table className="w-full min-w-[720px] text-sm">
                         <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
                             <tr>
-                                <th className="px-3 py-2 text-start">الموظف</th>
-                                <th className="w-24 px-2 py-2 text-start">التاريخ</th>
-                                <th className="w-16 px-2 py-2 text-center">الحالة</th>
-                                <th className="w-28 px-2 py-2 text-center">حضور</th>
-                                <th className="w-28 px-2 py-2 text-center">انصراف</th>
-                                <th className="w-16 px-2 py-2 text-center">تأخير</th>
-                                <th className="w-16 px-2 py-2 text-left">ساعات</th>
+                                <Th className="px-3 py-2 text-start">الموظف</Th>
+                                <Th className="w-24 px-2 py-2 text-start">التاريخ</Th>
+                                <Th className="w-16 px-2 py-2 text-center">الحالة</Th>
+                                <Th className="w-28 px-2 py-2 text-center">حضور</Th>
+                                <Th className="w-28 px-2 py-2 text-center">انصراف</Th>
+                                <Th className="w-16 px-2 py-2 text-center">تأخير</Th>
+                                <Th className="w-16 px-2 py-2 text-left">ساعات</Th>
                             </tr>
                         </thead>
                         <tbody>

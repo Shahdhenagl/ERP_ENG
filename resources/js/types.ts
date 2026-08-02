@@ -66,6 +66,9 @@ export interface Customer {
     company: string | null
     type: CustomerType | null
     type_label: string | null
+    /** How the account settles: on the spot, or on account. */
+    payment_terms?: 'cash' | 'credit'
+    payment_terms_label?: string
     phone: string | null
     whatsapp: string | null
     whatsapp_number: string | null

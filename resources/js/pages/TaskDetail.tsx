@@ -29,7 +29,7 @@ import { CustodyExpenseModal } from '@/components/CustodyExpenseModal'
 import { ReportForm } from '@/components/ReportForm'
 import { StatusRail } from '@/components/StatusRail'
 import { useToast } from '@/components/Toast'
-import { Badge, Button, ErrorState, Field, Input, PageLoader, Select, Textarea } from '@/components/ui'
+import { Badge, Button, ErrorState, Field, Input, PageLoader, Select, Textarea, Th } from '@/components/ui'
 import { errorMessage } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import {
@@ -1505,9 +1505,9 @@ function BeforeAfter({ before, after }: { before: TaskReport; after: TaskReport 
             <table className="w-full text-sm">
                 <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
                     <tr>
-                        <th className="px-3 py-2 text-start">القراءة</th>
-                        <th className="px-3 py-2 text-center">قبل</th>
-                        <th className="px-3 py-2 text-center">بعد</th>
+                        <Th className="px-3 py-2 text-start">القراءة</Th>
+                        <Th className="px-3 py-2 text-center">قبل</Th>
+                        <Th className="px-3 py-2 text-center">بعد</Th>
                     </tr>
                 </thead>
                 <tbody>

@@ -14,7 +14,7 @@ import { ExportButton } from '@/components/ExportButton'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { useViewMode, ViewToggle } from '@/components/ViewToggle'
-import { Button, EmptyState, Field, Input, Select, SkeletonCard, Textarea } from '@/components/ui'
+import { Button, EmptyState, Field, Input, Select, SkeletonCard, Textarea, Th } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { api } from '@/lib/api'
 import { formatMoney, LEAD_PRIORITY, LEAD_SOURCE } from '@/lib/domain'
@@ -251,14 +251,14 @@ function LeadTable({ leads, onOpen }: { leads: Lead[]; onOpen: (id: number) => v
             <table className="w-full min-w-[52rem] text-start text-sm">
                 <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
                     <tr>
-                        <th className="w-28 px-3 py-2.5">الكود</th>
-                        <th className="px-3 py-2.5">الاسم</th>
-                        <th className="px-3 py-2.5">الشركة</th>
-                        <th className="w-32 px-3 py-2.5">الهاتف</th>
-                        <th className="w-28 px-3 py-2.5">الحالة</th>
-                        <th className="w-24 px-3 py-2.5">الأولوية</th>
-                        <th className="w-24 px-3 py-2.5">المصدر</th>
-                        <th className="w-28 px-3 py-2.5 text-left">القيمة المتوقعة</th>
+                        <Th className="w-28 px-3 py-2.5">الكود</Th>
+                        <Th className="px-3 py-2.5">الاسم</Th>
+                        <Th className="px-3 py-2.5">الشركة</Th>
+                        <Th className="w-32 px-3 py-2.5">الهاتف</Th>
+                        <Th className="w-28 px-3 py-2.5">الحالة</Th>
+                        <Th className="w-24 px-3 py-2.5">الأولوية</Th>
+                        <Th className="w-24 px-3 py-2.5">المصدر</Th>
+                        <Th className="w-28 px-3 py-2.5 text-left">القيمة المتوقعة</Th>
                     </tr>
                 </thead>
 

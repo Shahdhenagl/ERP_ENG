@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { SkeletonCard } from '@/components/ui'
+import { SkeletonCard, Th } from '@/components/ui'
 import { formatMoney } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
 import { useProfitReport } from '@/lib/queries'
@@ -44,13 +44,13 @@ export function ProfitReportPage() {
                         <table className="doc-table">
                             <thead>
                                 <tr>
-                                    <th>الفاتورة</th>
-                                    <th>العميل</th>
-                                    <th className="w-24">التاريخ</th>
-                                    <th className="w-24 text-left">الإيراد</th>
-                                    <th className="w-24 text-left">القطع</th>
-                                    <th className="w-24 text-left">الربح</th>
-                                    <th className="w-20 text-left">الهامش</th>
+                                    <Th>الفاتورة</Th>
+                                    <Th>العميل</Th>
+                                    <Th className="w-24">التاريخ</Th>
+                                    <Th className="w-24 text-left">الإيراد</Th>
+                                    <Th className="w-24 text-left">القطع</Th>
+                                    <Th className="w-24 text-left">الربح</Th>
+                                    <Th className="w-20 text-left">الهامش</Th>
                                 </tr>
                             </thead>
                             <tbody>

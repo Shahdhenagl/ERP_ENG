@@ -16,7 +16,7 @@ import {
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { CustomerForm } from '@/components/CustomerForm'
-import { Button, EmptyState, ErrorState, Field, Input, PageLoader, SkeletonCard } from '@/components/ui'
+import { Button, EmptyState, ErrorState, Field, Input, PageLoader, SkeletonCard, Th } from '@/components/ui'
 import { formatMoney } from '@/lib/domain'
 import { formatDate, formatDateTime, telLink } from '@/lib/format'
 import { useArea } from '@/lib/nav'
@@ -333,15 +333,15 @@ function CustomerTasksSection({ customerId }: { customerId: number }) {
                         <table className="w-full min-w-[66rem] text-start text-sm">
                             <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
                                 <tr>
-                                    <th className="px-3 py-2.5">المهمة</th>
-                                    <th className="px-3 py-2.5">العميل</th>
-                                    <th className="px-3 py-2.5">الجهاز</th>
-                                    <th className="px-3 py-2.5">الفرع</th>
-                                    <th className="w-28 px-3 py-2.5">الموعد</th>
-                                    <th className="w-32 px-3 py-2.5">بداية التنفيذ</th>
-                                    <th className="w-32 px-3 py-2.5">انتهاء التنفيذ</th>
-                                    <th className="w-28 px-3 py-2.5">الحالة</th>
-                                    <th className="w-12 px-3 py-2.5" />
+                                    <Th className="px-3 py-2.5">المهمة</Th>
+                                    <Th className="px-3 py-2.5">العميل</Th>
+                                    <Th className="px-3 py-2.5">الجهاز</Th>
+                                    <Th className="px-3 py-2.5">الفرع</Th>
+                                    <Th className="w-28 px-3 py-2.5">الموعد</Th>
+                                    <Th className="w-32 px-3 py-2.5">بداية التنفيذ</Th>
+                                    <Th className="w-32 px-3 py-2.5">انتهاء التنفيذ</Th>
+                                    <Th className="w-28 px-3 py-2.5">الحالة</Th>
+                                    <Th className="w-12 px-3 py-2.5" />
                                 </tr>
                             </thead>
                             <tbody>

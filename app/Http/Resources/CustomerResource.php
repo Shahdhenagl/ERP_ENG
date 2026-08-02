@@ -22,6 +22,8 @@ class CustomerResource extends JsonResource
             'company' => $this->company,
             'type' => $this->type,
             'type_label' => $this->typeLabel(),
+            'payment_terms' => $this->payment_terms,
+            'payment_terms_label' => $this->paymentTermsLabel(),
             'phone' => $this->phone,
             'whatsapp' => $this->whatsapp,
             'whatsapp_number' => $this->whatsappNumber(),

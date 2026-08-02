@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import { Scale } from 'lucide-react'
-import { EmptyState, SkeletonCard } from '@/components/ui'
+import { EmptyState, SkeletonCard, Th } from '@/components/ui'
 import { formatMoney } from '@/lib/domain'
 import { useTrialBalance } from '@/lib/queries'
 import { useAccounting } from '@/pages/accounting/AccountingLayout'
@@ -48,12 +48,12 @@ export function TrialBalancePage() {
                 <table className="doc-table">
                     <thead>
                         <tr>
-                            <th className="w-20">الحساب</th>
-                            <th>الاسم</th>
-                            <th className="w-28 text-left">مدين</th>
-                            <th className="w-28 text-left">دائن</th>
-                            <th className="w-28 text-left">رصيد مدين</th>
-                            <th className="w-28 text-left">رصيد دائن</th>
+                            <Th className="w-20">الحساب</Th>
+                            <Th>الاسم</Th>
+                            <Th className="w-28 text-left">مدين</Th>
+                            <Th className="w-28 text-left">دائن</Th>
+                            <Th className="w-28 text-left">رصيد مدين</Th>
+                            <Th className="w-28 text-left">رصيد دائن</Th>
                         </tr>
                     </thead>
                     <tbody>

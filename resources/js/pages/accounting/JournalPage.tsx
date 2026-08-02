@@ -3,15 +3,7 @@ import { Plus, ScrollText, Trash2, Undo2, X } from 'lucide-react'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
-import {
-    Button,
-    EmptyState,
-    Field,
-    Input,
-    Select,
-    SkeletonCard,
-    Textarea,
-} from '@/components/ui'
+import { Button, EmptyState, Field, Input, Select, SkeletonCard, Textarea, Th } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import { formatMoney } from '@/lib/domain'
@@ -231,10 +223,10 @@ function EntryDialog({ entry, onClose }: { entry: JournalEntry; onClose: () => v
                     <table className="doc-table">
                         <thead>
                             <tr>
-                                <th className="w-20">الحساب</th>
-                                <th>البيان</th>
-                                <th className="w-28 text-left">مدين</th>
-                                <th className="w-28 text-left">دائن</th>
+                                <Th className="w-20">الحساب</Th>
+                                <Th>البيان</Th>
+                                <Th className="w-28 text-left">مدين</Th>
+                                <Th className="w-28 text-left">دائن</Th>
                             </tr>
                         </thead>
                         <tbody>

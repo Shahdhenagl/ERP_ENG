@@ -6,7 +6,7 @@ import { InvoiceForm } from '@/components/InvoiceForm'
 import { ConfirmDialog, Modal } from '@/components/Modal'
 import { PaymentForm } from '@/components/PaymentForm'
 import { useToast } from '@/components/Toast'
-import { Button, ErrorState, Field, PageLoader, Select, Textarea } from '@/components/ui'
+import { Button, ErrorState, Field, PageLoader, Select, Textarea, Th } from '@/components/ui'
 import { itemSpecRows } from '@/lib/specs'
 import { SpecRowList } from '@/components/SpecSheet'
 import { errorMessage } from '@/lib/api'
@@ -233,11 +233,11 @@ export function InvoiceDetail() {
                     <table className="w-full min-w-[40rem] text-start text-sm">
                         <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
                             <tr>
-                                <th className="w-10 px-3 py-2.5">#</th>
-                                <th className="px-3 py-2.5">البيان</th>
-                                <th className="w-24 px-3 py-2.5">الكمية</th>
-                                <th className="w-28 px-3 py-2.5">سعر الوحدة</th>
-                                <th className="w-28 px-3 py-2.5 text-left">الإجمالي</th>
+                                <Th className="w-10 px-3 py-2.5">#</Th>
+                                <Th className="px-3 py-2.5">البيان</Th>
+                                <Th className="w-24 px-3 py-2.5">الكمية</Th>
+                                <Th className="w-28 px-3 py-2.5">سعر الوحدة</Th>
+                                <Th className="w-28 px-3 py-2.5 text-left">الإجمالي</Th>
                             </tr>
                         </thead>
 
