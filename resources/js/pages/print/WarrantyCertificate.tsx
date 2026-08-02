@@ -24,7 +24,7 @@ export function WarrantyCertificate() {
     return (
         <DocumentShell
             title="شهادة ضمان"
-            subtitle={warranty.code}
+            number={warranty.code}
             footer={<p>هذه الشهادة صادرة إلكترونيًا ولا تحتاج إلى ختم لتكون سارية.</p>}
         >
             <div className="grid grid-cols-2 gap-4">

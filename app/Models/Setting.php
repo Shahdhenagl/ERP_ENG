@@ -38,6 +38,9 @@ class Setting extends Model
         // quote may override them; most never need to.
         'quotation_conditions' => '[{"label": "الأسعار", "value": "الأسعار شاملة القيمة المضافة"}, {"label": "مدة التوريد", "value": "بضاعة حاضرة"}, {"label": "طريقة السداد", "value": "100% عند الاستلام"}, {"label": "الضمان", "value": "عام من تاريخ التوريد"}, {"label": "سريان العرض", "value": "أسبوع من تاريخه"}]',
         'default_tax_rate' => '14',
+        // The company seal, as a path on the public disk. Empty until one
+        // is uploaded — a document with no stamp simply carries none.
+        'company_stamp' => '',
     ];
 
     protected static function booted(): void

@@ -37,7 +37,23 @@ export function QuotationPrint() {
             : parseConditions(settings?.quotation_conditions)
 
     return (
-        <DocumentShell title="عرض سعر" subtitle={quotation.code}>
+        <DocumentShell
+            title="عرض سعر"
+            number={quotation.code}
+            stamp={
+                // Only on an offer the company has actually signed off. A seal
+                // on a draft is a signature on a document nobody approved.
+                quotation.is_approved && settings?.company_stamp_url ? (
+                    <div className="doc-keep -mt-24 flex justify-start ps-10">
+                        <img
+                            src={settings.company_stamp_url}
+                            alt="ختم الشركة"
+                            className="h-28 w-auto object-contain opacity-90"
+                        />
+                    </div>
+                ) : undefined
+            }
+        >
             <div className="grid grid-cols-2 gap-4">
                 <DocumentParty
                     heading="مقدَّم إلى"

@@ -1606,6 +1606,26 @@ export function useSettings() {
     })
 }
 
+export function useSaveStamp() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (file: File | null) => {
+            if (!file) {
+                return (await api.delete<{ data: Record<string, string> }>('/settings/stamp')).data
+                    .data
+            }
+
+            const body = new FormData()
+            body.append('stamp', file)
+
+            return (await api.post<{ data: Record<string, string> }>('/settings/stamp', body)).data
+                .data
+        },
+        onSuccess: (data) => client.setQueryData(keys.settings, data),
+    })
+}
+
 export function useSaveSettings() {
     const client = useQueryClient()
 

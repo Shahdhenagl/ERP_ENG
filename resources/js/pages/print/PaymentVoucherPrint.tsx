@@ -23,7 +23,7 @@ export function PaymentVoucherPrint() {
     return (
         <DocumentShell
             title="سند صرف"
-            subtitle={voucher.code}
+            number={voucher.code}
             footer={<p>يُعتمد هذا السند بتوقيع المستلم وأمين الخزينة.</p>}
         >
             <div className="grid grid-cols-2 gap-4">

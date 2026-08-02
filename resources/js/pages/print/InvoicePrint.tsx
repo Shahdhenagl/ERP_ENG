@@ -23,7 +23,7 @@ export function InvoicePrint() {
     return (
         <DocumentShell
             title={invoice.status === 'draft' ? 'فاتورة (مسودة)' : 'فاتورة'}
-            subtitle={invoice.code}
+            number={invoice.code}
             footer={settings?.invoice_footer}
         >
             <div className="grid grid-cols-2 gap-4">

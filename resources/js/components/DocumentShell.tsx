@@ -15,14 +15,25 @@ import { useSettings } from '@/lib/queries'
  */
 export function DocumentShell({
     title,
+    number,
     subtitle,
     children,
     footer,
+    stamp,
 }: {
     title: string
+    /**
+     * The document's own reference. Set inline beside the name — "عرض سعر رقم
+     * QT-2026-0012" is how it is read aloud and quoted down a phone, and
+     * stacking the code under the title breaks it into two things to find.
+     */
+    number?: string
+    /** Anything that is not a number: a period, a filter summary. */
     subtitle?: string
     children: ReactNode
     footer?: ReactNode
+    /** The company seal, shown only when the document has been approved. */
+    stamp?: ReactNode
 }) {
     const navigate = useNavigate()
     const { data: settings, isLoading } = useSettings()
@@ -31,12 +42,12 @@ export function DocumentShell({
     // worth being the document's own name rather than the app's.
     useEffect(() => {
         const previous = document.title
-        document.title = title
+        document.title = number ? `${title} ${number}` : title
 
         return () => {
             document.title = previous
         }
-    }, [title])
+    }, [title, number])
 
     if (isLoading || !settings) return <PageLoader />
 
@@ -82,11 +93,24 @@ export function DocumentShell({
                 </header>
 
                 <div className="doc-keep mt-5 mb-5 text-center">
-                    <h1 className="text-xl font-extrabold text-navy-900">{title}</h1>
+                    <h1 className="text-xl font-extrabold text-navy-900">
+                        {title}
+                        {number && (
+                            <>
+                                {' '}
+                                <span className="font-bold">رقم</span>{' '}
+                                <span className="tabular" dir="ltr">
+                                    {number}
+                                </span>
+                            </>
+                        )}
+                    </h1>
                     {subtitle && <p className="mt-0.5 text-sm text-navy-500">{subtitle}</p>}
                 </div>
 
                 {children}
+
+                {stamp}
 
                 <footer className="mt-8 border-t border-navy-200 pt-3 text-center text-[10px] text-navy-400">
                     {footer}

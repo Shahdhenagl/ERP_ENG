@@ -572,6 +572,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('activity/filters', [ActivityLogController::class, 'filters'])->middleware('can:audit.view');
 
     Route::put('settings', [SettingController::class, 'update'])->middleware('can:settings.manage');
+    Route::post('settings/stamp', [SettingController::class, 'uploadStamp'])->middleware('can:settings.manage');
+    Route::delete('settings/stamp', [SettingController::class, 'deleteStamp'])->middleware('can:settings.manage');
 
     // The periodic-maintenance checklist template — the manager's to define.
     Route::post('checklist-items', [ChecklistController::class, 'store'])->middleware('can:settings.manage');

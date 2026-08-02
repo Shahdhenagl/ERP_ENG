@@ -25,7 +25,7 @@ export function DeliveryNotePrint() {
     return (
         <DocumentShell
             title="إذن تسليم"
-            subtitle={order.code}
+            number={order.code}
             footer={<p>يُعد استلام البضاعة إقرارًا بمطابقتها للأصناف والكميات المدوّنة أعلاه.</p>}
         >
             <div className="grid grid-cols-2 gap-4">

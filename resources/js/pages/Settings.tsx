@@ -2,6 +2,7 @@ import { Save } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useToast } from '@/components/Toast'
 import { SectionTabs } from '@/components/SectionTabs'
+import { StampSetting } from '@/components/StampSetting'
 import { LanguagePicker } from '@/components/LanguageToggle'
 import { ThemePicker } from '@/components/ThemeToggle'
 import { ChecklistEditor } from '@/components/ChecklistEditor'
@@ -79,6 +80,10 @@ export function Settings() {
                 </p>
                 <LanguagePicker />
             </section>
+
+            <div className="mb-5">
+                <StampSetting />
+            </div>
 
             <div className="grid gap-5 lg:grid-cols-2">
                 <section className="card p-5">

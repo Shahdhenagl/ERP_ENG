@@ -33,7 +33,8 @@ export function SupplierInvoicePrint() {
     return (
         <DocumentShell
             title="فاتورة مورّد"
-            subtitle={`${invoice.code}${invoice.supplier_ref ? ` · ${invoice.supplier_ref}` : ''}`}
+            number={invoice.code}
+            subtitle={invoice.supplier_ref ? `مرجع المورّد: ${invoice.supplier_ref}` : undefined}
             footer={settings?.invoice_footer}
         >
             <div className="grid grid-cols-2 gap-4">

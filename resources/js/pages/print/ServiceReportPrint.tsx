@@ -44,7 +44,7 @@ export function ServiceReportPrint() {
     const duration = task.visit?.duration_minutes
 
     return (
-        <DocumentShell title="تقرير زيارة فنية" subtitle={task.service_report_no ?? task.code}>
+        <DocumentShell title="تقرير زيارة فنية" number={task.service_report_no ?? task.code}>
             <div className="grid grid-cols-2 gap-4">
                 <DocumentParty
                     heading="العميل"

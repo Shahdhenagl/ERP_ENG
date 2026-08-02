@@ -24,7 +24,7 @@ export function ReceiptPrint() {
     return (
         <DocumentShell
             title="سند قبض"
-            subtitle={receipt.code}
+            number={receipt.code}
             footer={<p>يُعتمد هذا السند بتوقيع الدافع وأمين الخزينة.</p>}
         >
             <div className="grid grid-cols-2 gap-4">

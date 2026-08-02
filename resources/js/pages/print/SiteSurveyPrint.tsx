@@ -19,7 +19,7 @@ export function SiteSurveyPrint() {
     return (
         <DocumentShell
             title="معاينة موقع"
-            subtitle={survey.code}
+            number={survey.code}
             footer={<p>هذه المعاينة أساس عرض السعر ما دامت معتمدة.</p>}
         >
             <div className="grid grid-cols-2 gap-4">

@@ -25,7 +25,7 @@ export function CashVoucherPrint() {
     return (
         <DocumentShell
             title={voucher.title}
-            subtitle={voucher.code}
+            number={voucher.code}
             footer={<p>يُعتمد هذا السند بتوقيع الطرفين وأمين الخزينة.</p>}
         >
             <div className="grid grid-cols-2 gap-4">
