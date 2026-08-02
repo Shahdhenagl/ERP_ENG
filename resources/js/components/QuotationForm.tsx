@@ -153,7 +153,7 @@ export function QuotationForm({
             open={open}
             onClose={onClose}
             title={quotation ? `تعديل ${quotation.code}` : 'عرض سعر جديد'}
-            size="lg"
+            size="xl"
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
@@ -198,11 +198,11 @@ export function QuotationForm({
 
                 <LineItems
                     columns={[
-                        { label: 'الصنف', className: 'w-48' },
+                        { label: 'الصنف', className: 'w-44' },
                         { label: 'الكود', className: 'w-20' },
-                        // The one column somebody writes a sentence in, so it
-                        // takes the slack — with a floor, not just no width.
-                        { label: 'البيان', className: 'min-w-[15rem]' },
+                        // Declares no width on purpose: under a fixed layout
+                        // that is what hands it everything the rest leaves.
+                        { label: 'البيان' },
                         { label: 'الكمية', className: 'w-20' },
                         { label: 'سعر الوحدة', className: 'w-28' },
                         { label: 'الإجمالي', className: 'w-28' },
@@ -266,7 +266,7 @@ export function QuotationForm({
                                         </Select>
                                     </LineCell>
 
-                                    <LineCell className="tabular text-[11px] text-navy-500">
+                                    <LineCell className="tabular truncate text-[11px] text-navy-500">
                                         {item?.code ?? '—'}
                                     </LineCell>
 
@@ -304,7 +304,7 @@ export function QuotationForm({
                                         />
                                     </LineCell>
 
-                                    <LineCell className="tabular pt-4 text-left font-bold text-navy-800">
+                                    <LineCell className="tabular truncate pt-4 text-left text-[13px] font-bold text-navy-800">
                                         {formatMoney(
                                             (Number(row.qty) || 0) * (Number(row.unit_price) || 0),
                                         )}

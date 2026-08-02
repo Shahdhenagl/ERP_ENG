@@ -90,7 +90,7 @@ export function PurchaseOrderForm({
             open={open}
             onClose={onClose}
             title={order ? `تعديل ${order.code}` : 'أمر شراء جديد'}
-            size="lg"
+            size="xl"
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
@@ -122,7 +122,7 @@ export function PurchaseOrderForm({
 
                 <LineItems
                     columns={[
-                        { label: 'الصنف', className: 'w-56' },
+                        { label: 'الصنف' },
                         { label: 'الكود', className: 'w-24' },
                         { label: 'الكمية', className: 'w-24' },
                         { label: 'سعر الوحدة', className: 'w-28' },
@@ -166,7 +166,7 @@ export function PurchaseOrderForm({
                                         </Select>
                                     </LineCell>
 
-                                    <LineCell className="tabular text-[11px] text-navy-500">
+                                    <LineCell className="tabular truncate text-[11px] text-navy-500">
                                         {item?.code ?? '—'}
                                     </LineCell>
 
@@ -196,7 +196,7 @@ export function PurchaseOrderForm({
                                         />
                                     </LineCell>
 
-                                    <LineCell className="tabular pt-4 text-left font-bold text-navy-800">
+                                    <LineCell className="tabular truncate pt-4 text-left text-[13px] font-bold text-navy-800">
                                         {formatMoney(
                                             (Number(row.qty) || 0) * (Number(row.unit_price) || 0),
                                         )}

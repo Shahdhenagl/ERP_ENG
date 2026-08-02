@@ -13,10 +13,12 @@ import type { ReactNode } from 'react'
  * hang a full-width detail row beneath it — the device's nameplate, the stock
  * on the shelf — through `<LineDetailRow>`.
  *
- * The minimum width has to cover every fixed column *plus* a readable free-text
- * one. Set too low, the browser satisfies it by squeezing the only column that
- * asked for no width — which is always the description, the one field people
- * actually type a sentence into.
+ * The layout is fixed, not automatic. Under `auto`, columns bid for width with
+ * their content: a picked item name and a six-figure price win, and the
+ * description — whose content is a placeholder until somebody types — loses
+ * every time and collapses to a sliver. `table-fixed` honours the widths
+ * declared here and hands the remainder to the one column that declares none,
+ * which is exactly the free-text one.
  */
 export function LineItems({
     columns,
@@ -35,7 +37,7 @@ export function LineItems({
     return (
         <div className="space-y-1.5">
             <div className="overflow-x-auto rounded-2xl border border-navy-200">
-                <table className="w-full min-w-[58rem] text-right text-sm">
+                <table className="w-full min-w-[50rem] table-fixed text-right text-sm">
                     <thead className="bg-ink-soft text-[11px] font-bold text-white">
                         <tr>
                             {columns.map((column) => (

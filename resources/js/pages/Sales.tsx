@@ -35,6 +35,7 @@ import {
     useQuotation,
     useQuotationAction,
     useQuotations,
+    useSaveQuotation,
     useSalesOrder,
     useSalesOrderAction,
     useSalesOrders,
@@ -280,6 +281,128 @@ function QuotationsTab() {
     )
 }
 
+/**
+ * One more line, from the offer you are already looking at.
+ *
+ * It resends the lines the quote already has plus the new one, because the
+ * update endpoint takes the whole set — which also means it cannot be used to
+ * quietly drop one.
+ */
+function QuickLine({ quotation }: { quotation: Quotation }) {
+    const toast = useToast()
+    const save = useSaveQuotation(quotation.id)
+    const [open, setOpen] = useState(false)
+    const [description, setDescription] = useState('')
+    const [qty, setQty] = useState('1')
+    const [price, setPrice] = useState('')
+
+    const add = async () => {
+        if (!description.trim()) return
+
+        try {
+            await save.mutateAsync({
+                customer_id: quotation.customer_id,
+                branch_id: quotation.branch_id,
+                title: quotation.title,
+                valid_until: quotation.valid_until,
+                tax_rate: quotation.tax_rate,
+                discount: quotation.discount,
+                discount_percent: quotation.discount_percent,
+                terms: quotation.terms,
+                notes: quotation.notes,
+                conditions: quotation.conditions ?? undefined,
+                lines: [
+                    ...(quotation.lines ?? []).map((line) => ({
+                        item_id: line.item_id,
+                        description: line.description,
+                        qty: line.qty,
+                        unit_price: line.unit_price,
+                    })),
+                    {
+                        item_id: null,
+                        description: description.trim(),
+                        qty: Number(qty) || 1,
+                        unit_price: Number(price) || 0,
+                    },
+                ],
+            })
+
+            toast.success('تمت إضافة البند.')
+            setDescription('')
+            setQty('1')
+            setPrice('')
+            setOpen(false)
+        } catch (caught) {
+            toast.error(errorMessage(caught, 'تعذّرت إضافة البند.'))
+        }
+    }
+
+    if (!open) {
+        return (
+            <button
+                type="button"
+                onClick={() => setOpen(true)}
+                className="tap flex w-full items-center justify-center gap-1.5 border-t border-navy-100 py-2.5 text-xs font-bold text-brand-600 transition hover:bg-brand-50"
+            >
+                <Plus className="size-4" />
+                إضافة بند حر
+            </button>
+        )
+    }
+
+    return (
+        <div className="border-t border-navy-100 bg-navy-50/50 p-3">
+            <div className="flex flex-wrap items-center gap-2">
+                <Input
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="وصف البند"
+                    className="min-w-40 flex-1"
+                    autoFocus
+                />
+                <Input
+                    type="number"
+                    min={0}
+                    step="0.001"
+                    value={qty}
+                    onChange={(e) => setQty(e.target.value)}
+                    className="w-20 px-2 text-center"
+                    dir="ltr"
+                    aria-label="الكمية"
+                />
+                <Input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    placeholder="السعر"
+                    className="w-28 px-2 text-center"
+                    dir="ltr"
+                    aria-label="سعر الوحدة"
+                />
+
+                <Button
+                    className="text-xs"
+                    loading={save.isPending}
+                    disabled={!description.trim()}
+                    onClick={add}
+                >
+                    إضافة
+                </Button>
+
+                <button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    className="tap rounded-lg px-2 py-1 text-xs font-bold text-navy-500 transition hover:bg-navy-100"
+                >
+                    إلغاء
+                </button>
+            </div>
+        </div>
+    )
+}
+
 function QuotationDetail({
     id,
     onClose,
@@ -385,16 +508,9 @@ function QuotationDetail({
                                     className="flex items-center justify-between gap-3 border-b border-navy-100 p-3 last:border-0"
                                 >
                                     <div className="min-w-0">
-                                        <div className="flex flex-wrap items-center gap-1.5">
-                                            <p className="truncate text-sm font-bold text-navy-900">
-                                                {line.description}
-                                            </p>
-                                            {line.item_category_label && (
-                                                <span className="badge bg-navy-100 text-navy-600">
-                                                    {line.item_category_label}
-                                                </span>
-                                            )}
-                                        </div>
+                                        <p className="truncate text-sm font-bold text-navy-900">
+                                            {line.description}
+                                        </p>
                                         {specs.length > 0 && <SpecRowList rows={specs} />}
                                         <p className="tabular mt-0.5 text-xs text-navy-400">
                                             {formatQty(line.qty)} {line.unit ?? ''} × {formatMoney(line.unit_price)}
@@ -406,6 +522,14 @@ function QuotationDetail({
                                 </div>
                             )
                         })}
+
+                        {/* Reviewing an offer is when the missing line is
+                            noticed. Opening the full editor to add one item is
+                            the reason it gets left off. Drafts only — a sent
+                            quote is a document the customer is holding. */}
+                        {quotation.status === 'draft' && (
+                            <QuickLine quotation={quotation} />
+                        )}
                     </div>
 
                     {quotation.terms && (
