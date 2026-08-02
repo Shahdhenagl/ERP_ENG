@@ -31,7 +31,7 @@ export function LineItems({
         <div className="space-y-1.5">
             <div className="overflow-x-auto rounded-2xl border border-navy-200">
                 <table className="w-full min-w-[44rem] text-right text-sm">
-                    <thead className="bg-navy-600 text-[11px] font-bold text-white">
+                    <thead className="bg-ink-soft text-[11px] font-bold text-white">
                         <tr>
                             {columns.map((column) => (
                                 <th key={column.label} className={`px-3 py-2.5 ${column.className ?? ''}`}>

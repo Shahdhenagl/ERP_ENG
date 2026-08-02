@@ -446,7 +446,7 @@ const TONES = {
     emerald: 'from-emerald-500 to-emerald-600 text-white shadow-emerald-500/25',
     red: 'from-red-500 to-red-600 text-white shadow-red-500/25',
     amber: 'from-amber-500 to-amber-600 text-white shadow-amber-500/25',
-    navy: 'from-navy-700 to-navy-900 text-white shadow-navy-700/25',
+    navy: 'from-ink-soft to-ink text-white shadow-navy-950/25',
     slate: 'from-navy-100 to-navy-200 text-navy-500 shadow-navy-200/40',
 }
 

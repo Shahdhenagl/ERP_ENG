@@ -9,6 +9,9 @@ import { useNotifications } from '@/lib/queries'
 import { useNotificationAlerts } from '@/lib/useNotificationAlerts'
 import { syncPushSubscription } from '@/lib/push'
 import { NotificationPanel } from '@/components/NotificationPanel'
+import { LanguageToggle } from '@/components/LanguageToggle'
+import { useI18n, useT } from '@/lib/i18n'
+import { ThemeToggle } from '@/components/ThemeToggle'
 
 export function AppLayout() {
     const { user, logout, canDispatch, can } = useAuth()
@@ -61,16 +64,18 @@ export function AppLayout() {
     const barStart = canDispatch ? visibleNav.slice(0, mid) : visibleNav
     const barEnd = canDispatch ? visibleNav.slice(mid) : []
 
+    const { dir } = useI18n()
+
     const handleLogout = async () => {
         await logout()
         navigate('/login')
     }
 
     return (
-        <div className="min-h-dvh bg-navy-50" dir="rtl">
+        <div className="min-h-dvh bg-navy-50" dir={dir}>
             {/* ══ Office sidebar (wide screens only) ═══════════ */}
             {hasSidebar && (
-                <aside className="surface-brand fixed inset-y-0 right-0 z-30 hidden w-72 flex-col lg:flex">
+                <aside className="surface-brand fixed inset-y-0 start-0 z-30 hidden w-72 flex-col lg:flex">
                     <div className="flex items-center gap-3 px-6 py-7">
                         <img src="/brand/logo-mark.png" alt="" className="size-10 object-contain" />
                         <div className="min-w-0">
@@ -110,15 +115,15 @@ export function AppLayout() {
                 </aside>
             )}
 
-            <div className={clsx(hasSidebar && 'lg:mr-72')}>
+            <div className={clsx(hasSidebar && 'lg:ms-72')}>
             {/* ══ Top bar ══════════════════════════════════════ */}
-            <header className="safe-top sticky top-0 z-20 border-b border-navy-100 bg-white/90 backdrop-blur">
+            <header className="safe-top sticky top-0 z-20 border-b border-navy-100 bg-surface/90 backdrop-blur">
                 <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5 sm:px-6">
                     {/* Tapping yourself opens your own account — no menu in
                         between, since there is no longer a drawer to open. */}
                     <Link
                         to={path('/profile')}
-                        className="tap group flex min-w-0 items-center gap-2.5 rounded-2xl p-1 pl-3 transition hover:bg-navy-50 active:scale-[0.98]"
+                        className="tap group flex min-w-0 items-center gap-2.5 rounded-2xl p-1 pe-3 transition hover:bg-navy-50 active:scale-[0.98]"
                     >
                         <span className="grid size-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-bold text-white shadow-sm ring-2 ring-white transition group-hover:shadow-md">
                             {user?.name.charAt(0)}
@@ -159,6 +164,10 @@ export function AppLayout() {
                         </div>
                     </div>
 
+                    <LanguageToggle />
+
+                    <ThemeToggle />
+
                     <button
                         onClick={() => setNotificationsOpen(true)}
                         className="tap relative grid shrink-0 place-items-center rounded-xl p-2 text-navy-600 transition hover:bg-navy-100"
@@ -166,7 +175,7 @@ export function AppLayout() {
                     >
                         <Bell className="size-5" />
                         {unread > 0 && (
-                            <span className="tabular absolute top-1 left-1 grid size-4.5 min-w-4.5 place-items-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                            <span className="tabular absolute top-1 end-1 grid size-4.5 min-w-4.5 place-items-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
                                 {unread > 9 ? '9+' : unread}
                             </span>
                         )}
@@ -203,7 +212,7 @@ export function AppLayout() {
                 {/* Scrolls rather than squeezes. An admin carries enough
                     destinations to overflow a phone, and a label clipped to
                     "المستخدـ…" is worse than one the thumb has to reach. */}
-                <div className="no-scrollbar pointer-events-auto mx-auto flex max-w-lg items-stretch gap-0.5 overflow-x-auto rounded-3xl border border-navy-100 bg-white/95 p-1.5 shadow-[0_8px_30px_rgba(11,27,58,0.16)] backdrop-blur">
+                <div className="no-scrollbar pointer-events-auto mx-auto flex max-w-lg items-stretch gap-0.5 overflow-x-auto rounded-3xl border border-navy-100 bg-surface/95 p-1.5 shadow-[0_8px_30px_rgba(11,27,58,0.16)] backdrop-blur">
                     {barStart.map((item) => (
                         <BottomLink key={item.to} item={item} href={path(item.to)} />
                     ))}
@@ -255,6 +264,7 @@ function SidebarGroup({ item, path }: { item: NavItem; path: (suffix: string) =>
         return location.pathname === href || location.pathname.startsWith(`${href}/`)
     })
 
+    const t = useT()
     const [open, setOpen] = useState(containsActive)
 
     useEffect(() => {
@@ -274,12 +284,12 @@ function SidebarGroup({ item, path }: { item: NavItem; path: (suffix: string) =>
                 )}
             >
                 <Icon className="size-4.5 shrink-0" />
-                <span className="flex-1 text-right">{item.label}</span>
+                <span className="flex-1 text-start">{t(item.label)}</span>
                 <ChevronDown className={clsx('size-4 shrink-0 transition-transform', open && 'rotate-180')} />
             </button>
 
             {open && (
-                <div className="mt-0.5 mr-4 space-y-0.5 border-r border-white/10 pr-2">
+                <div className="mt-0.5 ms-4 space-y-0.5 border-s border-white/10 ps-2">
                     {children.map((child) => (
                         <SidebarLink key={child.to} item={child} href={path(child.to)} nested />
                     ))}
@@ -298,6 +308,7 @@ function SidebarLink({
     href: string
     nested?: boolean
 }) {
+    const t = useT()
     const Icon = item.icon
 
     return (
@@ -319,7 +330,7 @@ function SidebarLink({
             }
         >
             <Icon className={clsx('shrink-0', nested ? 'size-4' : 'size-4.5')} />
-            {item.label}
+            {t(item.label)}
         </NavLink>
     )
 }

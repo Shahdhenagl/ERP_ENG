@@ -233,7 +233,7 @@ function DeviceRow({ device }: { device: CustodyStatement['devices'][number] }) 
                         toast.error(errorMessage(caught, 'تعذّر التسجيل.'))
                     }
                 }}
-                className="tap grid shrink-0 place-items-center rounded-lg p-1.5 text-navy-400 transition hover:bg-white hover:text-emerald-600"
+                className="tap grid shrink-0 place-items-center rounded-lg p-1.5 text-navy-400 transition hover:bg-surface hover:text-emerald-600"
                 aria-label="تسليم الجهاز"
             >
                 <Undo2 className="size-4" />

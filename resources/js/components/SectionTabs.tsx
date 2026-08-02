@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { useT } from '@/lib/i18n'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '@/lib/auth'
 import { useArea } from '@/lib/nav'
@@ -20,6 +21,8 @@ export function SectionTabs({
     const { path } = useArea()
     const { canDispatch } = useAuth()
 
+    const t = useT()
+
     return (
         <div
             className={clsx(
@@ -36,11 +39,11 @@ export function SectionTabs({
                     className={({ isActive }) =>
                         clsx(
                             'tap flex-1 rounded-lg px-3 py-2 text-center text-xs font-bold whitespace-nowrap transition',
-                            isActive ? 'bg-white text-navy-900 shadow-sm' : 'text-navy-500',
+                            isActive ? 'bg-surface text-navy-900 shadow-sm' : 'text-navy-500',
                         )
                     }
                 >
-                    {label}
+                    {t(label)}
                 </NavLink>
             ))}
         </div>

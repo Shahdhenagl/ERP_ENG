@@ -141,7 +141,7 @@ export function AuditLog() {
                         'tap inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold ring-1 transition',
                         sensitive
                             ? 'bg-red-50 text-red-700 ring-red-200'
-                            : 'bg-white text-navy-500 ring-navy-200 hover:bg-navy-50',
+                            : 'bg-surface text-navy-500 ring-navy-200 hover:bg-navy-50',
                     )}
                 >
                     <ShieldAlert className="size-3.5" />

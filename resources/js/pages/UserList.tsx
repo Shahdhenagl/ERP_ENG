@@ -13,7 +13,7 @@ import { useDeleteUser, useJobRoles, useSaveUser, useUsers } from '@/lib/queries
 import type { Role, User } from '@/types'
 
 const ROLE_STYLES: Record<Role, string> = {
-    admin: 'bg-navy-900 text-white',
+    admin: 'bg-ink text-white',
     manager: 'bg-brand-50 text-brand-700 ring-1 ring-brand-200',
     technician: 'bg-navy-50 text-navy-600 ring-1 ring-navy-200',
 }

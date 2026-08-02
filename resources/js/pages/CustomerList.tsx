@@ -489,7 +489,7 @@ function BranchStrip({
                                             href={branch.maps_url}
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="grid place-items-center rounded-lg p-1.5 text-navy-400 transition hover:bg-white hover:text-navy-700"
+                                            className="grid place-items-center rounded-lg p-1.5 text-navy-400 transition hover:bg-surface hover:text-navy-700"
                                             aria-label="الخريطة"
                                         >
                                             <MapPin className="size-3.5" />
@@ -499,7 +499,7 @@ function BranchStrip({
                                         onClick={() => {
                                             onEdit(branch)
                                         }}
-                                        className="grid place-items-center rounded-lg p-1.5 text-navy-400 transition hover:bg-white hover:text-navy-700"
+                                        className="grid place-items-center rounded-lg p-1.5 text-navy-400 transition hover:bg-surface hover:text-navy-700"
                                         aria-label="تعديل الفرع"
                                     >
                                         <Pencil className="size-3.5" />

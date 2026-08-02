@@ -105,7 +105,7 @@ export function ItemsPage() {
                             'tap flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold ring-1 transition',
                             groupId === tab.value
                                 ? 'bg-brand-600 text-white ring-brand-600'
-                                : 'bg-white text-navy-500 ring-navy-200 hover:bg-navy-50',
+                                : 'bg-surface text-navy-500 ring-navy-200 hover:bg-navy-50',
                         )}
                     >
                         {tab.label}
@@ -141,7 +141,7 @@ export function ItemsPage() {
                             'tap flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold ring-1 transition',
                             lowOnly
                                 ? 'bg-amber-50 text-amber-700 ring-amber-200'
-                                : 'bg-white text-navy-500 ring-navy-200 hover:bg-navy-50',
+                                : 'bg-surface text-navy-500 ring-navy-200 hover:bg-navy-50',
                         )}
                     >
                         <AlertTriangle className="size-3.5" />
@@ -361,7 +361,7 @@ function ItemsTable({
                         return (
                             <tr
                                 key={item.id}
-                                className="border-b border-navy-100 bg-white transition last:border-0 hover:bg-navy-50"
+                                className="border-b border-navy-100 bg-surface transition last:border-0 hover:bg-navy-50"
                             >
                                 <td className="p-3">
                                     <div className="flex items-center gap-2">

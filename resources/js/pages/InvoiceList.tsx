@@ -158,7 +158,7 @@ export function InvoiceList() {
                             onClick={() => setFilter(value)}
                             className={clsx(
                                 'tap flex-1 rounded-lg px-3 py-2 text-xs font-bold transition',
-                                filter === value ? 'bg-white text-navy-900 shadow-sm' : 'text-navy-500',
+                                filter === value ? 'bg-surface text-navy-900 shadow-sm' : 'text-navy-500',
                             )}
                         >
                             {label}
@@ -178,7 +178,7 @@ export function InvoiceList() {
                                 'tap rounded-xl px-3 py-1.5 text-xs font-bold ring-1 transition',
                                 source === value
                                     ? 'bg-brand-50 text-brand-700 ring-brand-200'
-                                    : 'bg-white text-navy-500 ring-navy-200 hover:bg-navy-50',
+                                    : 'bg-surface text-navy-500 ring-navy-200 hover:bg-navy-50',
                             )}
                         >
                             {label}

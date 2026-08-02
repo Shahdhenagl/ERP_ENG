@@ -230,7 +230,7 @@ export function TreasuryPage() {
                                             : dir === 'out'
                                               ? 'bg-red-600 text-white ring-red-600'
                                               : 'bg-brand-600 text-white ring-brand-600'
-                                        : 'bg-white text-navy-500 ring-navy-200 hover:bg-navy-50',
+                                        : 'bg-surface text-navy-500 ring-navy-200 hover:bg-navy-50',
                                 )}
                             >
                                 {dir === 'in' ? 'وارد' : dir === 'out' ? 'منصرف' : 'الكل'}

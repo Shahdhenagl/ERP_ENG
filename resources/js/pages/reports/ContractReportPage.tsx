@@ -96,7 +96,7 @@ export function ContractReportPage() {
                                     </span>
                                 </div>
 
-                                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white">
+                                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface">
                                     <div
                                         className={clsx(
                                             'h-full rounded-full',

@@ -1010,7 +1010,7 @@ function ReportBlock({
                         }
 
                         return (
-                            <div key={key} className="rounded-xl bg-white p-2.5 text-center">
+                            <div key={key} className="rounded-xl bg-surface p-2.5 text-center">
                                 <p className="tabular text-base font-extrabold text-navy-900">{value}</p>
                                 <p className="mt-0.5 text-[10px] font-semibold text-navy-400">
                                     {labels[key] ?? key}
@@ -1037,7 +1037,7 @@ function ReportBlock({
                         {report.parts_used.map((part, index) => (
                             <li
                                 key={index}
-                                className="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold text-navy-700 ring-1 ring-navy-200"
+                                className="rounded-lg bg-surface px-2.5 py-1 text-xs font-semibold text-navy-700 ring-1 ring-navy-200"
                             >
                                 {part.name} × {part.qty ?? 1}
                             </li>
@@ -1054,7 +1054,7 @@ function ReportBlock({
                     <img
                         src={report.signature_url}
                         alt="توقيع العميل"
-                        className="h-20 rounded-lg border border-navy-200 bg-white object-contain p-1"
+                        className="h-20 rounded-lg border border-navy-200 bg-surface object-contain p-1"
                     />
                 </div>
             )}
@@ -1658,7 +1658,7 @@ function AttachmentsSection({
                                             {canEdit && (
                                                 <button
                                                     onClick={() => remove.mutate(attachment.id)}
-                                                    className="absolute top-1.5 left-1.5 grid size-6 place-items-center rounded-lg bg-navy-950/70 text-white opacity-0 transition group-hover:opacity-100"
+                                                    className="absolute top-1.5 left-1.5 grid size-6 place-items-center rounded-lg bg-black/60 text-white opacity-0 transition group-hover:opacity-100"
                                                     aria-label="حذف"
                                                 >
                                                     <X className="size-3.5" />

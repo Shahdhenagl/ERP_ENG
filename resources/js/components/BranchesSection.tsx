@@ -231,14 +231,14 @@ function AssetLine({ asset }: { asset: Asset }) {
             {/* How it has behaved, not just what it is: warranty standing, how
                 much work it has pulled, and when it went in. */}
             <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                <span className="badge bg-white text-navy-600 ring-1 ring-navy-200">
+                <span className="badge bg-surface text-navy-600 ring-1 ring-navy-200">
                     {asset.status_label}
                 </span>
-                <span className="badge bg-white text-navy-600 ring-1 ring-navy-200">
+                <span className="badge bg-surface text-navy-600 ring-1 ring-navy-200">
                     {asset.warranty_label}
                 </span>
                 {typeof asset.tasks_count === 'number' && (
-                    <span className="badge bg-white text-navy-600 ring-1 ring-navy-200">
+                    <span className="badge bg-surface text-navy-600 ring-1 ring-navy-200">
                         {asset.tasks_count} زيارة
                     </span>
                 )}

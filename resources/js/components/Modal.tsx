@@ -44,7 +44,7 @@ export function Modal({ open, onClose, title, description, size = 'md', footer, 
     return createPortal(
         <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
             <div
-                className="absolute inset-0 bg-navy-950/60"
+                className="absolute inset-0 bg-black/60"
                 onClick={onClose}
                 aria-hidden
             />
@@ -54,7 +54,7 @@ export function Modal({ open, onClose, title, description, size = 'md', footer, 
                 aria-modal="true"
                 aria-label={title}
                 className={clsx(
-                    'animate-in relative flex max-h-[92vh] w-full flex-col overflow-hidden bg-white shadow-[var(--shadow-panel)]',
+                    'animate-in relative flex max-h-[92vh] w-full flex-col overflow-hidden bg-surface shadow-[var(--shadow-panel)]',
                     'rounded-t-3xl sm:rounded-3xl',
                     SIZES[size],
                     'sm:mx-4',

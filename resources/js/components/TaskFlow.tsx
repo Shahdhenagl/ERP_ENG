@@ -87,7 +87,7 @@ export function FlowRail({ status }: { status: TaskStatus }) {
                         <span
                             className={clsx(
                                 'grid size-8 place-items-center rounded-full text-[11px] font-bold transition',
-                                active && 'bg-navy-900 text-white shadow-lg shadow-navy-900/25',
+                                active && 'bg-ink text-white shadow-lg shadow-navy-950/25',
                                 done && 'bg-emerald-500 text-white',
                                 !active && !done && 'bg-navy-100 text-navy-400',
                             )}
@@ -128,7 +128,7 @@ export function FlowStepCard({
     return (
         <section className="card overflow-hidden">
             <header className="flex items-center gap-3 border-b border-navy-100 bg-navy-50/60 px-4 py-3">
-                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white text-brand-600 shadow-sm">
+                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-surface text-brand-600 shadow-sm">
                     <step.icon className="size-4.5" />
                 </span>
                 <div className="min-w-0">
@@ -164,7 +164,7 @@ export function SiteCard({ task }: { task: Task }) {
     const phone = task.branch?.contact_number ?? task.customer?.phone
 
     return (
-        <div className="overflow-hidden rounded-2xl bg-gradient-to-bl from-navy-900 to-navy-800 text-white">
+        <div className="overflow-hidden rounded-2xl bg-gradient-to-bl from-ink to-ink-soft text-white">
             <div className="p-4">
                 <p className="text-[10px] font-bold text-white/50">العميل</p>
                 <p className="mt-0.5 text-base font-extrabold">{task.customer?.name}</p>
@@ -238,7 +238,7 @@ export function Requirement({
                 'tap flex w-full items-center gap-3 rounded-2xl p-3 text-right ring-1 transition',
                 done
                     ? 'bg-emerald-50 ring-emerald-200'
-                    : 'bg-white ring-navy-200 hover:bg-navy-50',
+                    : 'bg-surface ring-navy-200 hover:bg-navy-50',
             )}
         >
             <span
@@ -284,7 +284,7 @@ export function ExpenseBar({
     const route = task.branch?.route_total ?? 0
 
     return (
-        <div className="safe-bottom sticky bottom-0 z-20 -mx-4 mt-5 border-t border-navy-100 bg-white/95 px-4 pt-3 pb-2 backdrop-blur">
+        <div className="safe-bottom sticky bottom-0 z-20 -mx-4 mt-5 border-t border-navy-100 bg-surface/95 px-4 pt-3 pb-2 backdrop-blur">
             <div className="grid grid-cols-2 gap-2">
                 <button
                     type="button"

@@ -2,6 +2,8 @@ import { Save } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useToast } from '@/components/Toast'
 import { SectionTabs } from '@/components/SectionTabs'
+import { LanguagePicker } from '@/components/LanguageToggle'
+import { ThemePicker } from '@/components/ThemeToggle'
 import { ChecklistEditor } from '@/components/ChecklistEditor'
 import { HolidaysEditor } from '@/components/HolidaysEditor'
 import { Button, Field, Input, PageHeader, PageLoader, Textarea } from '@/components/ui'
@@ -57,6 +59,26 @@ export function Settings() {
             />
 
             <SectionTabs sections={ADMIN_SECTIONS} />
+
+            {/* The theme is per device, not per company: the same account is
+                opened on a bright office screen and on a phone at a site at
+                night, and those are not the same answer. Nothing here is
+                saved to the server for that reason. */}
+            <section className="card mb-5 p-5">
+                <h2 className="mb-1 text-sm font-bold text-navy-800">مظهر النظام</h2>
+                <p className="mb-3 text-[11px] leading-relaxed text-navy-400">
+                    الاختيار محفوظ على هذا الجهاز وحده — نفس الحساب يُفتح على شاشة مكتب
+                    وعلى موبايل في موقع ليلًا، وليست نفس الإجابة.
+                </p>
+                <ThemePicker />
+
+                <h2 className="mt-5 mb-1 text-sm font-bold text-navy-800">اللغة</h2>
+                <p className="mb-3 text-[11px] leading-relaxed text-navy-400">
+                    الإنجليزية مطبَّقة على الإطار — القوائم والأزرار ورؤوس الجداول والحالات —
+                    وباقي الشاشات تظهر بالعربية حتى تُترجَم. المستندات المطبوعة تبقى بالعربية.
+                </p>
+                <LanguagePicker />
+            </section>
 
             <div className="grid gap-5 lg:grid-cols-2">
                 <section className="card p-5">

@@ -62,7 +62,7 @@ export function LeadsTab() {
                         onClick={() => setStatus('')}
                         className={clsx(
                             'tap rounded-xl px-3 py-2 text-xs font-bold ring-1 transition',
-                            status === '' ? 'bg-brand-50 text-brand-700 ring-brand-200' : 'bg-white text-navy-500 ring-navy-200',
+                            status === '' ? 'bg-brand-50 text-brand-700 ring-brand-200' : 'bg-surface text-navy-500 ring-navy-200',
                         )}
                     >
                         الكل
@@ -73,7 +73,7 @@ export function LeadsTab() {
                             onClick={() => setStatus((s) => (s === value ? '' : value))}
                             className={clsx(
                                 'tap rounded-xl px-3 py-2 text-xs font-bold ring-1 transition',
-                                status === value ? 'bg-brand-50 text-brand-700 ring-brand-200' : 'bg-white text-navy-500 ring-navy-200',
+                                status === value ? 'bg-brand-50 text-brand-700 ring-brand-200' : 'bg-surface text-navy-500 ring-navy-200',
                             )}
                         >
                             {label}

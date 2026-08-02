@@ -48,13 +48,13 @@ export function CustodyReportPage() {
                                 </div>
 
                                 <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
-                                    <span className="rounded-lg bg-white px-2.5 py-1 font-bold text-amber-700">
+                                    <span className="rounded-lg bg-surface px-2.5 py-1 font-bold text-amber-700">
                                         نقدية {formatMoney(row.cash.balance)}
                                     </span>
-                                    <span className="rounded-lg bg-white px-2.5 py-1 font-bold text-navy-600">
+                                    <span className="rounded-lg bg-surface px-2.5 py-1 font-bold text-navy-600">
                                         قطع {formatMoney(row.stock.value)}
                                     </span>
-                                    <span className="rounded-lg bg-white px-2.5 py-1 font-bold text-navy-600">
+                                    <span className="rounded-lg bg-surface px-2.5 py-1 font-bold text-navy-600">
                                         {row.devices.length} جهاز
                                     </span>
                                 </div>

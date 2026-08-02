@@ -119,7 +119,7 @@ export function SupplierInvoicesTab() {
                             onClick={() => setTab(value)}
                             className={clsx(
                                 'tap flex-1 rounded-lg px-3 py-2 text-xs font-bold transition',
-                                tab === value ? 'bg-white text-navy-900 shadow-sm' : 'text-navy-500',
+                                tab === value ? 'bg-surface text-navy-900 shadow-sm' : 'text-navy-500',
                             )}
                         >
                             {label}
@@ -197,7 +197,7 @@ export function SupplierInvoicesTab() {
                                 <Link
                                     to={`${path('/print/supplier-invoices')}/${invoice.id}`}
                                     target="_blank"
-                                    className="tap grid place-items-center rounded-lg p-1.5 text-navy-400 transition hover:bg-white hover:text-brand-600"
+                                    className="tap grid place-items-center rounded-lg p-1.5 text-navy-400 transition hover:bg-surface hover:text-brand-600"
                                     aria-label={`طباعة ${invoice.code}`}
                                 >
                                     <Printer className="size-4" />

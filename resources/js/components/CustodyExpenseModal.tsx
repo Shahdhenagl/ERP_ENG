@@ -121,7 +121,7 @@ export function CustodyExpenseModal({
                             <button
                                 type="button"
                                 onClick={() => setReceipt(null)}
-                                className="tap absolute top-2 left-2 grid size-8 place-items-center rounded-lg bg-white/90 text-red-600 shadow"
+                                className="tap absolute top-2 left-2 grid size-8 place-items-center rounded-lg bg-surface/90 text-red-600 shadow"
                                 aria-label="إزالة"
                             >
                                 <X className="size-4" />

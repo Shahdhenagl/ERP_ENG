@@ -55,7 +55,7 @@ export function ViewToggle({
                     onClick={() => onChange(mode)}
                     className={clsx(
                         'tap flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition',
-                        view === mode ? 'bg-white text-navy-900 shadow-sm' : 'text-navy-500',
+                        view === mode ? 'bg-surface text-navy-900 shadow-sm' : 'text-navy-500',
                     )}
                 >
                     <Icon className="size-3.5" />

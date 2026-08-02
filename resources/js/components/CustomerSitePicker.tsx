@@ -75,7 +75,7 @@ export function CustomerSitePicker({
                                     onChange({ customerId: '', branchId: '' })
                                     setSearch('')
                                 }}
-                                className="tap grid shrink-0 place-items-center rounded-lg p-1.5 text-navy-400 transition hover:bg-white hover:text-navy-700"
+                                className="tap grid shrink-0 place-items-center rounded-lg p-1.5 text-navy-400 transition hover:bg-surface hover:text-navy-700"
                                 aria-label="تغيير العميل"
                             >
                                 <X className="size-4" />

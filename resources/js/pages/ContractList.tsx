@@ -134,7 +134,7 @@ export function ContractList() {
                             'tap flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold ring-1 transition',
                             expiringOnly
                                 ? 'bg-amber-50 text-amber-700 ring-amber-200'
-                                : 'bg-white text-navy-500 ring-navy-200 hover:bg-navy-50',
+                                : 'bg-surface text-navy-500 ring-navy-200 hover:bg-navy-50',
                         )}
                     >
                         <CalendarClock className="size-3.5" />

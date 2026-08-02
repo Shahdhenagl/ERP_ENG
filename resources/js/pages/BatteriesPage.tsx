@@ -50,7 +50,7 @@ export function BatteriesPage() {
                         'tap rounded-xl px-3 py-2 text-xs font-bold ring-1 transition',
                         dueOnly
                             ? 'bg-amber-50 text-amber-700 ring-amber-200'
-                            : 'bg-white text-navy-500 ring-navy-200',
+                            : 'bg-surface text-navy-500 ring-navy-200',
                     )}
                 >
                     تقترب على الانتهاء

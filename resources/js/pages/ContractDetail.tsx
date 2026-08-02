@@ -381,7 +381,7 @@ function VisitRow({
 
     const body = (
         <>
-            <span className="tabular grid size-8 shrink-0 place-items-center rounded-lg bg-white text-xs font-bold text-navy-500 ring-1 ring-navy-200">
+            <span className="tabular grid size-8 shrink-0 place-items-center rounded-lg bg-surface text-xs font-bold text-navy-500 ring-1 ring-navy-200">
                 {visit.sequence}
             </span>
 
@@ -443,7 +443,7 @@ function VisitRow({
                             <li key={job.id}>
                                 <Link
                                     to={`${taskHref}/${job.id}`}
-                                    className="tap flex items-center gap-2 rounded-lg bg-white p-2.5 transition hover:bg-brand-50"
+                                    className="tap flex items-center gap-2 rounded-lg bg-surface p-2.5 transition hover:bg-brand-50"
                                 >
                                     <span className="min-w-0 flex-1">
                                         <span className="block truncate text-xs font-bold text-navy-800">
@@ -543,7 +543,7 @@ function PaymentSchedule({ contract }: { contract: Contract }) {
                             key={payment.id}
                             className="flex items-center gap-3 rounded-xl bg-navy-50 p-3"
                         >
-                            <span className="tabular grid size-8 shrink-0 place-items-center rounded-lg bg-white text-xs font-bold text-navy-500 ring-1 ring-navy-200">
+                            <span className="tabular grid size-8 shrink-0 place-items-center rounded-lg bg-surface text-xs font-bold text-navy-500 ring-1 ring-navy-200">
                                 {payment.sequence}
                             </span>
 

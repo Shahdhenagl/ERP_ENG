@@ -83,7 +83,7 @@ export function NotificationsPage() {
                                         <Link
                                             key={`${group.key}-${index}`}
                                             to={path(item.url)}
-                                            className="flex items-start gap-3 border-b border-navy-100 bg-white p-3.5 transition last:border-0 hover:bg-navy-50"
+                                            className="flex items-start gap-3 border-b border-navy-100 bg-surface p-3.5 transition last:border-0 hover:bg-navy-50"
                                         >
                                             <span
                                                 className={clsx(

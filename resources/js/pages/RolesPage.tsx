@@ -343,7 +343,7 @@ function RoleEditor({
                                                         : [...new Set([...current, ...inGroup])],
                                                 )
                                             }
-                                            className="tap rounded-lg bg-white px-2.5 py-1 text-[11px] font-bold text-navy-600"
+                                            className="tap rounded-lg bg-surface px-2.5 py-1 text-[11px] font-bold text-navy-600"
                                         >
                                             {all ? 'إلغاء الكل' : 'تحديد الكل'}
                                         </button>

@@ -90,7 +90,7 @@ export function PermissionMatrix({ user, onClose }: { user: User; onClose: () =>
 
                             setDraft(reset)
                         }}
-                        className="tap inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-[11px] font-bold text-navy-600"
+                        className="tap inline-flex items-center gap-1.5 rounded-lg bg-surface px-3 py-1.5 text-[11px] font-bold text-navy-600"
                     >
                         <RotateCcw className="size-3.5" />
                         إرجاع لصلاحيات الدور

@@ -97,7 +97,7 @@ export function TendersPage() {
                             onClick={() => setFilter(value)}
                             className={clsx(
                                 'tap flex-1 rounded-lg px-3 py-2 text-xs font-bold whitespace-nowrap transition',
-                                filter === value ? 'bg-white text-navy-900 shadow-sm' : 'text-navy-500',
+                                filter === value ? 'bg-surface text-navy-900 shadow-sm' : 'text-navy-500',
                             )}
                         >
                             {label}
@@ -310,7 +310,7 @@ function DecideDialog({ tender, onClose }: { tender: Tender; onClose: () => void
                             'tap flex items-center justify-center gap-1.5 rounded-xl px-3 py-3 text-sm font-bold ring-1 transition',
                             result === 'won'
                                 ? 'bg-emerald-50 text-emerald-700 ring-emerald-300'
-                                : 'bg-white text-navy-500 ring-navy-200',
+                                : 'bg-surface text-navy-500 ring-navy-200',
                         )}
                     >
                         <Trophy className="size-4" />
@@ -322,7 +322,7 @@ function DecideDialog({ tender, onClose }: { tender: Tender; onClose: () => void
                             'tap flex items-center justify-center gap-1.5 rounded-xl px-3 py-3 text-sm font-bold ring-1 transition',
                             result === 'lost'
                                 ? 'bg-red-50 text-red-700 ring-red-300'
-                                : 'bg-white text-navy-500 ring-navy-200',
+                                : 'bg-surface text-navy-500 ring-navy-200',
                         )}
                     >
                         <ThumbsDown className="size-4" />

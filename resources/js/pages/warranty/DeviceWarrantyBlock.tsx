@@ -80,7 +80,7 @@ export function DeviceWarrantyBlock({ asset }: { asset: Asset }) {
                                     <Link
                                         to={path(`/print/warranty/${warranty.id}`)}
                                         target="_blank"
-                                        className="tap inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-navy-700"
+                                        className="tap inline-flex items-center gap-1.5 rounded-lg bg-surface px-3 py-1.5 text-xs font-bold text-navy-700"
                                     >
                                         <Printer className="size-3.5" />
                                         شهادة
@@ -119,7 +119,7 @@ export function DeviceWarrantyBlock({ asset }: { asset: Asset }) {
                                     {claim.task_code && (
                                         <Link
                                             to={path(`/tasks/${claim.task_id}`)}
-                                            className="tap mr-auto rounded-lg bg-white px-2.5 py-1 text-[11px] font-bold text-indigo-700"
+                                            className="tap mr-auto rounded-lg bg-surface px-2.5 py-1 text-[11px] font-bold text-indigo-700"
                                         >
                                             {claim.task_code}
                                         </Link>

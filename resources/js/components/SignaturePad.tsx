@@ -88,7 +88,7 @@ export function SignaturePad({ onChange }: SignaturePadProps) {
 
     return (
         <div>
-            <div className="relative overflow-hidden rounded-xl border-2 border-dashed border-navy-200 bg-white">
+            <div className="relative overflow-hidden rounded-xl border-2 border-dashed border-navy-200 bg-surface">
                 <canvas
                     ref={canvasRef}
                     className="block h-40 w-full touch-none"

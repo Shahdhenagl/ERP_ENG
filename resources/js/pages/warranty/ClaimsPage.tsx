@@ -51,7 +51,7 @@ export function ClaimsPage() {
                             className={clsx(
                                 'tap flex-1 rounded-lg px-3 py-2 text-xs font-bold transition',
                                 filter === value
-                                    ? 'bg-white text-navy-900 shadow-sm'
+                                    ? 'bg-surface text-navy-900 shadow-sm'
                                     : 'text-navy-500',
                             )}
                         >

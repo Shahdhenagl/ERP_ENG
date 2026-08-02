@@ -51,7 +51,7 @@ export function DiscountField({
                             className={clsx(
                                 'tap rounded-lg px-3 py-1.5 text-xs font-bold transition',
                                 (mode === 'percent') === byRate
-                                    ? 'bg-white text-navy-900 shadow-sm'
+                                    ? 'bg-surface text-navy-900 shadow-sm'
                                     : 'text-navy-500',
                             )}
                         >

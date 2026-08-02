@@ -39,7 +39,7 @@ export function FollowUpsTab() {
                         'tap rounded-xl px-3 py-2 text-xs font-bold ring-1 transition',
                         dueOnly
                             ? 'bg-red-50 text-red-700 ring-red-200'
-                            : 'bg-white text-navy-500 ring-navy-200',
+                            : 'bg-surface text-navy-500 ring-navy-200',
                     )}
                 >
                     المتأخّرة فقط

@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { useT } from '@/lib/i18n'
 import { Loader2, type LucideIcon } from 'lucide-react'
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
 
@@ -63,11 +64,13 @@ interface FieldProps {
 }
 
 export function Field({ label, error, hint, required, className, children }: FieldProps) {
+    const t = useT()
+
     return (
         <div className={className}>
             {label && (
                 <label className="label">
-                    {label}
+                    {t(label)}
                     {required && <span className="text-red-500"> *</span>}
                 </label>
             )}
@@ -123,15 +126,17 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({ icon: Icon, title, description, action }: EmptyStateProps) {
+    const t = useT()
+
     return (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-navy-200 bg-white/60 px-6 py-16 text-center">
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-navy-200 bg-surface/60 px-6 py-16 text-center">
             {Icon && (
                 <div className="mb-4 grid size-14 place-items-center rounded-2xl bg-navy-50 text-navy-300">
                     <Icon className="size-7" />
                 </div>
             )}
-            <h3 className="text-base font-bold text-navy-800">{title}</h3>
-            {description && <p className="mt-1 max-w-sm text-sm text-navy-400">{description}</p>}
+            <h3 className="text-base font-bold text-navy-800">{t(title)}</h3>
+            {description && <p className="mt-1 max-w-sm text-sm text-navy-400">{t(description)}</p>}
             {action && <div className="mt-5">{action}</div>}
         </div>
     )
@@ -161,11 +166,13 @@ interface PageHeaderProps {
 }
 
 export function PageHeader({ title, subtitle, actions }: PageHeaderProps) {
+    const t = useT()
+
     return (
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
             <div>
-                <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{title}</h1>
-                {subtitle && <p className="mt-1 text-sm text-navy-400">{subtitle}</p>}
+                <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t(title)}</h1>
+                {subtitle && <p className="mt-1 text-sm text-navy-400">{t(subtitle)}</p>}
             </div>
             {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
         </div>

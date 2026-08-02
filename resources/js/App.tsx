@@ -12,6 +12,8 @@ import { AppLayout } from '@/components/AppLayout'
 import { ToastProvider } from '@/components/Toast'
 import { PageLoader } from '@/components/ui'
 import { AuthProvider, useAuth } from '@/lib/auth'
+import { I18nProvider } from '@/lib/i18n'
+import { ThemeProvider } from '@/lib/theme'
 import { areaFor } from '@/lib/nav'
 import { AccountingLayout } from '@/pages/accounting/AccountingLayout'
 import { AccountsPage } from '@/pages/accounting/AccountsPage'
@@ -136,6 +138,8 @@ const queryClient = new QueryClient({
 export function App() {
     return (
         <QueryClientProvider client={queryClient}>
+            <ThemeProvider>
+            <I18nProvider>
             <BrowserRouter>
                 <ToastProvider>
                     <AuthProvider>
@@ -347,6 +351,8 @@ export function App() {
                     </AuthProvider>
                 </ToastProvider>
             </BrowserRouter>
+            </I18nProvider>
+            </ThemeProvider>
         </QueryClientProvider>
     )
 }

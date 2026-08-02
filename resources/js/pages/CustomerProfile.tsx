@@ -387,7 +387,7 @@ function CustomerTasksSection({ customerId }: { customerId: number }) {
                                         <td className="px-3 py-2.5">
                                             <Link
                                                 to={path(`/tasks/${task.id}`)}
-                                                className="tap grid place-items-center rounded-lg p-1.5 text-navy-400 transition hover:bg-white hover:text-brand-600"
+                                                className="tap grid place-items-center rounded-lg p-1.5 text-navy-400 transition hover:bg-surface hover:text-brand-600"
                                                 aria-label={`فتح ${task.code}`}
                                             >
                                                 <ArrowLeft className="size-4" />

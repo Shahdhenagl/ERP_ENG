@@ -22,7 +22,7 @@ const ToastContext = createContext<ToastValue | null>(null)
 const STYLES: Record<ToastKind, { icon: typeof Info; className: string }> = {
     success: { icon: CheckCircle2, className: 'bg-emerald-600' },
     error: { icon: AlertCircle, className: 'bg-red-600' },
-    info: { icon: Info, className: 'bg-navy-800' },
+    info: { icon: Info, className: 'bg-ink' },
 }
 
 let nextId = 1

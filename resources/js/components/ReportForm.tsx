@@ -222,7 +222,7 @@ export function ReportForm({ open, onClose, task, type, existing, onSaved }: Rep
                         {SITE_CHECKS.map((check) => (
                             <div
                                 key={check.key}
-                                className="flex items-center justify-between gap-3 rounded-xl border border-navy-200 bg-white px-3 py-2"
+                                className="flex items-center justify-between gap-3 rounded-xl border border-navy-200 bg-surface px-3 py-2"
                             >
                                 <span className="text-sm font-semibold text-navy-700">{check.label}</span>
                                 <div className="flex shrink-0 gap-1">
@@ -269,7 +269,7 @@ export function ReportForm({ open, onClose, task, type, existing, onSaved }: Rep
                         </Select>
                     </Field>
 
-                    <label className="flex cursor-pointer items-center gap-3 self-end rounded-xl border border-navy-200 bg-white px-4 py-3 transition hover:bg-navy-50">
+                    <label className="flex cursor-pointer items-center gap-3 self-end rounded-xl border border-navy-200 bg-surface px-4 py-3 transition hover:bg-navy-50">
                         <input
                             type="checkbox"
                             checked={batteriesFlag}
@@ -293,7 +293,7 @@ export function ReportForm({ open, onClose, task, type, existing, onSaved }: Rep
                                 return (
                                     <div
                                         key={item.id}
-                                        className="rounded-xl border border-navy-200 bg-white px-3 py-2"
+                                        className="rounded-xl border border-navy-200 bg-surface px-3 py-2"
                                     >
                                         <div className="flex items-center justify-between gap-3">
                                             <span className="min-w-0 text-sm font-semibold text-navy-700">
@@ -518,7 +518,7 @@ export function ReportForm({ open, onClose, task, type, existing, onSaved }: Rep
                                 <img
                                     src={existing.signature_url}
                                     alt="توقيع العميل"
-                                    className="h-24 rounded-xl border border-navy-200 bg-white object-contain p-2"
+                                    className="h-24 rounded-xl border border-navy-200 bg-surface object-contain p-2"
                                 />
                             </div>
                         )}

@@ -1,4 +1,5 @@
 import { LogIn } from 'lucide-react'
+import { useI18n } from '@/lib/i18n'
 import { useState, type FormEvent } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { Button, Field, Input, PageLoader } from '@/components/ui'
@@ -33,8 +34,10 @@ export function Login() {
         }
     }
 
+    const { dir } = useI18n()
+
     return (
-        <div className="surface-brand flex min-h-dvh items-center justify-center p-4" dir="rtl">
+        <div className="surface-brand flex min-h-dvh items-center justify-center p-4" dir={dir}>
             <div className="animate-in w-full max-w-md">
                 <div className="mb-8 flex flex-col items-center text-center">
                     <img
@@ -46,7 +49,7 @@ export function Login() {
                     <p className="mt-1 text-sm text-brand-200">نظام إدارة التركيب والصيانة</p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="rounded-3xl bg-white p-6 sm:p-8">
+                <form onSubmit={handleSubmit} className="rounded-3xl bg-surface p-6 sm:p-8">
                     <h2 className="mb-6 text-lg font-bold text-navy-900">تسجيل الدخول</h2>
 
                     {error && (

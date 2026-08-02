@@ -43,7 +43,7 @@ export function AttendanceTab() {
                     type="month"
                     value={period}
                     onChange={(event) => setPeriod(event.target.value)}
-                    className="rounded-xl border border-navy-200 bg-white px-3 py-2 text-sm font-bold text-navy-800"
+                    className="rounded-xl border border-navy-200 bg-surface px-3 py-2 text-sm font-bold text-navy-800"
                 />
                 <Button icon={Plus} onClick={() => setRecording(true)}>
                     تسجيل حضور
@@ -62,7 +62,7 @@ export function AttendanceTab() {
                         onClick={() => setView(value)}
                         className={clsx(
                             'tap flex-1 rounded-lg px-3 py-2 text-xs font-bold transition',
-                            view === value ? 'bg-white text-navy-900 shadow-sm' : 'text-navy-500',
+                            view === value ? 'bg-surface text-navy-900 shadow-sm' : 'text-navy-500',
                         )}
                     >
                         {label}

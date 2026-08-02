@@ -246,8 +246,8 @@ export function TaskList() {
                         className={clsx(
                             'shrink-0 rounded-full px-4 py-2 text-xs font-bold transition',
                             activeQuickFilter === filter.key
-                                ? 'bg-navy-900 text-white shadow-lg shadow-navy-900/20'
-                                : 'bg-white text-navy-600 ring-1 ring-navy-200 hover:bg-navy-50',
+                                ? 'bg-ink text-white shadow-lg shadow-navy-950/20'
+                                : 'bg-surface text-navy-600 ring-1 ring-navy-200 hover:bg-navy-50',
                         )}
                     >
                         {filter.label}

@@ -308,7 +308,7 @@ export function ContractForm({ open, onClose, contract, customerId, onSaved }: C
                                 return (
                                     <label
                                         key={asset.id}
-                                        className="tap flex cursor-pointer gap-2.5 rounded-lg bg-white p-2.5 text-sm"
+                                        className="tap flex cursor-pointer gap-2.5 rounded-lg bg-surface p-2.5 text-sm"
                                     >
                                         <input
                                             type="checkbox"

@@ -24,6 +24,24 @@
          on a site with no outbound internet access. --}}
     <link rel="preload" href="/fonts/cairo-arabic.woff2" as="font" type="font/woff2" crossorigin>
 
+    {{-- The theme is painted before the first byte of the app runs. Deciding
+         it in React means a white page appears first and is repainted dark a
+         moment later, which reads as a fault rather than a load. --}}
+    <script>
+        (function () {
+            var saved = localStorage.getItem('theme');
+            var dark = saved === 'dark' || (!saved && matchMedia('(prefers-color-scheme: dark)').matches);
+            document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+
+            var locale = localStorage.getItem('locale') === 'en' ? 'en' : 'ar';
+            document.documentElement.lang = locale;
+            document.documentElement.dir = locale === 'en' ? 'ltr' : 'rtl';
+            if (dark) {
+                document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0b1220');
+            }
+        })();
+    </script>
+
     @viteReactRefresh
     @vite(['resources/css/app.css', 'resources/js/main.tsx'])
 </head>

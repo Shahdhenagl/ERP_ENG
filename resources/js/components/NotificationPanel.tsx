@@ -150,7 +150,7 @@ export function NotificationPanel({ open, onClose }: { open: boolean; onClose: (
                                 className={clsx(
                                     'w-full rounded-xl border p-3 text-right transition',
                                     notification.read_at
-                                        ? 'border-navy-100 bg-white hover:bg-navy-50'
+                                        ? 'border-navy-100 bg-surface hover:bg-navy-50'
                                         : 'border-brand-200 bg-brand-50/60 hover:bg-brand-50',
                                 )}
                             >
