@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { Field, Select, SkeletonCard } from '@/components/ui'
 import { formatMoney } from '@/lib/domain'
@@ -37,7 +38,7 @@ export function ContractReportPage() {
                     <div>
                         <h2 className="text-sm font-bold text-navy-800">عقود قاربت على الانتهاء</h2>
                         <p className="mt-0.5 text-[11px] text-navy-400">
-                            التجديد يُباع قبل الانتهاء، لا بعده.
+                            {tr('التجديد يُباع قبل الانتهاء، لا بعده.')}
                         </p>
                     </div>
 

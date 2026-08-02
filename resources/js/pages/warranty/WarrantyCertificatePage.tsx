@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { BadgeCheck, Printer, Search, ShieldCheck, ShieldX } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -104,7 +105,7 @@ export function WarrantyCertificatePage() {
                                         className="btn-secondary text-xs"
                                     >
                                         <Printer className="size-4" />
-                                        طباعة الشهادة
+                                        {tr('طباعة الشهادة')}
                                     </Link>
                                     <span
                                         className={clsx(

@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import {
     ArrowRight,
     Battery,
@@ -208,7 +209,7 @@ export function TaskDetail() {
             <>
                 <button onClick={() => navigate(-1)} className="btn-ghost -mr-2 mb-2 text-sm">
                     <ArrowRight className="size-4" />
-                    رجوع
+                    {tr('رجوع')}
                 </button>
 
                 <div className="mb-4">
@@ -390,7 +391,7 @@ export function TaskDetail() {
                     className="btn-ghost -mr-2 text-sm"
                 >
                     <ArrowRight className="size-4" />
-                    رجوع
+                    {tr('رجوع')}
                 </button>
 
                 <div className="flex gap-1">
@@ -498,7 +499,7 @@ export function TaskDetail() {
 
                     {canDispatch && !isMine && !task.is_terminal && (
                         <p className="mt-3 text-xs text-navy-400">
-                            تقدّم المهمة يسجّله الفني المسند إليها من تطبيقه.
+                            {tr('تقدّم المهمة يسجّله الفني المسند إليها من تطبيقه.')}
                         </p>
                     )}
                 </section>
@@ -576,7 +577,7 @@ export function TaskDetail() {
                                         className="btn-secondary flex-col gap-1 py-3 text-xs"
                                     >
                                         <Phone className="size-4" />
-                                        اتصال
+                                        {tr('اتصال')}
                                     </a>
 
                                     <a
@@ -589,7 +590,7 @@ export function TaskDetail() {
                                         )}
                                     >
                                         <MessageCircle className="size-4" />
-                                        واتساب
+                                        {tr('واتساب')}
                                     </a>
 
                                     <a
@@ -602,7 +603,7 @@ export function TaskDetail() {
                                         )}
                                     >
                                         <Navigation className="size-4" />
-                                        الاتجاهات
+                                        {tr('الاتجاهات')}
                                     </a>
                                 </div>
                             </div>
@@ -615,7 +616,7 @@ export function TaskDetail() {
                             <div className="mb-4 flex flex-wrap items-center gap-2">
                                 <h2 className="flex items-center gap-2 text-sm font-bold text-navy-800">
                                     <Cpu className="size-4 text-navy-300" />
-                                    الجهاز
+                                    {tr('الجهاز')}
                                 </h2>
                                 {/* Whether this visit is billable hangs on the warranty,
                                     so it sits next to the device, not buried a page away. */}
@@ -626,7 +627,7 @@ export function TaskDetail() {
                                     to={path(`/assets/${task.asset.id}`)}
                                     className="mr-auto text-xs font-bold text-brand-600 hover:underline"
                                 >
-                                    سجل الجهاز
+                                    {tr('سجل الجهاز')}
                                 </Link>
                             </div>
 
@@ -644,7 +645,7 @@ export function TaskDetail() {
                         <div className="mb-4 flex items-center justify-between">
                             <h2 className="flex items-center gap-2 text-sm font-bold text-navy-800">
                                 <ClipboardCheck className="size-4 text-navy-300" />
-                                التقارير الفنية
+                                {tr('التقارير الفنية')}
                             </h2>
 
                             {canDrive && (
@@ -669,7 +670,7 @@ export function TaskDetail() {
 
                         {!diagnosisReport && !completionReport ? (
                             <p className="rounded-xl bg-navy-50 px-4 py-6 text-center text-sm text-navy-400">
-                                لم يتم رفع أي تقرير بعد.
+                                {tr('لم يتم رفع أي تقرير بعد.')}
                             </p>
                         ) : (
                             <div className="space-y-4">
@@ -729,11 +730,11 @@ export function TaskDetail() {
                                     }
                                 }}
                             >
-                                إصدار فاتورة
+                                {tr('إصدار فاتورة')}
                             </Button>
 
                             <p className="mt-2 text-[11px] text-navy-400">
-                                تُنشأ مسودة بقطع الغيار المستخدمة وبند أجر الزيارة، تراجعها قبل الإصدار.
+                                {tr('تُنشأ مسودة بقطع الغيار المستخدمة وبند أجر الزيارة، تراجعها قبل الإصدار.')}
                             </p>
                         </section>
                     )}
@@ -750,7 +751,7 @@ export function TaskDetail() {
                                     className="btn-whatsapp w-full"
                                 >
                                     <MessageCircle className="size-4" />
-                                    إرسال التفاصيل للفني
+                                    {tr('إرسال التفاصيل للفني')}
                                 </a>
                             )}
 
@@ -762,7 +763,7 @@ export function TaskDetail() {
                                     className="btn-secondary w-full"
                                 >
                                     <MessageCircle className="size-4" />
-                                    إرسال التقرير للمدير
+                                    {tr('إرسال التقرير للمدير')}
                                 </a>
                             )}
 
@@ -774,7 +775,7 @@ export function TaskDetail() {
                                     className="btn-secondary w-full"
                                 >
                                     <MessageCircle className="size-4" />
-                                    إرسال للعميل
+                                    {tr('إرسال للعميل')}
                                 </a>
                             )}
                         </div>
@@ -800,7 +801,7 @@ export function TaskDetail() {
                                 </div>
                             ) : (
                                 <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700">
-                                    لم يتم إسناد فني بعد.
+                                    {tr('لم يتم إسناد فني بعد.')}
                                 </p>
                             )}
 
@@ -856,7 +857,7 @@ export function TaskDetail() {
                                                             className="inline-flex items-center gap-0.5 font-bold text-brand-600 hover:text-brand-700"
                                                         >
                                                             <MapPin className="size-3" />
-                                                            الموقع
+                                                            {tr('الموقع')}
                                                         </a>
                                                     )}
                                                 </p>
@@ -892,7 +893,7 @@ export function TaskDetail() {
                 footer={
                     <>
                         <Button variant="secondary" onClick={() => setCancelOpen(false)}>
-                            تراجع
+                            {tr('تراجع')}
                         </Button>
                         <Button
                             variant="danger"
@@ -901,7 +902,7 @@ export function TaskDetail() {
                             onClick={handleCancel}
                             disabled={!cancelReason.trim()}
                         >
-                            تأكيد الإلغاء
+                            {tr('تأكيد الإلغاء')}
                         </Button>
                     </>
                 }
@@ -986,7 +987,7 @@ function ReportBlock({
                     {report.batteries_need_replacement && (
                         <Badge className="bg-red-50 text-red-700 ring-1 ring-red-200">
                             <Battery className="size-3.5" />
-                            استبدال بطاريات
+                            {tr('استبدال بطاريات')}
                         </Badge>
                     )}
                 </div>
@@ -1145,14 +1146,14 @@ function TaskExpenses({ task, canAdd }: { task: Task; canAdd: boolean }) {
                 </h2>
                 {canAdd && (
                     <Button variant="ghost" icon={Plus} className="text-xs" onClick={() => setAdding(true)}>
-                        أضف مصروف
+                        {tr('أضف مصروف')}
                     </Button>
                 )}
             </div>
 
             {expenses.length === 0 ? (
                 <p className="rounded-xl bg-navy-50 px-4 py-4 text-center text-xs text-navy-400">
-                    لا مصاريف مسجّلة على هذه المهمة.
+                    {tr('لا مصاريف مسجّلة على هذه المهمة.')}
                 </p>
             ) : (
                 <div className="space-y-2">
@@ -1355,7 +1356,7 @@ function RouteExpenseDialog({
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={spend.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={spend.isPending}
@@ -1580,7 +1581,7 @@ function AttachmentsSection({
             <div className="mb-4 flex items-center justify-between">
                 <h2 className="flex items-center gap-2 text-sm font-bold text-navy-800">
                     <ImageIcon className="size-4 text-navy-300" />
-                    الصور والمرفقات
+                    {tr('الصور والمرفقات')}
                 </h2>
 
                 {canEdit && (
@@ -1602,7 +1603,7 @@ function AttachmentsSection({
                             onClick={() => inputRef.current?.click()}
                             className="text-xs"
                         >
-                            رفع
+                            {tr('رفع')}
                         </Button>
 
                         <input
@@ -1620,7 +1621,7 @@ function AttachmentsSection({
 
             {attachments.length === 0 ? (
                 <p className="rounded-xl bg-navy-50 px-4 py-6 text-center text-sm text-navy-400">
-                    لا توجد مرفقات.
+                    {tr('لا توجد مرفقات.')}
                 </p>
             ) : (
                 <div className="space-y-4">
@@ -1715,10 +1716,10 @@ function AssignDialog({
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button loading={assign.isPending} onClick={handleSave}>
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }

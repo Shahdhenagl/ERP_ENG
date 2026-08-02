@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { SkeletonCard } from '@/components/ui'
 import { formatMoney } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
@@ -72,7 +73,7 @@ export function BalanceSheetPage() {
                         exactly the figure an owner looks for. */}
                     <div className="card flex items-center justify-between p-4">
                         <span className="text-[13px] font-bold text-navy-700">
-                            أرباح الفترة غير الموزَّعة
+                            {tr('أرباح الفترة غير الموزَّعة')}
                         </span>
                         <span
                             className={clsx(
@@ -86,7 +87,7 @@ export function BalanceSheetPage() {
 
                     <div className="card flex items-center justify-between bg-navy-50/60 p-4">
                         <span className="text-[13px] font-extrabold text-navy-900">
-                            إجمالي الخصوم وحقوق الملكية
+                            {tr('إجمالي الخصوم وحقوق الملكية')}
                         </span>
                         <span className="tabular text-sm font-extrabold text-navy-900">
                             {formatMoney(data.liabilities_and_equity_total)}

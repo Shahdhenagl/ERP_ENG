@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { AlertTriangle, FileText, Plus, Printer, Search, Wallet } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -107,13 +108,13 @@ export function InvoiceList() {
                         className="btn-secondary"
                     >
                         <Printer className="size-4" />
-                        طباعة
+                        {tr('طباعة')}
                     </Link>
                     {/* Most bills arrive from a quote or a finished job, but not
                         every sale passes through one — a counter sale has no
                         document ahead of it to convert. */}
                     <Button icon={Plus} onClick={() => setCreating(true)}>
-                        فاتورة جديدة
+                        {tr('فاتورة جديدة')}
                     </Button>
                     </>
                 }
@@ -329,7 +330,7 @@ export function InvoiceList() {
             >
                 <span className="flex items-center gap-2 font-bold text-navy-900">
                     <Wallet className="size-4 text-navy-400" />
-                    الخزينة والتحصيل
+                    {tr('الخزينة والتحصيل')}
                 </span>
                 <span className="tabular text-sm font-extrabold text-brand-600">
                     {summary ? formatMoney(summary.cash_on_hand) : '—'}

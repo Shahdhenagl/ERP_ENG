@@ -1,5 +1,5 @@
 import { LogIn } from 'lucide-react'
-import { useI18n } from '@/lib/i18n'
+import { tr, useI18n } from '@/lib/i18n'
 import { useState, type FormEvent } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { Button, Field, Input, PageLoader } from '@/components/ui'
@@ -88,7 +88,7 @@ export function Login() {
                     </div>
 
                     <Button type="submit" icon={LogIn} loading={submitting} block className="mt-7 py-3">
-                        دخول
+                        {tr('دخول')}
                     </Button>
                 </form>
 

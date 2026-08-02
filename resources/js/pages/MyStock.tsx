@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { Package, Plus, Receipt, Wallet } from 'lucide-react'
 import { useState } from 'react'
 import { CustodyExpenseModal } from '@/components/CustodyExpenseModal'
@@ -126,7 +127,7 @@ function MyCustodyCard() {
                     </div>
 
                     <Button icon={Plus} onClick={() => setSpending(true)}>
-                        تسجيل مصروف
+                        {tr('تسجيل مصروف')}
                     </Button>
                 </div>
 

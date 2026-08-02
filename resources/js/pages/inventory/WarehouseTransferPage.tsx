@@ -1,4 +1,5 @@
 import { ArrowLeftRight } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { useToast } from '@/components/Toast'
 import { Button, Field, Input, PageHeader, Select, Textarea } from '@/components/ui'
@@ -97,7 +98,7 @@ export function WarehouseTransferPage() {
 
                     {sameStore && (
                         <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700">
-                            لا يمكن التحويل إلى نفس المخزن.
+                            {tr('لا يمكن التحويل إلى نفس المخزن.')}
                         </p>
                     )}
 
@@ -130,7 +131,7 @@ export function WarehouseTransferPage() {
                         }
                         onClick={submit}
                     >
-                        تنفيذ التحويل
+                        {tr('تنفيذ التحويل')}
                     </Button>
                 </div>
             </div>

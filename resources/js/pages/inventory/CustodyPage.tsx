@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { Banknote, HandCoins, HardDrive, Package, Undo2, Wallet } from 'lucide-react'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
@@ -44,14 +45,14 @@ export function CustodyPage() {
                 actions={
                     <>
                         <Button icon={Wallet} onClick={() => setCashOpen(true)}>
-                            صرف عهدة نقدية
+                            {tr('صرف عهدة نقدية')}
                         </Button>
                         <Button
                             variant="secondary"
                             icon={HardDrive}
                             onClick={() => setDeviceOpen(true)}
                         >
-                            تسليم جهاز
+                            {tr('تسليم جهاز')}
                         </Button>
                     </>
                 }
@@ -143,7 +144,7 @@ export function CustodyPage() {
                                 className="text-xs"
                                 onClick={() => setCashFor(statement)}
                             >
-                                عهدة نقدية
+                                {tr('عهدة نقدية')}
                             </Button>
                         </div>
                     </div>
@@ -278,7 +279,7 @@ function CashDialog({
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={cash.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={cash.isPending}
@@ -304,7 +305,7 @@ function CashDialog({
                             }
                         }}
                     >
-                        تنفيذ
+                        {tr('تنفيذ')}
                     </Button>
                 </>
             }
@@ -402,7 +403,7 @@ function DeviceDialog({ onClose }: { onClose: () => void }) {
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={action.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={action.isPending}
@@ -428,7 +429,7 @@ function DeviceDialog({ onClose }: { onClose: () => void }) {
                             }
                         }}
                     >
-                        تسجيل
+                        {tr('تسجيل')}
                     </Button>
                 </>
             }

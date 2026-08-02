@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import {
     AlertTriangle,
     MapPin,
@@ -145,7 +146,7 @@ export function ItemsPage() {
                         )}
                     >
                         <AlertTriangle className="size-3.5" />
-                        تحت حد الطلب
+                        {tr('تحت حد الطلب')}
                     </button>
 
                     {/* Table for scanning many at a glance, cards for the detail. */}
@@ -182,7 +183,7 @@ export function ItemsPage() {
                             icon={Plus}
                             onClick={() => openItemForm(undefined, undefined, groupId || undefined)}
                         >
-                            صنف جديد
+                            {tr('صنف جديد')}
                         </Button>
                     }
                 />
@@ -217,7 +218,7 @@ export function ItemsPage() {
                                             {item.below_reorder_level && (
                                                 <span className="badge bg-amber-50 text-amber-700 ring-1 ring-amber-200">
                                                     <AlertTriangle className="size-3" />
-                                                    تحت حد الطلب
+                                                    {tr('تحت حد الطلب')}
                                                 </span>
                                             )}
                                         </div>
@@ -288,7 +289,7 @@ export function ItemsPage() {
                                                 className="tap inline-flex items-center gap-1.5 rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-700 hover:bg-brand-100"
                                             >
                                                 <MapPin className="size-3.5" />
-                                                تركيب عند عميل
+                                                {tr('تركيب عند عميل')}
                                             </button>
                                         </div>
                                     )}

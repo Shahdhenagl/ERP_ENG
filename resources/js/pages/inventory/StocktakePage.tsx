@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { ClipboardCheck, Save, Search, Warehouse as WarehouseIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Modal } from '@/components/Modal'
@@ -267,7 +268,7 @@ export function StocktakePage() {
                                 loading={commit.isPending}
                                 onClick={submit}
                             >
-                                اعتماد الجرد
+                                {tr('اعتماد الجرد')}
                             </Button>
                         </div>
                     </div>
@@ -329,7 +330,7 @@ function ResultModal({ summary, onClose }: { summary: StocktakeSummary; onClose:
                 </div>
 
                 <Button className="w-full" onClick={onClose}>
-                    تم
+                    {tr('تم')}
                 </Button>
             </div>
         </Modal>

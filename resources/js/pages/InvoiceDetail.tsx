@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { ArrowRight, Ban, Building2, CheckCircle2, HardDrive, MapPin, Pencil, Printer, Wallet } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -62,7 +63,7 @@ export function InvoiceDetail() {
             <div className="mb-4 flex items-center justify-between gap-2">
                 <button onClick={() => navigate(-1)} className="btn-ghost tap -mr-2 text-sm">
                     <ArrowRight className="size-4" />
-                    رجوع
+                    {tr('رجوع')}
                 </button>
 
                 {/* Opens the document rather than printing this screen — the
@@ -72,7 +73,7 @@ export function InvoiceDetail() {
                     className="btn-secondary tap text-sm"
                 >
                     <Printer className="size-4" />
-                    طباعة
+                    {tr('طباعة')}
                 </Link>
             </div>
 
@@ -160,7 +161,7 @@ export function InvoiceDetail() {
                             {/* A draft from a job carries a zero labour line on
                                 purpose — this is where its price gets set. */}
                             <Button variant="secondary" icon={Pencil} onClick={() => setEditOpen(true)}>
-                                تعديل البنود
+                                {tr('تعديل البنود')}
                             </Button>
 
                             {/* Issuing is the moment the goods leave the store, so
@@ -201,14 +202,14 @@ export function InvoiceDetail() {
                                     )
                                 }
                             >
-                                إصدار الفاتورة
+                                {tr('إصدار الفاتورة')}
                             </Button>
                         </>
                     )}
 
                     {collectable && (
                         <Button icon={Wallet} onClick={() => setPayOpen(true)}>
-                            تسجيل تحصيل
+                            {tr('تسجيل تحصيل')}
                         </Button>
                     )}
 
@@ -218,7 +219,7 @@ export function InvoiceDetail() {
                         className="text-red-600"
                         onClick={() => setVoidOpen(true)}
                     >
-                        إلغاء الفاتورة
+                        {tr('إلغاء الفاتورة')}
                     </Button>
                 </div>
             )}
@@ -332,7 +333,7 @@ export function InvoiceDetail() {
                                     onClick={() => setReversing(payment.id)}
                                     className="tap shrink-0 rounded-lg px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-50"
                                 >
-                                    إلغاء السند
+                                    {tr('إلغاء السند')}
                                 </button>
                             </div>
                         ))}
@@ -356,7 +357,7 @@ export function InvoiceDetail() {
                 footer={
                     <>
                         <Button variant="secondary" onClick={() => setVoidOpen(false)}>
-                            رجوع
+                            {tr('رجوع')}
                         </Button>
                         <Button
                             variant="danger"
@@ -375,7 +376,7 @@ export function InvoiceDetail() {
                                 setVoidOpen(false)
                             }}
                         >
-                            تأكيد الإلغاء
+                            {tr('تأكيد الإلغاء')}
                         </Button>
                     </>
                 }
@@ -384,7 +385,7 @@ export function InvoiceDetail() {
                     <Textarea value={voidReason} onChange={(event) => setVoidReason(event.target.value)} />
                 </Field>
                 <p className="mt-2 text-xs text-navy-400">
-                    الفاتورة الملغاة تبقى في السجل ولا تُحذف — ولا يمكن إلغاء فاتورة عليها تحصيل.
+                    {tr('الفاتورة الملغاة تبقى في السجل ولا تُحذف — ولا يمكن إلغاء فاتورة عليها تحصيل.')}
                 </p>
             </Modal>
 

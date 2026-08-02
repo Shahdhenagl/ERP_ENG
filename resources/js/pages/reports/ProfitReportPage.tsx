@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { SkeletonCard, Th } from '@/components/ui'
 import { formatMoney } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
@@ -33,7 +34,7 @@ export function ProfitReportPage() {
             {/* Said out loud: a reader who does not know it will assume the
                 report and the books are two separate answers. */}
             <p className="mt-3 rounded-xl bg-navy-50 p-3 text-[11px] text-navy-500">
-                هذه الأرقام مقروءة من قائمة الدخل نفسها، فلا يمكن أن تختلف عن المحاسبة.
+                {tr('هذه الأرقام مقروءة من قائمة الدخل نفسها، فلا يمكن أن تختلف عن المحاسبة.')}
             </p>
 
             <Section title="ربحية أوامر العمل المفوترة" count={data.jobs.length}>

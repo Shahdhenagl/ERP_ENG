@@ -1,4 +1,5 @@
 import { Gift, MinusCircle, Plus, Trash2 } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
@@ -174,7 +175,7 @@ function AdjustmentForm({
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={save.isPending}
@@ -197,7 +198,7 @@ function AdjustmentForm({
                             }
                         }}
                     >
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }

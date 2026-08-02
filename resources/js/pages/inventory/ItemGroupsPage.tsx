@@ -1,4 +1,5 @@
 import { Boxes, Plus, Trash2 } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
@@ -36,7 +37,7 @@ export function ItemGroupsPage() {
                 subtitle="تصنيف الأصناف"
                 actions={
                     <Button icon={Plus} onClick={() => setCreating(true)}>
-                        مجموعة جديدة
+                        {tr('مجموعة جديدة')}
                     </Button>
                 }
             />
@@ -118,7 +119,7 @@ function GroupDialog({ group, onClose }: { group?: ItemGroup; onClose: () => voi
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={save.isPending}
@@ -140,7 +141,7 @@ function GroupDialog({ group, onClose }: { group?: ItemGroup; onClose: () => voi
                             }
                         }}
                     >
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }
@@ -183,7 +184,7 @@ function GroupDialog({ group, onClose }: { group?: ItemGroup; onClose: () => voi
                         onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))}
                         className="size-4 accent-brand-600"
                     />
-                    نشطة
+                    {tr('نشطة')}
                 </label>
             </div>
         </Modal>

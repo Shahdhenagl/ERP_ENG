@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { ArrowRight, BadgeCheck, Coins, Plus, Printer, Wallet } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -38,7 +39,7 @@ export function PayrollTab() {
         <>
             <div className="mb-4 flex justify-end">
                 <Button icon={Plus} onClick={() => setOpening(true)}>
-                    فتح مسير شهر
+                    {tr('فتح مسير شهر')}
                 </Button>
             </div>
 
@@ -116,7 +117,7 @@ function OpenForm({
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={open.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={open.isPending}
@@ -136,7 +137,7 @@ function OpenForm({
                             }
                         }}
                     >
-                        فتح
+                        {tr('فتح')}
                     </Button>
                 </>
             }
@@ -208,7 +209,7 @@ function RunDetail({ id, onBack }: { id: number; onBack: () => void }) {
                 className="tap mb-4 inline-flex items-center gap-1.5 text-sm font-bold text-navy-500"
             >
                 <ArrowRight className="size-4" />
-                كل المسيّرات
+                {tr('كل المسيّرات')}
             </button>
 
             {isLoading || !run ? (
@@ -236,12 +237,12 @@ function RunDetail({ id, onBack }: { id: number; onBack: () => void }) {
                                         loading={act.isPending}
                                         onClick={() => runAction('approve')}
                                     >
-                                        اعتماد
+                                        {tr('اعتماد')}
                                     </Button>
                                 )}
                                 {run.status !== 'draft' && run.unpaid_net > 0 && (
                                     <Button icon={Wallet} onClick={() => setPayOpen('run')}>
-                                        صرف الكل
+                                        {tr('صرف الكل')}
                                     </Button>
                                 )}
                             </div>
@@ -393,7 +394,7 @@ function PayModal({
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={busy}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={busy}
@@ -416,7 +417,7 @@ function PayModal({
                             }
                         }}
                     >
-                        صرف
+                        {tr('صرف')}
                     </Button>
                 </>
             }

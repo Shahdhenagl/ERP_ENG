@@ -1,4 +1,5 @@
 import { MapPin, Save } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
@@ -120,10 +121,10 @@ export function CustomerForm({ open, onClose, customer, onSaved }: CustomerFormP
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button icon={Save} loading={save.isPending} onClick={handleSave}>
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }
@@ -275,7 +276,7 @@ export function CustomerForm({ open, onClose, customer, onSaved }: CustomerFormP
                     <div className="mb-3 flex items-center justify-between">
                         <h3 className="text-sm font-bold text-navy-800">الموقع على الخريطة</h3>
                         <Button variant="ghost" icon={MapPin} className="text-xs" onClick={useMyLocation}>
-                            موقعي الحالي
+                            {tr('موقعي الحالي')}
                         </Button>
                     </div>
 

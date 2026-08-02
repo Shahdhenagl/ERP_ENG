@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import {
     ArrowLeftRight,
     Banknote,
@@ -74,7 +75,7 @@ export function TreasuryPage() {
                 subtitle={summary ? `النقدية المتاحة ${formatMoney(summary.cash_on_hand)}` : undefined}
                 actions={
                     <Button icon={Plus} onClick={() => setDialog('box')}>
-                        خزينة جديدة
+                        {tr('خزينة جديدة')}
                     </Button>
                 }
             />
@@ -138,10 +139,10 @@ export function TreasuryPage() {
             {/* ══ Boxes ═════════════════════════════════════════ */}
             <div className="mb-3 flex flex-wrap gap-2">
                 <Button variant="secondary" icon={Banknote} onClick={() => setDialog('expense')}>
-                    تسجيل مصروف
+                    {tr('تسجيل مصروف')}
                 </Button>
                 <Button variant="secondary" icon={ArrowLeftRight} onClick={() => setDialog('transfer')}>
-                    تحويل بين الخزائن
+                    {tr('تحويل بين الخزائن')}
                 </Button>
             </div>
 
@@ -298,21 +299,21 @@ export function TreasuryPage() {
                                                 className="tap flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-bold text-navy-500 transition hover:bg-navy-50 hover:text-navy-800"
                                             >
                                                 <Printer className="size-3.5" />
-                                                طباعة
+                                                {tr('طباعة')}
                                             </Link>
                                             <button
                                                 onClick={() => setEditingMove(movement)}
                                                 className="tap flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-bold text-navy-500 transition hover:bg-navy-50 hover:text-navy-800"
                                             >
                                                 <Pencil className="size-3.5" />
-                                                تعديل
+                                                {tr('تعديل')}
                                             </button>
                                             <button
                                                 onClick={() => setDeletingMove(movement)}
                                                 className="tap flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-bold text-red-500 transition hover:bg-red-50 hover:text-red-700"
                                             >
                                                 <Trash2 className="size-3.5" />
-                                                حذف
+                                                {tr('حذف')}
                                             </button>
                                         </div>
                                     )}
@@ -425,7 +426,7 @@ function VoucherEditDialog({
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={update.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={update.isPending}
@@ -445,7 +446,7 @@ function VoucherEditDialog({
                             }
                         }}
                     >
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }
@@ -467,7 +468,7 @@ function VoucherEditDialog({
                 </Field>
 
                 <p className="text-[11px] text-navy-400">
-                    لتغيير المبلغ أو الخزينة، احذف السند وسجّل واحدًا جديدًا.
+                    {tr('لتغيير المبلغ أو الخزينة، احذف السند وسجّل واحدًا جديدًا.')}
                 </p>
             </div>
         </Modal>
@@ -584,7 +585,7 @@ function StatementDialog({
                 editable ? (
                     <>
                         <Button variant="secondary" icon={Pencil} className="text-xs" onClick={onEdit}>
-                            تعديل
+                            {tr('تعديل')}
                         </Button>
                         <Button
                             variant="secondary"
@@ -592,7 +593,7 @@ function StatementDialog({
                             className="text-xs text-red-600"
                             onClick={onDelete}
                         >
-                            حذف
+                            {tr('حذف')}
                         </Button>
                     </>
                 ) : undefined
@@ -611,7 +612,7 @@ function StatementDialog({
 
                     {data.rows.length === 0 ? (
                         <p className="rounded-xl bg-navy-50 p-4 text-center text-sm text-navy-400">
-                            لا توجد حركات في هذه الفترة.
+                            {tr('لا توجد حركات في هذه الفترة.')}
                         </p>
                     ) : (
                         <div className="overflow-x-auto">
@@ -683,7 +684,7 @@ function CashBoxDialog({ onClose, box }: { onClose: () => void; box?: CashBoxSum
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={save.isPending}
@@ -705,7 +706,7 @@ function CashBoxDialog({ onClose, box }: { onClose: () => void; box?: CashBoxSum
                             }
                         }}
                     >
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }
@@ -745,7 +746,7 @@ function CashBoxDialog({ onClose, box }: { onClose: () => void; box?: CashBoxSum
                             onChange={(e) => setIsActive(e.target.checked)}
                             className="size-4 rounded border-navy-300"
                         />
-                        خزينة نشطة
+                        {tr('خزينة نشطة')}
                     </label>
                 )}
             </div>

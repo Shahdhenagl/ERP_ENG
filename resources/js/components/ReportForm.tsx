@@ -1,4 +1,5 @@
 import { Plus, Save, Trash2 } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { SignaturePad } from '@/components/SignaturePad'
@@ -150,10 +151,10 @@ export function ReportForm({ open, onClose, task, type, existing, onSaved }: Rep
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button icon={Save} loading={save.isPending} onClick={handleSave}>
-                        حفظ التقرير
+                        {tr('حفظ التقرير')}
                     </Button>
                 </>
             }
@@ -277,7 +278,7 @@ export function ReportForm({ open, onClose, task, type, existing, onSaved }: Rep
                             className="size-4.5 accent-brand-500"
                         />
                         <span className="text-sm font-semibold text-navy-700">
-                            البطاريات تحتاج استبدال
+                            {tr('البطاريات تحتاج استبدال')}
                         </span>
                     </label>
                 </section>
@@ -392,7 +393,7 @@ export function ReportForm({ open, onClose, task, type, existing, onSaved }: Rep
                                 setParts((current) => [...current, { item_id: null, name: '', qty: '1' }])
                             }
                         >
-                            إضافة
+                            {tr('إضافة')}
                         </Button>
                     </div>
 
@@ -401,13 +402,13 @@ export function ReportForm({ open, onClose, task, type, existing, onSaved }: Rep
                         never in inventory. */}
                     {vanStock.length > 0 && (
                         <p className="mb-2 rounded-xl bg-navy-50 px-3 py-2 text-[11px] text-navy-500">
-                            اختيار قطعة من عهدتك يخصمها من رصيدك تلقائيًا.
+                            {tr('اختيار قطعة من عهدتك يخصمها من رصيدك تلقائيًا.')}
                         </p>
                     )}
 
                     {parts.length === 0 ? (
                         <p className="rounded-xl bg-navy-50 px-4 py-3 text-xs text-navy-400">
-                            لم تُستخدم قطع غيار.
+                            {tr('لم تُستخدم قطع غيار.')}
                         </p>
                     ) : (
                         <div className="space-y-2">

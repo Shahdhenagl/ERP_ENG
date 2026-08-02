@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { tr } from '@/lib/i18n'
 import { CustomerSitePicker } from '@/components/CustomerSitePicker'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
@@ -87,10 +88,10 @@ export function WarrantyForm({
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={register.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button onClick={handleSave} loading={register.isPending}>
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }

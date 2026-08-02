@@ -1,4 +1,5 @@
 import { Banknote, HandCoins, Undo2, Wallet } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
@@ -58,7 +59,7 @@ export function CustodySettlePage() {
                                     className="text-xs"
                                     onClick={() => setSpendFor(s)}
                                 >
-                                    تسجيل مصروف
+                                    {tr('تسجيل مصروف')}
                                 </Button>
                                 <Button
                                     variant="secondary"
@@ -97,7 +98,7 @@ function SpendDialog({ statement, onClose }: { statement: CustodyStatement; onCl
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={spend.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={spend.isPending}
@@ -118,7 +119,7 @@ function SpendDialog({ statement, onClose }: { statement: CustodyStatement; onCl
                             }
                         }}
                     >
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }
@@ -155,7 +156,7 @@ function ReturnDialog({ statement, onClose }: { statement: CustodyStatement; onC
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={cash.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         icon={HandCoins}
@@ -178,7 +179,7 @@ function ReturnDialog({ statement, onClose }: { statement: CustodyStatement; onC
                             }
                         }}
                     >
-                        ردّ للخزينة
+                        {tr('ردّ للخزينة')}
                     </Button>
                 </>
             }

@@ -1,4 +1,5 @@
 import { Save } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useMemo, useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
@@ -143,10 +144,10 @@ export function AssetForm({ open, onClose, asset, customerId, stockItem, onSaved
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button icon={Save} onClick={handleSave} loading={save.isPending}>
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }
@@ -316,7 +317,7 @@ export function AssetForm({ open, onClose, asset, customerId, stockItem, onSaved
 
                 <div className="rounded-2xl bg-navy-50 p-4">
                     <p className="mb-3 text-xs font-bold text-navy-500">
-                        الضمان — يُحتسب من تاريخ البيع
+                        {tr('الضمان — يُحتسب من تاريخ البيع')}
                     </p>
 
                     <div className="grid gap-4 sm:grid-cols-2">
@@ -341,7 +342,7 @@ export function AssetForm({ open, onClose, asset, customerId, stockItem, onSaved
 
                     {(!form.sold_at || !form.warranty_months) && (
                         <p className="mt-2 text-xs text-navy-400">
-                            بدون التاريخ والمدة معًا ستظهر حالة الضمان «غير محدد».
+                            {tr('بدون التاريخ والمدة معًا ستظهر حالة الضمان «غير محدد».')}
                         </p>
                     )}
                 </div>

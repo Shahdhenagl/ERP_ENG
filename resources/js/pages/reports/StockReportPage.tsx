@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { Field, Select, SkeletonCard } from '@/components/ui'
 import { formatMoney, formatQty } from '@/lib/domain'
@@ -81,7 +82,7 @@ export function StockReportPage() {
                     <div>
                         <h2 className="text-sm font-bold text-navy-800">مخزون راكد</h2>
                         <p className="mt-0.5 text-[11px] text-navy-400">
-                            أصناف عليها رصيد ولم تتحرك — فلوس واقفة في الرف.
+                            {tr('أصناف عليها رصيد ولم تتحرك — فلوس واقفة في الرف.')}
                         </p>
                     </div>
 

@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { Pencil, Plus, Target, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
@@ -33,7 +34,7 @@ export function CostCentersPage() {
         <>
             {isAdmin && (
                 <Button icon={Plus} className="mb-4" onClick={() => setEditing(null)}>
-                    مركز تكلفة جديد
+                    {tr('مركز تكلفة جديد')}
                 </Button>
             )}
 
@@ -81,7 +82,7 @@ export function CostCentersPage() {
 
                             {centre.accounts.length === 0 ? (
                                 <p className="px-4 py-5 text-center text-xs text-navy-400">
-                                    لا توجد حركة على هذا المركز في الفترة.
+                                    {tr('لا توجد حركة على هذا المركز في الفترة.')}
                                 </p>
                             ) : (
                                 <div className="divide-y divide-navy-100">
@@ -162,12 +163,12 @@ function CostCenterDialog({
                                 }
                             }}
                         >
-                            حذف
+                            {tr('حذف')}
                         </Button>
                     )}
 
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={save.isPending}
@@ -189,7 +190,7 @@ function CostCenterDialog({
                             }
                         }}
                     >
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }

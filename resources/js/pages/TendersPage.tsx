@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { FileSignature, Plus, Search, Send, ThumbsDown, Trophy } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Attachments } from '@/components/Attachments'
@@ -58,7 +59,7 @@ export function TendersPage() {
                 subtitle="العطاءات بمواعيدها ونسبة الفوز"
                 actions={
                     <Button icon={Plus} onClick={() => setCreating(true)}>
-                        مناقصة جديدة
+                        {tr('مناقصة جديدة')}
                     </Button>
                 }
             />
@@ -207,7 +208,7 @@ function TenderRow({
                             className="tap inline-flex items-center gap-1.5 rounded-lg bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-700"
                         >
                             <Send className="size-3.5" />
-                            تسجيل التقديم
+                            {tr('تسجيل التقديم')}
                         </button>
                     )}
                     {canDecide && (
@@ -216,7 +217,7 @@ function TenderRow({
                             className="tap inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700"
                         >
                             <Trophy className="size-3.5" />
-                            تسجيل النتيجة
+                            {tr('تسجيل النتيجة')}
                         </button>
                     )}
                 </div>
@@ -275,7 +276,7 @@ function DecideDialog({ tender, onClose }: { tender: Tender; onClose: () => void
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={action.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={action.isPending}
@@ -297,7 +298,7 @@ function DecideDialog({ tender, onClose }: { tender: Tender; onClose: () => void
                             }
                         }}
                     >
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }
@@ -314,7 +315,7 @@ function DecideDialog({ tender, onClose }: { tender: Tender; onClose: () => void
                         )}
                     >
                         <Trophy className="size-4" />
-                        فوز
+                        {tr('فوز')}
                     </button>
                     <button
                         onClick={() => setResult('lost')}
@@ -326,7 +327,7 @@ function DecideDialog({ tender, onClose }: { tender: Tender; onClose: () => void
                         )}
                     >
                         <ThumbsDown className="size-4" />
-                        خسارة
+                        {tr('خسارة')}
                     </button>
                 </div>
 
@@ -378,7 +379,7 @@ function TenderForm({ tender, onClose }: { tender?: Tender; onClose: () => void 
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={save.isPending}
@@ -407,7 +408,7 @@ function TenderForm({ tender, onClose }: { tender?: Tender; onClose: () => void 
                             }
                         }}
                     >
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }

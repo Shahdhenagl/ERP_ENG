@@ -1,4 +1,5 @@
 import { PackageMinus, Plus } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { EMPTY_RANGE, MonthDayFilter, monthDayRange } from '@/components/MonthDayFilter'
 import type { DateRange } from '@/components/MonthDayFilter'
@@ -50,7 +51,7 @@ export function StockIssuePage() {
                 subtitle="صرف الأصناف من المخزن بسبب — استهلاك أو تلف أو عيّنة"
                 actions={
                     <Button icon={Plus} onClick={() => setCreating(true)}>
-                        إذن صرف جديد
+                        {tr('إذن صرف جديد')}
                     </Button>
                 }
             />
@@ -76,7 +77,7 @@ export function StockIssuePage() {
                     description="سجّل صرفًا من المخزن ليظهر هنا بسببه والكمية التي خرجت."
                     action={
                         <Button icon={Plus} onClick={() => setCreating(true)}>
-                            إذن صرف جديد
+                            {tr('إذن صرف جديد')}
                         </Button>
                     }
                 />
@@ -174,7 +175,7 @@ function IssueDialog({ onClose }: { onClose: () => void }) {
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={issue.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         icon={PackageMinus}
@@ -198,7 +199,7 @@ function IssueDialog({ onClose }: { onClose: () => void }) {
                             }
                         }}
                     >
-                        تسجيل الصرف
+                        {tr('تسجيل الصرف')}
                     </Button>
                 </>
             }

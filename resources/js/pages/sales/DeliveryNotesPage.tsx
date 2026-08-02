@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { AlertTriangle, PackageCheck, Printer, Truck } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -104,7 +105,7 @@ export function DeliveryNotesPage() {
                                 <div className="mt-3 rounded-xl bg-red-50 p-2.5">
                                     <p className="flex items-center gap-1.5 text-[11px] font-bold text-red-700">
                                         <AlertTriangle className="size-3.5 shrink-0" />
-                                        ناقص بالمخزن
+                                        {tr('ناقص بالمخزن')}
                                     </p>
                                     {order.stock.short.map((line) => (
                                         <p key={line.item} className="tabular mt-0.5 text-[11px] text-red-600">
@@ -116,7 +117,7 @@ export function DeliveryNotesPage() {
                             ) : order.stock?.state === 'ready' && order.status === 'open' ? (
                                 <p className="mt-3 flex items-center gap-1.5 text-[11px] font-bold text-emerald-700">
                                     <PackageCheck className="size-3.5 shrink-0" />
-                                    البضاعة متوفرة بالمخزن الرئيسي
+                                    {tr('البضاعة متوفرة بالمخزن الرئيسي')}
                                 </p>
                             ) : null}
 
@@ -127,7 +128,7 @@ export function DeliveryNotesPage() {
                                     className="btn-secondary text-xs"
                                 >
                                     <Printer className="size-4" />
-                                    طباعة إذن التسليم
+                                    {tr('طباعة إذن التسليم')}
                                 </Link>
                                 {order.status === 'open' && (
                                     <Button
@@ -137,7 +138,7 @@ export function DeliveryNotesPage() {
                                         loading={action.isPending}
                                         onClick={() => deliver(order.id)}
                                     >
-                                        تم التسليم
+                                        {tr('تم التسليم')}
                                     </Button>
                                 )}
                             </div>

@@ -1,4 +1,5 @@
 import { ShieldPlus } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { Outlet, useOutletContext } from 'react-router-dom'
 import { SectionTabs } from '@/components/SectionTabs'
@@ -48,7 +49,7 @@ export function WarrantyLayout() {
                 subtitle={subtitle || undefined}
                 actions={
                     <Button icon={ShieldPlus} onClick={() => setRegistering({})}>
-                        تسجيل ضمان
+                        {tr('تسجيل ضمان')}
                     </Button>
                 }
             />

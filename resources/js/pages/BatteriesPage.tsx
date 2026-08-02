@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { BatteryCharging, Paperclip, Plus, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
 import { Attachments } from '@/components/Attachments'
@@ -38,7 +39,7 @@ export function BatteriesPage() {
                 subtitle="متابعة بنوك البطاريات ومواعيد استبدالها"
                 actions={
                     <Button icon={Plus} onClick={() => setCreating(true)}>
-                        تسجيل بطارية
+                        {tr('تسجيل بطارية')}
                     </Button>
                 }
             />
@@ -172,7 +173,7 @@ function BatteryRow({
                         className="tap inline-flex items-center gap-1.5 rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-700"
                     >
                         <RefreshCw className="size-3.5" />
-                        استبدال
+                        {tr('استبدال')}
                     </button>
                 )}
                 <button
@@ -180,7 +181,7 @@ function BatteryRow({
                     className="tap inline-flex items-center gap-1.5 rounded-lg bg-navy-50 px-3 py-1.5 text-xs font-bold text-navy-600"
                 >
                     <Paperclip className="size-3.5" />
-                    مرفقات
+                    {tr('مرفقات')}
                 </button>
             </div>
         </div>
@@ -213,7 +214,7 @@ function ReplaceDialog({ battery, onClose }: { battery: Battery; onClose: () => 
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={replace.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={replace.isPending}
@@ -235,7 +236,7 @@ function ReplaceDialog({ battery, onClose }: { battery: Battery; onClose: () => 
                             }
                         }}
                     >
-                        تأكيد الاستبدال
+                        {tr('تأكيد الاستبدال')}
                     </Button>
                 </>
             }

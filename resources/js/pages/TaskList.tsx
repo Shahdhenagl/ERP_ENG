@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import {
     FileSpreadsheet,
     Inbox,
@@ -182,7 +183,7 @@ export function TaskList() {
                                     loading={exporting}
                                     onClick={() => void exportRows()}
                                 >
-                                    تصدير Excel
+                                    {tr('تصدير Excel')}
                                 </Button>
                                 <Link
                                     to={`${path('/print/tasks')}?${searchParams.toString()}`}
@@ -190,14 +191,14 @@ export function TaskList() {
                                     className="btn-secondary"
                                 >
                                     <Printer className="size-4" />
-                                    طباعة
+                                    {tr('طباعة')}
                                 </Link>
                             </>
                         )}
                         {canDispatch && (
                             <Link to={path('/tasks/new')} className="btn-primary">
                                 <Plus className="size-4" />
-                                مهمة جديدة
+                                {tr('مهمة جديدة')}
                             </Link>
                         )}
                     </div>
@@ -352,7 +353,7 @@ export function TaskList() {
                             className="btn-ghost justify-start text-xs sm:col-span-3"
                         >
                             <X className="size-3.5" />
-                            مسح كل الفلاتر
+                            {tr('مسح كل الفلاتر')}
                         </button>
                     )}
                 </div>
@@ -376,7 +377,7 @@ export function TaskList() {
                         canDispatch && (
                             <Link to={path('/tasks/new')} className="btn-primary">
                                 <Plus className="size-4" />
-                                إنشاء مهمة
+                                {tr('إنشاء مهمة')}
                             </Link>
                         )
                     }
@@ -424,7 +425,7 @@ function Pagination({
                 disabled={current <= 1}
                 onClick={() => onChange(current - 1)}
             >
-                السابق
+                {tr('السابق')}
             </Button>
             <span className="tabular px-4 text-sm font-semibold text-navy-600">
                 {current} / {last}
@@ -434,7 +435,7 @@ function Pagination({
                 disabled={current >= last}
                 onClick={() => onChange(current + 1)}
             >
-                التالي
+                {tr('التالي')}
             </Button>
         </div>
     )

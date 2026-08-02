@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { ChevronDown, HardDrive, MapPin, Pencil, Phone, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { BranchForm } from '@/components/BranchForm'
@@ -35,7 +36,7 @@ export function BranchesSection({ customerId }: { customerId: number }) {
                     </span>
                 </div>
                 <Button icon={Plus} className="text-xs" onClick={() => setCreating(true)}>
-                    أضف فرعًا
+                    {tr('أضف فرعًا')}
                 </Button>
             </div>
 
@@ -155,7 +156,7 @@ function BranchAssets({ branchId }: { branchId: number }) {
                 className="tap flex w-full items-center gap-1.5 text-[11px] font-bold text-navy-500 transition hover:text-navy-800"
             >
                 <HardDrive className="size-3.5 text-navy-300" />
-                أجهزة الفرع
+                {tr('أجهزة الفرع')}
                 <ChevronDown
                     className={clsx('mr-auto size-3.5 transition', open && 'rotate-180')}
                 />

@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { Building2, FileText, Printer } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
@@ -45,7 +46,7 @@ export function SupplierStatementPage() {
                         className={clsx('btn-secondary', !supplierId && 'pointer-events-none opacity-40')}
                     >
                         <Printer className="size-4" />
-                        طباعة
+                        {tr('طباعة')}
                     </Link>
                 }
             />

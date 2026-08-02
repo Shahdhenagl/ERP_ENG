@@ -1,4 +1,5 @@
 import { HardDrive, Package, Printer, Receipt, Users, Wallet } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Modal } from '@/components/Modal'
@@ -59,7 +60,7 @@ export function CustodyStatementPage() {
                         className="btn-secondary inline-flex h-[42px] items-center justify-center gap-1.5"
                     >
                         <Printer className="size-4" />
-                        طباعة
+                        {tr('طباعة')}
                     </Link>
                 )}
             </div>
@@ -207,7 +208,7 @@ function ShortfallBanner({ userId, shortfall }: { userId: number; shortfall: num
                 </div>
                 <div className="flex gap-2">
                     <Button className="text-xs" onClick={() => setSettling(true)}>
-                        صرف الفرق
+                        {tr('صرف الفرق')}
                     </Button>
                     <Button
                         variant="secondary"
@@ -238,7 +239,7 @@ function ShortfallBanner({ userId, shortfall }: { userId: number; shortfall: num
                     footer={
                         <>
                             <Button variant="secondary" onClick={() => setSettling(false)} disabled={settle.isPending}>
-                                إلغاء
+                                {tr('إلغاء')}
                             </Button>
                             <Button
                                 loading={settle.isPending}
@@ -253,7 +254,7 @@ function ShortfallBanner({ userId, shortfall }: { userId: number; shortfall: num
                                     }
                                 }}
                             >
-                                صرف
+                                {tr('صرف')}
                             </Button>
                         </>
                     }

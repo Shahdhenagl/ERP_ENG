@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { Check, ClipboardList, Plus, Send, ShoppingCart, Trash2, X } from 'lucide-react'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
@@ -54,7 +55,7 @@ export function RequestsTab() {
         <>
             <div className="mb-4 flex flex-wrap items-center gap-2">
                 <Button icon={Plus} onClick={() => setCreating(true)}>
-                    طلب شراء
+                    {tr('طلب شراء')}
                 </Button>
 
                 {canDispatch && (
@@ -161,14 +162,14 @@ export function RequestsTab() {
                                                 className="tap inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700"
                                             >
                                                 <Send className="size-3.5" />
-                                                إرسال
+                                                {tr('إرسال')}
                                             </button>
                                             <button
                                                 onClick={() => run(row.id, 'delete', 'تم حذف الطلب.')}
                                                 className="tap inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700"
                                             >
                                                 <Trash2 className="size-3.5" />
-                                                حذف
+                                                {tr('حذف')}
                                             </button>
                                         </>
                                     )}
@@ -182,21 +183,21 @@ export function RequestsTab() {
                                                 className="tap inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700"
                                             >
                                                 <Check className="size-3.5" />
-                                                اعتماد
+                                                {tr('اعتماد')}
                                             </button>
                                             <button
                                                 onClick={() => setDeciding({ row, approve: false })}
                                                 className="tap inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700"
                                             >
                                                 <X className="size-3.5" />
-                                                رفض
+                                                {tr('رفض')}
                                             </button>
                                         </>
                                     )}
 
                                     {canDecide && row.status === 'submitted' && mine && (
                                         <span className="rounded-lg bg-navy-50 px-3 py-1.5 text-xs font-bold text-navy-400">
-                                            لا يمكنك اعتماد طلبك بنفسك
+                                            {tr('لا يمكنك اعتماد طلبك بنفسك')}
                                         </span>
                                     )}
 
@@ -206,7 +207,7 @@ export function RequestsTab() {
                                             className="tap inline-flex items-center gap-1.5 rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-700"
                                         >
                                             <ShoppingCart className="size-3.5" />
-                                            تحويل لأمر شراء
+                                            {tr('تحويل لأمر شراء')}
                                         </button>
                                     )}
                                 </div>
@@ -256,7 +257,7 @@ function RequestForm({ onClose }: { onClose: () => void }) {
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={save.isPending}
@@ -288,7 +289,7 @@ function RequestForm({ onClose }: { onClose: () => void }) {
                             }
                         }}
                     >
-                        حفظ كمسودة
+                        {tr('حفظ كمسودة')}
                     </Button>
                 </>
             }
@@ -333,7 +334,7 @@ function RequestForm({ onClose }: { onClose: () => void }) {
                             }
                             className="tap rounded-lg bg-navy-100 px-3 py-1.5 text-xs font-bold text-navy-700"
                         >
-                            إضافة سطر
+                            {tr('إضافة سطر')}
                         </button>
                     </div>
 
@@ -451,7 +452,7 @@ function DecideDialog({
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={act.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={act.isPending}
@@ -514,7 +515,7 @@ function OrderDialog({ row, onClose }: { row: PurchaseRequest; onClose: () => vo
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={act.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={act.isPending}
@@ -535,7 +536,7 @@ function OrderDialog({ row, onClose }: { row: PurchaseRequest; onClose: () => vo
                             }
                         }}
                     >
-                        إنشاء أمر الشراء
+                        {tr('إنشاء أمر الشراء')}
                     </Button>
                 </>
             }

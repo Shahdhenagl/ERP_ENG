@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { Plus, Trash2, Undo2 } from 'lucide-react'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
@@ -36,7 +37,7 @@ export function SalesReturnsTab() {
         <>
             <div className="mb-4 flex justify-end">
                 <Button icon={Plus} onClick={() => setCreating(true)}>
-                    مرتجع مبيعات
+                    {tr('مرتجع مبيعات')}
                 </Button>
             </div>
 
@@ -125,14 +126,14 @@ export function SalesReturnsTab() {
                                         }
                                         className="tap rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700"
                                     >
-                                        ترحيل
+                                        {tr('ترحيل')}
                                     </button>
                                     <button
                                         onClick={() => run(entry.id, 'delete', 'تم حذف المسودة.')}
                                         className="tap inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700"
                                     >
                                         <Trash2 className="size-3.5" />
-                                        حذف
+                                        {tr('حذف')}
                                     </button>
                                 </div>
                             )}
@@ -194,7 +195,7 @@ function SalesReturnForm({ onClose }: { onClose: () => void }) {
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={save.isPending}
@@ -223,7 +224,7 @@ function SalesReturnForm({ onClose }: { onClose: () => void }) {
                             }
                         }}
                     >
-                        حفظ كمسودة
+                        {tr('حفظ كمسودة')}
                     </Button>
                 </>
             }
@@ -278,7 +279,7 @@ function SalesReturnForm({ onClose }: { onClose: () => void }) {
                 {invoiceId && (
                     <div>
                         <p className="mb-2 text-sm font-bold text-navy-800">
-                            البنود القابلة للإرجاع
+                            {tr('البنود القابلة للإرجاع')}
                         </p>
 
                         {errors.lines && (
@@ -287,7 +288,7 @@ function SalesReturnForm({ onClose }: { onClose: () => void }) {
 
                         {lines.length === 0 ? (
                             <p className="rounded-xl bg-navy-50 p-3 text-xs text-navy-400">
-                                جارٍ تحميل بنود الفاتورة…
+                                {tr('جارٍ تحميل بنود الفاتورة…')}
                             </p>
                         ) : (
                             <div className="space-y-2">
@@ -368,7 +369,7 @@ function SalesReturnForm({ onClose }: { onClose: () => void }) {
                                                         }
                                                         className="size-3.5"
                                                     />
-                                                    تعود للمخزن — أزل العلامة لو البضاعة تالفة
+                                                    {tr('تعود للمخزن — أزل العلامة لو البضاعة تالفة')}
                                                 </label>
                                             )}
                                         </div>

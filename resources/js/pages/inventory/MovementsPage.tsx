@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { ClipboardList, Printer } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -41,7 +42,7 @@ export function MovementsPage() {
                     className="btn-secondary"
                 >
                     <Printer className="size-4" />
-                    طباعة
+                    {tr('طباعة')}
                 </Link>
 
                 <ViewToggle view={view} onChange={setView} className="mb-0.5" />

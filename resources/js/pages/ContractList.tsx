@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { CalendarClock, Pencil, Plus, ScrollText, Search, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -93,7 +94,7 @@ export function ContractList() {
                         }}
                     />
                     <Button icon={Plus} onClick={openNew}>
-                        عقد جديد
+                        {tr('عقد جديد')}
                     </Button>
                     </>
                 }
@@ -138,7 +139,7 @@ export function ContractList() {
                         )}
                     >
                         <CalendarClock className="size-3.5" />
-                        ينتهي خلال شهرين
+                        {tr('ينتهي خلال شهرين')}
                     </button>
                 </div>
             </div>
@@ -172,7 +173,7 @@ export function ContractList() {
                     description="أنشئ عقد صيانة ليتولّى النظام جدولة الزيارات الدورية بدلًا من تتبّعها يدويًا."
                     action={
                         <Button icon={Plus} onClick={openNew}>
-                            إنشاء عقد
+                            {tr('إنشاء عقد')}
                         </Button>
                     }
                 />

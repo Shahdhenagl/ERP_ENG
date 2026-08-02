@@ -1,4 +1,5 @@
 import { ArrowLeftRight, Banknote, HandCoins } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { useToast } from '@/components/Toast'
 import { Button, Field, Input, PageHeader, Select, Textarea } from '@/components/ui'
@@ -49,7 +50,7 @@ function TransferCard({ boxes }: { boxes: Box[] }) {
         <div className="card space-y-4 p-5">
             <h2 className="flex items-center gap-2 font-bold text-navy-900">
                 <ArrowLeftRight className="size-4.5 text-brand-600" />
-                تحويل بين الخزائن
+                {tr('تحويل بين الخزائن')}
             </h2>
 
             <Field label="من" required error={errors.from_box_id}>
@@ -74,7 +75,7 @@ function TransferCard({ boxes }: { boxes: Box[] }) {
             </Field>
             {same && (
                 <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700">
-                    لا يمكن التحويل إلى نفس الخزينة.
+                    {tr('لا يمكن التحويل إلى نفس الخزينة.')}
                 </p>
             )}
             <Field label="المبلغ" required error={errors.amount}>
@@ -103,7 +104,7 @@ function TransferCard({ boxes }: { boxes: Box[] }) {
                     }
                 }}
             >
-                تنفيذ التحويل
+                {tr('تنفيذ التحويل')}
             </Button>
         </div>
     )
@@ -130,7 +131,7 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
         <div className="card space-y-4 p-5">
             <h2 className="flex items-center gap-2 font-bold text-navy-900">
                 <Banknote className="size-4.5 text-red-600" />
-                تسجيل مصروف
+                {tr('تسجيل مصروف')}
             </h2>
 
             <Field label="الخزينة" required error={errors.cash_box_id}>
@@ -203,7 +204,7 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
                     }
                 }}
             >
-                تسجيل المصروف
+                {tr('تسجيل المصروف')}
             </Button>
         </div>
     )
@@ -225,7 +226,7 @@ function DepositCard({ boxes }: { boxes: Box[] }) {
         <div className="card space-y-4 p-5">
             <h2 className="flex items-center gap-2 font-bold text-navy-900">
                 <HandCoins className="size-4.5 text-emerald-600" />
-                إيداع خارجي
+                {tr('إيداع خارجي')}
             </h2>
 
             <Field label="الخزينة" required error={errors.cash_box_id}>
@@ -268,7 +269,7 @@ function DepositCard({ boxes }: { boxes: Box[] }) {
                     }
                 }}
             >
-                تسجيل الإيداع
+                {tr('تسجيل الإيداع')}
             </Button>
         </div>
     )

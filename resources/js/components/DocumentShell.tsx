@@ -1,4 +1,5 @@
 import { amountInWords } from '@/lib/tafqit'
+import { tr } from '@/lib/i18n'
 import { ArrowRight, Printer } from 'lucide-react'
 import { useEffect, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -56,12 +57,12 @@ export function DocumentShell({
             <div className="no-print mx-auto mb-4 flex max-w-[210mm] items-center justify-between gap-3 px-4">
                 <button onClick={() => navigate(-1)} className="btn-ghost text-sm">
                     <ArrowRight className="size-4" />
-                    رجوع
+                    {tr('رجوع')}
                 </button>
 
                 <button onClick={() => window.print()} className="btn-primary">
                     <Printer className="size-4" />
-                    طباعة
+                    {tr('طباعة')}
                 </button>
             </div>
 

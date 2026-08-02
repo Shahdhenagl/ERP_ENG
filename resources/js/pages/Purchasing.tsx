@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { Ban, PackageCheck, Pencil, Plus, Printer, ScrollText, Search, Send, Truck, Wallet } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
@@ -104,7 +105,7 @@ function OrdersTab() {
                         setFormOpen(true)
                     }}
                 >
-                    أمر شراء جديد
+                    {tr('أمر شراء جديد')}
                 </Button>
 
                 <button
@@ -116,7 +117,7 @@ function OrdersTab() {
                             : 'bg-surface text-navy-500 ring-navy-200 hover:bg-navy-50',
                     )}
                 >
-                    المفتوحة فقط
+                    {tr('المفتوحة فقط')}
                 </button>
 
                 <ViewToggle view={view} onChange={setView} className="mr-auto" />
@@ -222,7 +223,7 @@ function OrdersTab() {
                                                 setFormOpen(true)
                                             }}
                                         >
-                                            تعديل
+                                            {tr('تعديل')}
                                         </Button>
                                         <Button
                                             icon={Send}
@@ -238,7 +239,7 @@ function OrdersTab() {
                                                 )
                                             }
                                         >
-                                            إرسال للمورّد
+                                            {tr('إرسال للمورّد')}
                                         </Button>
                                     </>
                                 )}
@@ -250,7 +251,7 @@ function OrdersTab() {
                                         className="text-xs"
                                         onClick={() => setDetailId(order.id)}
                                     >
-                                        تسجيل استلام
+                                        {tr('تسجيل استلام')}
                                     </Button>
                                 ) : null}
                             </div>
@@ -329,7 +330,7 @@ function OrderDetail({ id, onClose }: { id: number; onClose: () => void }) {
                     <div className="flex flex-wrap gap-2">
                         {(order.fulfilment === 'awaiting' || order.fulfilment === 'partly_received') && (
                             <Button icon={PackageCheck} onClick={() => setReceiveOpen(true)}>
-                                تسجيل استلام
+                                {tr('تسجيل استلام')}
                             </Button>
                         )}
 
@@ -340,7 +341,7 @@ function OrderDetail({ id, onClose }: { id: number; onClose: () => void }) {
                                 className="text-red-600"
                                 onClick={() => setCancelOpen(true)}
                             >
-                                إلغاء الأمر
+                                {tr('إلغاء الأمر')}
                             </Button>
                         )}
                     </div>
@@ -372,7 +373,7 @@ function OrderDetail({ id, onClose }: { id: number; onClose: () => void }) {
                 footer={
                     <>
                         <Button variant="secondary" onClick={() => setCancelOpen(false)}>
-                            رجوع
+                            {tr('رجوع')}
                         </Button>
                         <Button
                             variant="danger"
@@ -393,7 +394,7 @@ function OrderDetail({ id, onClose }: { id: number; onClose: () => void }) {
                                 }
                             }}
                         >
-                            تأكيد
+                            {tr('تأكيد')}
                         </Button>
                     </>
                 }
@@ -402,7 +403,7 @@ function OrderDetail({ id, onClose }: { id: number; onClose: () => void }) {
                     <Textarea value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} />
                 </Field>
                 <p className="mt-2 text-xs text-navy-400">
-                    لا يمكن إلغاء أمر تم استلام جزء منه.
+                    {tr('لا يمكن إلغاء أمر تم استلام جزء منه.')}
                 </p>
             </Modal>
         </>
@@ -445,7 +446,7 @@ function SuppliersTab() {
                             setFormOpen(true)
                         }}
                     >
-                        مورّد جديد
+                        {tr('مورّد جديد')}
                     </Button>
 
                     <button
@@ -457,7 +458,7 @@ function SuppliersTab() {
                                 : 'bg-surface text-navy-500 ring-navy-200 hover:bg-navy-50',
                         )}
                     >
-                        المستحق عليهم فقط
+                        {tr('المستحق عليهم فقط')}
                     </button>
 
                     <ViewToggle view={view} onChange={setView} className="mr-auto" />
@@ -569,7 +570,7 @@ function SuppliersTab() {
                                         setFormOpen(true)
                                     }}
                                 >
-                                    تعديل
+                                    {tr('تعديل')}
                                 </Button>
 
                                 <Button
@@ -578,7 +579,7 @@ function SuppliersTab() {
                                     className="text-xs"
                                     onClick={() => setStatementFor(supplier)}
                                 >
-                                    كشف حساب
+                                    {tr('كشف حساب')}
                                 </Button>
 
                                 {supplier.balance > 0 && (
@@ -587,7 +588,7 @@ function SuppliersTab() {
                                         className="text-xs"
                                         onClick={() => setPaying(supplier)}
                                     >
-                                        سداد
+                                        {tr('سداد')}
                                     </Button>
                                 )}
                             </div>
@@ -668,7 +669,7 @@ function PaySupplierDialog({ supplier, onClose }: { supplier: Supplier; onClose:
                 ) : (
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={pay.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={pay.isPending}
@@ -692,7 +693,7 @@ function PaySupplierDialog({ supplier, onClose }: { supplier: Supplier; onClose:
                             }
                         }}
                     >
-                        تسجيل
+                        {tr('تسجيل')}
                     </Button>
                 </>
                 )
@@ -710,7 +711,7 @@ function PaySupplierDialog({ supplier, onClose }: { supplier: Supplier; onClose:
                         className="btn-primary inline-flex"
                     >
                         <Printer className="size-4" />
-                        طباعة السند
+                        {tr('طباعة السند')}
                     </Link>
                 </div>
             ) : (
@@ -856,7 +857,7 @@ function SupplierStatementDialog({
 
                     {data.rows.length === 0 ? (
                         <p className="rounded-xl bg-navy-50 p-4 text-center text-sm text-navy-400">
-                            لا توجد حركات في هذه الفترة.
+                            {tr('لا توجد حركات في هذه الفترة.')}
                         </p>
                     ) : (
                         <div className="overflow-x-auto">

@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { Plus, Trash2, Undo2 } from 'lucide-react'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
@@ -36,7 +37,7 @@ export function PurchaseReturnsTab() {
         <>
             <div className="mb-4 flex justify-end">
                 <Button icon={Plus} onClick={() => setCreating(true)}>
-                    مرتجع مشتريات
+                    {tr('مرتجع مشتريات')}
                 </Button>
             </div>
 
@@ -108,14 +109,14 @@ export function PurchaseReturnsTab() {
                                         }
                                         className="tap rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700"
                                     >
-                                        ترحيل وإخراج البضاعة
+                                        {tr('ترحيل وإخراج البضاعة')}
                                     </button>
                                     <button
                                         onClick={() => run(entry.id, 'delete', 'تم حذف المسودة.')}
                                         className="tap inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700"
                                     >
                                         <Trash2 className="size-3.5" />
-                                        حذف
+                                        {tr('حذف')}
                                     </button>
                                 </div>
                             )}
@@ -173,7 +174,7 @@ function ReturnForm({ onClose }: { onClose: () => void }) {
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={save.isPending}
@@ -204,7 +205,7 @@ function ReturnForm({ onClose }: { onClose: () => void }) {
                             }
                         }}
                     >
-                        حفظ كمسودة
+                        {tr('حفظ كمسودة')}
                     </Button>
                 </>
             }
@@ -269,7 +270,7 @@ function ReturnForm({ onClose }: { onClose: () => void }) {
                             onClick={() => setLines((current) => [...current, { item_id: '', qty: '1' }])}
                             className="tap rounded-lg bg-navy-100 px-3 py-1.5 text-xs font-bold text-navy-700"
                         >
-                            إضافة صنف
+                            {tr('إضافة صنف')}
                         </button>
                     </div>
 
@@ -341,7 +342,7 @@ function ReturnForm({ onClose }: { onClose: () => void }) {
                 {estimate > 0 && (
                     <div className="flex items-center justify-between rounded-xl bg-navy-50 p-3">
                         <span className="text-sm font-bold text-navy-700">
-                            القيمة التقديرية للخصم
+                            {tr('القيمة التقديرية للخصم')}
                         </span>
                         <span className="tabular font-extrabold text-navy-900">
                             {formatMoney(estimate)}

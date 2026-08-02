@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { tr } from '@/lib/i18n'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, Field, Input, Select, Textarea } from '@/components/ui'
@@ -69,10 +70,10 @@ export function TreasuryDialog({
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={run.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button onClick={handleSave} loading={run.isPending}>
-                        تنفيذ
+                        {tr('تنفيذ')}
                     </Button>
                 </>
             }

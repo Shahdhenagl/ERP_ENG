@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { CalendarCheck, Clock, MapPin, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
@@ -46,7 +47,7 @@ export function AttendanceTab() {
                     className="rounded-xl border border-navy-200 bg-surface px-3 py-2 text-sm font-bold text-navy-800"
                 />
                 <Button icon={Plus} onClick={() => setRecording(true)}>
-                    تسجيل حضور
+                    {tr('تسجيل حضور')}
                 </Button>
             </div>
 
@@ -82,7 +83,7 @@ export function AttendanceTab() {
 
             {view === 'log' && (
                 <p className="mt-4 text-center text-[11px] text-navy-400">
-                    اضغط على أي يوم لتعديله، والتسجيل على نفس اليوم يصحّح ولا يكرّر.
+                    {tr('اضغط على أي يوم لتعديله، والتسجيل على نفس اليوم يصحّح ولا يكرّر.')}
                 </p>
             )}
         </>
@@ -171,7 +172,7 @@ function LocationLink({ lat, lng }: { lat?: number | null; lng?: number | null }
             className="inline-flex items-center gap-0.5 text-[11px] font-bold text-brand-600 hover:text-brand-700"
         >
             <MapPin className="size-3" />
-            موقع
+            {tr('موقع')}
         </a>
     )
 }
@@ -193,7 +194,7 @@ function LogView({ filters }: { filters: { year: number; month: number } }) {
                 />
                 {day && (
                     <Button variant="secondary" className="text-xs" onClick={() => setDay('')}>
-                        كل الشهر
+                        {tr('كل الشهر')}
                     </Button>
                 )}
             </div>
@@ -346,7 +347,7 @@ function RecordDialog({
                                 }
                             }}
                         >
-                            حذف
+                            {tr('حذف')}
                         </Button>
                     ) : (
                         <span />
@@ -354,7 +355,7 @@ function RecordDialog({
 
                     <div className="flex gap-2">
                         <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                            إلغاء
+                            {tr('إلغاء')}
                         </Button>
                         <Button
                             loading={save.isPending}
@@ -378,7 +379,7 @@ function RecordDialog({
                                 }
                             }}
                         >
-                            حفظ
+                            {tr('حفظ')}
                         </Button>
                     </div>
                 </div>

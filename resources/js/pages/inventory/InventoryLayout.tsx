@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
 import { Outlet, useLocation, useOutletContext } from 'react-router-dom'
@@ -83,7 +84,7 @@ export function InventoryLayout() {
                 actions={
                     meta.stock ? (
                         <Button icon={Plus} onClick={() => openItemForm()}>
-                            صنف جديد
+                            {tr('صنف جديد')}
                         </Button>
                     ) : undefined
                 }

@@ -1,4 +1,5 @@
 import { CalendarPlus, RefreshCcw, Repeat } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { EmptyState, PageHeader, SkeletonCard } from '@/components/ui'
 import { formatDate } from '@/lib/format'
 import { useWarranties, useWarrantyClaims } from '@/lib/queries'
@@ -19,7 +20,7 @@ export function WarrantyLifecyclePage() {
             <section className="mb-6">
                 <p className="mb-2 flex items-center gap-1.5 text-xs font-extrabold text-navy-400">
                     <CalendarPlus className="size-3.5" />
-                    تمديدات الضمان
+                    {tr('تمديدات الضمان')}
                 </p>
 
                 {loadingExt ? (
@@ -55,7 +56,7 @@ export function WarrantyLifecyclePage() {
             <section>
                 <p className="mb-2 flex items-center gap-1.5 text-xs font-extrabold text-navy-400">
                     <RefreshCcw className="size-3.5" />
-                    استبدال الأجهزة
+                    {tr('استبدال الأجهزة')}
                 </p>
 
                 {loadingRep ? (

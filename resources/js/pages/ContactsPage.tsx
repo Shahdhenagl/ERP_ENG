@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { Contact as ContactIcon, Mail, Phone, Plus, Search, Star, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Modal } from '@/components/Modal'
@@ -58,7 +59,7 @@ export function ContactsPage() {
                 subtitle="الأشخاص عند العملاء — من تتصل به ولماذا"
                 actions={
                     <Button icon={Plus} onClick={() => setCreating(true)}>
-                        جهة اتصال
+                        {tr('جهة اتصال')}
                     </Button>
                 }
             />
@@ -118,12 +119,12 @@ export function ContactsPage() {
                                                     {contact.is_primary && (
                                                         <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700">
                                                             <Star className="size-3" />
-                                                            الأساسي
+                                                            {tr('الأساسي')}
                                                         </span>
                                                     )}
                                                     {!contact.is_active && (
                                                         <span className="badge bg-slate-100 text-slate-500">
-                                                            موقوف
+                                                            {tr('موقوف')}
                                                         </span>
                                                     )}
                                                 </div>
@@ -226,7 +227,7 @@ function ContactDialog({
                                 }
                             }}
                         >
-                            حذف
+                            {tr('حذف')}
                         </Button>
                     ) : (
                         <span />
@@ -234,7 +235,7 @@ function ContactDialog({
 
                     <div className="flex gap-2">
                         <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                            إلغاء
+                            {tr('إلغاء')}
                         </Button>
                         <Button
                             loading={save.isPending}
@@ -262,7 +263,7 @@ function ContactDialog({
                                 }
                             }}
                         >
-                            حفظ
+                            {tr('حفظ')}
                         </Button>
                     </div>
                 </div>

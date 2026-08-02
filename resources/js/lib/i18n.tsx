@@ -38,6 +38,20 @@ function paint(locale: Locale) {
 // back in the wrong language and sit in the cache.
 paint(storedLocale())
 
+/**
+ * The translator, without a hook.
+ *
+ * Switching language reloads the page, so the answer cannot change while the
+ * app is running — which means a plain function is as correct here as a hook,
+ * and it can be called from anywhere: a bare line of JSX text, a helper
+ * outside a component, a map defined at module scope. Roughly a thousand
+ * strings sit in exactly those places, reachable no other way short of
+ * restructuring the file they live in.
+ */
+export function tr(arabic: string): string {
+    return storedLocale() === 'en' ? (EN[arabic] ?? arabic) : arabic
+}
+
 interface I18nValue {
     locale: Locale
     dir: 'rtl' | 'ltr'

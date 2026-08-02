@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { Check, FileWarning, Replace, Wrench, X } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -61,7 +62,7 @@ export function ClaimsPage() {
                 </div>
 
                 <Button variant="secondary" icon={FileWarning} onClick={() => setFiling(true)}>
-                    بلاغ جديد
+                    {tr('بلاغ جديد')}
                 </Button>
             </div>
 
@@ -263,7 +264,7 @@ function ClaimForm({ onClose }: { onClose: () => void }) {
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={file.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={file.isPending}
@@ -284,7 +285,7 @@ function ClaimForm({ onClose }: { onClose: () => void }) {
                             }
                         }}
                     >
-                        فتح البلاغ
+                        {tr('فتح البلاغ')}
                     </Button>
                 </>
             }
@@ -372,7 +373,7 @@ function DecideDialog({
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={decide.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={decide.isPending}
@@ -472,7 +473,7 @@ function RepairOrderDialog({ claim, onClose }: { claim: WarrantyClaim; onClose: 
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={raise.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={raise.isPending}
@@ -496,7 +497,7 @@ function RepairOrderDialog({ claim, onClose }: { claim: WarrantyClaim; onClose: 
                             }
                         }}
                     >
-                        فتح أمر الإصلاح
+                        {tr('فتح أمر الإصلاح')}
                     </Button>
                 </>
             }

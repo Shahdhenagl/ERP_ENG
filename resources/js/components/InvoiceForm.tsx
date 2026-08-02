@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { Save, Trash2 } from 'lucide-react'
 import { Fragment, useState } from 'react'
 import { CustomerSitePicker } from '@/components/CustomerSitePicker'
@@ -116,10 +117,10 @@ export function InvoiceForm({
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button icon={Save} onClick={handleSave} loading={save.isPending}>
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }

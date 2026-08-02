@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { ArrowRight, CalendarDays, ClipboardList, Clock, MapPin, Wallet } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
@@ -53,7 +54,7 @@ export function TechnicianProfile() {
                 className="tap mb-4 inline-flex items-center gap-1.5 text-sm font-bold text-navy-500"
             >
                 <ArrowRight className="size-4" />
-                الفنيون
+                {tr('الفنيون')}
             </Link>
 
             {/* ── Identity ───────────────────────────────── */}

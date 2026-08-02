@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { ArrowRight, Building2, CalendarClock, HardDrive, MapPin, Pencil } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -32,7 +33,7 @@ export function AssetDetail() {
             <div className="mb-4 flex items-center gap-2">
                 <button onClick={() => navigate(-1)} className="btn-ghost tap -mr-2 text-sm">
                     <ArrowRight className="size-4" />
-                    رجوع
+                    {tr('رجوع')}
                 </button>
                 <div className="flex-1" />
                 {canDispatch && (

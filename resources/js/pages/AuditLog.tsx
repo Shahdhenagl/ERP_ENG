@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { ChevronDown, ScrollText, Search, ShieldAlert } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { SectionTabs } from '@/components/SectionTabs'
@@ -173,7 +174,7 @@ export function AuditLog() {
                                 disabled={page <= 1}
                                 onClick={() => setPage((p) => p - 1)}
                             >
-                                السابق
+                                {tr('السابق')}
                             </Button>
 
                             <span className="tabular text-xs font-bold text-navy-500">
@@ -185,7 +186,7 @@ export function AuditLog() {
                                 disabled={page >= data.meta.last_page}
                                 onClick={() => setPage((p) => p + 1)}
                             >
-                                التالي
+                                {tr('التالي')}
                             </Button>
                         </div>
                     )}
@@ -257,7 +258,7 @@ function Row({ entry }: { entry: ActivityEntry }) {
                         <ChevronDown
                             className={clsx('size-3 transition', open && 'rotate-180')}
                         />
-                        التفاصيل
+                        {tr('التفاصيل')}
                     </button>
 
                     {open && (

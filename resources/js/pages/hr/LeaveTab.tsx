@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { CalendarDays, Check, Plus, X } from 'lucide-react'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
@@ -54,7 +55,7 @@ export function LeaveTab() {
                     {data?.meta.pending ? ` (${data.meta.pending})` : ''}
                 </button>
                 <Button icon={Plus} onClick={() => setCreating(true)}>
-                    طلب إجازة
+                    {tr('طلب إجازة')}
                 </Button>
             </div>
 
@@ -110,14 +111,14 @@ export function LeaveTab() {
                                         className="tap inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700"
                                     >
                                         <Check className="size-3.5" />
-                                        اعتماد
+                                        {tr('اعتماد')}
                                     </button>
                                     <button
                                         onClick={() => act(leave.id, 'reject')}
                                         className="tap inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700"
                                     >
                                         <X className="size-3.5" />
-                                        رفض
+                                        {tr('رفض')}
                                     </button>
                                 </div>
                             )}
@@ -157,7 +158,7 @@ function LeaveForm({ onClose }: { onClose: () => void }) {
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={save.isPending}
@@ -176,7 +177,7 @@ function LeaveForm({ onClose }: { onClose: () => void }) {
                             }
                         }}
                     >
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }

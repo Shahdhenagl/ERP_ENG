@@ -1,4 +1,5 @@
 import { FileText, Printer, Users } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { EmptyState, Field, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
@@ -91,7 +92,7 @@ export function CustomerStatementPage() {
                             className="btn-secondary text-xs"
                         >
                             <Printer className="size-4" />
-                            طباعة
+                            {tr('طباعة')}
                         </Link>
                     </div>
 

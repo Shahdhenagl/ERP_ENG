@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { FileText, HandCoins, Printer, ReceiptText, ScrollText, Undo2, Users, Wrench } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -58,7 +59,7 @@ export function CustomerLedgerPage() {
                         className="btn-secondary shrink-0 text-xs"
                     >
                         <Printer className="size-4" />
-                        طباعة
+                        {tr('طباعة')}
                     </Link>
                 )}
             </div>

@@ -1,4 +1,5 @@
 import { Save } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { CashBoxSelect, CollectorSelect } from '@/components/MoneyFields'
 import { Modal } from '@/components/Modal'
@@ -71,10 +72,10 @@ export function PaymentForm({ open, onClose, invoice }: PaymentFormProps) {
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={receive.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button icon={Save} onClick={handleSave} loading={receive.isPending} disabled={over}>
-                        تسجيل
+                        {tr('تسجيل')}
                     </Button>
                 </>
             }

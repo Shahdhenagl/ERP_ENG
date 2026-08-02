@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { CalendarClock, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
@@ -99,7 +100,7 @@ export function ContractRenewalsPage() {
                                             className="text-xs"
                                             onClick={() => setRenewing(contract)}
                                         >
-                                            تجديد العقد
+                                            {tr('تجديد العقد')}
                                         </Button>
                                     </div>
                                 )}
@@ -134,7 +135,7 @@ function RenewDialog({ contract, onClose }: { contract: Contract; onClose: () =>
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={renew.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={renew.isPending}
@@ -154,7 +155,7 @@ function RenewDialog({ contract, onClose }: { contract: Contract; onClose: () =>
                             }
                         }}
                     >
-                        تجديد
+                        {tr('تجديد')}
                     </Button>
                 </>
             }

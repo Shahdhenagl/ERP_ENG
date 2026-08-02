@@ -1,4 +1,5 @@
 import { KeyRound, LogOut, Save, ShieldCheck } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '@/components/Toast'
@@ -30,7 +31,7 @@ export function Profile() {
                 className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700 transition hover:bg-red-100 lg:hidden"
             >
                 <LogOut className="size-4" />
-                تسجيل الخروج
+                {tr('تسجيل الخروج')}
             </button>
         </>
     )
@@ -123,7 +124,7 @@ function DetailsCard() {
             </div>
 
             <Button type="submit" icon={Save} loading={update.isPending} block className="mt-6">
-                حفظ البيانات
+                {tr('حفظ البيانات')}
             </Button>
         </form>
     )
@@ -231,7 +232,7 @@ function PasswordCard() {
                 block
                 className="mt-6"
             >
-                تغيير كلمة المرور
+                {tr('تغيير كلمة المرور')}
             </Button>
         </form>
     )

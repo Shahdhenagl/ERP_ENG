@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import {
     ArrowLeft,
     ArrowRight,
@@ -61,7 +62,7 @@ export function CustomerProfile() {
                 className="tap mb-4 inline-flex items-center gap-1.5 text-sm font-bold text-navy-500"
             >
                 <ArrowRight className="size-4" />
-                كل العملاء
+                {tr('كل العملاء')}
             </Link>
 
             {/* ── Identity ───────────────────────────────── */}
@@ -93,7 +94,7 @@ export function CustomerProfile() {
                             <FileText className="size-4.5" />
                         </Link>
                         <Button variant="secondary" icon={Pencil} onClick={() => setEditing(true)}>
-                            تعديل
+                            {tr('تعديل')}
                         </Button>
                     </div>
                 </div>
@@ -112,7 +113,7 @@ export function CustomerProfile() {
                         className={clsx('btn-whatsapp py-2 text-xs', !c.whatsapp_link && 'pointer-events-none opacity-40')}
                     >
                         <MessageCircle className="size-3.5" />
-                        واتساب
+                        {tr('واتساب')}
                     </a>
                     <a
                         href={c.maps_url ?? undefined}
@@ -121,7 +122,7 @@ export function CustomerProfile() {
                         className={clsx('btn-secondary py-2 text-xs', !c.maps_url && 'pointer-events-none opacity-40')}
                     >
                         <MapPin className="size-3.5" />
-                        الخريطة
+                        {tr('الخريطة')}
                     </a>
                 </div>
 
@@ -302,7 +303,7 @@ function CustomerTasksSection({ customerId }: { customerId: number }) {
                     )}
                 >
                     <Printer className="size-3.5" />
-                    طباعة تقرير
+                    {tr('طباعة تقرير')}
                 </a>
             </div>
 

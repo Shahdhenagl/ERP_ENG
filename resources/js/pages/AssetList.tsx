@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { HardDrive, Pencil, Plus, Search, ShieldCheck, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -91,7 +92,7 @@ export function AssetList() {
                             }}
                         />
                         <Button icon={Plus} onClick={openNew}>
-                            جهاز جديد
+                            {tr('جهاز جديد')}
                         </Button>
                     </>
                 }
@@ -138,7 +139,7 @@ export function AssetList() {
                         )}
                     >
                         <ShieldCheck className="size-3.5" />
-                        داخل الضمان فقط
+                        {tr('داخل الضمان فقط')}
                     </button>
                 </div>
             </div>
@@ -158,7 +159,7 @@ export function AssetList() {
                     description="سجّل أول جهاز ليصبح لكل زيارة صيانة سجل مرتبط به."
                     action={
                         <Button icon={Plus} onClick={openNew}>
-                            تسجيل جهاز
+                            {tr('تسجيل جهاز')}
                         </Button>
                     }
                 />

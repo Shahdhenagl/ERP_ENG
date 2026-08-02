@@ -1,4 +1,5 @@
 import { HandCoins, Pencil, Printer, RotateCcw, Search } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ConfirmDialog, Modal } from '@/components/Modal'
@@ -181,7 +182,7 @@ function EditReceiptModal({ payment, onClose }: { payment: Payment; onClose: () 
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={update.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={update.isPending}
@@ -200,7 +201,7 @@ function EditReceiptModal({ payment, onClose }: { payment: Payment; onClose: () 
                             }
                         }}
                     >
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }

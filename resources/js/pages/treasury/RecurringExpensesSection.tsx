@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { CalendarClock, Pencil, Plus, Trash2, Wallet } from 'lucide-react'
 import { useState } from 'react'
 import { ConfirmDialog, Modal } from '@/components/Modal'
@@ -64,7 +65,7 @@ export function RecurringExpensesSection() {
                     )}
                 </h2>
                 <Button icon={Plus} className="text-xs" onClick={() => setEditing(null)}>
-                    مصروف دوري جديد
+                    {tr('مصروف دوري جديد')}
                 </Button>
             </div>
 
@@ -97,7 +98,7 @@ export function RecurringExpensesSection() {
                                             <span className="font-bold text-navy-900">{expense.name}</span>
                                             {!expense.is_active && (
                                                 <span className="badge bg-slate-100 text-slate-500">
-                                                    موقوف
+                                                    {tr('موقوف')}
                                                 </span>
                                             )}
                                             <span className={clsx('badge', chip.className)}>{chip.text}</span>
@@ -122,14 +123,14 @@ export function RecurringExpensesSection() {
                                         className="tap flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-bold text-navy-500 transition hover:bg-navy-50 hover:text-navy-800"
                                     >
                                         <Pencil className="size-3.5" />
-                                        تعديل
+                                        {tr('تعديل')}
                                     </button>
                                     <button
                                         onClick={() => setDeleting(expense)}
                                         className="tap flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-bold text-red-500 transition hover:bg-red-50 hover:text-red-700"
                                     >
                                         <Trash2 className="size-3.5" />
-                                        حذف
+                                        {tr('حذف')}
                                     </button>
                                     {expense.last_paid_on && (
                                         <span className="mr-auto text-[11px] text-navy-400">
@@ -189,7 +190,7 @@ function PayButton({ expense }: { expense: RecurringExpense }) {
             className="tap flex items-center gap-1 rounded-lg bg-brand-50 px-2.5 py-1 text-[11px] font-bold text-brand-700 transition hover:bg-brand-100 disabled:opacity-50"
         >
             <Wallet className="size-3.5" />
-            سداد
+            {tr('سداد')}
         </button>
     )
 }
@@ -228,7 +229,7 @@ function RecurringExpenseDialog({
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={save.isPending}
@@ -253,7 +254,7 @@ function RecurringExpenseDialog({
                             }
                         }}
                     >
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }

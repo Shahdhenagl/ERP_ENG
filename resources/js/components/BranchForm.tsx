@@ -1,4 +1,5 @@
 import { MapPin, Save, Trash2 } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
@@ -144,10 +145,10 @@ export function BranchForm({
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button icon={Save} onClick={handleSave} loading={save.isPending}>
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }
@@ -233,7 +234,7 @@ export function BranchForm({
                             onClick={useMyLocation}
                             className="w-full text-xs"
                         >
-                            موقعي الحالي
+                            {tr('موقعي الحالي')}
                         </Button>
                     </div>
                 </div>
@@ -286,7 +287,7 @@ export function BranchForm({
                         <div>
                             <h3 className="text-sm font-bold text-navy-800">خط السير</h3>
                             <p className="text-[11px] text-navy-400">
-                                التكلفة المتوقعة لكل محطة — يؤكّدها الفني أو يعدّلها عند التنفيذ.
+                                {tr('التكلفة المتوقعة لكل محطة — يؤكّدها الفني أو يعدّلها عند التنفيذ.')}
                             </p>
                         </div>
                         <button
@@ -294,7 +295,7 @@ export function BranchForm({
                             onClick={() => setLegs((current) => [...current, { label: '', cost: '' }])}
                             className="tap rounded-lg bg-navy-100 px-3 py-1.5 text-xs font-bold text-navy-700"
                         >
-                            إضافة محطة
+                            {tr('إضافة محطة')}
                         </button>
                     </div>
 
@@ -384,7 +385,7 @@ export function BranchForm({
                         onChange={(e) => set('is_active')(e.target.checked)}
                         className="size-4 rounded border-navy-300"
                     />
-                    فرع نشط
+                    {tr('فرع نشط')}
                 </label>
             </div>
         </Modal>

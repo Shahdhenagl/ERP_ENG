@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { Plus, ScrollText, Trash2, Undo2, X } from 'lucide-react'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
@@ -71,7 +72,7 @@ export function JournalPage() {
 
                 {user?.role === 'admin' && (
                     <Button icon={Plus} className="mb-0.5" onClick={() => setComposing(true)}>
-                        قيد يدوي
+                        {tr('قيد يدوي')}
                     </Button>
                 )}
             </div>
@@ -108,7 +109,7 @@ export function JournalPage() {
                                         )}
                                         {entry.is_void && (
                                             <span className="badge bg-red-50 text-red-700 ring-1 ring-red-200">
-                                                ملغى
+                                                {tr('ملغى')}
                                             </span>
                                         )}
                                     </div>
@@ -183,7 +184,7 @@ function EntryDialog({ entry, onClose }: { entry: JournalEntry; onClose: () => v
                                 loading={action.isPending}
                                 onClick={() => run('void')}
                             >
-                                إلغاء القيد
+                                {tr('إلغاء القيد')}
                             </Button>
                         )}
                         <Button
@@ -192,7 +193,7 @@ function EntryDialog({ entry, onClose }: { entry: JournalEntry; onClose: () => v
                             loading={action.isPending}
                             onClick={() => run('reverse')}
                         >
-                            عكس القيد
+                            {tr('عكس القيد')}
                         </Button>
                         <Button onClick={onClose}>إغلاق</Button>
                     </>
@@ -309,7 +310,7 @@ function ComposeDialog({ onClose }: { onClose: () => void }) {
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={post.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={post.isPending}
@@ -338,7 +339,7 @@ function ComposeDialog({ onClose }: { onClose: () => void }) {
                             }
                         }}
                     >
-                        ترحيل
+                        {tr('ترحيل')}
                     </Button>
                 </>
             }
@@ -440,7 +441,7 @@ function ComposeDialog({ onClose }: { onClose: () => void }) {
                     icon={Plus}
                     onClick={() => setLines([...lines, { ...BLANK }])}
                 >
-                    سطر آخر
+                    {tr('سطر آخر')}
                 </Button>
 
                 {/* Stated as it is typed rather than discovered on submit: an

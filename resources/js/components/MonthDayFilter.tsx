@@ -1,4 +1,5 @@
 import { X } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { Input } from '@/components/ui'
 
 /** A hand-picked span, which beats both the month and the day when set. */
@@ -116,7 +117,7 @@ export function MonthDayFilter({
                     className="tap mb-0.5 flex items-center gap-1 rounded-xl px-3 py-2 text-xs font-bold text-navy-500 ring-1 ring-navy-200 transition hover:bg-navy-50"
                 >
                     <X className="size-3.5" />
-                    مسح
+                    {tr('مسح')}
                 </button>
             )}
         </div>

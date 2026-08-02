@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { Banknote, Plus, Search } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
@@ -90,10 +91,10 @@ export function ChequesPage() {
                 actions={
                     <div className="flex gap-2">
                         <Button variant="secondary" icon={Plus} onClick={() => setCreating('outgoing')}>
-                            شيك صادر
+                            {tr('شيك صادر')}
                         </Button>
                         <Button icon={Plus} onClick={() => setCreating('incoming')}>
-                            شيك وارد
+                            {tr('شيك وارد')}
                         </Button>
                     </div>
                 }
@@ -397,7 +398,7 @@ function ChequeForm({
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={save.isPending}
@@ -430,7 +431,7 @@ function ChequeForm({
                             }
                         }}
                     >
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }
@@ -626,7 +627,7 @@ function TransitionDialog({
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={move.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={move.isPending}

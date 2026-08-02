@@ -1,4 +1,5 @@
 import { PackageCheck } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
@@ -90,7 +91,7 @@ export function ReceiveOrderForm({
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={action.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         icon={PackageCheck}
@@ -98,14 +99,14 @@ export function ReceiveOrderForm({
                         loading={action.isPending}
                         disabled={anyOver}
                     >
-                        تسجيل الاستلام
+                        {tr('تسجيل الاستلام')}
                     </Button>
                 </>
             }
         >
             <div className="space-y-4">
                 <p className="rounded-xl bg-navy-50 p-3 text-xs text-navy-500">
-                    اكتب الكمية التي وصلت فعلًا. الباقي يظل مفتوحًا على أمر الشراء لاستلام لاحق.
+                    {tr('اكتب الكمية التي وصلت فعلًا. الباقي يظل مفتوحًا على أمر الشراء لاستلام لاحق.')}
                 </p>
 
                 <div className="space-y-3">
@@ -153,7 +154,7 @@ export function ReceiveOrderForm({
 
                                 {over && (
                                     <p className="mt-1.5 text-[11px] font-medium text-red-600">
-                                        أكبر من المتبقي على أمر الشراء.
+                                        {tr('أكبر من المتبقي على أمر الشراء.')}
                                     </p>
                                 )}
                             </div>

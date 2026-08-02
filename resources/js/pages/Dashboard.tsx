@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import {
     AlertTriangle,
     Building2,
@@ -124,7 +125,7 @@ export function Dashboard() {
                     <div className="mb-3 flex items-center justify-between">
                         <h2 className="text-sm font-bold text-navy-700">حِمل العمل على الفنيين</h2>
                         <Link to={path('/users')} className="text-xs font-bold text-brand-600 hover:underline">
-                            كل المستخدمين
+                            {tr('كل المستخدمين')}
                         </Link>
                     </div>
 
@@ -210,7 +211,7 @@ export function Dashboard() {
                     <section className="mt-8">
                         <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-navy-700">
                             <AlertTriangle className="size-4 text-amber-600" />
-                            تنبيهات تحتاج إجراء
+                            {tr('تنبيهات تحتاج إجراء')}
                         </h2>
 
                         <div className="grid gap-4 lg:grid-cols-3">
@@ -307,13 +308,13 @@ export function Dashboard() {
                     <div className="mb-3 flex items-center justify-between">
                         <h2 className="flex items-center gap-2 text-sm font-bold text-navy-700">
                             <CalendarClock className="size-4 text-brand-600" />
-                            زيارات صيانة تنتظر الإسناد
+                            {tr('زيارات صيانة تنتظر الإسناد')}
                         </h2>
                         <Link
                             to={path('/contracts')}
                             className="text-xs font-bold text-brand-600 hover:underline"
                         >
-                            العقود
+                            {tr('العقود')}
                         </Link>
                     </div>
 
@@ -369,10 +370,10 @@ export function Dashboard() {
                     <div className="mb-3 flex items-center justify-between">
                         <h2 className="flex items-center gap-2 text-sm font-bold text-navy-700">
                             <AlertTriangle className="size-4 text-red-600" />
-                            متابعات فات موعدها
+                            {tr('متابعات فات موعدها')}
                         </h2>
                         <Link to={path('/crm')} className="text-xs font-bold text-brand-600 hover:underline">
-                            المتابعات
+                            {tr('المتابعات')}
                         </Link>
                     </div>
 
@@ -407,7 +408,7 @@ export function Dashboard() {
                         {canDispatch ? 'الأقرب تنفيذًا' : 'مهامك القادمة'}
                     </h2>
                     <Link to={path('/tasks')} className="text-xs font-bold text-brand-600 hover:underline">
-                        عرض الكل
+                        {tr('عرض الكل')}
                     </Link>
                 </div>
 
@@ -504,7 +505,7 @@ function AttendanceCard() {
 
                     {!checkedIn ? (
                         <Button icon={LogIn} loading={checkIn.isPending} onClick={() => punch('check-in')}>
-                            تسجيل حضور
+                            {tr('تسجيل حضور')}
                         </Button>
                     ) : !checkedOut ? (
                         <Button
@@ -513,7 +514,7 @@ function AttendanceCard() {
                             loading={checkOut.isPending}
                             onClick={() => punch('check-out')}
                         >
-                            تسجيل انصراف
+                            {tr('تسجيل انصراف')}
                         </Button>
                     ) : (
                         <span className="badge bg-emerald-50 text-emerald-700">اكتمل اليوم</span>
@@ -583,7 +584,7 @@ function AttendanceToday({
                                     )}
                                     {row.check_out && !row.check_out_location && (
                                         <span className="text-[11px] text-navy-300">
-                                            الانصراف بدون موقع
+                                            {tr('الانصراف بدون موقع')}
                                         </span>
                                     )}
                                 </div>

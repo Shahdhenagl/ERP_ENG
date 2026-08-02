@@ -1,4 +1,5 @@
 import { Save } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useToast } from '@/components/Toast'
 import { SectionTabs } from '@/components/SectionTabs'
@@ -54,7 +55,7 @@ export function Settings() {
                 subtitle="تظهر على الفواتير وعروض الأسعار وكشوف الحساب"
                 actions={
                     <Button type="submit" icon={Save} loading={save.isPending}>
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 }
             />

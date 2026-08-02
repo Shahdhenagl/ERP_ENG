@@ -1,4 +1,5 @@
 import { CalendarOff, Plus, Trash2 } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { useToast } from '@/components/Toast'
 import { Button, Input, SkeletonCard } from '@/components/ui'
@@ -76,7 +77,7 @@ export function HolidaysEditor() {
                             ))
                         ) : (
                             <p className="rounded-xl bg-navy-50 px-3 py-3 text-center text-xs text-navy-400">
-                                لا توجد إجازات مسجّلة.
+                                {tr('لا توجد إجازات مسجّلة.')}
                             </p>
                         )}
                     </div>
@@ -95,7 +96,7 @@ export function HolidaysEditor() {
                             className="flex-1"
                         />
                         <Button icon={Plus} loading={add.isPending} onClick={submit} disabled={!date}>
-                            إضافة
+                            {tr('إضافة')}
                         </Button>
                     </div>
                 </>

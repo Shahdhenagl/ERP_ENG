@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { FileText, Plus, Printer, Search, Undo2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -107,7 +108,7 @@ export function SupplierInvoicesTab() {
                 </Select>
 
                 <Button icon={Plus} onClick={() => setDrafting(true)}>
-                    فاتورة مورّد
+                    {tr('فاتورة مورّد')}
                 </Button>
             </div>
 
@@ -278,7 +279,7 @@ export function SupplierInvoicesTab() {
                                     className="tap inline-flex items-center gap-1.5 rounded-lg bg-navy-50 px-3 py-1.5 text-xs font-bold text-navy-600 transition hover:bg-navy-100"
                                 >
                                     <Printer className="size-3.5" />
-                                    طباعة
+                                    {tr('طباعة')}
                                 </Link>
 
                                 {invoice.status === 'draft' && (
@@ -287,13 +288,13 @@ export function SupplierInvoicesTab() {
                                             onClick={() => run(invoice.id, 'post', 'تم ترحيل الفاتورة.')}
                                             className="tap rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700"
                                         >
-                                            ترحيل
+                                            {tr('ترحيل')}
                                         </button>
                                         <button
                                             onClick={() => run(invoice.id, 'delete', 'تم حذف المسودة.')}
                                             className="tap rounded-lg bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700"
                                         >
-                                            حذف
+                                            {tr('حذف')}
                                         </button>
                                     </>
                                 )}
@@ -304,7 +305,7 @@ export function SupplierInvoicesTab() {
                                         className="tap inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700"
                                     >
                                         <Undo2 className="size-3.5" />
-                                        إلغاء
+                                        {tr('إلغاء')}
                                     </button>
                                 )}
 
@@ -361,7 +362,7 @@ function SupplierInvoiceForm({ onClose }: { onClose: () => void }) {
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={save.isPending}
@@ -398,7 +399,7 @@ function SupplierInvoiceForm({ onClose }: { onClose: () => void }) {
                             }
                         }}
                     >
-                        حفظ كمسودة
+                        {tr('حفظ كمسودة')}
                     </Button>
                 </>
             }
@@ -475,7 +476,7 @@ function SupplierInvoiceForm({ onClose }: { onClose: () => void }) {
                     <div>
                         <div className="mb-2 flex items-center justify-between">
                             <p className="text-sm font-bold text-navy-800">
-                                استلامات بلا فاتورة
+                                {tr('استلامات بلا فاتورة')}
                             </p>
                             <span className="tabular text-xs text-navy-400">
                                 {formatMoney(uninvoiced?.total ?? 0)}
@@ -581,7 +582,7 @@ function VoidDialog({ invoice, onClose }: { invoice: SupplierInvoice; onClose: (
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={act.isPending}>
-                        تراجع
+                        {tr('تراجع')}
                     </Button>
                     <Button
                         loading={act.isPending}
@@ -602,7 +603,7 @@ function VoidDialog({ invoice, onClose }: { invoice: SupplierInvoice; onClose: (
                             }
                         }}
                     >
-                        إلغاء الفاتورة
+                        {tr('إلغاء الفاتورة')}
                     </Button>
                 </>
             }

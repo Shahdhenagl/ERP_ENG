@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { PackageCheck, Truck } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { ReceiveOrderForm } from '@/components/ReceiveOrderForm'
@@ -74,7 +75,7 @@ export function PurchaseReceivingPage() {
                                     className="text-xs"
                                     onClick={() => setReceivingId(order.id)}
                                 >
-                                    تسجيل استلام
+                                    {tr('تسجيل استلام')}
                                 </Button>
                             </div>
                         </div>

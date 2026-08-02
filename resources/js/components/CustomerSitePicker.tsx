@@ -1,4 +1,5 @@
 import { Building2, Check, Search, X } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { Field, Input, Select } from '@/components/ui'
 import { useCustomer, useCustomerBranches, useCustomers } from '@/lib/queries'
@@ -176,7 +177,7 @@ export function CustomerSitePicker({
             {customerId && branches.length === 0 && (
                 <p className="flex items-center gap-1.5 text-[11px] text-navy-400">
                     <Building2 className="size-3.5" />
-                    لا توجد فروع مسجّلة لهذا العميل.
+                    {tr('لا توجد فروع مسجّلة لهذا العميل.')}
                 </p>
             )}
         </div>

@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { CalendarDays, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
@@ -31,7 +32,7 @@ export function TechLeavePage() {
                 subtitle="قدّم طلب إجازة وتابع اعتماده"
                 actions={
                     <Button icon={Plus} onClick={() => setCreating(true)}>
-                        طلب إجازة
+                        {tr('طلب إجازة')}
                     </Button>
                 }
             />
@@ -108,7 +109,7 @@ function LeaveForm({ onClose }: { onClose: () => void }) {
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={submit.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={submit.isPending}
@@ -129,7 +130,7 @@ function LeaveForm({ onClose }: { onClose: () => void }) {
                             }
                         }}
                     >
-                        إرسال
+                        {tr('إرسال')}
                     </Button>
                 </>
             }

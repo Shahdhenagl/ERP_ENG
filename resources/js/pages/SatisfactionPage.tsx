@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { MessageSquare, Plus, Smile, Star } from 'lucide-react'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
@@ -33,7 +34,7 @@ export function SatisfactionPage() {
                 subtitle="تقييم العملاء لأوامر العمل المنتهية"
                 actions={
                     <Button icon={Plus} onClick={() => setCreating(true)}>
-                        استطلاع جديد
+                        {tr('استطلاع جديد')}
                     </Button>
                 }
             />
@@ -124,7 +125,7 @@ export function SatisfactionPage() {
                                             <Stars value={survey.rating ?? 0} />
                                         ) : (
                                             <span className="badge bg-amber-50 text-amber-700">
-                                                بانتظار الرد
+                                                {tr('بانتظار الرد')}
                                             </span>
                                         )}
                                     </div>
@@ -147,7 +148,7 @@ export function SatisfactionPage() {
                                         onClick={() => setResponding(survey)}
                                         className="tap shrink-0 rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-700"
                                     >
-                                        تسجيل التقييم
+                                        {tr('تسجيل التقييم')}
                                     </button>
                                 )}
                             </div>
@@ -230,7 +231,7 @@ function RespondDialog({ survey, onClose }: { survey: SatisfactionSurvey; onClos
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={respond.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={respond.isPending}
@@ -245,7 +246,7 @@ function RespondDialog({ survey, onClose }: { survey: SatisfactionSurvey; onClos
                             }
                         }}
                     >
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }
@@ -280,7 +281,7 @@ function NewSurveyDialog({ onClose }: { onClose: () => void }) {
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={create.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={create.isPending}
@@ -299,7 +300,7 @@ function NewSurveyDialog({ onClose }: { onClose: () => void }) {
                             }
                         }}
                     >
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }
@@ -317,7 +318,7 @@ function NewSurveyDialog({ onClose }: { onClose: () => void }) {
                     </Select>
                     {candidates && !candidates.length && (
                         <p className="mt-1 text-[11px] text-navy-400">
-                            لا توجد أوامر عمل منتهية بلا استطلاع حاليًا.
+                            {tr('لا توجد أوامر عمل منتهية بلا استطلاع حاليًا.')}
                         </p>
                     )}
                 </Field>

@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { useMemo, useState } from 'react'
 import { Button, Field, Input } from '@/components/ui'
 
@@ -152,7 +153,7 @@ export function PeriodPicker({
                         className="mb-0.5 text-xs"
                         onClick={() => setCustom({ from: '', to: '' })}
                     >
-                        إلغاء التحديد
+                        {tr('إلغاء التحديد')}
                     </Button>
                 )}
             </div>

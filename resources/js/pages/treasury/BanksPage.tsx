@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import {
     ArrowLeftRight,
     Banknote,
@@ -71,7 +72,7 @@ function AccountsView() {
                     <p className="tabular text-lg font-extrabold text-navy-900">{formatMoney(total)}</p>
                 </div>
                 <Button icon={Plus} onClick={() => setCreating(true)}>
-                    حساب بنكي جديد
+                    {tr('حساب بنكي جديد')}
                 </Button>
             </div>
 
@@ -110,7 +111,7 @@ function AccountsView() {
                                     className="tap mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-brand-600"
                                 >
                                     <FileText className="size-3" />
-                                    كشف الحساب
+                                    {tr('كشف الحساب')}
                                 </button>
                             </div>
                         </div>
@@ -141,7 +142,7 @@ function AccountDialog({ onClose }: { onClose: () => void }) {
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={save.isPending}
@@ -157,7 +158,7 @@ function AccountDialog({ onClose }: { onClose: () => void }) {
                             }
                         }}
                     >
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }
@@ -318,7 +319,7 @@ function TransfersView() {
 
                 {sameBox && (
                     <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700">
-                        لا يمكن التحويل إلى نفس الخزينة.
+                        {tr('لا يمكن التحويل إلى نفس الخزينة.')}
                     </p>
                 )}
 
@@ -345,7 +346,7 @@ function TransfersView() {
                     disabled={!form.from_box_id || !form.to_box_id || !form.amount || Boolean(sameBox)}
                     onClick={submit}
                 >
-                    تنفيذ التحويل
+                    {tr('تنفيذ التحويل')}
                 </Button>
             </div>
         </div>

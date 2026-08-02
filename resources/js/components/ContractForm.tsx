@@ -1,4 +1,5 @@
 import { FileText, Save } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
@@ -150,10 +151,10 @@ export function ContractForm({ open, onClose, contract, customerId, onSaved }: C
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button icon={Save} onClick={handleSave} loading={save.isPending}>
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }

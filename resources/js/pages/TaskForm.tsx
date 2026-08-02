@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { ArrowRight, MessageCircle, Plus, Save } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -151,12 +152,12 @@ export function TaskForm() {
                                 className="btn-whatsapp w-full"
                             >
                                 <MessageCircle className="size-4" />
-                                إرسال التفاصيل للفني على واتساب
+                                {tr('إرسال التفاصيل للفني على واتساب')}
                             </a>
                         )}
 
                         <Button variant="secondary" block onClick={() => navigate(path(`/tasks/${saved.id}`))}>
-                            فتح المهمة
+                            {tr('فتح المهمة')}
                         </Button>
 
                         <Button
@@ -174,7 +175,7 @@ export function TaskForm() {
                             }}
                         >
                             <Plus className="size-4" />
-                            إنشاء مهمة أخرى
+                            {tr('إنشاء مهمة أخرى')}
                         </Button>
                     </div>
                 </div>
@@ -186,7 +187,7 @@ export function TaskForm() {
         <>
             <button onClick={() => navigate(-1)} className="btn-ghost -mr-2 mb-3 text-sm">
                 <ArrowRight className="size-4" />
-                رجوع
+                {tr('رجوع')}
             </button>
 
             <PageHeader
@@ -231,7 +232,7 @@ export function TaskForm() {
                                     className="shrink-0"
                                     onClick={() => setCustomerFormOpen(true)}
                                 >
-                                    جديد
+                                    {tr('جديد')}
                                 </Button>
                             </div>
                         </Field>
@@ -356,7 +357,7 @@ export function TaskForm() {
                                 onClick={() => setAssetFormOpen(true)}
                                 className="text-xs font-bold text-brand-600 hover:underline"
                             >
-                                + تسجيل جهاز جديد
+                                {tr('+ تسجيل جهاز جديد')}
                             </button>
                         )}
                     </div>
@@ -382,7 +383,7 @@ export function TaskForm() {
 
                             {customerAssets.length === 0 && (
                                 <p className="mt-2 text-xs text-navy-400">
-                                    لا توجد أجهزة مسجّلة لهذا العميل بعد.
+                                    {tr('لا توجد أجهزة مسجّلة لهذا العميل بعد.')}
                                 </p>
                             )}
 
@@ -430,7 +431,7 @@ export function TaskForm() {
 
                 <div className="flex justify-end gap-2 pb-4">
                     <Button variant="secondary" onClick={() => navigate(-1)} disabled={pending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button icon={Save} loading={pending} onClick={handleSubmit}>
                         {isEdit ? 'حفظ التعديلات' : 'إنشاء المهمة'}

@@ -1,4 +1,5 @@
 import { Download } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { Outlet, useLocation, useOutletContext } from 'react-router-dom'
 import { PeriodPicker, usePeriod, type PeriodState } from '@/components/PeriodPicker'
@@ -93,7 +94,7 @@ export function ReportsLayout() {
                                 }
                             }}
                         >
-                            تصدير Excel
+                            {tr('تصدير Excel')}
                         </Button>
                     )
                 }

@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { CalendarPlus, Printer, Search, ShieldCheck, ShieldX } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -156,7 +157,7 @@ export function WarrantyRegisterPage() {
                                         className="tap inline-flex items-center gap-1.5 rounded-lg bg-navy-50 px-3 py-1.5 text-xs font-bold text-navy-700"
                                     >
                                         <Printer className="size-3.5" />
-                                        شهادة ضمان
+                                        {tr('شهادة ضمان')}
                                     </Link>
 
                                     {warranty.status === 'active' && (
@@ -166,14 +167,14 @@ export function WarrantyRegisterPage() {
                                                 className="tap inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700"
                                             >
                                                 <CalendarPlus className="size-3.5" />
-                                                تمديد
+                                                {tr('تمديد')}
                                             </button>
                                             <button
                                                 onClick={() => setVoiding(warranty)}
                                                 className="tap inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700"
                                             >
                                                 <ShieldX className="size-3.5" />
-                                                إلغاء
+                                                {tr('إلغاء')}
                                             </button>
                                         </>
                                     )}
@@ -217,7 +218,7 @@ function ExtendDialog({ warranty, onClose }: { warranty: Warranty; onClose: () =
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={act.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={act.isPending}
@@ -238,7 +239,7 @@ function ExtendDialog({ warranty, onClose }: { warranty: Warranty; onClose: () =
                             }
                         }}
                     >
-                        تمديد
+                        {tr('تمديد')}
                     </Button>
                 </>
             }
@@ -282,7 +283,7 @@ function VoidDialog({ warranty, onClose }: { warranty: Warranty; onClose: () => 
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={act.isPending}>
-                        تراجع
+                        {tr('تراجع')}
                     </Button>
                     <Button
                         loading={act.isPending}
@@ -303,7 +304,7 @@ function VoidDialog({ warranty, onClose }: { warranty: Warranty; onClose: () => 
                             }
                         }}
                     >
-                        إلغاء الضمان
+                        {tr('إلغاء الضمان')}
                     </Button>
                 </>
             }

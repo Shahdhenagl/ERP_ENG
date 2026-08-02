@@ -1,4 +1,5 @@
 import { Save } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
@@ -102,10 +103,10 @@ export function StockOperationForm({ open, onClose, operation, itemId }: StockOp
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={run.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button icon={Save} onClick={handleSave} loading={run.isPending}>
-                        تنفيذ
+                        {tr('تنفيذ')}
                     </Button>
                 </>
             }

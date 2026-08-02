@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { BookOpen, Lock, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -68,7 +69,7 @@ export function AccountsPage() {
 
                 {isAdmin && (
                     <Button icon={Plus} className="mb-0.5" onClick={() => setEditing(null)}>
-                        حساب جديد
+                        {tr('حساب جديد')}
                     </Button>
                 )}
             </div>
@@ -218,12 +219,12 @@ function AccountDialog({
                                 }
                             }}
                         >
-                            حذف
+                            {tr('حذف')}
                         </Button>
                     )}
 
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={save.isPending}
@@ -243,7 +244,7 @@ function AccountDialog({
                             }
                         }}
                     >
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }
@@ -321,7 +322,7 @@ function AccountDialog({
                     <span>
                         <span className="font-semibold text-navy-800">حساب تجميعي</span>
                         <span className="block text-[11px] text-navy-400">
-                            عنوان تُجمَّع تحته الحسابات، ولا تُرحَّل عليه القيود مباشرة.
+                            {tr('عنوان تُجمَّع تحته الحسابات، ولا تُرحَّل عليه القيود مباشرة.')}
                         </span>
                     </span>
                 </label>

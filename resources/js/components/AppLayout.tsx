@@ -10,7 +10,7 @@ import { useNotificationAlerts } from '@/lib/useNotificationAlerts'
 import { syncPushSubscription } from '@/lib/push'
 import { NotificationPanel } from '@/components/NotificationPanel'
 import { LanguageToggle } from '@/components/LanguageToggle'
-import { useI18n, useT } from '@/lib/i18n'
+import { tr, useI18n, useT } from '@/lib/i18n'
 import { ThemeToggle } from '@/components/ThemeToggle'
 
 export function AppLayout() {
@@ -108,7 +108,7 @@ export function AppLayout() {
                                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-brand-500"
                             >
                                 <Plus className="size-4" />
-                                مهمة جديدة
+                                {tr('مهمة جديدة')}
                             </Link>
                         </div>
                     )}
@@ -229,7 +229,7 @@ export function AppLayout() {
                                 <Plus className="size-5" />
                             </span>
                             <span className="-mt-1 text-[10px] leading-none font-bold text-navy-500">
-                                جديدة
+                                {tr('جديدة')}
                             </span>
                         </Link>
                     )}

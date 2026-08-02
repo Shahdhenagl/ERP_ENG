@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import {
     ArrowRight,
     Check,
@@ -82,7 +83,7 @@ export function LeadsTab() {
                             status === '' ? 'bg-brand-50 text-brand-700 ring-brand-200' : 'bg-surface text-navy-500 ring-navy-200',
                         )}
                     >
-                        الكل
+                        {tr('الكل')}
                     </button>
                     {STAGES.map(([value, label]) => (
                         <button
@@ -133,7 +134,7 @@ export function LeadsTab() {
                 />
 
                 <Button icon={Plus} onClick={() => setCreating(true)}>
-                    عميل محتمل
+                    {tr('عميل محتمل')}
                 </Button>
             </div>
 
@@ -341,7 +342,7 @@ function LeadDetail({ id, onBack }: { id: number; onBack: () => void }) {
                 className="tap mb-4 inline-flex items-center gap-1.5 text-sm font-bold text-navy-500"
             >
                 <ArrowRight className="size-4" />
-                كل العملاء المحتملين
+                {tr('كل العملاء المحتملين')}
             </button>
 
             {isLoading || !lead ? (
@@ -367,7 +368,7 @@ function LeadDetail({ id, onBack }: { id: number; onBack: () => void }) {
                                 onClick={() => setEditing(true)}
                                 className="tap rounded-lg bg-navy-100 px-3 py-1.5 text-xs font-bold text-navy-600"
                             >
-                                تعديل
+                                {tr('تعديل')}
                             </button>
                         </div>
 
@@ -389,7 +390,7 @@ function LeadDetail({ id, onBack }: { id: number; onBack: () => void }) {
                                     className="tap inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 font-semibold text-emerald-700"
                                 >
                                     <MessageCircle className="size-3.5" />
-                                    واتساب
+                                    {tr('واتساب')}
                                 </a>
                             )}
                             {lead.est_value ? (
@@ -417,7 +418,7 @@ function LeadDetail({ id, onBack }: { id: number; onBack: () => void }) {
                                 className="tap mt-3 inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700"
                             >
                                 <UserPlus className="size-4" />
-                                فتح العميل المسجّل
+                                {tr('فتح العميل المسجّل')}
                             </Link>
                         )}
 
@@ -426,12 +427,12 @@ function LeadDetail({ id, onBack }: { id: number; onBack: () => void }) {
                             <div className="mt-4 flex flex-wrap gap-2 border-t border-navy-100 pt-3">
                                 {lead.status === 'new' && (
                                     <StageButton onClick={() => move('contacted')} disabled={changeStatus.isPending}>
-                                        تم التواصل
+                                        {tr('تم التواصل')}
                                     </StageButton>
                                 )}
                                 {lead.status !== 'qualified' && (
                                     <StageButton onClick={() => move('qualified')} disabled={changeStatus.isPending}>
-                                        مؤهَّل
+                                        {tr('مؤهَّل')}
                                     </StageButton>
                                 )}
                                 <button
@@ -440,14 +441,14 @@ function LeadDetail({ id, onBack }: { id: number; onBack: () => void }) {
                                     className="tap inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50"
                                 >
                                     <Check className="size-3.5" />
-                                    كسب وتحويل
+                                    {tr('كسب وتحويل')}
                                 </button>
                                 <button
                                     onClick={() => move('lost')}
                                     disabled={changeStatus.isPending}
                                     className="tap rounded-lg bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700 disabled:opacity-50"
                                 >
-                                    خسارة
+                                    {tr('خسارة')}
                                 </button>
                             </div>
                         )}
@@ -523,7 +524,7 @@ function LeadForm({
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={save.isPending}
@@ -550,7 +551,7 @@ function LeadForm({
                             }
                         }}
                     >
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }

@@ -1,4 +1,5 @@
 import { Camera, Save, X } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useRef, useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
@@ -67,10 +68,10 @@ export function CustodyExpenseModal({
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={spend.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button icon={Save} loading={spend.isPending} onClick={handleSave}>
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }

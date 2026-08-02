@@ -1,4 +1,5 @@
 import { Stamp, Trash2, Upload } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useRef } from 'react'
 import { useToast } from '@/components/Toast'
 import { Button } from '@/components/ui'
@@ -84,7 +85,7 @@ export function StampSetting() {
                             className="tap inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[11px] font-bold text-red-600 transition hover:bg-red-50"
                         >
                             <Trash2 className="size-3.5" />
-                            حذف
+                            {tr('حذف')}
                         </button>
                     )}
                 </div>

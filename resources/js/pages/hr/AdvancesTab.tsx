@@ -1,4 +1,5 @@
 import { HandCoins, Plus } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
@@ -16,7 +17,7 @@ export function AdvancesTab() {
         <>
             <div className="mb-4 flex justify-end">
                 <Button icon={Plus} onClick={() => setCreating(true)}>
-                    صرف سلفة
+                    {tr('صرف سلفة')}
                 </Button>
             </div>
 
@@ -92,7 +93,7 @@ function AdvanceForm({ onClose }: { onClose: () => void }) {
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={save.isPending}
@@ -114,7 +115,7 @@ function AdvanceForm({ onClose }: { onClose: () => void }) {
                             }
                         }}
                     >
-                        صرف
+                        {tr('صرف')}
                     </Button>
                 </>
             }

@@ -1,4 +1,5 @@
 import { Save } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
@@ -159,10 +160,10 @@ export function ItemForm({
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button icon={Save} onClick={handleSave} loading={save.isPending}>
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }
@@ -436,7 +437,7 @@ export function ItemForm({
                 {/* Cost is intentionally absent: it comes from what the goods
                     actually cost on receipt, never from typing. */}
                 <p className="rounded-xl bg-navy-50 p-3 text-xs text-navy-500">
-                    تكلفة الصنف تُحسب تلقائيًا كمتوسط مرجح من أسعار الشراء عند تسجيل الوارد.
+                    {tr('تكلفة الصنف تُحسب تلقائيًا كمتوسط مرجح من أسعار الشراء عند تسجيل الوارد.')}
                 </p>
 
                 <Field label="ملاحظات" error={errors.notes}>
@@ -453,7 +454,7 @@ export function ItemForm({
                         onChange={(event) => set('is_active')(event.target.checked)}
                         className="size-4 rounded border-navy-300"
                     />
-                    صنف نشط
+                    {tr('صنف نشط')}
                 </label>
             </div>
         </Modal>

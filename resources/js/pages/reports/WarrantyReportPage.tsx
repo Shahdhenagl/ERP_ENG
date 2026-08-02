@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { Field, Select, SkeletonCard } from '@/components/ui'
 import { CLAIM_STATUS, formatMoney } from '@/lib/domain'
@@ -42,7 +43,7 @@ export function WarrantyReportPage() {
                     <div>
                         <h2 className="text-sm font-bold text-navy-800">ضمانات قاربت على الانتهاء</h2>
                         <p className="mt-0.5 text-[11px] text-navy-400">
-                            فرصة بيع تمديد قبل أن يشعر العميل بأنه بلا تغطية.
+                            {tr('فرصة بيع تمديد قبل أن يشعر العميل بأنه بلا تغطية.')}
                         </p>
                     </div>
 

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { tr } from '@/lib/i18n'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, Field, Input, Select, Textarea } from '@/components/ui'
@@ -106,7 +107,7 @@ export function BatteryForm({ onClose, stockItem, onSaved }: BatteryFormProps) {
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={save.isPending}
@@ -153,7 +154,7 @@ export function BatteryForm({ onClose, stockItem, onSaved }: BatteryFormProps) {
                             }
                         }}
                     >
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }

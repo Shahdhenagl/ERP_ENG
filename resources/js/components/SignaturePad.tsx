@@ -1,4 +1,5 @@
 import { Eraser } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useEffect, useRef, useState } from 'react'
 
 interface SignaturePadProps {
@@ -101,7 +102,7 @@ export function SignaturePad({ onChange }: SignaturePadProps) {
 
                 {!hasInk && (
                     <p className="pointer-events-none absolute inset-0 grid place-items-center text-sm text-navy-300">
-                        وقّع هنا بإصبعك
+                        {tr('وقّع هنا بإصبعك')}
                     </p>
                 )}
             </div>
@@ -113,7 +114,7 @@ export function SignaturePad({ onChange }: SignaturePadProps) {
                     className="btn-ghost mt-2 text-xs"
                 >
                     <Eraser className="size-3.5" />
-                    مسح التوقيع
+                    {tr('مسح التوقيع')}
                 </button>
             )}
         </div>

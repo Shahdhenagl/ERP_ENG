@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
 import { Outlet, useOutletContext } from 'react-router-dom'
 import { PeriodPicker, usePeriod, type PeriodState } from '@/components/PeriodPicker'
@@ -135,11 +136,11 @@ function Notice({
                     )}
                     {!balanced && (
                         <p className="font-bold text-amber-900">
-                            الميزانية غير متوازنة — راجع القيود اليدوية.
+                            {tr('الميزانية غير متوازنة — راجع القيود اليدوية.')}
                         </p>
                     )}
                     <p className="mt-0.5 text-[11px] text-amber-700">
-                        التقارير أدناه تقرأ من دفتر اليومية، فقد تكون ناقصة حتى يتم الترحيل.
+                        {tr('التقارير أدناه تقرأ من دفتر اليومية، فقد تكون ناقصة حتى يتم الترحيل.')}
                     </p>
                 </div>
             </div>
@@ -158,7 +159,7 @@ function Notice({
                         }
                     }}
                 >
-                    ترحيل الآن
+                    {tr('ترحيل الآن')}
                 </Button>
             )}
         </div>

@@ -1,4 +1,5 @@
 import { Pencil, Plus, Star, Trash2, Warehouse as WarehouseIcon } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { ConfirmDialog, Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
@@ -37,7 +38,7 @@ export function WarehousesPage() {
                         setFormOpen(true)
                     }}
                 >
-                    مخزن جديد
+                    {tr('مخزن جديد')}
                 </Button>
             </div>
 
@@ -85,7 +86,7 @@ export function WarehousesPage() {
                                             setFormOpen(true)
                                         }}
                                     >
-                                        تعديل
+                                        {tr('تعديل')}
                                     </Button>
 
                                     {!warehouse.is_default && (
@@ -95,7 +96,7 @@ export function WarehousesPage() {
                                             className="text-xs text-red-600"
                                             onClick={() => setDeleting(warehouse)}
                                         >
-                                            حذف
+                                            {tr('حذف')}
                                         </Button>
                                     )}
                                 </div>
@@ -109,7 +110,7 @@ export function WarehousesPage() {
                 <section className="mt-6">
                     <h2 className="mb-2 text-sm font-bold text-navy-700">عهد الفنيين</h2>
                     <p className="mb-2 text-xs text-navy-400">
-                        تُملأ بتسليم العهدة وتُفرَّغ بصرف القطع على المهام — لا تُحرَّر يدويًا.
+                        {tr('تُملأ بتسليم العهدة وتُفرَّغ بصرف القطع على المهام — لا تُحرَّر يدويًا.')}
                     </p>
 
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -188,7 +189,7 @@ function StoreForm({
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={save.isPending}
@@ -210,7 +211,7 @@ function StoreForm({
                             }
                         }}
                     >
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }
@@ -241,9 +242,9 @@ function StoreForm({
                             className="mt-0.5 size-4 rounded border-navy-300"
                         />
                         <span>
-                            اجعله المخزن الافتراضي
+                            {tr('اجعله المخزن الافتراضي')}
                             <span className="block text-xs font-normal text-navy-400">
-                                الوارد يدخل إليه ويُصرف منه ما لم يُحدَّد غير ذلك
+                                {tr('الوارد يدخل إليه ويُصرف منه ما لم يُحدَّد غير ذلك')}
                             </span>
                         </span>
                     </label>

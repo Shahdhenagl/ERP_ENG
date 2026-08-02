@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { BellOff, BellRing, CheckCheck, Inbox } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -61,7 +62,7 @@ export function NotificationPanel({ open, onClose }: { open: boolean; onClose: (
                         loading={markAllRead.isPending}
                         onClick={() => markAllRead.mutate()}
                     >
-                        تعليم الكل كمقروء
+                        {tr('تعليم الكل كمقروء')}
                     </Button>
                 )
             }
@@ -85,7 +86,7 @@ export function NotificationPanel({ open, onClose }: { open: boolean; onClose: (
                     className="tap mb-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-navy-50 py-2 text-[11px] font-bold text-navy-500 transition hover:bg-navy-100"
                 >
                     <BellRing className="size-3.5" />
-                    جرّب إشعارًا على هذا الجهاز
+                    {tr('جرّب إشعارًا على هذا الجهاز')}
                 </button>
             )}
 
@@ -109,13 +110,13 @@ export function NotificationPanel({ open, onClose }: { open: boolean; onClose: (
                                     loading={enabling}
                                     onClick={handleEnablePush}
                                 >
-                                    تفعيل الآن
+                                    {tr('تفعيل الآن')}
                                 </Button>
                             )}
                             {permission === 'denied' && (
                                 <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-red-600">
                                     <BellOff className="size-3.5" />
-                                    الإشعارات محظورة — فعّلها من إعدادات المتصفح.
+                                    {tr('الإشعارات محظورة — فعّلها من إعدادات المتصفح.')}
                                 </p>
                             )}
                         </div>

@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { Check, FileText, Plus, Trash2, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Modal } from '@/components/Modal'
@@ -73,7 +74,7 @@ export function SupplierQuotesPage() {
                 subtitle="سجّل عروض الأسعار وقارنها واعتمد الأفضل"
                 actions={
                     <Button icon={Plus} onClick={() => setCreating(true)}>
-                        عرض جديد
+                        {tr('عرض جديد')}
                     </Button>
                 }
             />
@@ -179,7 +180,7 @@ function QuoteRow({ quote, best }: { quote: SupplierQuote; best?: boolean }) {
                             className="tap inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700"
                         >
                             <Check className="size-3.5" />
-                            اعتماد وإنشاء أمر
+                            {tr('اعتماد وإنشاء أمر')}
                         </button>
                         <button
                             onClick={() => act('reject')}
@@ -187,7 +188,7 @@ function QuoteRow({ quote, best }: { quote: SupplierQuote; best?: boolean }) {
                             className="tap inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700"
                         >
                             <X className="size-3.5" />
-                            رفض
+                            {tr('رفض')}
                         </button>
                     </div>
                 )}
@@ -293,7 +294,7 @@ function QuoteForm({ onClose }: { onClose: () => void }) {
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={save.isPending}
@@ -325,7 +326,7 @@ function QuoteForm({ onClose }: { onClose: () => void }) {
                             }
                         }}
                     >
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }
@@ -438,7 +439,7 @@ function QuoteForm({ onClose }: { onClose: () => void }) {
                         className="tap mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-brand-600"
                     >
                         <Plus className="size-3.5" />
-                        إضافة صنف
+                        {tr('إضافة صنف')}
                     </button>
                     {errors.lines && <p className="mt-1 text-xs text-red-600">{errors.lines}</p>}
                 </div>

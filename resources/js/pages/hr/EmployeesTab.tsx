@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { Pencil, Plus, Search, Trash2, UserRound } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Modal } from '@/components/Modal'
@@ -70,7 +71,7 @@ export function EmployeesTab() {
                     />
                 </div>
                 <Button icon={Plus} onClick={() => setEditing(null)}>
-                    موظف جديد
+                    {tr('موظف جديد')}
                 </Button>
             </div>
 
@@ -183,7 +184,7 @@ function EmployeeProfile({
             size="lg"
             footer={
                 <Button variant="secondary" icon={Pencil} onClick={onEdit}>
-                    تعديل البيانات
+                    {tr('تعديل البيانات')}
                 </Button>
             }
         >
@@ -421,7 +422,7 @@ function EmployeeForm({ employee, onClose }: { employee: Employee | null; onClos
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={save.isPending}
@@ -444,7 +445,7 @@ function EmployeeForm({ employee, onClose }: { employee: Employee | null; onClos
                             }
                         }}
                     >
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }
@@ -538,7 +539,7 @@ function EmployeeForm({ employee, onClose }: { employee: Employee | null; onClos
                             onClick={() => setAllowances((a) => [...a, { name: '', amount: 0 }])}
                             className="tap rounded-lg bg-navy-100 px-3 py-1.5 text-xs font-bold text-navy-700"
                         >
-                            إضافة بدل
+                            {tr('إضافة بدل')}
                         </button>
                     </div>
                     <div className="grid gap-2 sm:grid-cols-2">

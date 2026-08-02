@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { RotateCcw } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Modal } from '@/components/Modal'
@@ -53,7 +54,7 @@ export function PermissionMatrix({ user, onClose }: { user: User; onClose: () =>
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={save.isPending}
@@ -67,7 +68,7 @@ export function PermissionMatrix({ user, onClose }: { user: User; onClose: () =>
                             }
                         }}
                     >
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }
@@ -93,7 +94,7 @@ export function PermissionMatrix({ user, onClose }: { user: User; onClose: () =>
                         className="tap inline-flex items-center gap-1.5 rounded-lg bg-surface px-3 py-1.5 text-[11px] font-bold text-navy-600"
                     >
                         <RotateCcw className="size-3.5" />
-                        إرجاع لصلاحيات الدور
+                        {tr('إرجاع لصلاحيات الدور')}
                     </button>
                 </div>
 

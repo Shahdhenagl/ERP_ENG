@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { FileWarning, Printer, ShieldCheck } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { CLAIM_STATUS, WARRANTY_STATUS } from '@/lib/domain'
@@ -40,7 +41,7 @@ export function DeviceWarrantyBlock({ asset }: { asset: Asset }) {
                         </span>
                     ) : (
                         <span className="badge mr-auto bg-slate-100 text-slate-600 ring-1 ring-slate-200">
-                            بدون تغطية سارية
+                            {tr('بدون تغطية سارية')}
                         </span>
                     )}
                 </div>
@@ -83,7 +84,7 @@ export function DeviceWarrantyBlock({ asset }: { asset: Asset }) {
                                         className="tap inline-flex items-center gap-1.5 rounded-lg bg-surface px-3 py-1.5 text-xs font-bold text-navy-700"
                                     >
                                         <Printer className="size-3.5" />
-                                        شهادة
+                                        {tr('شهادة')}
                                     </Link>
                                 </div>
                             )

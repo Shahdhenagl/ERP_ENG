@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { Plus, RotateCcw, Save, Trash2 } from 'lucide-react'
 import { Fragment, useEffect, useState } from 'react'
 import { CustomerSitePicker } from '@/components/CustomerSitePicker'
@@ -157,10 +158,10 @@ export function QuotationForm({
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button icon={Save} onClick={handleSave} loading={save.isPending}>
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }
@@ -393,12 +394,12 @@ export function QuotationForm({
                             className="tap inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[11px] font-bold text-navy-500 transition hover:bg-navy-50"
                         >
                             <RotateCcw className="size-3.5" />
-                            الشروط الافتراضية
+                            {tr('الشروط الافتراضية')}
                         </button>
                     </div>
 
                     <p className="mb-2 text-[11px] leading-relaxed text-navy-400">
-                        تظهر أسفل العرض المطبوع. الشرط بلا قيمة يُطبع سطرًا منقّطًا يُملأ بخط اليد.
+                        {tr('تظهر أسفل العرض المطبوع. الشرط بلا قيمة يُطبع سطرًا منقّطًا يُملأ بخط اليد.')}
                     </p>
 
                     <div className="space-y-2">
@@ -455,7 +456,7 @@ export function QuotationForm({
                         className="tap mt-2 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-bold text-brand-600 transition hover:bg-brand-50"
                     >
                         <Plus className="size-4" />
-                        إضافة شرط
+                        {tr('إضافة شرط')}
                     </button>
                 </div>
 

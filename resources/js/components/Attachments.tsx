@@ -1,4 +1,5 @@
 import { FileText, Loader2, Paperclip, Trash2, Upload } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useRef, useState } from 'react'
 import { useToast } from '@/components/Toast'
 import { errorMessage } from '@/lib/api'
@@ -101,7 +102,7 @@ export function Attachments({
                             : 'border-navy-200 text-navy-400 hover:bg-navy-50')
                     }
                 >
-                    اسحب الصور أو الملفات هنا، أو اضغط للاختيار — صور أو PDF حتى 10MB
+                    {tr('اسحب الصور أو الملفات هنا، أو اضغط للاختيار — صور أو PDF حتى 10MB')}
                 </div>
             )}
 

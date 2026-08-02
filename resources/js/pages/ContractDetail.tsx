@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import {
     ArrowRight,
     Ban,
@@ -89,7 +90,7 @@ export function ContractDetail() {
             <div className="mb-4 flex items-center justify-between gap-2">
                 <Link to={path('/contracts')} className="btn btn-ghost tap -mr-2">
                     <ArrowRight className="size-4" />
-                    رجوع
+                    {tr('رجوع')}
                 </Link>
 
                 <div className="flex gap-2">
@@ -99,10 +100,10 @@ export function ContractDetail() {
                         className="btn-secondary text-xs"
                     >
                         <Printer className="size-4" />
-                        طباعة
+                        {tr('طباعة')}
                     </Link>
                     <Button variant="secondary" icon={Pencil} onClick={() => setEditOpen(true)}>
-                        تعديل
+                        {tr('تعديل')}
                     </Button>
                 </div>
             </div>
@@ -149,7 +150,7 @@ export function ContractDetail() {
                                     void run('activate', 'تم تفعيل العقد وجدولة زياراته.', 'تعذّر تفعيل العقد.')
                                 }
                             >
-                                تفعيل وجدولة الزيارات
+                                {tr('تفعيل وجدولة الزيارات')}
                             </Button>
                         )}
 
@@ -162,7 +163,7 @@ export function ContractDetail() {
                                     void run('materialise', 'تم تحديث أوامر الشغل المستحقة.', 'تعذّر التحديث.')
                                 }
                             >
-                                توليد أوامر الشغل المستحقة
+                                {tr('توليد أوامر الشغل المستحقة')}
                             </Button>
                         )}
 
@@ -175,7 +176,7 @@ export function ContractDetail() {
                                     icon={CalendarPlus}
                                     onClick={() => setRenewing(true)}
                                 >
-                                    تجديد العقد
+                                    {tr('تجديد العقد')}
                                 </Button>
                             )}
 
@@ -185,7 +186,7 @@ export function ContractDetail() {
                             className="text-red-600"
                             onClick={() => setCancelling(true)}
                         >
-                            إلغاء العقد
+                            {tr('إلغاء العقد')}
                         </Button>
                     </div>
 
@@ -219,7 +220,7 @@ export function ContractDetail() {
 
                         {visits.length === 0 ? (
                             <p className="py-6 text-center text-sm text-navy-400">
-                                لم تُجدول زيارات بعد — فعّل العقد لتوليد خطة السنة.
+                                {tr('لم تُجدول زيارات بعد — فعّل العقد لتوليد خطة السنة.')}
                             </p>
                         ) : (
                             <ul className="space-y-2">
@@ -241,7 +242,7 @@ export function ContractDetail() {
 
                         {!contract.assets?.length ? (
                             <p className="text-sm text-navy-500">
-                                العقد يغطي كل أجهزة العميل، بما فيها ما يُضاف لاحقًا.
+                                {tr('العقد يغطي كل أجهزة العميل، بما فيها ما يُضاف لاحقًا.')}
                             </p>
                         ) : (
                             <ul className="space-y-2">
@@ -315,7 +316,7 @@ export function ContractDetail() {
                         </dl>
 
                         <p className="mt-4 border-t border-navy-100 pt-3 text-[11px] leading-relaxed text-navy-400">
-                            المدة تُحسب بالساعات المتواصلة، بلا استثناء للعطلات أو خارج الدوام.
+                            {tr('المدة تُحسب بالساعات المتواصلة، بلا استثناء للعطلات أو خارج الدوام.')}
                         </p>
                     </section>
 
@@ -407,7 +408,7 @@ function VisitRow({
                 so no work order is cut for it until the money is in. */}
             {held && !visit.task_id && (
                 <span className="badge shrink-0 bg-amber-50 text-amber-700 ring-1 ring-amber-200">
-                    محجوزة — بانتظار التحصيل
+                    {tr('محجوزة — بانتظار التحصيل')}
                 </span>
             )}
 
@@ -560,7 +561,7 @@ function PaymentSchedule({ contract }: { contract: Contract }) {
                             {payment.status === 'collected' ? (
                                 <span className="badge shrink-0 bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">
                                     <CircleCheck className="size-3" />
-                                    محصّلة
+                                    {tr('محصّلة')}
                                 </span>
                             ) : (
                                 <Button
@@ -568,7 +569,7 @@ function PaymentSchedule({ contract }: { contract: Contract }) {
                                     className="shrink-0 text-xs"
                                     onClick={() => setCollecting(payment)}
                                 >
-                                    تحصيل
+                                    {tr('تحصيل')}
                                 </Button>
                             )}
                         </li>
@@ -615,7 +616,7 @@ function CollectDialog({
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={collect.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         icon={Coins}
@@ -636,7 +637,7 @@ function CollectDialog({
                             }
                         }}
                     >
-                        تأكيد التحصيل
+                        {tr('تأكيد التحصيل')}
                     </Button>
                 </>
             }
@@ -672,7 +673,7 @@ function CollectDialog({
                 </Field>
 
                 <p className="rounded-xl bg-navy-50 p-3 text-[11px] text-navy-500">
-                    يصدر سند قبض وفاتورة بقيمة الدفعة، وإذا كانت مرتبطة بزيارة يُرفع أمر شغلها للفنيين.
+                    {tr('يصدر سند قبض وفاتورة بقيمة الدفعة، وإذا كانت مرتبطة بزيارة يُرفع أمر شغلها للفنيين.')}
                 </p>
             </div>
         </Modal>
@@ -709,7 +710,7 @@ function RenewDialog({ contract, onClose }: { contract: Contract; onClose: () =>
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={renew.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={renew.isPending}
@@ -731,7 +732,7 @@ function RenewDialog({ contract, onClose }: { contract: Contract; onClose: () =>
                             }
                         }}
                     >
-                        تجديد
+                        {tr('تجديد')}
                     </Button>
                 </>
             }
@@ -776,7 +777,7 @@ function RenewDialog({ contract, onClose }: { contract: Contract; onClose: () =>
                 </div>
 
                 <p className="rounded-xl bg-navy-50 p-3 text-[11px] text-navy-500">
-                    نفس الأجهزة تنتقل للعقد الجديد، والعقد الحالي يبقى كما هو سجلًا لما تم تنفيذه.
+                    {tr('نفس الأجهزة تنتقل للعقد الجديد، والعقد الحالي يبقى كما هو سجلًا لما تم تنفيذه.')}
                 </p>
             </div>
         </Modal>

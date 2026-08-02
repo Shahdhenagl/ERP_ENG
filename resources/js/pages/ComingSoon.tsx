@@ -1,4 +1,5 @@
 import { Construction } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useLocation } from 'react-router-dom'
 import { useArea } from '@/lib/nav'
 import { menuLabelForPath } from '@/lib/menu'
@@ -39,7 +40,7 @@ export function ComingSoon() {
                 </p>
 
                 <span className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
-                    قريبًا
+                    {tr('قريبًا')}
                 </span>
             </div>
         </div>

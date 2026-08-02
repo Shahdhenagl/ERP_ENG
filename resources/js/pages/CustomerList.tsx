@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import {
     Building2,
     ChevronDown,
@@ -134,7 +135,7 @@ export function CustomerList() {
                             }}
                         />
                         <Button icon={Plus} onClick={openNew}>
-                            عميل جديد
+                            {tr('عميل جديد')}
                         </Button>
                     </>
                 }
@@ -264,7 +265,7 @@ export function CustomerList() {
                             onClick={() => setPicked([])}
                             className="tap rounded-lg px-2 py-1 text-xs font-bold text-navy-500 transition hover:bg-surface"
                         >
-                            إلغاء التحديد
+                            {tr('إلغاء التحديد')}
                         </button>
                     </div>
                 </div>
@@ -285,7 +286,7 @@ export function CustomerList() {
                     description="أضف أول عميل لتتمكن من إنشاء المهام."
                     action={
                         <Button icon={Plus} onClick={openNew}>
-                            إضافة عميل
+                            {tr('إضافة عميل')}
                         </Button>
                     }
                 />
@@ -457,7 +458,7 @@ export function CustomerList() {
                             <div className="mt-3 grid grid-cols-3 gap-1.5">
                                 <a href={telLink(customer.phone)} className="btn-secondary py-2 text-xs">
                                     <Phone className="size-3.5" />
-                                    اتصال
+                                    {tr('اتصال')}
                                 </a>
 
                                 <a
@@ -467,7 +468,7 @@ export function CustomerList() {
                                     className={`btn-whatsapp py-2 text-xs ${!customer.whatsapp_link ? 'pointer-events-none opacity-40' : ''}`}
                                 >
                                     <MessageCircle className="size-3.5" />
-                                    واتساب
+                                    {tr('واتساب')}
                                 </a>
 
                                 <a
@@ -477,7 +478,7 @@ export function CustomerList() {
                                     className={`btn-secondary py-2 text-xs ${!customer.maps_url ? 'pointer-events-none opacity-40' : ''}`}
                                 >
                                     <MapPin className="size-3.5" />
-                                    الخريطة
+                                    {tr('الخريطة')}
                                 </a>
                             </div>
 
@@ -573,7 +574,7 @@ function BranchStrip({
             >
                 <span className="flex items-center gap-1.5">
                     <Store className="size-3.5" />
-                    الفروع
+                    {tr('الفروع')}
                 </span>
                 <ChevronDown
                     className={clsx('size-4 transition-transform', open && 'rotate-180')}
@@ -654,7 +655,7 @@ function BranchStrip({
                             onAdd()
                         }}
                     >
-                        إضافة فرع
+                        {tr('إضافة فرع')}
                     </Button>
                 </div>
             )}

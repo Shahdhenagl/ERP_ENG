@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import { Children, cloneElement, isValidElement } from 'react'
-import { useT } from '@/lib/i18n'
+import { tr, useT } from '@/lib/i18n'
 import { Loader2, type LucideIcon } from 'lucide-react'
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
 
@@ -190,7 +190,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
             <p className="text-sm font-medium text-red-700">{message}</p>
             {onRetry && (
                 <Button variant="secondary" className="mt-4" onClick={onRetry}>
-                    إعادة المحاولة
+                    {tr('إعادة المحاولة')}
                 </Button>
             )}
         </div>

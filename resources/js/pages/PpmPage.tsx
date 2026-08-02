@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { CalendarClock, ExternalLink, PlayCircle } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -63,7 +64,7 @@ export function PpmPage() {
                             }
                         }}
                     >
-                        إصدار الأوامر المستحقة
+                        {tr('إصدار الأوامر المستحقة')}
                     </Button>
                 }
             />

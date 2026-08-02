@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { Check, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
@@ -25,7 +26,7 @@ export function LeadFollowUps({ lead }: { lead: Lead }) {
             <div className="mb-3 flex items-center justify-between">
                 <h3 className="font-bold text-navy-900">المتابعات</h3>
                 <Button variant="secondary" icon={Plus} onClick={() => setAdding(true)}>
-                    متابعة
+                    {tr('متابعة')}
                 </Button>
             </div>
 
@@ -129,7 +130,7 @@ export function FollowUpForm({
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={save.isPending}
@@ -151,7 +152,7 @@ export function FollowUpForm({
                             }
                         }}
                     >
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }

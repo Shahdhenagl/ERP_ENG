@@ -1,4 +1,5 @@
 import { Download, Table2, Upload } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useEffect, useState } from 'react'
 import { useToast } from '@/components/Toast'
 import { Button, Field, Input, Select, SkeletonCard } from '@/components/ui'
@@ -57,7 +58,7 @@ export function CustomExportPage() {
                 <div>
                     <h2 className="text-sm font-bold text-navy-900">تصدير بيانات خام</h2>
                     <p className="mt-0.5 text-xs leading-relaxed text-navy-500">
-                        اختر جدولًا وفترة زمنية، واحصل على السجلات نفسها كملف Excel لتحليلها كما تشاء.
+                        {tr('اختر جدولًا وفترة زمنية، واحصل على السجلات نفسها كملف Excel لتحليلها كما تشاء.')}
                     </p>
                 </div>
             </div>
@@ -82,7 +83,7 @@ export function CustomExportPage() {
 
             <div className="mt-5 flex justify-end">
                 <Button icon={Download} loading={exporting} disabled={!dataset} onClick={run}>
-                    تصدير Excel
+                    {tr('تصدير Excel')}
                 </Button>
             </div>
         </div>
@@ -117,7 +118,7 @@ function ImportCard() {
                 <div>
                     <h2 className="text-sm font-bold text-navy-900">استيراد بيانات</h2>
                     <p className="mt-0.5 text-xs leading-relaxed text-navy-500">
-                        نزّل القالب، املأه، وارفعه. الصفوف المطابقة تُحدَّث بدل ما تتكرر.
+                        {tr('نزّل القالب، املأه، وارفعه. الصفوف المطابقة تُحدَّث بدل ما تتكرر.')}
                     </p>
                 </div>
             </div>
@@ -157,7 +158,7 @@ function ImportCard() {
                     onClick={() => entity && void downloadImportTemplate(entity)}
                     className="tap text-xs font-bold text-brand-600"
                 >
-                    تنزيل القالب
+                    {tr('تنزيل القالب')}
                 </button>
 
                 <Button
@@ -175,7 +176,7 @@ function ImportCard() {
                         }
                     }}
                 >
-                    استيراد
+                    {tr('استيراد')}
                 </Button>
             </div>
 

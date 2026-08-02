@@ -1,4 +1,5 @@
 import { ListChecks, Plus, Trash2 } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { useToast } from '@/components/Toast'
 import { Button, Input, SkeletonCard } from '@/components/ui'
@@ -34,7 +35,7 @@ export function ChecklistEditor() {
                 <h2 className="text-sm font-bold text-navy-800">قائمة الفحص الدوري</h2>
             </div>
             <p className="mb-4 text-[11px] text-navy-400">
-                بنود الفحص التي يعلّم عليها الفني في كل زيارة صيانة دورية.
+                {tr('بنود الفحص التي يعلّم عليها الفني في كل زيارة صيانة دورية.')}
             </p>
 
             {isLoading ? (
@@ -69,7 +70,7 @@ export function ChecklistEditor() {
                             ))
                         ) : (
                             <p className="rounded-xl bg-navy-50 px-3 py-3 text-center text-xs text-navy-400">
-                                لا توجد بنود بعد. أضف أول بند فحص.
+                                {tr('لا توجد بنود بعد. أضف أول بند فحص.')}
                             </p>
                         )}
                     </div>
@@ -83,7 +84,7 @@ export function ChecklistEditor() {
                             className="flex-1"
                         />
                         <Button icon={Plus} loading={save.isPending} onClick={add}>
-                            إضافة
+                            {tr('إضافة')}
                         </Button>
                     </div>
                 </>

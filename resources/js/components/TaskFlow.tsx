@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import {
     Camera,
     Check,
@@ -195,7 +196,7 @@ export function SiteCard({ task }: { task: Task }) {
                             className="tap flex items-center justify-center gap-2 py-3 text-xs font-bold transition hover:bg-white/10"
                         >
                             <Navigation className="size-4" />
-                            الاتجاهات
+                            {tr('الاتجاهات')}
                         </a>
                     )}
                     {phone && (
@@ -204,7 +205,7 @@ export function SiteCard({ task }: { task: Task }) {
                             className="tap flex items-center justify-center gap-2 py-3 text-xs font-bold transition hover:bg-white/10"
                         >
                             <Phone className="size-4" />
-                            اتصال
+                            {tr('اتصال')}
                         </a>
                     )}
                 </div>

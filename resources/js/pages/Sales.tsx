@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import {
     Ban,
     BadgeCheck,
@@ -106,7 +107,7 @@ function QuotationsTab() {
                             setFormOpen(true)
                         }}
                     >
-                        عرض سعر جديد
+                        {tr('عرض سعر جديد')}
                     </Button>
 
                     <button
@@ -118,7 +119,7 @@ function QuotationsTab() {
                                 : 'bg-surface text-navy-500 ring-navy-200 hover:bg-navy-50',
                         )}
                     >
-                        بانتظار رد العميل
+                        {tr('بانتظار رد العميل')}
                     </button>
                 </div>
 
@@ -345,7 +346,7 @@ function QuickLine({ quotation }: { quotation: Quotation }) {
                 className="tap flex w-full items-center justify-center gap-1.5 border-t border-navy-100 py-2.5 text-xs font-bold text-brand-600 transition hover:bg-brand-50"
             >
                 <Plus className="size-4" />
-                إضافة بند حر
+                {tr('إضافة بند حر')}
             </button>
         )
     }
@@ -388,7 +389,7 @@ function QuickLine({ quotation }: { quotation: Quotation }) {
                     disabled={!description.trim()}
                     onClick={add}
                 >
-                    إضافة
+                    {tr('إضافة')}
                 </Button>
 
                 <button
@@ -396,7 +397,7 @@ function QuickLine({ quotation }: { quotation: Quotation }) {
                     onClick={() => setOpen(false)}
                     className="tap rounded-lg px-2 py-1 text-xs font-bold text-navy-500 transition hover:bg-navy-100"
                 >
-                    إلغاء
+                    {tr('إلغاء')}
                 </button>
             </div>
         </div>
@@ -559,7 +560,7 @@ function QuotationDetail({
                             className="btn-secondary text-xs"
                         >
                             <Printer className="size-4" />
-                            طباعة
+                            {tr('طباعة')}
                         </Link>
 
                         {quotation.status === 'draft' && (
@@ -570,7 +571,7 @@ function QuotationDetail({
                                     className="text-xs"
                                     onClick={() => onEdit(quotation)}
                                 >
-                                    تعديل
+                                    {tr('تعديل')}
                                 </Button>
                                 {quotation.is_approved ? (
                                     <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-700">
@@ -588,7 +589,7 @@ function QuotationDetail({
                                                 loading={action.isPending}
                                                 onClick={approve}
                                             >
-                                                اعتماد
+                                                {tr('اعتماد')}
                                             </Button>
                                             <Button
                                                 variant="secondary"
@@ -596,12 +597,12 @@ function QuotationDetail({
                                                 className="text-xs text-red-600"
                                                 onClick={() => setReasonFor('reject-approval')}
                                             >
-                                                إرجاع للتعديل
+                                                {tr('إرجاع للتعديل')}
                                             </Button>
                                         </>
                                     ) : (
                                         <span className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-700">
-                                            بانتظار الاعتماد
+                                            {tr('بانتظار الاعتماد')}
                                         </span>
                                     )
                                 ) : (
@@ -619,7 +620,7 @@ function QuotationDetail({
                                             }
                                         }}
                                     >
-                                        تقديم للاعتماد
+                                        {tr('تقديم للاعتماد')}
                                     </Button>
                                 )}
                                 {!quotation.is_pending_approval && (
@@ -629,7 +630,7 @@ function QuotationDetail({
                                     loading={action.isPending}
                                     onClick={() => run('send', 'تم إرسال العرض.')}
                                 >
-                                    إرسال للعميل
+                                    {tr('إرسال للعميل')}
                                 </Button>
                                 )}
                                 <Button
@@ -639,7 +640,7 @@ function QuotationDetail({
                                     loading={remove.isPending}
                                     onClick={handleDelete}
                                 >
-                                    حذف
+                                    {tr('حذف')}
                                 </Button>
                             </>
                         )}
@@ -652,7 +653,7 @@ function QuotationDetail({
                                     loading={action.isPending}
                                     onClick={() => run('accept', 'تم قبول العرض وتحويله إلى أمر بيع.')}
                                 >
-                                    العميل وافق
+                                    {tr('العميل وافق')}
                                 </Button>
                                 <Button
                                     variant="secondary"
@@ -660,7 +661,7 @@ function QuotationDetail({
                                     className="text-xs text-red-600"
                                     onClick={() => setReasonFor('reject')}
                                 >
-                                    العميل رفض
+                                    {tr('العميل رفض')}
                                 </Button>
                             </>
                         )}
@@ -672,7 +673,7 @@ function QuotationDetail({
                                 className="text-xs"
                                 onClick={() => setReasonFor('cancel')}
                             >
-                                إلغاء
+                                {tr('إلغاء')}
                             </Button>
                         )}
                     </div>
@@ -693,7 +694,7 @@ function QuotationDetail({
                 footer={
                     <>
                         <Button variant="secondary" onClick={() => setReasonFor(null)}>
-                            رجوع
+                            {tr('رجوع')}
                         </Button>
                         <Button
                             variant="danger"
@@ -719,7 +720,7 @@ function QuotationDetail({
                                 }
                             }}
                         >
-                            تأكيد
+                            {tr('تأكيد')}
                         </Button>
                     </>
                 }
@@ -759,7 +760,7 @@ function OrdersTab() {
                             : 'bg-surface text-navy-500 ring-navy-200 hover:bg-navy-50',
                     )}
                 >
-                    لم تتم فوترته
+                    {tr('لم تتم فوترته')}
                 </button>
 
                 <ViewToggle view={view} onChange={setView} className="mr-auto" />
@@ -990,7 +991,7 @@ function OrderDetail({ id, onClose }: { id: number; onClose: () => void }) {
                                     }
                                 }}
                             >
-                                إنشاء فاتورة
+                                {tr('إنشاء فاتورة')}
                             </Button>
                         )}
 
@@ -1003,7 +1004,7 @@ function OrderDetail({ id, onClose }: { id: number; onClose: () => void }) {
                             className="btn-secondary text-xs"
                         >
                             <Printer className="size-4" />
-                            إذن تسليم
+                            {tr('إذن تسليم')}
                         </Link>
 
                         {order.status === 'open' && (
@@ -1020,7 +1021,7 @@ function OrderDetail({ id, onClose }: { id: number; onClose: () => void }) {
                                     }
                                 }}
                             >
-                                تم التسليم
+                                {tr('تم التسليم')}
                             </Button>
                         )}
 
@@ -1031,7 +1032,7 @@ function OrderDetail({ id, onClose }: { id: number; onClose: () => void }) {
                                 className="text-xs text-red-600"
                                 onClick={() => setCancelOpen(true)}
                             >
-                                إلغاء الأمر
+                                {tr('إلغاء الأمر')}
                             </Button>
                         )}
                     </div>
@@ -1052,7 +1053,7 @@ function OrderDetail({ id, onClose }: { id: number; onClose: () => void }) {
                 footer={
                     <>
                         <Button variant="secondary" onClick={() => setCancelOpen(false)}>
-                            رجوع
+                            {tr('رجوع')}
                         </Button>
                         <Button
                             variant="danger"
@@ -1073,7 +1074,7 @@ function OrderDetail({ id, onClose }: { id: number; onClose: () => void }) {
                                 }
                             }}
                         >
-                            تأكيد
+                            {tr('تأكيد')}
                         </Button>
                     </>
                 }

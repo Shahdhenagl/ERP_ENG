@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { KeyRound, Pencil, Plus, Save, Search, Trash2, UserCircle2, Users } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { ConfirmDialog, Modal } from '@/components/Modal'
@@ -52,7 +53,7 @@ export function UserList() {
                             setFormOpen(true)
                         }}
                     >
-                        مستخدم جديد
+                        {tr('مستخدم جديد')}
                     </Button>
                 }
             />
@@ -258,10 +259,10 @@ function UserFormDialog({
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button icon={Save} loading={save.isPending} onClick={handleSave}>
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }
@@ -363,7 +364,7 @@ function UserFormDialog({
                     />
                     <span className="flex items-center gap-2 text-sm font-semibold text-navy-700">
                         <UserCircle2 className="size-4 text-navy-300" />
-                        الحساب نشط ويمكنه تسجيل الدخول
+                        {tr('الحساب نشط ويمكنه تسجيل الدخول')}
                     </span>
                 </label>
             </div>

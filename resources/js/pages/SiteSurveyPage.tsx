@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { BadgeCheck, MapPin, Plus, Printer, Trash2, Zap } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -49,7 +50,7 @@ export function SiteSurveyPage() {
                 subtitle="زيارة الموقع التي يُبنى عليها عرض السعر"
                 actions={
                     <Button icon={Plus} onClick={() => setCreating(true)}>
-                        معاينة جديدة
+                        {tr('معاينة جديدة')}
                     </Button>
                 }
             />
@@ -232,7 +233,7 @@ function SurveyDialog({ survey, onClose }: { survey?: SiteSurvey; onClose: () =>
                                 className="btn-secondary text-xs"
                             >
                                 <Printer className="size-4" />
-                                طباعة
+                                {tr('طباعة')}
                             </Link>
 
                             {!locked && (
@@ -252,7 +253,7 @@ function SurveyDialog({ survey, onClose }: { survey?: SiteSurvey; onClose: () =>
                                             }
                                         }}
                                     >
-                                        اعتماد
+                                        {tr('اعتماد')}
                                     </Button>
                                     <Button
                                         variant="secondary"
@@ -270,7 +271,7 @@ function SurveyDialog({ survey, onClose }: { survey?: SiteSurvey; onClose: () =>
                                             }
                                         }}
                                     >
-                                        حذف
+                                        {tr('حذف')}
                                     </Button>
                                 </>
                             )}
@@ -285,7 +286,7 @@ function SurveyDialog({ survey, onClose }: { survey?: SiteSurvey; onClose: () =>
                         </Button>
                         {!locked && (
                             <Button loading={save.isPending} onClick={submit}>
-                                حفظ
+                                {tr('حفظ')}
                             </Button>
                         )}
                     </div>

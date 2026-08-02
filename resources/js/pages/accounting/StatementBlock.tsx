@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { formatMoney } from '@/lib/domain'
 import type { StatementGroup } from '@/types'
 
@@ -39,7 +40,7 @@ export function StatementBlock({
 
             {groups.length === 0 ? (
                 <p className="px-4 py-6 text-center text-xs text-navy-400">
-                    لا توجد أرصدة في هذا القسم.
+                    {tr('لا توجد أرصدة في هذا القسم.')}
                 </p>
             ) : (
                 <div className="divide-y divide-navy-100">

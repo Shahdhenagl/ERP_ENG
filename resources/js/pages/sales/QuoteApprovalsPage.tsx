@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { BadgeCheck, ClipboardCheck, Eye, ThumbsDown } from 'lucide-react'
 import { useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -85,7 +86,7 @@ export function QuoteApprovalsPage() {
                                             {quote.code}
                                         </span>
                                         <span className="badge bg-amber-50 text-amber-700">
-                                            بانتظار الاعتماد
+                                            {tr('بانتظار الاعتماد')}
                                         </span>
                                     </div>
                                     <p className="mt-1 truncate font-bold text-navy-900">
@@ -112,7 +113,7 @@ export function QuoteApprovalsPage() {
                                     loading={action.isPending}
                                     onClick={() => decide(quote.id, true)}
                                 >
-                                    اعتماد
+                                    {tr('اعتماد')}
                                 </Button>
                                 <Button
                                     variant="secondary"
@@ -120,7 +121,7 @@ export function QuoteApprovalsPage() {
                                     className="text-xs text-red-600"
                                     onClick={() => decide(quote.id, false)}
                                 >
-                                    إعادة للتعديل
+                                    {tr('إعادة للتعديل')}
                                 </Button>
                                 <Link
                                     to={path(`/print/quotations/${quote.id}`)}
@@ -128,7 +129,7 @@ export function QuoteApprovalsPage() {
                                     className="btn-secondary text-xs"
                                 >
                                     <Eye className="size-3.5" />
-                                    معاينة العرض
+                                    {tr('معاينة العرض')}
                                 </Link>
                             </div>
                         </div>

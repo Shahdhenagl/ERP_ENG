@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { Pencil, Plus, ShieldCheck, Trash2, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -45,11 +46,11 @@ export function RolesPage() {
                     <>
                         <Link to={path('/users')} className="btn-secondary text-xs">
                             <Users className="size-4" />
-                            المستخدمون
+                            {tr('المستخدمون')}
                         </Link>
                         <Button onClick={() => setEditing('new')} className="text-xs">
                             <Plus className="size-4" />
-                            دور جديد
+                            {tr('دور جديد')}
                         </Button>
                     </>
                 }
@@ -235,7 +236,7 @@ function RoleEditor({
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
-                        إلغاء
+                        {tr('إلغاء')}
                     </Button>
                     <Button
                         loading={save.isPending}
@@ -270,7 +271,7 @@ function RoleEditor({
                             }
                         }}
                     >
-                        حفظ
+                        {tr('حفظ')}
                     </Button>
                 </>
             }
