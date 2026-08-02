@@ -286,7 +286,9 @@ class QuotationController extends Controller
             'terms' => ['nullable', 'string', 'max:2000'],
             'conditions' => ['nullable', 'array', 'max:12'],
             'conditions.*.label' => ['required', 'string', 'max:60'],
-            'conditions.*.value' => ['required', 'string', 'max:200'],
+            // A condition may be stated with no value: it prints as a dotted
+            // rule for whoever agrees the offer to fill in by hand.
+            'conditions.*.value' => ['nullable', 'string', 'max:200'],
             'notes' => ['nullable', 'string', 'max:2000'],
 
             'lines' => ['required', 'array', 'min:1'],

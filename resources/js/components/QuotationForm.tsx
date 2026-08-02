@@ -1,6 +1,6 @@
 import clsx from 'clsx'
-import { Save, Trash2 } from 'lucide-react'
-import { Fragment, useState } from 'react'
+import { Plus, RotateCcw, Save, Trash2 } from 'lucide-react'
+import { Fragment, useEffect, useState } from 'react'
 import { CustomerSitePicker } from '@/components/CustomerSitePicker'
 import { DiscountField } from '@/components/DiscountField'
 import { LineCell, LineDetailRow, LineItems, LineRow } from '@/components/LineItems'
@@ -8,10 +8,11 @@ import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, Field, Input, Select, Textarea } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
+import { parseConditions, type Condition } from '@/lib/conditions'
 import { DEFAULT_TAX_RATE, formatMoney, formatQty, ITEM_CATEGORY } from '@/lib/domain'
 import { itemSpecRows } from '@/lib/specs'
 import { SpecSheet } from '@/components/SpecSheet'
-import { useItems, useSaveQuotation } from '@/lib/queries'
+import { useItems, useSaveQuotation, useSettings } from '@/lib/queries'
 import type { Quotation } from '@/types'
 
 interface Row {
@@ -50,6 +51,33 @@ export function QuotationForm({
     const [discountPercent, setDiscountPercent] = useState(
         quotation?.discount_percent != null ? String(quotation.discount_percent) : '',
     )
+    const { data: settings } = useSettings()
+
+    // The company set is the starting point, not a permanent answer: an offer
+    // that needs "50% مقدم" says so on the sheet the customer signs, and saying
+    // it here must not rewrite the default for every offer after it.
+    const houseConditions = parseConditions(settings?.quotation_conditions)
+
+    const [conditions, setConditions] = useState<Condition[]>(
+        quotation?.conditions?.length ? quotation.conditions : houseConditions,
+    )
+    const [conditionsTouched, setConditionsTouched] = useState(
+        Boolean(quotation?.conditions?.length),
+    )
+
+    // Settings arrive after the first render, so a new offer opened before they
+    // land would show an empty box and save it as a deliberate blank.
+    useEffect(() => {
+        if (!conditionsTouched && conditions.length === 0 && houseConditions.length > 0) {
+            setConditions(houseConditions)
+        }
+    }, [conditionsTouched, conditions.length, houseConditions])
+
+    const editConditions = (next: Condition[]) => {
+        setConditionsTouched(true)
+        setConditions(next)
+    }
+
     const [terms, setTerms] = useState(quotation?.terms ?? '')
     const [notes, setNotes] = useState(quotation?.notes ?? '')
 
@@ -93,6 +121,14 @@ export function QuotationForm({
                 discount_percent: discountPercent === '' ? null : Number(discountPercent),
                 terms: terms || null,
                 notes: notes || null,
+                // Only what was actually typed. A row with no label is a
+                // half-finished thought, not a condition.
+                conditions: conditions
+                    .filter((condition) => condition.label.trim())
+                    .map((condition) => ({
+                        label: condition.label.trim(),
+                        value: condition.value.trim(),
+                    })),
                 lines: rows
                     .filter((row) => row.description.trim())
                     .map((row) => ({
@@ -162,10 +198,12 @@ export function QuotationForm({
 
                 <LineItems
                     columns={[
-                        { label: 'الصنف', className: 'w-44' },
-                        { label: 'الكود', className: 'w-24' },
-                        { label: 'البيان' },
-                        { label: 'الكمية', className: 'w-24' },
+                        { label: 'الصنف', className: 'w-48' },
+                        { label: 'الكود', className: 'w-20' },
+                        // The one column somebody writes a sentence in, so it
+                        // takes the slack — with a floor, not just no width.
+                        { label: 'البيان', className: 'min-w-[15rem]' },
+                        { label: 'الكمية', className: 'w-20' },
                         { label: 'سعر الوحدة', className: 'w-28' },
                         { label: 'الإجمالي', className: 'w-28' },
                     ]}
@@ -247,7 +285,7 @@ export function QuotationForm({
                                             step="0.001"
                                             value={row.qty}
                                             onChange={(e) => patch(index, 'qty', e.target.value)}
-                                            className="text-center"
+                                            className="px-2 text-center"
                                             dir="ltr"
                                             aria-label="الكمية"
                                         />
@@ -260,7 +298,7 @@ export function QuotationForm({
                                             step="0.01"
                                             value={row.unit_price}
                                             onChange={(e) => patch(index, 'unit_price', e.target.value)}
-                                            className="text-center"
+                                            className="px-2 text-center"
                                             dir="ltr"
                                             aria-label="سعر الوحدة"
                                         />
@@ -343,6 +381,82 @@ export function QuotationForm({
                             className="text-left"
                         />
                     </Field>
+                </div>
+
+                <div>
+                    <div className="mb-1.5 flex items-center justify-between gap-2">
+                        <span className="label mb-0">الشروط والأحكام</span>
+
+                        <button
+                            type="button"
+                            onClick={() => editConditions(houseConditions)}
+                            className="tap inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[11px] font-bold text-navy-500 transition hover:bg-navy-50"
+                        >
+                            <RotateCcw className="size-3.5" />
+                            الشروط الافتراضية
+                        </button>
+                    </div>
+
+                    <p className="mb-2 text-[11px] leading-relaxed text-navy-400">
+                        تظهر أسفل العرض المطبوع. الشرط بلا قيمة يُطبع سطرًا منقّطًا يُملأ بخط اليد.
+                    </p>
+
+                    <div className="space-y-2">
+                        {conditions.map((condition, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                                <Input
+                                    value={condition.label}
+                                    onChange={(e) =>
+                                        editConditions(
+                                            conditions.map((row, i) =>
+                                                i === index ? { ...row, label: e.target.value } : row,
+                                            ),
+                                        )
+                                    }
+                                    placeholder="البند"
+                                    className="w-40 shrink-0"
+                                    aria-label="اسم الشرط"
+                                />
+
+                                <Input
+                                    value={condition.value}
+                                    onChange={(e) =>
+                                        editConditions(
+                                            conditions.map((row, i) =>
+                                                i === index ? { ...row, value: e.target.value } : row,
+                                            ),
+                                        )
+                                    }
+                                    placeholder="اتركه فارغًا ليُملأ بخط اليد"
+                                    aria-label="قيمة الشرط"
+                                />
+
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        editConditions(conditions.filter((_, i) => i !== index))
+                                    }
+                                    className="tap grid shrink-0 place-items-center rounded-lg p-2 text-red-500 transition hover:bg-red-50"
+                                    aria-label="حذف الشرط"
+                                >
+                                    <Trash2 className="size-4" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+
+                    {errors.conditions && (
+                        <p className="mt-1 text-xs font-medium text-red-600">{errors.conditions}</p>
+                    )}
+
+                    <button
+                        type="button"
+                        onClick={() => editConditions([...conditions, { label: '', value: '' }])}
+                        className="tap mt-2 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-bold text-brand-600 transition hover:bg-brand-50"
+                    >
+                        <Plus className="size-4" />
+                        إضافة شرط
+                    </button>
                 </div>
 
                 <Field label="شروط العرض" error={errors.terms} hint="الدفع، التسليم، الضمان">

@@ -136,10 +136,12 @@ export function InvoiceForm({
 
                 <LineItems
                     columns={[
-                        { label: 'الصنف', className: 'w-44' },
-                        { label: 'الكود', className: 'w-24' },
-                        { label: 'البيان' },
-                        { label: 'الكمية', className: 'w-24' },
+                        { label: 'الصنف', className: 'w-48' },
+                        { label: 'الكود', className: 'w-20' },
+                        // The one column somebody writes a sentence in, so it
+                        // takes the slack — with a floor, not just no width.
+                        { label: 'البيان', className: 'min-w-[15rem]' },
+                        { label: 'الكمية', className: 'w-20' },
                         { label: 'سعر الوحدة', className: 'w-28' },
                         { label: 'الإجمالي', className: 'w-28' },
                     ]}
@@ -225,7 +227,7 @@ export function InvoiceForm({
                                             step="0.001"
                                             value={row.qty}
                                             onChange={(event) => patch(index, 'qty', event.target.value)}
-                                            className="text-center"
+                                            className="px-2 text-center"
                                             dir="ltr"
                                             aria-label="الكمية"
                                         />
@@ -240,7 +242,7 @@ export function InvoiceForm({
                                             onChange={(event) =>
                                                 patch(index, 'unit_price', event.target.value)
                                             }
-                                            className="text-center"
+                                            className="px-2 text-center"
                                             dir="ltr"
                                             aria-label="سعر الوحدة"
                                         />

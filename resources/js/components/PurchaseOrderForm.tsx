@@ -177,7 +177,7 @@ export function PurchaseOrderForm({
                                             step="0.001"
                                             value={row.qty}
                                             onChange={(e) => patch(index, 'qty', e.target.value)}
-                                            className="text-center"
+                                            className="px-2 text-center"
                                             dir="ltr"
                                             aria-label="الكمية"
                                         />
@@ -190,7 +190,7 @@ export function PurchaseOrderForm({
                                             step="0.01"
                                             value={row.unit_price}
                                             onChange={(e) => patch(index, 'unit_price', e.target.value)}
-                                            className="text-center"
+                                            className="px-2 text-center"
                                             dir="ltr"
                                             aria-label="سعر الوحدة"
                                         />

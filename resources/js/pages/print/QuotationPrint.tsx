@@ -1,4 +1,5 @@
 import { useParams } from 'react-router-dom'
+import { parseConditions } from '@/lib/conditions'
 import {
     DocumentParty,
     DocumentShell,
@@ -27,9 +28,13 @@ export function QuotationPrint() {
     // The standing conditions, unless this offer states its own. Parsed
     // defensively: a settings string somebody hand-edited must not take the
     // whole document down with it.
-    const conditions = quotation.conditions?.length
-        ? quotation.conditions
-        : parseConditions(settings?.quotation_conditions)
+    // Null means the offer never stated its own — an older quote, from before
+    // they were editable. An empty list is a decision, and stays empty: falling
+    // back there would print conditions the person who cleared them removed.
+    const conditions =
+        quotation.conditions != null
+            ? quotation.conditions
+            : parseConditions(settings?.quotation_conditions)
 
     return (
         <DocumentShell title="عرض سعر" subtitle={quotation.code}>
@@ -128,8 +133,6 @@ export function QuotationPrint() {
                 inWords={quotation.total}
             />
 
-            {/* The conditions the offer closes on, read label-first the way the
-                sheet is scanned: down the right column, then across. */}
             {/* The conditions the offer closes on, in a box beside the
                 signature. A condition with a value states it; one without is a
                 dotted rule, because a quote is often agreed at a desk and the
@@ -178,20 +181,3 @@ export function QuotationPrint() {
     )
 }
 
-/** Settings hold them as JSON text; a bad edit there yields none, not a crash. */
-function parseConditions(raw: string | undefined): Array<{ label: string; value: string }> {
-    if (!raw) return []
-
-    try {
-        const parsed: unknown = JSON.parse(raw)
-
-        return Array.isArray(parsed)
-            ? parsed.filter(
-                  (row): row is { label: string; value: string } =>
-                      Boolean(row) && typeof row === 'object' && 'label' in row && 'value' in row,
-              )
-            : []
-    } catch {
-        return []
-    }
-}
