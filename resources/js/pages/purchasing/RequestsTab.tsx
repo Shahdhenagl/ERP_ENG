@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { tr } from '@/lib/i18n'
 import { Check, ClipboardList, Plus, Send, ShoppingCart, Trash2, X } from 'lucide-react'
 import { useState } from 'react'
@@ -37,6 +38,7 @@ export function RequestsTab() {
     const [deciding, setDeciding] = useState<{ row: PurchaseRequest; approve: boolean } | null>(null)
     const [ordering, setOrdering] = useState<PurchaseRequest | null>(null)
 
+    const [view, setView] = useViewMode('purchase-requests')
     const { data, isLoading } = usePurchaseRequests({
         awaiting: awaiting ? 1 : undefined,
         per_page: 40,
@@ -74,6 +76,10 @@ export function RequestsTab() {
                 )}
             </div>
 
+            <div className="mb-3 flex justify-end">
+                <ViewToggle view={view} onChange={setView} />
+            </div>
+
             {isLoading ? (
                 <SkeletonCard />
             ) : !data?.data.length ? (
@@ -82,6 +88,47 @@ export function RequestsTab() {
                     title="لا توجد طلبات شراء"
                     description="الفني اللي خلصت منه قطعة يقدر يطلبها من هنا، والمدير يعتمدها ويحوّلها لأمر شراء."
                 />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="56rem"
+                    headers={[
+                        { label: 'الكود', className: 'w-28' },
+                        { label: 'مقدّم الطلب', className: 'w-40' },
+                        'السبب',
+                        { label: 'المخزن', className: 'w-32' },
+                        { label: 'مطلوب قبل', className: 'w-32' },
+                        { label: 'الأولوية', className: 'w-24' },
+                        { label: 'الحالة', className: 'w-28' },
+                    ]}
+                >
+                    {data.data.map((row) => (
+                        <tr key={row.id} className="border-t border-navy-100 hover:bg-navy-50/60">
+                            <td className="tabular px-3 py-2.5 font-bold text-brand-600">
+                                {row.code}
+                            </td>
+                            <td className="px-3 py-2.5 font-semibold text-navy-800">
+                                {row.requester ?? '—'}
+                            </td>
+                            <td className="max-w-56 truncate px-3 py-2.5 text-navy-600">
+                                {row.reason ?? '—'}
+                            </td>
+                            <td className="px-3 py-2.5 text-navy-600">{row.warehouse ?? '—'}</td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {row.needed_by ? formatDate(row.needed_by) : '—'}
+                            </td>
+                            <td className="px-3 py-2.5">
+                                <span className={clsx('badge', PRIORITY[row.priority].chip)}>
+                                    {PRIORITY[row.priority].label}
+                                </span>
+                            </td>
+                            <td className="px-3 py-2.5">
+                                <span className={clsx('badge', STATUS_CHIP[row.status])}>
+                                    {row.status_label}
+                                </span>
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
                 <div className="space-y-2">
                     {data.data.map((row) => {

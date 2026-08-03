@@ -2616,4 +2616,6 @@ export const EN: Record<string, string> = {
     الطرف: 'Party',
     الجهة: 'Body',
     'موعد الاستبدال': 'Replacement due',
+    'مقدّم الطلب': 'Requested by',
+    الموضوع: 'Subject',
 }

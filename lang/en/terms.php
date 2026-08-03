@@ -2565,4 +2565,6 @@ return [
     'الطرف' => 'Party',
     'الجهة' => 'Body',
     'موعد الاستبدال' => 'Replacement due',
+    'مقدّم الطلب' => 'Requested by',
+    'الموضوع' => 'Subject',
 ];

@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { CalendarClock, Check } from 'lucide-react'
 import { useState } from 'react'
 import { useToast } from '@/components/Toast'
@@ -14,6 +15,7 @@ export function FollowUpsTab() {
     const complete = useCompleteFollowUp()
     const [dueOnly, setDueOnly] = useState(false)
 
+    const [view, setView] = useViewMode('crm-followups')
     const { data, isLoading } = useFollowUps({
         open: 1,
         due: dueOnly ? 1 : undefined,
@@ -47,6 +49,10 @@ export function FollowUpsTab() {
                 </button>
             </div>
 
+            <div className="mb-3 flex justify-end">
+                <ViewToggle view={view} onChange={setView} />
+            </div>
+
             {isLoading ? (
                 <SkeletonCard />
             ) : !data?.data.length ? (
@@ -55,6 +61,42 @@ export function FollowUpsTab() {
                     title={dueOnly ? 'لا متابعات متأخّرة' : 'لا متابعات مفتوحة'}
                     description="احجز متابعة من صفحة العميل المحتمل لتظهر هنا."
                 />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="52rem"
+                    headers={[
+                        'الموضوع',
+                        'العميل',
+                        { label: 'النوع', className: 'w-28' },
+                        { label: 'الموعد', className: 'w-36' },
+                        { label: 'المسؤول', className: 'w-32' },
+                        { label: 'الحالة', className: 'w-28' },
+                    ]}
+                >
+                    {data.data.map((followUp) => (
+                        <tr
+                            key={followUp.id}
+                            className="border-t border-navy-100 hover:bg-navy-50/60"
+                        >
+                            <td className="px-3 py-2.5 font-semibold text-navy-800">
+                                {followUp.subject ?? '—'}
+                            </td>
+                            <td className="px-3 py-2.5 text-navy-600">
+                                {followUp.subject_code ?? '—'}
+                            </td>
+                            <td className="px-3 py-2.5 text-navy-600">{followUp.type_label}</td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {followUp.due_at ? formatDateTime(followUp.due_at) : '—'}
+                            </td>
+                            <td className="px-3 py-2.5 text-navy-600">{followUp.owner ?? '—'}</td>
+                            <td className="px-3 py-2.5">
+                                <span className={clsx('badge', FOLLOWUP_STATUS[followUp.status])}>
+                                    {followUp.status_label}
+                                </span>
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
                 <div className="space-y-2">
                     {data.data.map((followUp) => (
