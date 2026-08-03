@@ -2560,4 +2560,6 @@ return [
     'لا يوجد عميل بهذا الاسم.' => 'No customer by that name.',
     'لا يوجد فرع بهذا الاسم.' => 'No branch by that name.',
     'الأيام' => 'Days',
+    'العطل' => 'Fault',
+    'تاريخ البلاغ' => 'Reported on',
 ];

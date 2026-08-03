@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { tr } from '@/lib/i18n'
 import { CalendarPlus, Printer, Search, ShieldCheck, ShieldX } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
@@ -28,6 +29,7 @@ export function WarrantyRegisterPage() {
     const [extending, setExtending] = useState<Warranty | null>(null)
     const [voiding, setVoiding] = useState<Warranty | null>(null)
 
+    const [view, setView] = useViewMode('warranty-register')
     const { data, isLoading } = useWarranties({
         search,
         effective: filter === 'effective' ? 1 : undefined,
@@ -75,6 +77,10 @@ export function WarrantyRegisterPage() {
                 </div>
             </div>
 
+            <div className="mb-3 flex justify-end">
+                <ViewToggle view={view} onChange={setView} />
+            </div>
+
             {isLoading ? (
                 <SkeletonCard />
             ) : !data?.data.length ? (
@@ -83,6 +89,49 @@ export function WarrantyRegisterPage() {
                     title="لا توجد ضمانات"
                     description="سجّل ضمانًا لأي جهاز لتبدأ متابعة المطالبات والتجديدات."
                 />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="58rem"
+                    headers={[
+                        { label: 'الكود', className: 'w-28' },
+                        'الجهاز',
+                        'العميل',
+                        { label: 'النوع', className: 'w-28' },
+                        { label: 'يغطي', className: 'w-32' },
+                        { label: 'ينتهي في', className: 'w-32' },
+                        { label: 'الحالة', className: 'w-28' },
+                    ]}
+                >
+                    {data.data.map((warranty) => (
+                        <tr
+                            key={warranty.id}
+                            className="border-t border-navy-100 hover:bg-navy-50/60"
+                        >
+                            <td className="tabular px-3 py-2.5 font-bold text-brand-600">
+                                {warranty.code}
+                            </td>
+                            <td className="px-3 py-2.5 font-semibold text-navy-800">
+                                {warranty.asset_code} · {warranty.asset}
+                            </td>
+                            <td className="px-3 py-2.5 text-navy-600">{warranty.customer}</td>
+                            <td className="px-3 py-2.5 text-navy-600">{warranty.kind_label}</td>
+                            <td className="px-3 py-2.5 text-navy-600">{warranty.covers_label}</td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {formatDate(warranty.ends_on)}
+                            </td>
+                            <td className="px-3 py-2.5">
+                                <span
+                                    className={clsx(
+                                        'badge',
+                                        WARRANTY_STATUS[warranty.effective_status].chip,
+                                    )}
+                                >
+                                    {WARRANTY_STATUS[warranty.effective_status].label}
+                                </span>
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
                 <div className="grid gap-2 sm:grid-cols-2">
                     {data.data.map((warranty) => {

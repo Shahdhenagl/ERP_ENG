@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { tr } from '@/lib/i18n'
 import { Check, FileWarning, Replace, Wrench, X } from 'lucide-react'
 import { useState } from 'react'
@@ -31,6 +32,7 @@ export function ClaimsPage() {
     const [deciding, setDeciding] = useState<{ claim: WarrantyClaim; action: Action } | null>(null)
     const [dispatching, setDispatching] = useState<WarrantyClaim | null>(null)
 
+    const [view, setView] = useViewMode('warranty-claims')
     const { data, isLoading } = useWarrantyClaims({
         open: filter === 'open' ? 1 : undefined,
         per_page: 40,
@@ -66,6 +68,10 @@ export function ClaimsPage() {
                 </Button>
             </div>
 
+            <div className="mb-3 flex justify-end">
+                <ViewToggle view={view} onChange={setView} />
+            </div>
+
             {isLoading ? (
                 <SkeletonCard />
             ) : !data?.data.length ? (
@@ -74,6 +80,41 @@ export function ClaimsPage() {
                     title="لا توجد مطالبات"
                     description="افتح بلاغًا عندما يعطل جهاز داخل فترة الضمان."
                 />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="56rem"
+                    headers={[
+                        { label: 'الكود', className: 'w-28' },
+                        'الجهاز',
+                        'العميل',
+                        'العطل',
+                        { label: 'تاريخ البلاغ', className: 'w-32' },
+                        { label: 'الحالة', className: 'w-28' },
+                    ]}
+                >
+                    {data.data.map((claim) => (
+                        <tr key={claim.id} className="border-t border-navy-100 hover:bg-navy-50/60">
+                            <td className="tabular px-3 py-2.5 font-bold text-brand-600">
+                                {claim.code}
+                            </td>
+                            <td className="px-3 py-2.5 font-semibold text-navy-800">
+                                {claim.asset_code} · {claim.asset}
+                            </td>
+                            <td className="px-3 py-2.5 text-navy-600">{claim.customer}</td>
+                            <td className="max-w-64 truncate px-3 py-2.5 text-navy-600">
+                                {claim.fault}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {formatDate(claim.reported_on)}
+                            </td>
+                            <td className="px-3 py-2.5">
+                                <span className={clsx('badge', CLAIM_STATUS[claim.status].chip)}>
+                                    {CLAIM_STATUS[claim.status].label}
+                                </span>
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
                 <div className="grid gap-2 sm:grid-cols-2">
                     {data.data.map((claim) => {
