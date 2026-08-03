@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\CashBox;
 use App\Models\RecurringExpense;
 use App\Services\BillingService;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -69,7 +70,7 @@ class RecurringExpenseController extends Controller
     {
         $recurringExpense->delete();
 
-        return response()->json(['message' => 'تم حذف المصروف الدوري.']);
+        return response()->json(['message' => Terms::get('تم حذف المصروف الدوري.')]);
     }
 
     /**

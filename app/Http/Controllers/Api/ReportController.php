@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\CustomReportService;
 use App\Services\ReportService;
 use App\Services\TreasuryReport;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -178,7 +179,7 @@ class ReportController extends Controller
 
         return [
             'sales-'.($from ?? 'all').'.csv',
-            ['العميل', 'عدد الفواتير', 'الإجمالي'],
+            [Terms::get('العميل'), Terms::get('عدد الفواتير'), Terms::get('الإجمالي')],
             collect($report['by_customer'])
                 ->map(fn ($row) => [$row['name'], $row['invoices'], $row['total']]),
         ];
@@ -191,7 +192,7 @@ class ReportController extends Controller
 
         return [
             'profitability-'.($from ?? 'all').'.csv',
-            ['الفاتورة', 'أمر العمل', 'العميل', 'التاريخ', 'الإيراد', 'تكلفة القطع', 'الربح', 'الهامش %'],
+            [Terms::get('الفاتورة'), Terms::get('أمر العمل'), Terms::get('العميل'), Terms::get('التاريخ'), Terms::get('الإيراد'), Terms::get('تكلفة القطع'), Terms::get('الربح'), Terms::get('الهامش %')],
             collect($report['jobs'])->map(fn ($row) => [
                 $row['code'], $row['task_code'], $row['customer'], $row['date'],
                 $row['revenue'], $row['parts_cost'], $row['margin'], $row['margin_pct'],
@@ -206,7 +207,7 @@ class ReportController extends Controller
 
         return [
             'stock.csv',
-            ['المخزن', 'النوع', 'الكمية', 'القيمة'],
+            [Terms::get('المخزن'), Terms::get('النوع'), Terms::get('الكمية'), Terms::get('القيمة')],
             collect($report['by_warehouse'])->map(fn ($row) => [
                 $row['name'], $row['type_label'], $row['qty'], $row['value'],
             ]),
@@ -220,7 +221,7 @@ class ReportController extends Controller
 
         return [
             'custody.csv',
-            ['الفني', 'نقدية', 'قيمة القطع', 'عدد الأجهزة', 'الإجمالي'],
+            [Terms::get('الفني'), Terms::get('نقدية'), Terms::get('قيمة القطع'), Terms::get('عدد الأجهزة'), Terms::get('الإجمالي')],
             collect($report['technicians'])->map(fn ($row) => [
                 $row['technician']['name'],
                 $row['cash']['balance'],
@@ -238,7 +239,7 @@ class ReportController extends Controller
 
         return [
             'contracts.csv',
-            ['الكود', 'العميل', 'يبدأ', 'ينتهي', 'الأيام المتبقية', 'الزيارات', 'المنفذة', 'المتأخرة', 'الالتزام %'],
+            [Terms::get('الكود'), Terms::get('العميل'), Terms::get('يبدأ'), Terms::get('ينتهي'), Terms::get('الأيام المتبقية'), Terms::get('الزيارات'), Terms::get('المنفذة'), Terms::get('المتأخرة'), Terms::get('الالتزام %')],
             collect($report['rows'])->map(fn ($row) => [
                 $row['code'], $row['customer'], $row['starts_on'], $row['ends_on'],
                 $row['days_remaining'], $row['visits'], $row['visits_done'],
@@ -254,7 +255,7 @@ class ReportController extends Controller
 
         return [
             'warranties.csv',
-            ['الكود', 'الجهاز', 'العميل', 'ينتهي في', 'الأيام المتبقية', 'النوع'],
+            [Terms::get('الكود'), Terms::get('الجهاز'), Terms::get('العميل'), Terms::get('ينتهي في'), Terms::get('الأيام المتبقية'), Terms::get('النوع')],
             collect($report['expiring'])->map(fn ($row) => [
                 $row['code'], $row['asset'], $row['customer'],
                 $row['ends_on'], $row['days_remaining'], $row['kind_label'],
@@ -269,7 +270,7 @@ class ReportController extends Controller
 
         return [
             'crm-'.($from ?? 'all').'.csv',
-            ['المصدر', 'إجمالي العملاء المحتملين', 'المكسوبون', 'نسبة التحويل %'],
+            [Terms::get('المصدر'), Terms::get('إجمالي العملاء المحتملين'), Terms::get('المكسوبون'), Terms::get('نسبة التحويل %')],
             collect($report['by_source'])->map(fn ($row) => [
                 $row['label'], $row['total'], $row['won'], $row['conversion_pct'],
             ]),
@@ -283,7 +284,7 @@ class ReportController extends Controller
 
         return [
             'hr-'.($from ?? 'all').'.csv',
-            ['القسم', 'عدد الموظفين', 'إجمالي الرواتب'],
+            [Terms::get('القسم'), Terms::get('عدد الموظفين'), Terms::get('إجمالي الرواتب')],
             collect($report['by_department'])->map(fn ($row) => [
                 $row['department'], $row['count'], $row['payroll'],
             ]),
@@ -297,7 +298,7 @@ class ReportController extends Controller
 
         return [
             'maintenance-'.($from ?? 'all').'.csv',
-            ['الحالة', 'عدد أوامر العمل'],
+            [Terms::get('الحالة'), Terms::get('عدد أوامر العمل')],
             collect($report['tasks']['by_status'])->map(fn ($row) => [
                 $row['label'], $row['count'],
             ]),

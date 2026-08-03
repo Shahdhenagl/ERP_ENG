@@ -7,8 +7,9 @@ use App\Models\PurchaseReturn;
 use App\Models\StockMovement;
 use App\Models\Supplier;
 use App\Models\SupplierInvoice;
-use App\Models\Warehouse;
 use App\Models\User;
+use App\Models\Warehouse;
+use App\Support\Terms;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -115,7 +116,7 @@ class SupplierBilling
     {
         if ($invoice->status !== 'draft') {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن تعديل بنود فاتورة مُرحّلة.',
+                'status' => Terms::get('لا يمكن تعديل بنود فاتورة مُرحّلة.'),
             ]);
         }
 
@@ -147,13 +148,13 @@ class SupplierBilling
     {
         if ($invoice->status !== 'draft') {
             throw ValidationException::withMessages([
-                'status' => 'تم ترحيل هذه الفاتورة بالفعل.',
+                'status' => Terms::get('تم ترحيل هذه الفاتورة بالفعل.'),
             ]);
         }
 
         if ($invoice->lines()->count() === 0) {
             throw ValidationException::withMessages([
-                'lines' => 'لا يمكن ترحيل فاتورة بدون بنود.',
+                'lines' => Terms::get('لا يمكن ترحيل فاتورة بدون بنود.'),
             ]);
         }
 
@@ -170,13 +171,13 @@ class SupplierBilling
     {
         if ($invoice->paidTotal() > 0) {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن إلغاء فاتورة سُدّد عليها. اعكس السداد أولًا.',
+                'status' => Terms::get('لا يمكن إلغاء فاتورة سُدّد عليها. اعكس السداد أولًا.'),
             ]);
         }
 
         if ($invoice->returns()->where('status', 'posted')->exists()) {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن إلغاء فاتورة عليها مرتجع مُرحّل.',
+                'status' => Terms::get('لا يمكن إلغاء فاتورة عليها مرتجع مُرحّل.'),
             ]);
         }
 
@@ -223,7 +224,7 @@ class SupplierBilling
     {
         if ($return->isPosted()) {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن تعديل مرتجع مُرحّل.',
+                'status' => Terms::get('لا يمكن تعديل مرتجع مُرحّل.'),
             ]);
         }
 
@@ -261,13 +262,13 @@ class SupplierBilling
     {
         if ($return->isPosted()) {
             throw ValidationException::withMessages([
-                'status' => 'تم ترحيل هذا المرتجع بالفعل.',
+                'status' => Terms::get('تم ترحيل هذا المرتجع بالفعل.'),
             ]);
         }
 
         if ($return->lines()->count() === 0) {
             throw ValidationException::withMessages([
-                'lines' => 'لا يمكن ترحيل مرتجع بدون بنود.',
+                'lines' => Terms::get('لا يمكن ترحيل مرتجع بدون بنود.'),
             ]);
         }
 
@@ -462,20 +463,20 @@ class SupplierBilling
         foreach ($receipts as $receipt) {
             if ($receipt->supplier_id !== $supplier->id) {
                 throw ValidationException::withMessages([
-                    'receipt_ids' => 'أحد الاستلامات لا يخص هذا المورّد.',
+                    'receipt_ids' => Terms::get('أحد الاستلامات لا يخص هذا المورّد.'),
                 ]);
             }
 
             if ($receipt->supplier_invoice_id) {
                 throw ValidationException::withMessages([
-                    'receipt_ids' => 'أحد الاستلامات مفوتر بالفعل.',
+                    'receipt_ids' => Terms::get('أحد الاستلامات مفوتر بالفعل.'),
                 ]);
             }
         }
 
         if ($receipts->count() !== count(array_unique($ids))) {
             throw ValidationException::withMessages([
-                'receipt_ids' => 'أحد الاستلامات غير موجود.',
+                'receipt_ids' => Terms::get('أحد الاستلامات غير موجود.'),
             ]);
         }
 

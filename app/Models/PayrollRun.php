@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Terms;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -57,9 +58,9 @@ class PayrollRun extends Model
     public function statusLabel(): string
     {
         return match ($this->status) {
-            'draft' => 'مسودة',
-            'approved' => 'معتمد',
-            'paid' => 'مدفوع',
+            'draft' => Terms::get('مسودة'),
+            'approved' => Terms::get('معتمد'),
+            'paid' => Terms::get('مدفوع'),
             default => $this->status,
         };
     }

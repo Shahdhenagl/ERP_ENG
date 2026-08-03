@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\Invoice;
 use App\Models\SalesReturn;
 use App\Services\SalesReturnService;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -106,7 +107,7 @@ class SalesReturnController extends Controller
     {
         $this->returns->discard($salesReturn);
 
-        return response()->json(['message' => 'تم حذف المسودة.']);
+        return response()->json(['message' => Terms::get('تم حذف المسودة.')]);
     }
 
     /**

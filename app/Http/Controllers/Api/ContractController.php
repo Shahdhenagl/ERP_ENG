@@ -13,6 +13,7 @@ use App\Models\Invoice;
 use App\Services\BillingService;
 use App\Services\ContractPaymentPlanner;
 use App\Services\MaintenancePlanner;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -154,7 +155,7 @@ class ContractController extends Controller
         // instead of letting a delete orphan live jobs.
         if ($contract->tasks()->open()->exists()) {
             return response()->json([
-                'message' => 'لا يمكن حذف عقد له مهام مفتوحة. ألغِ العقد بدلًا من ذلك.',
+                'message' => Terms::get('لا يمكن حذف عقد له مهام مفتوحة. ألغِ العقد بدلًا من ذلك.'),
             ], 422);
         }
 
@@ -164,7 +165,7 @@ class ContractController extends Controller
 
         ActivityLog::record('contract.deleted', $contract, "تم حذف عقد الصيانة {$code}");
 
-        return response()->json(['message' => 'تم حذف العقد.']);
+        return response()->json(['message' => Terms::get('تم حذف العقد.')]);
     }
 
     // ── Lifecycle ────────────────────────────────────────────
@@ -174,7 +175,7 @@ class ContractController extends Controller
     {
         if ($contract->status === ContractStatus::Cancelled) {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن تفعيل عقد ملغي. أنشئ عقدًا جديدًا.',
+                'status' => Terms::get('لا يمكن تفعيل عقد ملغي. أنشئ عقدًا جديدًا.'),
             ]);
         }
 
@@ -183,7 +184,7 @@ class ContractController extends Controller
         // schedule (value-less, or drafted before this feature) are unaffected.
         if (! $contract->firstPaymentCollected()) {
             throw ValidationException::withMessages([
-                'payment' => 'يجب تحصيل الدفعة الأولى قبل اعتماد العقد.',
+                'payment' => Terms::get('يجب تحصيل الدفعة الأولى قبل اعتماد العقد.'),
             ]);
         }
 
@@ -211,7 +212,7 @@ class ContractController extends Controller
         abort_unless((int) $payment->contract_id === $contract->id, 404);
 
         if ($payment->isCollected()) {
-            throw ValidationException::withMessages(['payment' => 'هذه الدفعة محصّلة بالفعل.']);
+            throw ValidationException::withMessages(['payment' => Terms::get('هذه الدفعة محصّلة بالفعل.')]);
         }
 
         $data = $request->validate([
@@ -293,7 +294,7 @@ class ContractController extends Controller
     {
         if ($contract->renewal()->exists()) {
             throw ValidationException::withMessages([
-                'contract' => 'تم تجديد هذا العقد بالفعل.',
+                'contract' => Terms::get('تم تجديد هذا العقد بالفعل.'),
             ]);
         }
 
@@ -433,7 +434,7 @@ class ContractController extends Controller
 
         if ($foreign->isNotEmpty()) {
             throw ValidationException::withMessages([
-                'asset_ids' => 'هذه الأجهزة لا تخص العميل: '.$foreign->implode('، '),
+                'asset_ids' => Terms::get('هذه الأجهزة لا تخص العميل: ').$foreign->implode('، '),
             ]);
         }
     }

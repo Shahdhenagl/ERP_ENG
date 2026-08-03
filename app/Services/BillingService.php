@@ -13,6 +13,7 @@ use App\Models\StockMovement;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Support\Terms;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -62,13 +63,13 @@ class BillingService
     {
         if ($invoice->status !== InvoiceStatus::Draft) {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن إصدار فاتورة غير مسودة.',
+                'status' => Terms::get('لا يمكن إصدار فاتورة غير مسودة.'),
             ]);
         }
 
         if ($invoice->lines()->count() === 0) {
             throw ValidationException::withMessages([
-                'lines' => 'لا يمكن إصدار فاتورة بدون بنود.',
+                'lines' => Terms::get('لا يمكن إصدار فاتورة بدون بنود.'),
             ]);
         }
 
@@ -179,7 +180,7 @@ class BillingService
     {
         if ($invoice->payments()->exists()) {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن إلغاء فاتورة عليها تحصيل. ألغِ سندات القبض أولًا.',
+                'status' => Terms::get('لا يمكن إلغاء فاتورة عليها تحصيل. ألغِ سندات القبض أولًا.'),
             ]);
         }
 
@@ -207,7 +208,7 @@ class BillingService
 
         if ($amount <= 0) {
             throw ValidationException::withMessages([
-                'amount' => 'قيمة التحصيل يجب أن تكون أكبر من صفر.',
+                'amount' => Terms::get('قيمة التحصيل يجب أن تكون أكبر من صفر.'),
             ]);
         }
 
@@ -216,7 +217,7 @@ class BillingService
         if ($invoice) {
             if (! $invoice->status->countsAsReceivable()) {
                 throw ValidationException::withMessages([
-                    'invoice_id' => 'لا يمكن التحصيل على فاتورة مسودة أو ملغاة.',
+                    'invoice_id' => Terms::get('لا يمكن التحصيل على فاتورة مسودة أو ملغاة.'),
                 ]);
             }
 
@@ -224,7 +225,7 @@ class BillingService
             // then reads as a credit nobody granted.
             if ($amount > $invoice->balance() + 0.005) {
                 throw ValidationException::withMessages([
-                    'amount' => 'المبلغ أكبر من المتبقي على الفاتورة ('.number_format($invoice->balance(), 2).').',
+                    'amount' => Terms::get('المبلغ أكبر من المتبقي على الفاتورة (').number_format($invoice->balance(), 2).').',
                 ]);
             }
         }
@@ -293,7 +294,7 @@ class BillingService
         $amount = round($amount, 2);
 
         if ($amount <= 0) {
-            throw ValidationException::withMessages(['amount' => 'المبلغ يجب أن يكون أكبر من صفر.']);
+            throw ValidationException::withMessages(['amount' => Terms::get('المبلغ يجب أن يكون أكبر من صفر.')]);
         }
 
         // A company box cannot spend what it does not hold. A technician's float
@@ -301,7 +302,7 @@ class BillingService
         // negative is exactly how the company learns it owes them the difference.
         if (! $allowOverdraw && $amount > $box->balance() + 0.005) {
             throw ValidationException::withMessages([
-                'amount' => 'رصيد «'.$box->name.'» لا يكفي ('.number_format($box->balance(), 2).').',
+                'amount' => Terms::get('رصيد «').$box->name.'» لا يكفي ('.number_format($box->balance(), 2).').',
             ]);
         }
 
@@ -340,13 +341,13 @@ class BillingService
         $amount = round($amount, 2);
 
         if ($amount <= 0) {
-            throw ValidationException::withMessages(['amount' => 'المبلغ يجب أن يكون أكبر من صفر.']);
+            throw ValidationException::withMessages(['amount' => Terms::get('المبلغ يجب أن يكون أكبر من صفر.')]);
         }
 
         $party = trim((string) ($context['party'] ?? ''));
 
         if ($party === '') {
-            throw ValidationException::withMessages(['party' => 'اكتب اسم الجهة المودِعة.']);
+            throw ValidationException::withMessages(['party' => Terms::get('اكتب اسم الجهة المودِعة.')]);
         }
 
         $extra = trim((string) ($context['note'] ?? ''));
@@ -369,16 +370,16 @@ class BillingService
         $amount = round($amount, 2);
 
         if ($from->id === $to->id) {
-            throw ValidationException::withMessages(['to_box_id' => 'لا يمكن التحويل لنفس الخزينة.']);
+            throw ValidationException::withMessages(['to_box_id' => Terms::get('لا يمكن التحويل لنفس الخزينة.')]);
         }
 
         if ($amount <= 0) {
-            throw ValidationException::withMessages(['amount' => 'المبلغ يجب أن يكون أكبر من صفر.']);
+            throw ValidationException::withMessages(['amount' => Terms::get('المبلغ يجب أن يكون أكبر من صفر.')]);
         }
 
         if ($amount > $from->balance() + 0.005) {
             throw ValidationException::withMessages([
-                'amount' => 'رصيد «'.$from->name.'» لا يكفي ('.number_format($from->balance(), 2).').',
+                'amount' => Terms::get('رصيد «').$from->name.'» لا يكفي ('.number_format($from->balance(), 2).').',
             ]);
         }
 

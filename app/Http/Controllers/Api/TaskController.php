@@ -14,6 +14,7 @@ use App\Models\Customer;
 use App\Models\Task;
 use App\Models\User;
 use App\Services\TaskWorkflow;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -173,7 +174,7 @@ class TaskController extends Controller
 
             if ((int) $owner !== $customerId) {
                 throw ValidationException::withMessages([
-                    'asset_id' => 'الجهاز المحدد لا يخص هذا العميل.',
+                    'asset_id' => Terms::get('الجهاز المحدد لا يخص هذا العميل.'),
                 ]);
             }
         }
@@ -183,7 +184,7 @@ class TaskController extends Controller
 
             if ((int) $owner !== $customerId) {
                 throw ValidationException::withMessages([
-                    'branch_id' => 'الفرع المحدد لا يخص هذا العميل.',
+                    'branch_id' => Terms::get('الفرع المحدد لا يخص هذا العميل.'),
                 ]);
             }
         }
@@ -200,13 +201,13 @@ class TaskController extends Controller
 
         if ($technician && ! $technician->isTechnician()) {
             throw ValidationException::withMessages([
-                'assigned_to' => 'يجب اختيار مستخدم بدور «فني».',
+                'assigned_to' => Terms::get('يجب اختيار مستخدم بدور «فني».'),
             ]);
         }
 
         if ($technician && ! $technician->is_active) {
             throw ValidationException::withMessages([
-                'assigned_to' => 'هذا الفني موقوف ولا يمكن إسناد مهام إليه.',
+                'assigned_to' => Terms::get('هذا الفني موقوف ولا يمكن إسناد مهام إليه.'),
             ]);
         }
 
@@ -222,7 +223,7 @@ class TaskController extends Controller
 
         ActivityLog::record('task.deleted', $task, "تم حذف المهمة {$code}");
 
-        return response()->json(['message' => 'تم حذف المهمة.']);
+        return response()->json(['message' => Terms::get('تم حذف المهمة.')]);
     }
 
     /** A technician may only open a job assigned to them. */

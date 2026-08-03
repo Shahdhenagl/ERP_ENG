@@ -10,6 +10,7 @@ use App\Models\Asset;
 use App\Models\Item;
 use App\Models\Warehouse;
 use App\Services\StockLedger;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -52,7 +53,7 @@ class AssetController extends Controller
 
                 if ($item->category !== ItemCategory::Ups) {
                     throw ValidationException::withMessages([
-                        'item_id' => 'الصنف المختار ليس جهاز UPS.',
+                        'item_id' => Terms::get('الصنف المختار ليس جهاز UPS.'),
                     ]);
                 }
 
@@ -120,7 +121,7 @@ class AssetController extends Controller
     {
         if ($asset->tasks()->exists()) {
             return response()->json([
-                'message' => 'لا يمكن حذف جهاز مرتبط بمهام. غيّر حالته إلى «خارج الخدمة» بدلًا من ذلك.',
+                'message' => Terms::get('لا يمكن حذف جهاز مرتبط بمهام. غيّر حالته إلى «خارج الخدمة» بدلًا من ذلك.'),
             ], 422);
         }
 
@@ -129,7 +130,7 @@ class AssetController extends Controller
 
         ActivityLog::record('asset.deleted', $asset, "تم حذف الجهاز {$code}");
 
-        return response()->json(['message' => 'تم حذف الجهاز.']);
+        return response()->json(['message' => Terms::get('تم حذف الجهاز.')]);
     }
 
     /** @return array<string, mixed> */
@@ -184,7 +185,7 @@ class AssetController extends Controller
 
             if ((int) $owner !== (int) $data['customer_id']) {
                 throw ValidationException::withMessages([
-                    'branch_id' => 'الفرع المحدد لا يخص هذا العميل.',
+                    'branch_id' => Terms::get('الفرع المحدد لا يخص هذا العميل.'),
                 ]);
             }
         }

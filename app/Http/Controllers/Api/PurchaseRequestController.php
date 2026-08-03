@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\PurchaseRequest;
 use App\Models\Supplier;
 use App\Services\RequisitionService;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -171,7 +172,7 @@ class PurchaseRequestController extends Controller
         $this->assertOwner($request, $purchaseRequest);
         $this->requisitions->discard($purchaseRequest);
 
-        return response()->json(['message' => 'تم حذف الطلب.']);
+        return response()->json(['message' => Terms::get('تم حذف الطلب.')]);
     }
 
     /* ── Internals ───────────────────────────────────────── */

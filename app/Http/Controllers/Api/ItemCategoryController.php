@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\ItemCategory;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -47,13 +48,13 @@ class ItemCategoryController extends Controller
         // word from the list" means.
         if ($itemCategory->isInUse()) {
             return response()->json([
-                'message' => 'لا يمكن حذف مجموعة تحتوي أصنافًا. أوقفها بدلًا من ذلك.',
+                'message' => Terms::get('لا يمكن حذف مجموعة تحتوي أصنافًا. أوقفها بدلًا من ذلك.'),
             ], 422);
         }
 
         $itemCategory->delete();
 
-        return response()->json(['message' => 'تم حذف المجموعة.']);
+        return response()->json(['message' => Terms::get('تم حذف المجموعة.')]);
     }
 
     /** @return array<string, mixed> */

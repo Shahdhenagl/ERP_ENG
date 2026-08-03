@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\PurchaseOrder;
 use App\Models\SupplierQuote;
 use App\Models\SupplierQuoteLine;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -73,7 +74,7 @@ class SupplierQuoteController extends Controller
     {
         if ($supplierQuote->status !== 'received') {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن تعديل عرض بعد اعتماده أو رفضه.',
+                'status' => Terms::get('لا يمكن تعديل عرض بعد اعتماده أو رفضه.'),
             ]);
         }
 
@@ -107,14 +108,14 @@ class SupplierQuoteController extends Controller
     public function select(SupplierQuote $supplierQuote): JsonResponse
     {
         if ($supplierQuote->status === 'selected') {
-            throw ValidationException::withMessages(['status' => 'العرض معتمد بالفعل.']);
+            throw ValidationException::withMessages(['status' => Terms::get('العرض معتمد بالفعل.')]);
         }
 
         $itemLines = $supplierQuote->lines()->whereNotNull('item_id')->get();
 
         if ($itemLines->isEmpty()) {
             throw ValidationException::withMessages([
-                'lines' => 'لا يمكن تحويل عرض بلا أصناف من الكتالوج إلى أمر شراء.',
+                'lines' => Terms::get('لا يمكن تحويل عرض بلا أصناف من الكتالوج إلى أمر شراء.'),
             ]);
         }
 
@@ -165,7 +166,7 @@ class SupplierQuoteController extends Controller
     public function reject(SupplierQuote $supplierQuote): JsonResponse
     {
         if ($supplierQuote->status === 'selected') {
-            throw ValidationException::withMessages(['status' => 'لا يمكن رفض عرض معتمد.']);
+            throw ValidationException::withMessages(['status' => Terms::get('لا يمكن رفض عرض معتمد.')]);
         }
 
         $supplierQuote->update(['status' => 'rejected']);

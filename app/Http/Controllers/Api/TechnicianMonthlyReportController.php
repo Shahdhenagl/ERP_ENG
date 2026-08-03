@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\TechnicianMonthlyReport;
 use App\Models\User;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -99,7 +100,7 @@ class TechnicianMonthlyReportController extends Controller
     {
         $technicianMonthlyReport->delete();
 
-        return response()->json(['message' => 'تم حذف تسجيل الاستلام.']);
+        return response()->json(['message' => Terms::get('تم حذف تسجيل الاستلام.')]);
     }
 
     /** @return array<string, mixed> */

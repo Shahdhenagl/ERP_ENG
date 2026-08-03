@@ -9,6 +9,7 @@ use App\Models\Invoice;
 use App\Models\Supplier;
 use App\Models\SupplierInvoice;
 use App\Models\User;
+use App\Support\Terms;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -45,7 +46,7 @@ class ChequeRegister
 
         if ($invoice && ! $invoice->status->countsAsReceivable()) {
             throw ValidationException::withMessages([
-                'invoice_id' => 'لا يمكن استلام شيك على فاتورة مسودة أو ملغاة.',
+                'invoice_id' => Terms::get('لا يمكن استلام شيك على فاتورة مسودة أو ملغاة.'),
             ]);
         }
 
@@ -54,7 +55,7 @@ class ChequeRegister
 
         if (! $customer) {
             throw ValidationException::withMessages([
-                'customer_id' => 'الشيك الوارد يجب أن يكون من عميل.',
+                'customer_id' => Terms::get('الشيك الوارد يجب أن يكون من عميل.'),
             ]);
         }
 
@@ -96,7 +97,7 @@ class ChequeRegister
 
         if (! $supplier) {
             throw ValidationException::withMessages([
-                'supplier_id' => 'الشيك الصادر يجب أن يكون لمورّد.',
+                'supplier_id' => Terms::get('الشيك الصادر يجب أن يكون لمورّد.'),
             ]);
         }
 
@@ -128,7 +129,7 @@ class ChequeRegister
     {
         if ($cheque->status !== 'held') {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن إيداع إلا شيك في الخزنة.',
+                'status' => Terms::get('لا يمكن إيداع إلا شيك في الخزنة.'),
             ]);
         }
 
@@ -153,7 +154,7 @@ class ChequeRegister
     {
         if (! $cheque->isOpen()) {
             throw ValidationException::withMessages([
-                'status' => 'تم إقفال هذا الشيك بالفعل.',
+                'status' => Terms::get('تم إقفال هذا الشيك بالفعل.'),
             ]);
         }
 
@@ -161,7 +162,7 @@ class ChequeRegister
 
         if (! $target) {
             throw ValidationException::withMessages([
-                'cash_box_id' => 'حدّد الحساب البنكي الذي تم التحصيل فيه.',
+                'cash_box_id' => Terms::get('حدّد الحساب البنكي الذي تم التحصيل فيه.'),
             ]);
         }
 
@@ -217,7 +218,7 @@ class ChequeRegister
     {
         if (! $cheque->isOpen()) {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن ارتداد شيك تم إقفاله.',
+                'status' => Terms::get('لا يمكن ارتداد شيك تم إقفاله.'),
             ]);
         }
 
@@ -234,7 +235,7 @@ class ChequeRegister
     {
         if (! $cheque->isOpen()) {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن إلغاء شيك تم إقفاله.',
+                'status' => Terms::get('لا يمكن إلغاء شيك تم إقفاله.'),
             ]);
         }
 
@@ -282,7 +283,7 @@ class ChequeRegister
     {
         if (round((float) $amount, 2) <= 0) {
             throw ValidationException::withMessages([
-                'amount' => 'قيمة الشيك يجب أن تكون أكبر من صفر.',
+                'amount' => Terms::get('قيمة الشيك يجب أن تكون أكبر من صفر.'),
             ]);
         }
     }

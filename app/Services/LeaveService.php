@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Employee;
 use App\Models\LeaveRequest;
 use App\Models\User;
+use App\Support\Terms;
 use Carbon\CarbonPeriod;
 use Illuminate\Validation\ValidationException;
 
@@ -33,7 +34,7 @@ class LeaveService
 
         if ($to->lt($from)) {
             throw ValidationException::withMessages([
-                'to_date' => 'تاريخ نهاية الإجازة لا يمكن أن يسبق بدايتها.',
+                'to_date' => Terms::get('تاريخ نهاية الإجازة لا يمكن أن يسبق بدايتها.'),
             ]);
         }
 
@@ -41,7 +42,7 @@ class LeaveService
 
         if ($days < 1) {
             throw ValidationException::withMessages([
-                'from_date' => 'الفترة لا تحتوي على أيام عمل.',
+                'from_date' => Terms::get('الفترة لا تحتوي على أيام عمل.'),
             ]);
         }
 
@@ -104,7 +105,7 @@ class LeaveService
     {
         if ($leave->status === 'rejected') {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن إلغاء طلب مرفوض.',
+                'status' => Terms::get('لا يمكن إلغاء طلب مرفوض.'),
             ]);
         }
 
@@ -143,7 +144,7 @@ class LeaveService
     {
         if ($leave->status !== 'pending') {
             throw ValidationException::withMessages([
-                'status' => 'تم البتّ في هذا الطلب بالفعل.',
+                'status' => Terms::get('تم البتّ في هذا الطلب بالفعل.'),
             ]);
         }
     }

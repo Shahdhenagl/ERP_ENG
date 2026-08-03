@@ -9,6 +9,7 @@ use App\Models\ActivityLog;
 use App\Models\Invoice;
 use App\Models\Task;
 use App\Services\BillingService;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -93,7 +94,7 @@ class InvoiceController extends Controller
         // void and a fresh invoice, not by quietly rewriting the numbers.
         if ($invoice->status !== InvoiceStatus::Draft) {
             return response()->json([
-                'message' => 'لا يمكن تعديل فاتورة صادرة. ألغِها وأصدر فاتورة جديدة.',
+                'message' => Terms::get('لا يمكن تعديل فاتورة صادرة. ألغِها وأصدر فاتورة جديدة.'),
             ], 422);
         }
 
@@ -164,7 +165,7 @@ class InvoiceController extends Controller
     {
         if ($invoice->status !== InvoiceStatus::Draft) {
             return response()->json([
-                'message' => 'لا يمكن حذف فاتورة صادرة. استخدم الإلغاء بدلًا من ذلك.',
+                'message' => Terms::get('لا يمكن حذف فاتورة صادرة. استخدم الإلغاء بدلًا من ذلك.'),
             ], 422);
         }
 
@@ -173,7 +174,7 @@ class InvoiceController extends Controller
 
         ActivityLog::record('invoice.deleted', $invoice, "تم حذف المسودة {$code}");
 
-        return response()->json(['message' => 'تم حذف المسودة.']);
+        return response()->json(['message' => Terms::get('تم حذف المسودة.')]);
     }
 
     /** Replace every line in one go — simpler than diffing, and drafts are cheap. */

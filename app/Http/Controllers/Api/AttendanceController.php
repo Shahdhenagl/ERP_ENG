@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Attendance;
 use App\Models\Employee;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -101,7 +102,7 @@ class AttendanceController extends Controller
         $existing = Attendance::where('employee_id', $employee->id)->whereDate('date', $today)->first();
 
         if ($existing && $existing->check_in) {
-            throw ValidationException::withMessages(['check_in' => 'تم تسجيل حضورك اليوم بالفعل.']);
+            throw ValidationException::withMessages(['check_in' => Terms::get('تم تسجيل حضورك اليوم بالفعل.')]);
         }
 
         $attendance = Attendance::updateOrCreate(
@@ -131,11 +132,11 @@ class AttendanceController extends Controller
             ->first();
 
         if (! $attendance || ! $attendance->check_in) {
-            throw ValidationException::withMessages(['check_out' => 'سجّل حضورك أولًا قبل الانصراف.']);
+            throw ValidationException::withMessages(['check_out' => Terms::get('سجّل حضورك أولًا قبل الانصراف.')]);
         }
 
         if ($attendance->check_out) {
-            throw ValidationException::withMessages(['check_out' => 'تم تسجيل انصرافك اليوم بالفعل.']);
+            throw ValidationException::withMessages(['check_out' => Terms::get('تم تسجيل انصرافك اليوم بالفعل.')]);
         }
 
         $attendance->update([

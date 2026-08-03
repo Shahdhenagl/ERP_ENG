@@ -7,6 +7,7 @@ use App\Models\PurchaseOrder;
 use App\Models\PurchaseRequest;
 use App\Models\Supplier;
 use App\Models\User;
+use App\Support\Terms;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -46,7 +47,7 @@ class RequisitionService
     {
         if (! $request->isEditable()) {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن تعديل طلب بعد إرساله.',
+                'status' => Terms::get('لا يمكن تعديل طلب بعد إرساله.'),
             ]);
         }
 
@@ -83,13 +84,13 @@ class RequisitionService
     {
         if ($request->status !== 'draft') {
             throw ValidationException::withMessages([
-                'status' => 'تم إرسال هذا الطلب بالفعل.',
+                'status' => Terms::get('تم إرسال هذا الطلب بالفعل.'),
             ]);
         }
 
         if ($request->lines()->count() === 0) {
             throw ValidationException::withMessages([
-                'lines' => 'لا يمكن إرسال طلب بدون أصناف.',
+                'lines' => Terms::get('لا يمكن إرسال طلب بدون أصناف.'),
             ]);
         }
 
@@ -139,7 +140,7 @@ class RequisitionService
     {
         if ($request->status !== 'approved') {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن تحويل طلب غير معتمد إلى أمر شراء.',
+                'status' => Terms::get('لا يمكن تحويل طلب غير معتمد إلى أمر شراء.'),
             ]);
         }
 
@@ -147,7 +148,7 @@ class RequisitionService
 
         if ($catalogued->isEmpty()) {
             throw ValidationException::withMessages([
-                'lines' => 'لا يوجد صنف مسجّل في المخزون ضمن هذا الطلب. أضف الأصناف أولًا.',
+                'lines' => Terms::get('لا يوجد صنف مسجّل في المخزون ضمن هذا الطلب. أضف الأصناف أولًا.'),
             ]);
         }
 
@@ -184,7 +185,7 @@ class RequisitionService
     {
         if (! $request->isEditable()) {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن حذف طلب بعد إرساله.',
+                'status' => Terms::get('لا يمكن حذف طلب بعد إرساله.'),
             ]);
         }
 
@@ -197,7 +198,7 @@ class RequisitionService
     {
         if (! $request->isPending()) {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن البتّ إلا في طلب مُرسَل.',
+                'status' => Terms::get('لا يمكن البتّ إلا في طلب مُرسَل.'),
             ]);
         }
 
@@ -205,7 +206,7 @@ class RequisitionService
         // note the requester wrote to themselves.
         if ($request->requested_by === $decider->id) {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن اعتماد طلب قدّمته بنفسك.',
+                'status' => Terms::get('لا يمكن اعتماد طلب قدّمته بنفسك.'),
             ]);
         }
     }

@@ -6,15 +6,16 @@ use App\Enums\MovementType;
 use App\Enums\WarehouseType;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\StockMovementResource;
+use App\Models\ActivityLog;
 use App\Models\Item;
 use App\Models\StockMovement;
+use App\Models\Supplier;
 use App\Models\User;
 use App\Models\Warehouse;
-use App\Models\Supplier;
-use App\Models\ActivityLog;
 use App\Services\CustodyService;
 use App\Services\PurchasingService;
 use App\Services\StockLedger;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -300,7 +301,7 @@ class StockController extends Controller
         );
 
         if (! $movement) {
-            return response()->json(['message' => 'الجرد مطابق للرصيد — لم تُسجَّل أي حركة.']);
+            return response()->json(['message' => Terms::get('الجرد مطابق للرصيد — لم تُسجَّل أي حركة.')]);
         }
 
         return response()->json(
@@ -403,7 +404,7 @@ class StockController extends Controller
 
         ActivityLog::record('warehouse.deleted', null, "تم حذف مخزن {$warehouse->name}");
 
-        return response()->json(['message' => 'تم حذف المخزن.']);
+        return response()->json(['message' => Terms::get('تم حذف المخزن.')]);
     }
 
     /** @return array<string, mixed> */

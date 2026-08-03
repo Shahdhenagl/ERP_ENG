@@ -9,6 +9,7 @@ use App\Models\Invoice;
 use App\Models\Quotation;
 use App\Models\SalesOrder;
 use App\Models\User;
+use App\Support\Terms;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -58,7 +59,7 @@ class SalesService
     {
         if ($quotation->status !== QuotationStatus::Draft) {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن إرسال عرض سعر غير مسودة.',
+                'status' => Terms::get('لا يمكن إرسال عرض سعر غير مسودة.'),
             ]);
         }
 
@@ -67,13 +68,13 @@ class SalesService
         // still sends straight through — approval is opt-in.
         if ($quotation->isPendingApproval()) {
             throw ValidationException::withMessages([
-                'status' => 'العرض بانتظار الاعتماد الداخلي قبل إرساله للعميل.',
+                'status' => Terms::get('العرض بانتظار الاعتماد الداخلي قبل إرساله للعميل.'),
             ]);
         }
 
         if ($quotation->lines()->count() === 0) {
             throw ValidationException::withMessages([
-                'lines' => 'لا يمكن إرسال عرض سعر بدون بنود.',
+                'lines' => Terms::get('لا يمكن إرسال عرض سعر بدون بنود.'),
             ]);
         }
 
@@ -95,7 +96,7 @@ class SalesService
     {
         if ($quotation->status !== QuotationStatus::Sent) {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن رفض عرض لم يُرسَل بعد.',
+                'status' => Terms::get('لا يمكن رفض عرض لم يُرسَل بعد.'),
             ]);
         }
 
@@ -112,7 +113,7 @@ class SalesService
     {
         if ($quotation->salesOrder()->exists()) {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن إلغاء عرض تحوّل إلى أمر بيع.',
+                'status' => Terms::get('لا يمكن إلغاء عرض تحوّل إلى أمر بيع.'),
             ]);
         }
 
@@ -136,13 +137,13 @@ class SalesService
     {
         if ($quotation->status !== QuotationStatus::Sent) {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن قبول عرض لم يُرسَل بعد.',
+                'status' => Terms::get('لا يمكن قبول عرض لم يُرسَل بعد.'),
             ]);
         }
 
         if ($quotation->hasLapsed()) {
             throw ValidationException::withMessages([
-                'status' => 'انتهت صلاحية هذا العرض. أصدر عرضًا جديدًا بدلًا منه.',
+                'status' => Terms::get('انتهت صلاحية هذا العرض. أصدر عرضًا جديدًا بدلًا منه.'),
             ]);
         }
 
@@ -220,7 +221,7 @@ class SalesService
     {
         if ($order->invoices()->whereNot('status', InvoiceStatus::Void)->exists()) {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن إلغاء أمر بيع صدرت عنه فاتورة. ألغِ الفاتورة أولًا.',
+                'status' => Terms::get('لا يمكن إلغاء أمر بيع صدرت عنه فاتورة. ألغِ الفاتورة أولًا.'),
             ]);
         }
 
@@ -236,7 +237,7 @@ class SalesService
     {
         if ($order->status !== SalesOrderStatus::Open) {
             throw ValidationException::withMessages([
-                'status' => 'أمر البيع ليس قيد التنفيذ.',
+                'status' => Terms::get('أمر البيع ليس قيد التنفيذ.'),
             ]);
         }
 
@@ -253,13 +254,13 @@ class SalesService
     {
         if ($order->status === SalesOrderStatus::Cancelled) {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن فوترة أمر بيع ملغي.',
+                'status' => Terms::get('لا يمكن فوترة أمر بيع ملغي.'),
             ]);
         }
 
         if ($order->lines()->count() === 0) {
             throw ValidationException::withMessages([
-                'lines' => 'لا يمكن فوترة أمر بيع بدون بنود.',
+                'lines' => Terms::get('لا يمكن فوترة أمر بيع بدون بنود.'),
             ]);
         }
 
@@ -267,7 +268,7 @@ class SalesService
         // second invoice can be raised by hand against the customer.
         if ($order->invoices()->whereNot('status', InvoiceStatus::Void)->exists()) {
             throw ValidationException::withMessages([
-                'status' => 'صدرت فاتورة لهذا الأمر بالفعل.',
+                'status' => Terms::get('صدرت فاتورة لهذا الأمر بالفعل.'),
             ]);
         }
 

@@ -10,6 +10,7 @@ use App\Models\StockMovement;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Support\Terms;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -42,7 +43,7 @@ class StockLedger
 
         if ($unitCost < 0) {
             throw ValidationException::withMessages([
-                'unit_cost' => 'سعر الوحدة لا يمكن أن يكون سالبًا.',
+                'unit_cost' => Terms::get('سعر الوحدة لا يمكن أن يكون سالبًا.'),
             ]);
         }
 
@@ -224,7 +225,7 @@ class StockLedger
 
         if ($from->id === $to->id) {
             throw ValidationException::withMessages([
-                'to_warehouse_id' => 'لا يمكن التحويل إلى نفس المخزن.',
+                'to_warehouse_id' => Terms::get('لا يمكن التحويل إلى نفس المخزن.'),
             ]);
         }
 
@@ -313,7 +314,7 @@ class StockLedger
     ): ?StockMovement {
         if ($countedQty < 0) {
             throw ValidationException::withMessages([
-                'qty' => 'الكمية المجرودة لا يمكن أن تكون سالبة.',
+                'qty' => Terms::get('الكمية المجرودة لا يمكن أن تكون سالبة.'),
             ]);
         }
 
@@ -589,7 +590,7 @@ class StockLedger
     {
         if ($qty <= 0) {
             throw ValidationException::withMessages([
-                'qty' => 'الكمية يجب أن تكون أكبر من صفر.',
+                'qty' => Terms::get('الكمية يجب أن تكون أكبر من صفر.'),
             ]);
         }
     }

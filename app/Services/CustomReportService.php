@@ -11,6 +11,7 @@ use App\Models\Lead;
 use App\Models\Quotation;
 use App\Models\Supplier;
 use App\Models\Task;
+use App\Support\Terms;
 use BackedEnum;
 
 /**
@@ -43,7 +44,7 @@ class CustomReportService
     public static function catalogue(): array
     {
         return collect(self::DATASETS)
-            ->map(fn (string $label, string $key) => ['key' => $key, 'label' => $label])
+            ->map(fn (string $label, string $key) => ['key' => $key, 'label' => Terms::get($label)])
             ->values()
             ->all();
     }
@@ -84,7 +85,7 @@ class CustomReportService
     protected function customers(?string $from, ?string $to): array
     {
         return [
-            ['الكود', 'الاسم', 'الشركة', 'النوع', 'الهاتف', 'أُضيف في'],
+            [Terms::get('الكود'), Terms::get('الاسم'), Terms::get('الشركة'), Terms::get('النوع'), Terms::get('الهاتف'), Terms::get('أُضيف في')],
             $this->window(Customer::query(), 'created_at', $from, $to)->orderBy('id')->get()
                 ->map(fn (Customer $c) => [
                     $c->code, $c->name, $c->company, $c->type, $c->phone,
@@ -97,7 +98,7 @@ class CustomReportService
     protected function suppliers(?string $from, ?string $to): array
     {
         return [
-            ['الكود', 'الاسم', 'الشركة', 'الهاتف', 'أُضيف في'],
+            [Terms::get('الكود'), Terms::get('الاسم'), Terms::get('الشركة'), Terms::get('الهاتف'), Terms::get('أُضيف في')],
             $this->window(Supplier::query(), 'created_at', $from, $to)->orderBy('id')->get()
                 ->map(fn (Supplier $s) => [
                     $s->code, $s->name, $s->company, $s->phone, $s->created_at?->toDateString(),
@@ -109,7 +110,7 @@ class CustomReportService
     protected function assets(?string $from, ?string $to): array
     {
         return [
-            ['الكود', 'السيريال', 'الماركة', 'الموديل', 'العميل', 'الحالة', 'أُضيف في'],
+            [Terms::get('الكود'), Terms::get('السيريال'), Terms::get('الماركة'), Terms::get('الموديل'), Terms::get('العميل'), Terms::get('الحالة'), Terms::get('أُضيف في')],
             $this->window(Asset::with('customer'), 'created_at', $from, $to)->orderBy('id')->get()
                 ->map(fn (Asset $a) => [
                     $a->code, $a->serial, $a->brand, $a->model,
@@ -122,7 +123,7 @@ class CustomReportService
     protected function items(?string $from, ?string $to): array
     {
         return [
-            ['الكود', 'الاسم', 'الفئة', 'الوحدة', 'حد الطلب', 'سعر البيع', 'متوسط التكلفة', 'الرصيد', 'قيمة المخزون'],
+            [Terms::get('الكود'), Terms::get('الاسم'), Terms::get('الفئة'), Terms::get('الوحدة'), Terms::get('حد الطلب'), Terms::get('سعر البيع'), Terms::get('متوسط التكلفة'), Terms::get('الرصيد'), Terms::get('قيمة المخزون')],
             $this->window(Item::with('levels'), 'created_at', $from, $to)->orderBy('id')->get()
                 ->map(fn (Item $item) => [
                     $item->code, $item->name, $item->category->label(), $item->unit,
@@ -137,7 +138,7 @@ class CustomReportService
     protected function invoices(?string $from, ?string $to): array
     {
         return [
-            ['الكود', 'العميل', 'التاريخ', 'الإجمالي', 'الحالة'],
+            [Terms::get('الكود'), Terms::get('العميل'), Terms::get('التاريخ'), Terms::get('الإجمالي'), Terms::get('الحالة')],
             $this->window(Invoice::with('customer'), 'issue_date', $from, $to)->orderBy('id')->get()
                 ->map(fn (Invoice $i) => [
                     $i->code, $i->customer?->name, $i->issue_date?->toDateString(),
@@ -150,7 +151,7 @@ class CustomReportService
     protected function quotations(?string $from, ?string $to): array
     {
         return [
-            ['الكود', 'العميل', 'العنوان', 'التاريخ', 'الإجمالي', 'الحالة'],
+            [Terms::get('الكود'), Terms::get('العميل'), Terms::get('العنوان'), Terms::get('التاريخ'), Terms::get('الإجمالي'), Terms::get('الحالة')],
             $this->window(Quotation::with('customer'), 'issue_date', $from, $to)->orderBy('id')->get()
                 ->map(fn (Quotation $q) => [
                     $q->code, $q->customer?->name, $q->title, $q->issue_date?->toDateString(),
@@ -163,7 +164,7 @@ class CustomReportService
     protected function tasks(?string $from, ?string $to): array
     {
         return [
-            ['الكود', 'العميل', 'الحالة', 'أُنشئ في'],
+            [Terms::get('الكود'), Terms::get('العميل'), Terms::get('الحالة'), Terms::get('أُنشئ في')],
             $this->window(Task::with('customer'), 'created_at', $from, $to)->orderBy('id')->get()
                 ->map(fn (Task $t) => [
                     $t->code, $t->customer?->name, $this->str($t->status),
@@ -176,7 +177,7 @@ class CustomReportService
     protected function employees(?string $from, ?string $to): array
     {
         return [
-            ['الكود', 'الاسم', 'القسم', 'الوظيفة', 'الأساسي', 'الحالة', 'التعيين'],
+            [Terms::get('الكود'), Terms::get('الاسم'), Terms::get('القسم'), Terms::get('الوظيفة'), Terms::get('الأساسي'), Terms::get('الحالة'), Terms::get('التعيين')],
             $this->window(Employee::query(), 'hired_on', $from, $to)->orderBy('id')->get()
                 ->map(fn (Employee $e) => [
                     $e->code, $e->name, $e->department, $e->job_title,
@@ -189,7 +190,7 @@ class CustomReportService
     protected function leads(?string $from, ?string $to): array
     {
         return [
-            ['الكود', 'الاسم', 'المصدر', 'الحالة', 'القيمة المتوقعة', 'أُضيف في'],
+            [Terms::get('الكود'), Terms::get('الاسم'), Terms::get('المصدر'), Terms::get('الحالة'), Terms::get('القيمة المتوقعة'), Terms::get('أُضيف في')],
             $this->window(Lead::query(), 'created_at', $from, $to)->orderBy('id')->get()
                 ->map(fn (Lead $l) => [
                     $l->code, $l->name, $this->str($l->source), $this->str($l->status),

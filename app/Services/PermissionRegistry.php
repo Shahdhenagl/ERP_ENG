@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\UserRole;
+use App\Support\Terms;
 
 /**
  * Every permission the system has, defined in code.
@@ -133,12 +134,12 @@ class PermissionRegistry
 
     public static function label(string $permission): string
     {
-        return self::ALL[$permission][0] ?? $permission;
+        return Terms::get(self::ALL[$permission][0] ?? $permission);
     }
 
     public static function group(string $permission): string
     {
-        return self::ALL[$permission][1] ?? 'أخرى';
+        return Terms::get(self::ALL[$permission][1] ?? 'أخرى');
     }
 
     /** @return array<int, string> */
@@ -159,7 +160,7 @@ class PermissionRegistry
         $groups = [];
 
         foreach (self::ALL as $key => [$label, $group]) {
-            $groups[$group][] = ['key' => $key, 'label' => $label];
+            $groups[Terms::get($group)][] = ['key' => $key, 'label' => Terms::get($label)];
         }
 
         return array_map(

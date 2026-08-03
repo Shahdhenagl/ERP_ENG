@@ -9,6 +9,7 @@ use App\Models\Battery;
 use App\Models\Item;
 use App\Models\Warehouse;
 use App\Services\StockLedger;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -58,7 +59,7 @@ class BatteryController extends Controller
 
                 if ($item->category !== ItemCategory::Battery) {
                     throw ValidationException::withMessages([
-                        'item_id' => 'الصنف المختار ليس بطارية.',
+                        'item_id' => Terms::get('الصنف المختار ليس بطارية.'),
                     ]);
                 }
 
@@ -109,7 +110,7 @@ class BatteryController extends Controller
     public function replace(Request $request, Battery $battery): JsonResponse
     {
         if ($battery->status !== \App\Enums\BatteryStatus::Active) {
-            throw ValidationException::withMessages(['status' => 'هذه البطارية ليست قيد التشغيل.']);
+            throw ValidationException::withMessages(['status' => Terms::get('هذه البطارية ليست قيد التشغيل.')]);
         }
 
         $data = $request->validate([
@@ -164,7 +165,7 @@ class BatteryController extends Controller
 
         ActivityLog::record('battery.deleted', $battery, "حذف بطارية {$code}");
 
-        return response()->json(['message' => 'تم الحذف.']);
+        return response()->json(['message' => Terms::get('تم الحذف.')]);
     }
 
     /** @return array<string, mixed> */

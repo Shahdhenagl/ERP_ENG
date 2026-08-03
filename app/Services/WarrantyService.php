@@ -11,6 +11,7 @@ use App\Models\Task;
 use App\Models\User;
 use App\Models\Warranty;
 use App\Models\WarrantyClaim;
+use App\Support\Terms;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -49,7 +50,7 @@ class WarrantyService
 
         if (now()->parse($ends)->lt(now()->parse($starts))) {
             throw ValidationException::withMessages([
-                'ends_on' => 'تاريخ نهاية الضمان لا يمكن أن يسبق بدايته.',
+                'ends_on' => Terms::get('تاريخ نهاية الضمان لا يمكن أن يسبق بدايته.'),
             ]);
         }
 
@@ -85,7 +86,7 @@ class WarrantyService
     {
         if ($warranty->status === 'void') {
             throw ValidationException::withMessages([
-                'warranty' => 'لا يمكن تمديد ضمان ملغي.',
+                'warranty' => Terms::get('لا يمكن تمديد ضمان ملغي.'),
             ]);
         }
 
@@ -94,7 +95,7 @@ class WarrantyService
 
         if (now()->parse($ends)->lte($warranty->ends_on)) {
             throw ValidationException::withMessages([
-                'ends_on' => 'التمديد يجب أن ينتهي بعد الضمان الأصلي.',
+                'ends_on' => Terms::get('التمديد يجب أن ينتهي بعد الضمان الأصلي.'),
             ]);
         }
 
@@ -120,7 +121,7 @@ class WarrantyService
     {
         if ($warranty->claims()->whereIn('status', ['approved', 'repaired', 'replaced'])->exists()) {
             throw ValidationException::withMessages([
-                'warranty' => 'لا يمكن إلغاء ضمان تم إصلاح أو استبدال جهاز تحته.',
+                'warranty' => Terms::get('لا يمكن إلغاء ضمان تم إصلاح أو استبدال جهاز تحته.'),
             ]);
         }
 
@@ -149,7 +150,7 @@ class WarrantyService
 
         if (! $warranty) {
             throw ValidationException::withMessages([
-                'asset_id' => 'لا يوجد ضمان ساري على هذا الجهاز في تاريخ العطل.',
+                'asset_id' => Terms::get('لا يوجد ضمان ساري على هذا الجهاز في تاريخ العطل.'),
             ]);
         }
 
@@ -215,13 +216,13 @@ class WarrantyService
     {
         if ($claim->status !== ClaimStatus::Approved) {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن فتح أمر إصلاح قبل اعتماد البلاغ.',
+                'status' => Terms::get('لا يمكن فتح أمر إصلاح قبل اعتماد البلاغ.'),
             ]);
         }
 
         if ($claim->task_id) {
             throw ValidationException::withMessages([
-                'task' => 'تم فتح أمر إصلاح لهذا البلاغ بالفعل.',
+                'task' => Terms::get('تم فتح أمر إصلاح لهذا البلاغ بالفعل.'),
             ]);
         }
 
@@ -255,7 +256,7 @@ class WarrantyService
     {
         if ($claim->status !== ClaimStatus::Approved) {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن إقفال بلاغ لم يُعتمد.',
+                'status' => Terms::get('لا يمكن إقفال بلاغ لم يُعتمد.'),
             ]);
         }
 
@@ -282,7 +283,7 @@ class WarrantyService
     {
         if ($claim->status !== ClaimStatus::Approved) {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن استبدال جهاز قبل اعتماد البلاغ.',
+                'status' => Terms::get('لا يمكن استبدال جهاز قبل اعتماد البلاغ.'),
             ]);
         }
 
@@ -290,7 +291,7 @@ class WarrantyService
 
         if ($replacement->id === $claim->asset_id) {
             throw ValidationException::withMessages([
-                'replacement_asset_id' => 'لا يمكن استبدال الجهاز بنفسه.',
+                'replacement_asset_id' => Terms::get('لا يمكن استبدال الجهاز بنفسه.'),
             ]);
         }
 
@@ -427,7 +428,7 @@ class WarrantyService
 
         if ($months < 1) {
             throw ValidationException::withMessages([
-                'months' => 'مدة الضمان يجب أن تكون شهرًا واحدًا على الأقل.',
+                'months' => Terms::get('مدة الضمان يجب أن تكون شهرًا واحدًا على الأقل.'),
             ]);
         }
 
@@ -440,7 +441,7 @@ class WarrantyService
     {
         if ($claim->status->isFinal()) {
             throw ValidationException::withMessages([
-                'status' => 'تم إغلاق هذا البلاغ بالفعل.',
+                'status' => Terms::get('تم إغلاق هذا البلاغ بالفعل.'),
             ]);
         }
     }

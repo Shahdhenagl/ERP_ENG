@@ -9,6 +9,7 @@ use App\Models\ActivityLog;
 use App\Models\Item;
 use App\Models\Warehouse;
 use App\Services\StockLedger;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -116,7 +117,7 @@ class ItemController extends Controller
     {
         if ($item->movements()->exists()) {
             return response()->json([
-                'message' => 'لا يمكن حذف صنف له حركة مخزنية. أوقفه بدلًا من ذلك.',
+                'message' => Terms::get('لا يمكن حذف صنف له حركة مخزنية. أوقفه بدلًا من ذلك.'),
             ], 422);
         }
 
@@ -125,7 +126,7 @@ class ItemController extends Controller
 
         ActivityLog::record('item.deleted', $item, "تم حذف الصنف {$name}");
 
-        return response()->json(['message' => 'تم حذف الصنف.']);
+        return response()->json(['message' => Terms::get('تم حذف الصنف.')]);
     }
 
     /**

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Customer;
 use App\Models\Lead;
 use App\Models\User;
+use App\Support\Terms;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -37,7 +38,7 @@ class LeadService
         if ($status === 'lost') {
             if (! $lostReason) {
                 throw ValidationException::withMessages([
-                    'lost_reason' => 'سبب الخسارة مطلوب.',
+                    'lost_reason' => Terms::get('سبب الخسارة مطلوب.'),
                 ]);
             }
 

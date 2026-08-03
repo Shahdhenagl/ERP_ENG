@@ -5,10 +5,11 @@ namespace App\Services;
 use App\Models\CashBox;
 use App\Models\CashMovement;
 use App\Models\Employee;
-use App\Models\Payslip;
 use App\Models\PayrollRun;
+use App\Models\Payslip;
 use App\Models\SalaryAdvance;
 use App\Models\User;
+use App\Support\Terms;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -41,7 +42,7 @@ class PayrollService
 
         if ($amount <= 0) {
             throw ValidationException::withMessages([
-                'amount' => 'قيمة السلفة يجب أن تكون أكبر من صفر.',
+                'amount' => Terms::get('قيمة السلفة يجب أن تكون أكبر من صفر.'),
             ]);
         }
 
@@ -51,7 +52,7 @@ class PayrollService
 
         if ($amount > $box->balance() + 0.005) {
             throw ValidationException::withMessages([
-                'amount' => 'رصيد «'.$box->name.'» لا يكفي ('.number_format($box->balance(), 2).').',
+                'amount' => Terms::get('رصيد «').$box->name.'» لا يكفي ('.number_format($box->balance(), 2).').',
             ]);
         }
 
@@ -94,12 +95,12 @@ class PayrollService
     public function open(int $year, int $month, User $actor): PayrollRun
     {
         if ($month < 1 || $month > 12) {
-            throw ValidationException::withMessages(['month' => 'شهر غير صحيح.']);
+            throw ValidationException::withMessages(['month' => Terms::get('شهر غير صحيح.')]);
         }
 
         if (PayrollRun::where('year', $year)->where('month', $month)->exists()) {
             throw ValidationException::withMessages([
-                'month' => 'يوجد مسير رواتب لهذا الشهر بالفعل.',
+                'month' => Terms::get('يوجد مسير رواتب لهذا الشهر بالفعل.'),
             ]);
         }
 
@@ -219,7 +220,7 @@ class PayrollService
     {
         if (! $slip->run->isDraft()) {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن تعديل قسيمة بعد اعتماد المسير.',
+                'status' => Terms::get('لا يمكن تعديل قسيمة بعد اعتماد المسير.'),
             ]);
         }
 
@@ -252,13 +253,13 @@ class PayrollService
     {
         if (! $run->isDraft()) {
             throw ValidationException::withMessages([
-                'status' => 'تم اعتماد هذا المسير بالفعل.',
+                'status' => Terms::get('تم اعتماد هذا المسير بالفعل.'),
             ]);
         }
 
         if ($run->payslips()->count() === 0) {
             throw ValidationException::withMessages([
-                'payslips' => 'لا يمكن اعتماد مسير بلا قسائم.',
+                'payslips' => Terms::get('لا يمكن اعتماد مسير بلا قسائم.'),
             ]);
         }
 
@@ -279,13 +280,13 @@ class PayrollService
     {
         if ($slip->run->status === 'draft') {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن صرف قسيمة قبل اعتماد المسير.',
+                'status' => Terms::get('لا يمكن صرف قسيمة قبل اعتماد المسير.'),
             ]);
         }
 
         if ($slip->isPaid()) {
             throw ValidationException::withMessages([
-                'status' => 'تم صرف هذه القسيمة بالفعل.',
+                'status' => Terms::get('تم صرف هذه القسيمة بالفعل.'),
             ]);
         }
 
@@ -294,7 +295,7 @@ class PayrollService
 
         if ($net > $target->balance() + 0.005) {
             throw ValidationException::withMessages([
-                'amount' => 'رصيد «'.$target->name.'» لا يكفي لصرف صافي الراتب.',
+                'amount' => Terms::get('رصيد «').$target->name.'» لا يكفي لصرف صافي الراتب.',
             ]);
         }
 
@@ -328,7 +329,7 @@ class PayrollService
     {
         if ($run->status !== 'approved') {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن الصرف إلا من مسير معتمد.',
+                'status' => Terms::get('لا يمكن الصرف إلا من مسير معتمد.'),
             ]);
         }
 

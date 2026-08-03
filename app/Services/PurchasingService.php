@@ -12,6 +12,7 @@ use App\Models\SupplierInvoice;
 use App\Models\SupplierPayment;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Support\Terms;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -31,13 +32,13 @@ class PurchasingService
     {
         if ($order->status !== 'draft') {
             throw ValidationException::withMessages([
-                'status' => 'أمر الشراء ليس مسودة.',
+                'status' => Terms::get('أمر الشراء ليس مسودة.'),
             ]);
         }
 
         if ($order->lines()->count() === 0) {
             throw ValidationException::withMessages([
-                'lines' => 'لا يمكن إرسال أمر شراء بدون أصناف.',
+                'lines' => Terms::get('لا يمكن إرسال أمر شراء بدون أصناف.'),
             ]);
         }
 
@@ -54,7 +55,7 @@ class PurchasingService
     {
         if ($order->receipts()->exists()) {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن إلغاء أمر شراء تم استلام جزء منه.',
+                'status' => Terms::get('لا يمكن إلغاء أمر شراء تم استلام جزء منه.'),
             ]);
         }
 
@@ -82,7 +83,7 @@ class PurchasingService
     ): array {
         if ($order->status !== 'sent') {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن الاستلام إلا على أمر شراء مُرسَل.',
+                'status' => Terms::get('لا يمكن الاستلام إلا على أمر شراء مُرسَل.'),
             ]);
         }
 
@@ -101,7 +102,7 @@ class PurchasingService
 
             if (! $orderLine) {
                 throw ValidationException::withMessages([
-                    'lines' => 'صنف غير موجود في أمر الشراء.',
+                    'lines' => Terms::get('صنف غير موجود في أمر الشراء.'),
                 ]);
             }
 
@@ -173,7 +174,7 @@ class PurchasingService
 
         if ($amount <= 0) {
             throw ValidationException::withMessages([
-                'amount' => 'المبلغ يجب أن يكون أكبر من صفر.',
+                'amount' => Terms::get('المبلغ يجب أن يكون أكبر من صفر.'),
             ]);
         }
 
@@ -188,13 +189,13 @@ class PurchasingService
         if ($invoice) {
             if ($invoice->supplier_id !== $supplier->id) {
                 throw ValidationException::withMessages([
-                    'supplier_invoice_id' => 'الفاتورة لا تخص هذا المورّد.',
+                    'supplier_invoice_id' => Terms::get('الفاتورة لا تخص هذا المورّد.'),
                 ]);
             }
 
             if ($invoice->status !== 'posted') {
                 throw ValidationException::withMessages([
-                    'supplier_invoice_id' => 'لا يمكن السداد على فاتورة غير مُرحّلة.',
+                    'supplier_invoice_id' => Terms::get('لا يمكن السداد على فاتورة غير مُرحّلة.'),
                 ]);
             }
 
@@ -203,7 +204,7 @@ class PurchasingService
             // honest way to record a genuine advance.
             if ($amount > $invoice->balance() + 0.005) {
                 throw ValidationException::withMessages([
-                    'amount' => 'المتبقي على الفاتورة '.number_format($invoice->balance(), 2).' فقط.',
+                    'amount' => Terms::get('المتبقي على الفاتورة ').number_format($invoice->balance(), 2).' فقط.',
                 ]);
             }
         }
@@ -214,7 +215,7 @@ class PurchasingService
 
         if ($amount > $box->balance() + 0.005) {
             throw ValidationException::withMessages([
-                'amount' => 'رصيد «'.$box->name.'» لا يكفي ('.number_format($box->balance(), 2).').',
+                'amount' => Terms::get('رصيد «').$box->name.'» لا يكفي ('.number_format($box->balance(), 2).').',
             ]);
         }
 

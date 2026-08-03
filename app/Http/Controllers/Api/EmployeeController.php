@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Employee;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -69,12 +70,12 @@ class EmployeeController extends Controller
         if ($employee->payslips()->exists()) {
             $employee->update(['status' => 'terminated', 'left_on' => now()->toDateString()]);
 
-            return response()->json(['message' => 'تم إنهاء خدمة الموظف مع حفظ سجلّه.']);
+            return response()->json(['message' => Terms::get('تم إنهاء خدمة الموظف مع حفظ سجلّه.')]);
         }
 
         $employee->delete();
 
-        return response()->json(['message' => 'تم حذف الموظف.']);
+        return response()->json(['message' => Terms::get('تم حذف الموظف.')]);
     }
 
     /** @return array<string, mixed> */

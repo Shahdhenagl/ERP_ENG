@@ -10,6 +10,7 @@ use App\Models\SalesReturn;
 use App\Models\StockMovement;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Support\Terms;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -47,7 +48,7 @@ class SalesReturnService
 
         if ($invoice->status !== InvoiceStatus::Issued) {
             throw ValidationException::withMessages([
-                'invoice_id' => 'لا يمكن عمل مرتجع إلا على فاتورة صادرة.',
+                'invoice_id' => Terms::get('لا يمكن عمل مرتجع إلا على فاتورة صادرة.'),
             ]);
         }
 
@@ -84,7 +85,7 @@ class SalesReturnService
     {
         if ($return->isPosted()) {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن تعديل مرتجع مُرحّل.',
+                'status' => Terms::get('لا يمكن تعديل مرتجع مُرحّل.'),
             ]);
         }
 
@@ -162,13 +163,13 @@ class SalesReturnService
     {
         if ($return->isPosted()) {
             throw ValidationException::withMessages([
-                'status' => 'تم ترحيل هذا المرتجع بالفعل.',
+                'status' => Terms::get('تم ترحيل هذا المرتجع بالفعل.'),
             ]);
         }
 
         if ($return->lines()->count() === 0) {
             throw ValidationException::withMessages([
-                'lines' => 'لا يمكن ترحيل مرتجع بدون بنود.',
+                'lines' => Terms::get('لا يمكن ترحيل مرتجع بدون بنود.'),
             ]);
         }
 
@@ -178,7 +179,7 @@ class SalesReturnService
         // could each look reasonable and together exceed the invoice.
         if ($return->total > $invoice->total - $invoice->creditedTotal() + 0.005) {
             throw ValidationException::withMessages([
-                'total' => 'قيمة المرتجع تتجاوز المتبقي على الفاتورة.',
+                'total' => Terms::get('قيمة المرتجع تتجاوز المتبقي على الفاتورة.'),
             ]);
         }
 
@@ -218,7 +219,7 @@ class SalesReturnService
     {
         if ($return->isPosted()) {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن حذف مرتجع مُرحّل — البضاعة رجعت بالفعل.',
+                'status' => Terms::get('لا يمكن حذف مرتجع مُرحّل — البضاعة رجعت بالفعل.'),
             ]);
         }
 
@@ -272,7 +273,7 @@ class SalesReturnService
 
         if (! $line) {
             throw ValidationException::withMessages([
-                'lines' => 'أحد البنود لا يخص هذه الفاتورة.',
+                'lines' => Terms::get('أحد البنود لا يخص هذه الفاتورة.'),
             ]);
         }
 

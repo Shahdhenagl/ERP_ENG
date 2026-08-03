@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\Terms;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -16,11 +17,11 @@ class EnsureUserRole
         $user = $request->user();
 
         if (! $user || ! $user->is_active) {
-            return response()->json(['message' => 'غير مصرح بالدخول.'], 403);
+            return response()->json(['message' => Terms::get('غير مصرح بالدخول.')], 403);
         }
 
         if ($roles && ! in_array($user->role->value, $roles, true)) {
-            return response()->json(['message' => 'ليس لديك صلاحية لهذا الإجراء.'], 403);
+            return response()->json(['message' => Terms::get('ليس لديك صلاحية لهذا الإجراء.')], 403);
         }
 
         return $next($request);

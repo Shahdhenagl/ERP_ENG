@@ -12,6 +12,7 @@ use App\Models\Attendance;
 use App\Models\JobRole;
 use App\Models\Payslip;
 use App\Models\User;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -280,12 +281,12 @@ class UserController extends Controller
     public function destroy(Request $request, User $user): JsonResponse
     {
         if ($user->id === $request->user()->id) {
-            return response()->json(['message' => 'لا يمكنك حذف حسابك الخاص.'], 422);
+            return response()->json(['message' => Terms::get('لا يمكنك حذف حسابك الخاص.')], 422);
         }
 
         if ($user->assignedTasks()->open()->exists()) {
             return response()->json([
-                'message' => 'لا يمكن حذف فني لديه مهام مفتوحة. أعد إسناد مهامه أولاً.',
+                'message' => Terms::get('لا يمكن حذف فني لديه مهام مفتوحة. أعد إسناد مهامه أولاً.'),
             ], 422);
         }
 
@@ -294,6 +295,6 @@ class UserController extends Controller
 
         ActivityLog::record('user.deleted', $user, "تم حذف المستخدم {$name}");
 
-        return response()->json(['message' => 'تم حذف المستخدم.']);
+        return response()->json(['message' => Terms::get('تم حذف المستخدم.')]);
     }
 }

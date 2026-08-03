@@ -6,9 +6,10 @@ use App\Enums\ItemCategory;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Item;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -173,9 +174,14 @@ class ImportController extends Controller
     /** @return array{0: array<int, string>, 1: string} */
     protected function entity(string $entity): array
     {
-        abort_unless(isset(self::ENTITIES[$entity]), 404, 'مجموعة بيانات غير معروفة.');
+        abort_unless(isset(self::ENTITIES[$entity]), 404, Terms::get('مجموعة بيانات غير معروفة.'));
 
-        return self::ENTITIES[$entity];
+        // Translated on the way out rather than in the constant: a class
+        // constant cannot hold a call, and the heading row of a template is
+        // read by whoever opens the file.
+        [$headings, $permission] = self::ENTITIES[$entity];
+
+        return [array_map(Terms::get(...), $headings), $permission];
     }
 
     /**

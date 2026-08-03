@@ -6,6 +6,7 @@ use App\Models\Item;
 use App\Models\ItemSerial;
 use App\Models\StockMovement;
 use App\Models\Warehouse;
+use App\Support\Terms;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -200,7 +201,7 @@ class SerialRegistry
 
         if ($duplicates->isNotEmpty()) {
             throw ValidationException::withMessages([
-                'serials' => 'الرقم التسلسلي «'.$duplicates->first().'» مكرر في نفس العملية.',
+                'serials' => Terms::get('الرقم التسلسلي «').$duplicates->first().'» مكرر في نفس العملية.',
             ]);
         }
 
@@ -232,7 +233,7 @@ class SerialRegistry
     {
         if (abs(count($serials) - $qty) > 0.0005) {
             throw ValidationException::withMessages([
-                'serials' => 'عدد الأرقام التسلسلية ('.count($serials).') لا يساوي الكمية ('
+                'serials' => Terms::get('عدد الأرقام التسلسلية (').count($serials).') لا يساوي الكمية ('
                     .rtrim(rtrim(number_format($qty, 3, '.', ''), '0'), '.').').',
             ]);
         }

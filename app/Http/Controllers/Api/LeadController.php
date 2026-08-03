@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Lead;
 use App\Services\LeadService;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -110,7 +111,7 @@ class LeadController extends Controller
 
         ActivityLog::record('lead.deleted', $lead, "حذف عميل محتمل {$code}");
 
-        return response()->json(['message' => 'تم حذف العميل المحتمل.']);
+        return response()->json(['message' => Terms::get('تم حذف العميل المحتمل.')]);
     }
 
     /** @return array<string, mixed> */

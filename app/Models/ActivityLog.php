@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Terms;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -124,7 +125,7 @@ class ActivityLog extends Model
 
     public function moduleLabel(): string
     {
-        return self::MODULES[$this->module()] ?? $this->module();
+        return Terms::get(self::MODULES[$this->module()] ?? $this->module());
     }
 
     public function verbLabel(): string
@@ -133,7 +134,7 @@ class ActivityLog extends Model
             ? substr($this->action, strrpos($this->action, '.') + 1)
             : '';
 
-        return self::VERBS[$verb] ?? $verb;
+        return Terms::get(self::VERBS[$verb] ?? $verb);
     }
 
     /** «الفواتير · إصدار», falling back to the raw action when unknown. */

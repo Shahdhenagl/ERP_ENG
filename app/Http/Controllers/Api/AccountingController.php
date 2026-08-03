@@ -12,6 +12,7 @@ use App\Services\ChartOfAccounts;
 use App\Services\FinancialReports;
 use App\Services\Ledger;
 use App\Services\LedgerBackfill;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -107,14 +108,14 @@ class AccountingController extends Controller
         ]);
 
         if ((int) ($data['parent_id'] ?? 0) === $account->id) {
-            throw ValidationException::withMessages(['parent_id' => 'لا يمكن أن يكون الحساب أبًا لنفسه.']);
+            throw ValidationException::withMessages(['parent_id' => Terms::get('لا يمكن أن يكون الحساب أبًا لنفسه.')]);
         }
 
         // Turning a posted-to account into a heading would strand its entries
         // somewhere nothing is allowed to be.
         if (($data['is_group'] ?? false) && $account->lines()->exists()) {
             throw ValidationException::withMessages([
-                'is_group' => 'الحساب عليه حركة، فلا يمكن تحويله إلى حساب تجميعي.',
+                'is_group' => Terms::get('الحساب عليه حركة، فلا يمكن تحويله إلى حساب تجميعي.'),
             ]);
         }
 
@@ -122,7 +123,7 @@ class AccountingController extends Controller
         // machine key — but its type is what the posting rules assume.
         if ($account->is_system && $data['type'] !== $account->type->value) {
             throw ValidationException::withMessages([
-                'type' => 'لا يمكن تغيير نوع حساب أساسي يعتمد عليه النظام.',
+                'type' => Terms::get('لا يمكن تغيير نوع حساب أساسي يعتمد عليه النظام.'),
             ]);
         }
 
@@ -137,25 +138,25 @@ class AccountingController extends Controller
     {
         if ($account->is_system) {
             throw ValidationException::withMessages([
-                'account' => 'حساب أساسي يعتمد عليه الترحيل الآلي — يمكن إعادة تسميته أو تعطيله فقط.',
+                'account' => Terms::get('حساب أساسي يعتمد عليه الترحيل الآلي — يمكن إعادة تسميته أو تعطيله فقط.'),
             ]);
         }
 
         if ($account->lines()->exists()) {
             throw ValidationException::withMessages([
-                'account' => 'الحساب عليه حركة. عطّله بدلًا من حذفه.',
+                'account' => Terms::get('الحساب عليه حركة. عطّله بدلًا من حذفه.'),
             ]);
         }
 
         if ($account->children()->exists()) {
             throw ValidationException::withMessages([
-                'account' => 'احذف الحسابات الفرعية أولًا.',
+                'account' => Terms::get('احذف الحسابات الفرعية أولًا.'),
             ]);
         }
 
         $account->delete();
 
-        return response()->json(['message' => 'تم حذف الحساب.']);
+        return response()->json(['message' => Terms::get('تم حذف الحساب.')]);
     }
 
     /* ── Cost centres ────────────────────────────────────── */
@@ -200,13 +201,13 @@ class AccountingController extends Controller
     {
         if ($costCenter->lines()->exists()) {
             throw ValidationException::withMessages([
-                'cost_center' => 'مركز التكلفة عليه حركة. عطّله بدلًا من حذفه.',
+                'cost_center' => Terms::get('مركز التكلفة عليه حركة. عطّله بدلًا من حذفه.'),
             ]);
         }
 
         $costCenter->delete();
 
-        return response()->json(['message' => 'تم حذف مركز التكلفة.']);
+        return response()->json(['message' => Terms::get('تم حذف مركز التكلفة.')]);
     }
 
     /* ── The journal ─────────────────────────────────────── */
@@ -307,7 +308,7 @@ class AccountingController extends Controller
 
         ActivityLog::record('journal.voided', $entry, "إلغاء القيد اليدوي {$entry->code}");
 
-        return response()->json(['message' => 'تم إلغاء القيد.']);
+        return response()->json(['message' => Terms::get('تم إلغاء القيد.')]);
     }
 
     /* ── Statements ──────────────────────────────────────── */

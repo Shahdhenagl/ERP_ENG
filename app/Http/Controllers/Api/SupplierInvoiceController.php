@@ -11,6 +11,7 @@ use App\Models\StockMovement;
 use App\Models\Supplier;
 use App\Models\SupplierInvoice;
 use App\Services\SupplierBilling;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -139,7 +140,7 @@ class SupplierInvoiceController extends Controller
     {
         if ($supplierInvoice->status !== 'draft') {
             return response()->json(
-                ['message' => 'لا يمكن حذف فاتورة مُرحّلة. ألغِها بسبب موثّق.'],
+                ['message' => Terms::get('لا يمكن حذف فاتورة مُرحّلة. ألغِها بسبب موثّق.')],
                 422,
             );
         }
@@ -147,7 +148,7 @@ class SupplierInvoiceController extends Controller
         $supplierInvoice->receipts()->update(['supplier_invoice_id' => null]);
         $supplierInvoice->delete();
 
-        return response()->json(['message' => 'تم حذف المسودة.']);
+        return response()->json(['message' => Terms::get('تم حذف المسودة.')]);
     }
 
     /** Deliveries with no bill against them yet — what a bill is drafted from. */
@@ -250,13 +251,13 @@ class SupplierInvoiceController extends Controller
     {
         if ($purchaseReturn->isPosted()) {
             return response()->json(
-                ['message' => 'لا يمكن حذف مرتجع مُرحّل — البضاعة خرجت بالفعل.'],
+                ['message' => Terms::get('لا يمكن حذف مرتجع مُرحّل — البضاعة خرجت بالفعل.')],
                 422,
             );
         }
 
         $purchaseReturn->delete();
 
-        return response()->json(['message' => 'تم حذف المسودة.']);
+        return response()->json(['message' => Terms::get('تم حذف المسودة.')]);
     }
 }

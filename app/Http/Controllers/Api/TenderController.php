@@ -6,6 +6,7 @@ use App\Enums\TenderStatus;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Tender;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -65,7 +66,7 @@ class TenderController extends Controller
     public function submit(Tender $tender): JsonResponse
     {
         if ($tender->status !== TenderStatus::Registered) {
-            throw ValidationException::withMessages(['status' => 'لا يمكن تقديم إلا مناقصة مسجّلة.']);
+            throw ValidationException::withMessages(['status' => Terms::get('لا يمكن تقديم إلا مناقصة مسجّلة.')]);
         }
 
         $tender->update(['status' => TenderStatus::Submitted]);
@@ -84,7 +85,7 @@ class TenderController extends Controller
         ]);
 
         if (! $tender->status->isOpen()) {
-            throw ValidationException::withMessages(['status' => 'المناقصة محسومة بالفعل.']);
+            throw ValidationException::withMessages(['status' => Terms::get('المناقصة محسومة بالفعل.')]);
         }
 
         $tender->update([

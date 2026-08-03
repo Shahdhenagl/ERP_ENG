@@ -8,6 +8,7 @@ use App\Models\CashBox;
 use App\Models\CashMovement;
 use App\Models\Cheque;
 use App\Services\ChequeRegister;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -199,7 +200,7 @@ class ChequeController extends Controller
             ($data['reconciled'] ? 'تسوية ' : 'إلغاء تسوية ').count($data['ids']).' حركة بنكية',
         );
 
-        return response()->json(['message' => 'تم التحديث.', 'count' => count($data['ids'])]);
+        return response()->json(['message' => Terms::get('تم التحديث.'), 'count' => count($data['ids'])]);
     }
 
     /** @return array<string, mixed> */

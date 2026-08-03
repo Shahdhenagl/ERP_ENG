@@ -8,6 +8,7 @@ use App\Models\ActivityLog;
 use App\Models\Branch;
 use App\Models\Quotation;
 use App\Services\SalesService;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -64,7 +65,7 @@ class QuotationController extends Controller
         // a new quote, not a quiet rewrite of the one they were given.
         if ($quotation->status !== QuotationStatus::Draft) {
             return response()->json([
-                'message' => 'لا يمكن تعديل عرض سعر بعد إرساله. أنشئ عرضًا جديدًا بدلًا منه.',
+                'message' => Terms::get('لا يمكن تعديل عرض سعر بعد إرساله. أنشئ عرضًا جديدًا بدلًا منه.'),
             ], 422);
         }
 
@@ -183,13 +184,13 @@ class QuotationController extends Controller
     {
         if ($quotation->status !== QuotationStatus::Draft) {
             return response()->json([
-                'message' => 'لا يمكن حذف عرض سعر أُرسل. استخدم الإلغاء بدلًا من ذلك.',
+                'message' => Terms::get('لا يمكن حذف عرض سعر أُرسل. استخدم الإلغاء بدلًا من ذلك.'),
             ], 422);
         }
 
         $quotation->delete();
 
-        return response()->json(['message' => 'تم حذف المسودة.']);
+        return response()->json(['message' => Terms::get('تم حذف المسودة.')]);
     }
 
     /* ── Helpers ─────────────────────────────────────────── */
@@ -313,7 +314,7 @@ class QuotationController extends Controller
 
         if ((int) $owner !== (int) $data['customer_id']) {
             throw ValidationException::withMessages([
-                'branch_id' => 'هذا الفرع لا يخص العميل المختار.',
+                'branch_id' => Terms::get('هذا الفرع لا يخص العميل المختار.'),
             ]);
         }
     }

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Account;
 use App\Models\JournalEntry;
 use App\Models\User;
+use App\Support\Terms;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -47,20 +48,20 @@ class Ledger
 
         if (count($resolved) < 2) {
             throw ValidationException::withMessages([
-                'lines' => 'القيد يحتاج طرفين على الأقل.',
+                'lines' => Terms::get('القيد يحتاج طرفين على الأقل.'),
             ]);
         }
 
         if (abs($debit - $credit) > self::TOLERANCE) {
             throw ValidationException::withMessages([
-                'lines' => 'القيد غير متوازن: مدين '.number_format($debit, 2)
+                'lines' => Terms::get('القيد غير متوازن: مدين ').number_format($debit, 2)
                     .' مقابل دائن '.number_format($credit, 2).'.',
             ]);
         }
 
         if ($debit <= 0) {
             throw ValidationException::withMessages([
-                'lines' => 'لا يمكن ترحيل قيد بقيمة صفر.',
+                'lines' => Terms::get('لا يمكن ترحيل قيد بقيمة صفر.'),
             ]);
         }
 
@@ -203,7 +204,7 @@ class Ledger
     {
         if (! $entry->source->isManual()) {
             throw ValidationException::withMessages([
-                'entry' => 'القيود الآلية تُعكَس ولا تُلغى — عدّل المستند نفسه.',
+                'entry' => Terms::get('القيود الآلية تُعكَس ولا تُلغى — عدّل المستند نفسه.'),
             ]);
         }
 
@@ -240,7 +241,7 @@ class Ledger
             // what was meant, so say the net.
             if ($debit > 0 && $credit > 0) {
                 throw ValidationException::withMessages([
-                    'lines' => 'السطر لا يمكن أن يكون مدينًا ودائنًا في نفس الوقت.',
+                    'lines' => Terms::get('السطر لا يمكن أن يكون مدينًا ودائنًا في نفس الوقت.'),
                 ]);
             }
 
@@ -274,7 +275,7 @@ class Ledger
             $found = Account::find((int) $account);
 
             if (! $found) {
-                throw ValidationException::withMessages(['lines' => 'حساب غير موجود.']);
+                throw ValidationException::withMessages(['lines' => Terms::get('حساب غير موجود.')]);
             }
 
             return $found;

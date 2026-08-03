@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\Customer;
 use App\Models\FollowUp;
 use App\Models\Lead;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -107,7 +108,7 @@ class FollowUpController extends Controller
     {
         $followUp->delete();
 
-        return response()->json(['message' => 'تم حذف المتابعة.']);
+        return response()->json(['message' => Terms::get('تم حذف المتابعة.')]);
     }
 
     /** @return array<string, mixed> */

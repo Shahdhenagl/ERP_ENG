@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Branch;
 use App\Models\Customer;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -78,7 +79,7 @@ class BranchController extends Controller
         // records would point at a site that no longer exists.
         if ($branch->assets()->exists() || $branch->tasks()->exists()) {
             return response()->json([
-                'message' => 'لا يمكن حذف فرع به أجهزة أو مهام. أوقفه بدلًا من ذلك.',
+                'message' => Terms::get('لا يمكن حذف فرع به أجهزة أو مهام. أوقفه بدلًا من ذلك.'),
             ], 422);
         }
 
@@ -87,7 +88,7 @@ class BranchController extends Controller
 
         ActivityLog::record('branch.deleted', $branch, "تم حذف فرع {$name}");
 
-        return response()->json(['message' => 'تم حذف الفرع.']);
+        return response()->json(['message' => Terms::get('تم حذف الفرع.')]);
     }
 
     /* ── Helpers ─────────────────────────────────────────── */

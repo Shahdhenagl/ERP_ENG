@@ -9,6 +9,7 @@ use App\Models\AssetCustody;
 use App\Models\CashBox;
 use App\Models\User;
 use App\Services\CustodyService;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -233,7 +234,7 @@ class CustodyController extends Controller
             "تم تسليم {$custody->asset?->label()} من عهدة {$custody->holder?->name}",
         );
 
-        return response()->json(['message' => 'تم تسجيل التسليم.']);
+        return response()->json(['message' => Terms::get('تم تسجيل التسليم.')]);
     }
 
     /** Devices currently out, whoever is holding them. */

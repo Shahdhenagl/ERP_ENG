@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Models\ActivityLog;
 use App\Models\User;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -36,7 +37,7 @@ class AuthController extends Controller
             );
 
             throw ValidationException::withMessages([
-                'email' => 'بيانات الدخول غير صحيحة.',
+                'email' => Terms::get('بيانات الدخول غير صحيحة.'),
             ]);
         }
 
@@ -48,7 +49,7 @@ class AuthController extends Controller
             );
 
             throw ValidationException::withMessages([
-                'email' => 'هذا الحساب موقوف. تواصل مع مدير النظام.',
+                'email' => Terms::get('هذا الحساب موقوف. تواصل مع مدير النظام.'),
             ]);
         }
 
@@ -73,7 +74,7 @@ class AuthController extends Controller
     {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json(['message' => 'تم تسجيل الخروج.']);
+        return response()->json(['message' => Terms::get('تم تسجيل الخروج.')]);
     }
 
     /** Self-service profile edit — role and active flag are deliberately not editable here. */
@@ -104,7 +105,7 @@ class AuthController extends Controller
 
         if (! Hash::check($data['current_password'], $user->password)) {
             throw ValidationException::withMessages([
-                'current_password' => 'كلمة المرور الحالية غير صحيحة.',
+                'current_password' => Terms::get('كلمة المرور الحالية غير صحيحة.'),
             ]);
         }
 
@@ -112,6 +113,6 @@ class AuthController extends Controller
 
         ActivityLog::record('auth.password_changed', $user, "{$user->name} غيّر كلمة المرور");
 
-        return response()->json(['message' => 'تم تغيير كلمة المرور.']);
+        return response()->json(['message' => Terms::get('تم تغيير كلمة المرور.')]);
     }
 }

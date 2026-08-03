@@ -11,6 +11,7 @@ use App\Models\Item;
 use App\Models\StockMovement;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Support\Terms;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -128,7 +129,7 @@ class CustodyService
         $shortfall = $this->shortfallFor($technician);
 
         if ($shortfall <= 0) {
-            throw ValidationException::withMessages(['amount' => 'لا يوجد فرق مستحق على العهدة.']);
+            throw ValidationException::withMessages(['amount' => Terms::get('لا يوجد فرق مستحق على العهدة.')]);
         }
 
         $this->advanceCash($technician, $shortfall, $from, $actor, 'صرف فرق العهدة');
@@ -147,7 +148,7 @@ class CustodyService
         $shortfall = round(max(0.0, -$box->balance()), 2);
 
         if ($shortfall <= 0) {
-            throw ValidationException::withMessages(['amount' => 'لا يوجد فرق على العهدة.']);
+            throw ValidationException::withMessages(['amount' => Terms::get('لا يوجد فرق على العهدة.')]);
         }
 
         CashMovement::create([
@@ -248,7 +249,7 @@ class CustodyService
     {
         if (! $custody->isOpen()) {
             throw ValidationException::withMessages([
-                'custody' => 'هذه العهدة مُسلَّمة بالفعل.',
+                'custody' => Terms::get('هذه العهدة مُسلَّمة بالفعل.'),
             ]);
         }
 
@@ -437,19 +438,19 @@ class CustodyService
     {
         if ($warehouse->isVan()) {
             throw ValidationException::withMessages([
-                'warehouse' => 'عهدة الفني تُغلق بتسليم ما بها، لا بالحذف.',
+                'warehouse' => Terms::get('عهدة الفني تُغلق بتسليم ما بها، لا بالحذف.'),
             ]);
         }
 
         if ($warehouse->is_default) {
             throw ValidationException::withMessages([
-                'warehouse' => 'لا يمكن حذف المخزن الافتراضي. اجعل مخزنًا آخر افتراضيًا أولًا.',
+                'warehouse' => Terms::get('لا يمكن حذف المخزن الافتراضي. اجعل مخزنًا آخر افتراضيًا أولًا.'),
             ]);
         }
 
         if ($warehouse->levels()->where('qty', '>', 0)->exists()) {
             throw ValidationException::withMessages([
-                'warehouse' => 'لا يمكن حذف مخزن به رصيد. حوّل ما به أولًا.',
+                'warehouse' => Terms::get('لا يمكن حذف مخزن به رصيد. حوّل ما به أولًا.'),
             ]);
         }
 
@@ -469,7 +470,7 @@ class CustodyService
     {
         if (! $user->is_active) {
             throw ValidationException::withMessages([
-                'user_id' => 'لا يمكن تسليم عهدة لمستخدم موقوف.',
+                'user_id' => Terms::get('لا يمكن تسليم عهدة لمستخدم موقوف.'),
             ]);
         }
     }

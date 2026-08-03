@@ -9,6 +9,7 @@ use App\Models\Contract;
 use App\Models\SiteSurvey;
 use App\Models\TechnicianMonthlyReport;
 use App\Models\Tender;
+use App\Support\Terms;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -89,7 +90,7 @@ class AttachmentController extends Controller
         Storage::disk('public')->delete($attachment->path);
         $attachment->delete();
 
-        return response()->json(['message' => 'تم حذف المرفق.']);
+        return response()->json(['message' => Terms::get('تم حذف المرفق.')]);
     }
 
     /** Resolve the record from the URL, guarding by its kind's permission. */

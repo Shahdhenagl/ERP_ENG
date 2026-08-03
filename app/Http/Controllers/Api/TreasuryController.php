@@ -12,6 +12,7 @@ use App\Models\Invoice;
 use App\Models\Payment;
 use App\Services\BillingService;
 use App\Services\TreasuryReport;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -83,7 +84,7 @@ class TreasuryController extends Controller
 
         ActivityLog::record('payment.reversed', $payment, "تم إلغاء سند القبض {$payment->code}");
 
-        return response()->json(['message' => 'تم إلغاء سند القبض.']);
+        return response()->json(['message' => Terms::get('تم إلغاء سند القبض.')]);
     }
 
     /* ── Cash boxes ──────────────────────────────────────── */
@@ -127,7 +128,7 @@ class TreasuryController extends Controller
     public function updateBox(Request $request, CashBox $box): JsonResponse
     {
         if ($box->isCustody()) {
-            throw ValidationException::withMessages(['box' => 'خزينة عهدة فني تُدار من شاشة العهد.']);
+            throw ValidationException::withMessages(['box' => Terms::get('خزينة عهدة فني تُدار من شاشة العهد.')]);
         }
 
         $data = $request->validate([
@@ -150,22 +151,22 @@ class TreasuryController extends Controller
     public function destroyBox(CashBox $box): JsonResponse
     {
         if ($box->isCustody()) {
-            throw ValidationException::withMessages(['box' => 'خزينة عهدة فني تُدار من شاشة العهد.']);
+            throw ValidationException::withMessages(['box' => Terms::get('خزينة عهدة فني تُدار من شاشة العهد.')]);
         }
 
         if ($box->id === CashBox::default()->id) {
-            throw ValidationException::withMessages(['box' => 'لا يمكن حذف الخزينة الرئيسية.']);
+            throw ValidationException::withMessages(['box' => Terms::get('لا يمكن حذف الخزينة الرئيسية.')]);
         }
 
         if ($box->movements()->exists()) {
             throw ValidationException::withMessages([
-                'box' => 'لا يمكن حذف خزينة لها حركة. أوقفها بدلًا من ذلك.',
+                'box' => Terms::get('لا يمكن حذف خزينة لها حركة. أوقفها بدلًا من ذلك.'),
             ]);
         }
 
         $box->delete();
 
-        return response()->json(['message' => 'تم حذف الخزينة.']);
+        return response()->json(['message' => Terms::get('تم حذف الخزينة.')]);
     }
 
     /**
@@ -258,7 +259,7 @@ class TreasuryController extends Controller
             $data['note'] ?? null,
         );
 
-        return response()->json(['message' => 'تم التحويل.'], 201);
+        return response()->json(['message' => Terms::get('تم التحويل.')], 201);
     }
 
     /**
@@ -334,7 +335,7 @@ class TreasuryController extends Controller
 
         if ($movement->reconciled_at) {
             throw ValidationException::withMessages([
-                'movement' => 'لا يمكن حذف سند بعد تسوية الخزينة عليه.',
+                'movement' => Terms::get('لا يمكن حذف سند بعد تسوية الخزينة عليه.'),
             ]);
         }
 
@@ -351,7 +352,7 @@ class TreasuryController extends Controller
 
         ActivityLog::record('cash_voucher.deleted', null, "حذف سند خزينة #{$movement->id}");
 
-        return response()->json(['message' => 'تم حذف السند.']);
+        return response()->json(['message' => Terms::get('تم حذف السند.')]);
     }
 
     public function movements(Request $request): JsonResponse

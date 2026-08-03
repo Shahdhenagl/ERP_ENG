@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\Supplier;
 use App\Models\SupplierPayment;
 use App\Services\PurchasingService;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -83,13 +84,13 @@ class SupplierController extends Controller
     {
         if ($supplier->receipts()->exists() || $supplier->orders()->exists()) {
             return response()->json([
-                'message' => 'لا يمكن حذف مورّد له حركة. أوقفه بدلًا من ذلك.',
+                'message' => Terms::get('لا يمكن حذف مورّد له حركة. أوقفه بدلًا من ذلك.'),
             ], 422);
         }
 
         $supplier->delete();
 
-        return response()->json(['message' => 'تم حذف المورّد.']);
+        return response()->json(['message' => Terms::get('تم حذف المورّد.')]);
     }
 
     /* ── Paying them ─────────────────────────────────────── */
@@ -148,7 +149,7 @@ class SupplierController extends Controller
     {
         $this->purchasing->reversePayment($payment, $request->user());
 
-        return response()->json(['message' => 'تم إلغاء سند الصرف.']);
+        return response()->json(['message' => Terms::get('تم إلغاء سند الصرف.')]);
     }
 
     /* ── Helpers ─────────────────────────────────────────── */

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -26,7 +27,7 @@ class PushSubscriptionController extends Controller
             $data['keys']['auth'],
         );
 
-        return response()->json(['message' => 'تم تفعيل الإشعارات على هذا الجهاز.']);
+        return response()->json(['message' => Terms::get('تم تفعيل الإشعارات على هذا الجهاز.')]);
     }
 
     public function destroy(Request $request): JsonResponse
@@ -37,6 +38,6 @@ class PushSubscriptionController extends Controller
 
         $request->user()->deletePushSubscription($data['endpoint']);
 
-        return response()->json(['message' => 'تم إيقاف الإشعارات على هذا الجهاز.']);
+        return response()->json(['message' => Terms::get('تم إيقاف الإشعارات على هذا الجهاز.')]);
     }
 }

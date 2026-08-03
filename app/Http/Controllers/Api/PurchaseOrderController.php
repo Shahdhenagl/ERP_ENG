@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\PurchaseOrder;
 use App\Services\PurchasingService;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -81,7 +82,7 @@ class PurchaseOrderController extends Controller
         // a delivery ends up not matching anything.
         if ($order->status !== 'draft') {
             return response()->json([
-                'message' => 'لا يمكن تعديل أمر شراء بعد إرساله.',
+                'message' => Terms::get('لا يمكن تعديل أمر شراء بعد إرساله.'),
             ], 422);
         }
 
@@ -154,12 +155,12 @@ class PurchaseOrderController extends Controller
     public function destroy(PurchaseOrder $order): JsonResponse
     {
         if ($order->status !== 'draft') {
-            return response()->json(['message' => 'لا يمكن حذف أمر شراء مُرسَل.'], 422);
+            return response()->json(['message' => Terms::get('لا يمكن حذف أمر شراء مُرسَل.')], 422);
         }
 
         $order->delete();
 
-        return response()->json(['message' => 'تم حذف المسودة.']);
+        return response()->json(['message' => Terms::get('تم حذف المسودة.')]);
     }
 
     /* ── Helpers ─────────────────────────────────────────── */

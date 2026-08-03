@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\TaskAttachmentResource;
 use App\Models\Task;
 use App\Models\TaskAttachment;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -71,6 +72,6 @@ class TaskAttachmentController extends Controller
         Storage::disk('public')->delete($attachment->path);
         $attachment->delete();
 
-        return response()->json(['message' => 'تم حذف المرفق.']);
+        return response()->json(['message' => Terms::get('تم حذف المرفق.')]);
     }
 }

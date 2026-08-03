@@ -8,6 +8,7 @@ use App\Models\ActivityLog;
 use App\Models\JobRole;
 use App\Models\User;
 use App\Services\PermissionRegistry;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -104,7 +105,7 @@ class JobRoleController extends Controller
 
         ActivityLog::record('job_role.deleted', null, "تم حذف الدور {$name}");
 
-        return response()->json(['message' => 'تم حذف الدور.']);
+        return response()->json(['message' => Terms::get('تم حذف الدور.')]);
     }
 
     /** @return array{name: string, base_role: string, permissions: array<int, string>} */

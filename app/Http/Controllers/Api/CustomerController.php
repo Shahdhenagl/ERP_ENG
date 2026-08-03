@@ -8,6 +8,7 @@ use App\Models\ActivityLog;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\SalesReturn;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -263,7 +264,7 @@ class CustomerController extends Controller
     {
         if ($customer->tasks()->open()->exists()) {
             return response()->json([
-                'message' => 'لا يمكن حذف عميل لديه مهام مفتوحة.',
+                'message' => Terms::get('لا يمكن حذف عميل لديه مهام مفتوحة.'),
             ], 422);
         }
 
@@ -272,7 +273,7 @@ class CustomerController extends Controller
 
         ActivityLog::record('customer.deleted', $customer, "تم حذف العميل {$name}");
 
-        return response()->json(['message' => 'تم حذف العميل.']);
+        return response()->json(['message' => Terms::get('تم حذف العميل.')]);
     }
 
     /** @return array<string, mixed> */

@@ -6,6 +6,7 @@ use App\Enums\SurveyStatus;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\SiteSurvey;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -50,7 +51,7 @@ class SiteSurveyController extends Controller
     {
         if ($siteSurvey->status === SurveyStatus::Approved) {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن تعديل معاينة معتمدة.',
+                'status' => Terms::get('لا يمكن تعديل معاينة معتمدة.'),
             ]);
         }
 
@@ -64,7 +65,7 @@ class SiteSurveyController extends Controller
     {
         if ($siteSurvey->status === SurveyStatus::Approved) {
             throw ValidationException::withMessages([
-                'status' => 'لا يمكن حذف معاينة معتمدة.',
+                'status' => Terms::get('لا يمكن حذف معاينة معتمدة.'),
             ]);
         }
 
@@ -73,14 +74,14 @@ class SiteSurveyController extends Controller
 
         ActivityLog::record('site_survey.deleted', $siteSurvey, "حذف معاينة {$code}");
 
-        return response()->json(['message' => 'تم حذف المعاينة.']);
+        return response()->json(['message' => Terms::get('تم حذف المعاينة.')]);
     }
 
     /** Freeze the survey as the basis a quotation is sized against. */
     public function approve(Request $request, SiteSurvey $siteSurvey): JsonResponse
     {
         if ($siteSurvey->status === SurveyStatus::Approved) {
-            throw ValidationException::withMessages(['status' => 'المعاينة معتمدة بالفعل.']);
+            throw ValidationException::withMessages(['status' => Terms::get('المعاينة معتمدة بالفعل.')]);
         }
 
         $siteSurvey->update([

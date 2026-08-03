@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -37,13 +38,13 @@ class NotificationController extends Controller
         $notification = $request->user()->notifications()->findOrFail($id);
         $notification->markAsRead();
 
-        return response()->json(['message' => 'تم وضع علامة مقروء.']);
+        return response()->json(['message' => Terms::get('تم وضع علامة مقروء.')]);
     }
 
     public function markAllRead(Request $request): JsonResponse
     {
         $request->user()->unreadNotifications->markAsRead();
 
-        return response()->json(['message' => 'تم وضع علامة مقروء على الكل.']);
+        return response()->json(['message' => Terms::get('تم وضع علامة مقروء على الكل.')]);
     }
 }

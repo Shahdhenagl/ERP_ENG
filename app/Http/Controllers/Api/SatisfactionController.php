@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\SatisfactionSurvey;
 use App\Models\Task;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -45,13 +46,13 @@ class SatisfactionController extends Controller
 
         if ($task->status !== TaskStatus::Completed) {
             throw ValidationException::withMessages([
-                'task_id' => 'لا يُقيَّم إلا أمر عمل منتهٍ.',
+                'task_id' => Terms::get('لا يُقيَّم إلا أمر عمل منتهٍ.'),
             ]);
         }
 
         if (SatisfactionSurvey::where('task_id', $task->id)->exists()) {
             throw ValidationException::withMessages([
-                'task_id' => 'تم إنشاء استطلاع لأمر العمل هذا بالفعل.',
+                'task_id' => Terms::get('تم إنشاء استطلاع لأمر العمل هذا بالفعل.'),
             ]);
         }
 

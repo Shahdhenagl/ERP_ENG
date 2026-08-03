@@ -17,6 +17,7 @@ use App\Models\Quotation;
 use App\Models\Task;
 use App\Models\Warranty;
 use App\Models\WarrantyClaim;
+use App\Support\Terms;
 use Illuminate\Support\Collection;
 
 /**
@@ -73,7 +74,7 @@ class OperationsAlertScanner
                 return [
                     'key' => "recurring-expense-due:{$e->id}:{$e->next_due_on->toDateString()}",
                     'type' => 'expense.recurring_due',
-                    'title' => 'مصروف دوري مستحق',
+                    'title' => Terms::get('مصروف دوري مستحق'),
                     'body' => "{$e->name} — ".number_format((float) $e->amount, 2)." ج · {$when}",
                     'url' => '/treasury/operations', 'tag' => "recurring-expense-{$e->id}",
                 ];
@@ -87,7 +88,7 @@ class OperationsAlertScanner
             ->with('customer')->get()
             ->map(fn (Task $t) => [
                 'key' => "urgent-task:{$t->id}", 'type' => 'task.urgent',
-                'title' => 'صيانة عاجلة',
+                'title' => Terms::get('صيانة عاجلة'),
                 'body' => "{$t->code} — ".($t->customer?->name ?? $t->title),
                 'url' => "/tasks/{$t->id}", 'tag' => "task-{$t->id}",
             ]);
@@ -100,7 +101,7 @@ class OperationsAlertScanner
             ->with(['customer', 'asset'])->get()
             ->map(fn (Task $t) => [
                 'key' => "device-fault:{$t->id}", 'type' => 'device.fault',
-                'title' => 'بلاغ عطل جهاز',
+                'title' => Terms::get('بلاغ عطل جهاز'),
                 'body' => ($t->asset?->label() ?? $t->customer?->name ?? $t->title)." — {$t->code}",
                 'url' => "/tasks/{$t->id}", 'tag' => "task-{$t->id}",
             ]);
@@ -112,7 +113,7 @@ class OperationsAlertScanner
         return Task::query()->open()->slaBreached()->with('customer')->get()
             ->map(fn (Task $t) => [
                 'key' => "task-delayed:{$t->id}", 'type' => 'task.delayed',
-                'title' => 'تأخر تنفيذ طلب صيانة',
+                'title' => Terms::get('تأخر تنفيذ طلب صيانة'),
                 'body' => "{$t->code} — ".($t->customer?->name ?? $t->title),
                 'url' => "/tasks/{$t->id}", 'tag' => "task-{$t->id}",
             ]);
@@ -130,7 +131,7 @@ class OperationsAlertScanner
             ->with('contract.customer')->get()
             ->map(fn (ContractVisit $v) => [
                 'key' => "ppm-due:{$v->id}", 'type' => 'ppm.due',
-                'title' => 'قرب موعد صيانة دورية',
+                'title' => Terms::get('قرب موعد صيانة دورية'),
                 'body' => ($v->contract?->customer?->name ?? 'عقد صيانة')." — {$v->planned_for->toDateString()}",
                 'url' => '/contracts', 'tag' => "visit-{$v->id}",
             ]);
@@ -158,7 +159,7 @@ class OperationsAlertScanner
             ->with('contract.customer')->get()
             ->map(fn ($p) => [
                 'key' => "contract-payment-due:{$p->id}", 'type' => 'contract.payment_due',
-                'title' => 'دفعة عقد مستحقة قبل الزيارة',
+                'title' => Terms::get('دفعة عقد مستحقة قبل الزيارة'),
                 'body' => ($p->contract?->customer?->name ?? $p->contract?->code)
                     ." — الدفعة {$p->sequence} (".number_format((float) $p->amount, 2).' ج)',
                 'url' => "/contracts/{$p->contract_id}", 'tag' => "contract-payment-{$p->id}",
@@ -177,7 +178,7 @@ class OperationsAlertScanner
             ->map(fn (\App\Models\Contract $c) => [
                 'key' => "contract-expiring:{$c->id}",
                 'type' => 'contract.expiring',
-                'title' => 'عقد قارب على الانتهاء',
+                'title' => Terms::get('عقد قارب على الانتهاء'),
                 'body' => ($c->customer?->name ?? $c->code)." — ينتهي {$c->ends_on?->toDateString()}",
                 'url' => "/contracts/{$c->id}", 'tag' => "contract-{$c->id}",
             ]);
@@ -190,7 +191,7 @@ class OperationsAlertScanner
             ->with('asset')->get()
             ->map(fn (Warranty $w) => [
                 'key' => "warranty-expiring:{$w->id}", 'type' => 'warranty.expiring',
-                'title' => 'قرب انتهاء ضمان',
+                'title' => Terms::get('قرب انتهاء ضمان'),
                 'body' => ($w->asset?->label() ?? $w->code)." — ينتهي {$w->ends_on?->toDateString()}",
                 'url' => '/warranties', 'tag' => "warranty-{$w->id}",
             ]);
@@ -202,7 +203,7 @@ class OperationsAlertScanner
         return Invoice::query()->overdue()->with('customer')->get()
             ->map(fn (Invoice $i) => [
                 'key' => "invoice-overdue:{$i->id}", 'type' => 'invoice.overdue',
-                'title' => 'فاتورة متأخرة السداد',
+                'title' => Terms::get('فاتورة متأخرة السداد'),
                 'body' => "{$i->code} — ".($i->customer?->name ?? '')
                     .' · '.number_format((float) $i->balance(), 2).' ج',
                 'url' => "/invoices/{$i->id}", 'tag' => "invoice-{$i->id}",
@@ -221,9 +222,9 @@ class OperationsAlertScanner
             ->map(fn (Item $item) => [
                 'key' => "parts-low:{$item->id}", 'type' => 'stock.low',
                 'title' => match ($item->category->value) {
-                    'ups' => 'نقص أجهزة UPS',
-                    'battery' => 'نقص بطاريات',
-                    default => 'نقص قطع غيار',
+                    'ups' => Terms::get('نقص أجهزة UPS'),
+                    'battery' => Terms::get('نقص بطاريات'),
+                    default => Terms::get('نقص قطع غيار'),
                 },
                 'body' => "{$item->name} — المتاح ".$item->totalQty()." {$item->unit}",
                 'url' => '/inventory', 'tag' => "item-{$item->id}",
@@ -240,7 +241,7 @@ class OperationsAlertScanner
             ->with('customer')->get()
             ->map(fn (Invoice $i) => [
                 'key' => "invoice-new:{$i->id}", 'type' => 'invoice.created',
-                'title' => 'فاتورة جديدة',
+                'title' => Terms::get('فاتورة جديدة'),
                 'body' => "{$i->code} — ".($i->customer?->name ?? '')
                     .' · '.number_format((float) $i->total, 2).' ج',
                 'url' => "/invoices/{$i->id}", 'tag' => "invoice-{$i->id}",
@@ -256,7 +257,7 @@ class OperationsAlertScanner
         $quotes = Quotation::query()->pendingApproval()->with('customer')->get()
             ->map(fn (Quotation $q) => [
                 'key' => "approval-quote:{$q->id}", 'type' => 'approval.needed',
-                'title' => 'عرض سعر بانتظار الاعتماد',
+                'title' => Terms::get('عرض سعر بانتظار الاعتماد'),
                 'body' => "{$q->code} — ".($q->customer?->name ?? ''),
                 'url' => "/sales/approvals?quote={$q->id}", 'tag' => "quote-{$q->id}",
             ]);
@@ -264,7 +265,7 @@ class OperationsAlertScanner
         $leave = LeaveRequest::query()->pending()->with('employee')->get()
             ->map(fn (LeaveRequest $l) => [
                 'key' => "approval-leave:{$l->id}", 'type' => 'approval.needed',
-                'title' => 'طلب إجازة بانتظار الاعتماد',
+                'title' => Terms::get('طلب إجازة بانتظار الاعتماد'),
                 'body' => "{$l->code} — ".($l->employee?->name ?? ''),
                 'url' => '/hr/leave', 'tag' => "leave-{$l->id}",
             ]);
@@ -272,7 +273,7 @@ class OperationsAlertScanner
         $requests = PurchaseRequest::query()->awaiting()->get()
             ->map(fn (PurchaseRequest $r) => [
                 'key' => "approval-request:{$r->id}", 'type' => 'approval.needed',
-                'title' => 'طلب شراء بانتظار الاعتماد',
+                'title' => Terms::get('طلب شراء بانتظار الاعتماد'),
                 'body' => $r->code ?? "طلب #{$r->id}",
                 'url' => '/purchase-requests', 'tag' => "request-{$r->id}",
             ]);
@@ -281,7 +282,7 @@ class OperationsAlertScanner
             ->with('asset')->get()
             ->map(fn (WarrantyClaim $c) => [
                 'key' => "approval-claim:{$c->id}", 'type' => 'approval.needed',
-                'title' => 'مطالبة ضمان بانتظار البتّ',
+                'title' => Terms::get('مطالبة ضمان بانتظار البتّ'),
                 'body' => $c->asset?->label() ?? "مطالبة #{$c->id}",
                 'url' => '/warranties', 'tag' => "claim-{$c->id}",
             ]);

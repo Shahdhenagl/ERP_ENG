@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Contact;
 use App\Models\Customer;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -83,7 +84,7 @@ class ContactController extends Controller
 
         ActivityLog::record('contact.deleted', $contact, "تم حذف جهة اتصال {$name}");
 
-        return response()->json(['message' => 'تم حذف جهة الاتصال.']);
+        return response()->json(['message' => Terms::get('تم حذف جهة الاتصال.')]);
     }
 
     /**

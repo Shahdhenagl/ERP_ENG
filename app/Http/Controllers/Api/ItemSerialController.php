@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\Item;
 use App\Models\ItemSerial;
 use App\Services\SerialRegistry;
+use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -52,7 +53,7 @@ class ItemSerialController extends Controller
             ->first();
 
         if (! $unit) {
-            return response()->json(['message' => 'لا يوجد رقم تسلسلي مطابق.'], 404);
+            return response()->json(['message' => Terms::get('لا يوجد رقم تسلسلي مطابق.')], 404);
         }
 
         return response()->json(['data' => $this->present($unit, detailed: true)]);
