@@ -2618,4 +2618,6 @@ export const EN: Record<string, string> = {
     'موعد الاستبدال': 'Replacement due',
     'مقدّم الطلب': 'Requested by',
     الموضوع: 'Subject',
+    'عنوان IP': 'IP address',
+    'الاستحقاق القادم': 'Next due',
 }

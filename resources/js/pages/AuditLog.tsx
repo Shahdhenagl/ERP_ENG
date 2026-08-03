@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { tr } from '@/lib/i18n'
 import { ChevronDown, ScrollText, Search, ShieldAlert } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
@@ -32,6 +33,7 @@ export function AuditLog() {
     const [range, setRange] = useState({ from: '', to: '' })
     const [page, setPage] = useState(1)
 
+    const [view, setView] = useViewMode('audit-log')
     const { data: options } = useActivityFilters()
     const { data, isLoading } = useActivity({
         search,
@@ -151,6 +153,10 @@ export function AuditLog() {
                 </button>
             </div>
 
+            <div className="mb-3 flex justify-end">
+                <ViewToggle view={view} onChange={setView} />
+            </div>
+
             {isLoading ? (
                 <SkeletonCard />
             ) : !data?.data.length ? (
@@ -161,11 +167,54 @@ export function AuditLog() {
                 />
             ) : (
                 <>
-                    <div className="space-y-1.5">
-                        {data.data.map((entry) => (
-                            <Row key={entry.id} entry={entry} />
-                        ))}
-                    </div>
+                    {view === 'table' ? (
+                        <DataTable
+                            minWidth="56rem"
+                            headers={[
+                                { label: 'العملية', className: 'w-48' },
+                                'البيان',
+                                { label: 'المستخدم', className: 'w-40' },
+                                { label: 'التاريخ', className: 'w-40' },
+                                { label: 'عنوان IP', className: 'w-32' },
+                            ]}
+                        >
+                            {data.data.map((entry) => (
+                                <tr
+                                    key={entry.id}
+                                    className={clsx(
+                                        'border-t border-navy-100 hover:bg-navy-50/60',
+                                        // A sensitive action is the one somebody
+                                        // opens this log to find.
+                                        entry.is_sensitive && 'bg-red-50/50',
+                                    )}
+                                >
+                                    <td className="px-3 py-2.5 font-semibold text-navy-800">
+                                        {entry.label}
+                                    </td>
+                                    <td className="max-w-72 truncate px-3 py-2.5 text-navy-600">
+                                        {entry.description ?? '—'}
+                                    </td>
+                                    <td className="px-3 py-2.5 text-navy-600">
+                                        {entry.user ?? 'غير معروف'}
+                                    </td>
+                                    <td className="tabular px-3 py-2.5 text-navy-600">
+                                        {formatDateTime(entry.created_at)}
+                                    </td>
+                                    <td className="tabular px-3 py-2.5 text-navy-500" dir="ltr">
+                                        <span className="block text-start">
+                                            {entry.ip_address ?? '—'}
+                                        </span>
+                                    </td>
+                                </tr>
+                            ))}
+                        </DataTable>
+                    ) : (
+                        <div className="space-y-1.5">
+                            {data.data.map((entry) => (
+                                <Row key={entry.id} entry={entry} />
+                            ))}
+                        </div>
+                    )}
 
                     {data.meta.last_page > 1 && (
                         <div className="mt-4 flex items-center justify-between">

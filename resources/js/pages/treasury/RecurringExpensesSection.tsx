@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { tr } from '@/lib/i18n'
 import { CalendarClock, Pencil, Plus, Trash2, Wallet } from 'lucide-react'
 import { useState } from 'react'
@@ -43,6 +44,7 @@ function dueChip(days: number): { text: string; className: string } {
  * rolls the schedule forward one cycle.
  */
 export function RecurringExpensesSection() {
+    const [view, setView] = useViewMode('recurring-expenses')
     const { data, isLoading } = useRecurringExpenses()
     const [editing, setEditing] = useState<RecurringExpense | null | undefined>(undefined)
     const [deleting, setDeleting] = useState<RecurringExpense | null>(null)
@@ -69,6 +71,10 @@ export function RecurringExpensesSection() {
                 </Button>
             </div>
 
+            <div className="mb-3 flex justify-end">
+                <ViewToggle view={view} onChange={setView} />
+            </div>
+
             {isLoading ? (
                 <SkeletonCard />
             ) : expenses.length === 0 ? (
@@ -77,6 +83,52 @@ export function RecurringExpensesSection() {
                     title="لا مصروفات دورية"
                     description="أضف الإيجار والاشتراكات الثابتة ليذكّرك النظام قبل استحقاقها بثلاثة أيام."
                 />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="52rem"
+                    headers={[
+                        'بند المصروف',
+                        { label: 'البند', className: 'w-32' },
+                        { label: 'الخزينة', className: 'w-32' },
+                        { label: 'الدورة', className: 'w-24' },
+                        { label: 'الاستحقاق القادم', className: 'w-36' },
+                        { label: 'المبلغ', className: 'w-28 text-end' },
+                    ]}
+                >
+                    {expenses.map((expense) => (
+                        <tr
+                            key={expense.id}
+                            className={clsx(
+                                'border-t border-navy-100 hover:bg-navy-50/60',
+                                // What falls due next is the reason this list
+                                // is open at all.
+                                expense.is_due_soon && 'bg-amber-50/60',
+                            )}
+                        >
+                            <td className="px-3 py-2.5 font-semibold text-navy-800">
+                                {expense.name}
+                            </td>
+                            <td className="px-3 py-2.5 text-navy-600">{expense.category ?? '—'}</td>
+                            <td className="px-3 py-2.5 text-navy-600">{expense.cash_box ?? '—'}</td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {expense.cycle_days} يوم
+                            </td>
+                            <td
+                                className={clsx(
+                                    'tabular px-3 py-2.5',
+                                    expense.is_due_soon
+                                        ? 'font-bold text-amber-700'
+                                        : 'text-navy-600',
+                                )}
+                            >
+                                {expense.next_due_on ? formatDate(expense.next_due_on) : '—'}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-end font-bold text-navy-900">
+                                {formatMoney(expense.amount)}
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
                 <div className="space-y-2">
                     {expenses.map((expense) => {
