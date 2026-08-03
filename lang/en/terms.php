@@ -2568,5 +2568,9 @@ return [
     'مقدّم الطلب' => 'Requested by',
     'الموضوع' => 'Subject',
     'عنوان IP' => 'IP address',
+    'تمديد لـ' => 'Extends',
+    'الجهاز المستبدل' => 'Unit replaced',
+    'البديل' => 'Replacement',
+    'عدد القسائم' => 'Payslips',
     'الاستحقاق القادم' => 'Next due',
 ];

@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { tr } from '@/lib/i18n'
 import { ArrowRight, BadgeCheck, Coins, Plus, Printer, Wallet } from 'lucide-react'
 import { useState } from 'react'
@@ -29,6 +30,7 @@ const STATUS: Record<PayrollStatus, string> = {
 export function PayrollTab() {
     const [opening, setOpening] = useState(false)
     const [openId, setOpenId] = useState<number | null>(null)
+    const [view, setView] = useViewMode('hr-payroll')
     const { data, isLoading } = usePayrollRuns({ per_page: 24 })
 
     if (openId !== null) {
@@ -43,6 +45,10 @@ export function PayrollTab() {
                 </Button>
             </div>
 
+            <div className="mb-3 flex justify-end">
+                <ViewToggle view={view} onChange={setView} />
+            </div>
+
             {isLoading ? (
                 <SkeletonCard />
             ) : !data?.data.length ? (
@@ -51,6 +57,53 @@ export function PayrollTab() {
                     title="لا توجد مسيّرات رواتب"
                     description="افتح مسير شهر ليُنشئ قسائم الرواتب لكل موظف على رأس العمل."
                 />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="52rem"
+                    headers={[
+                        { label: 'الكود', className: 'w-28' },
+                        'الشهر',
+                        { label: 'عدد القسائم', className: 'w-28' },
+                        { label: 'إجمالي الراتب', className: 'w-32 text-end' },
+                        { label: 'الاستقطاعات', className: 'w-28 text-end' },
+                        { label: 'الصافي', className: 'w-32 text-end' },
+                        { label: 'الحالة', className: 'w-28' },
+                    ]}
+                >
+                    {data.data.map((run) => (
+                        <tr
+                            key={run.id}
+                            onClick={() => setOpenId(run.id)}
+                            className="cursor-pointer border-t border-navy-100 hover:bg-navy-50/60"
+                        >
+                            <td className="tabular px-3 py-2.5 font-bold text-brand-600">
+                                {run.code}
+                            </td>
+                            <td className="px-3 py-2.5 font-semibold text-navy-800">
+                                {run.month_label}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {run.payslips_count ?? 0}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-end text-navy-600">
+                                {run.gross_total != null ? formatMoney(run.gross_total) : '—'}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-end text-navy-600">
+                                {run.deductions_total != null
+                                    ? formatMoney(run.deductions_total)
+                                    : '—'}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-end font-bold text-navy-900">
+                                {formatMoney(run.net_total)}
+                            </td>
+                            <td className="px-3 py-2.5">
+                                <span className={clsx('badge', STATUS[run.status])}>
+                                    {run.status_label}
+                                </span>
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
                 <div className="space-y-2">
                     {data.data.map((run) => (
