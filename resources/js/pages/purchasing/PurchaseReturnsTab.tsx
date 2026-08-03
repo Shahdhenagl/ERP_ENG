@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { tr } from '@/lib/i18n'
 import { Plus, Trash2, Undo2 } from 'lucide-react'
 import { useState } from 'react'
@@ -22,6 +23,7 @@ export function PurchaseReturnsTab() {
     const act = usePurchaseReturnAction()
     const [creating, setCreating] = useState(false)
 
+    const [view, setView] = useViewMode('purchase-returns')
     const { data, isLoading } = usePurchaseReturns({ per_page: 40 })
 
     const run = async (id: number, action: 'post' | 'delete', done: string) => {
@@ -41,6 +43,10 @@ export function PurchaseReturnsTab() {
                 </Button>
             </div>
 
+            <div className="mb-3 flex justify-end">
+                <ViewToggle view={view} onChange={setView} />
+            </div>
+
             {isLoading ? (
                 <SkeletonCard />
             ) : !data?.data.length ? (
@@ -49,6 +55,50 @@ export function PurchaseReturnsTab() {
                     title="لا توجد مرتجعات"
                     description="سجّل مرتجعًا لإرجاع بضاعة معيبة للمورّد وخصم قيمتها من حسابه."
                 />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="50rem"
+                    headers={[
+                        { label: 'الكود', className: 'w-28' },
+                        'المورّد',
+                        { label: 'الفاتورة', className: 'w-32' },
+                        { label: 'التاريخ', className: 'w-32' },
+                        { label: 'الإجمالي', className: 'w-28 text-end' },
+                        { label: 'الحالة', className: 'w-28' },
+                    ]}
+                >
+                    {data.data.map((entry) => (
+                        <tr key={entry.id} className="border-t border-navy-100 hover:bg-navy-50/60">
+                            <td className="tabular px-3 py-2.5 font-bold text-brand-600">
+                                {entry.code}
+                            </td>
+                            <td className="px-3 py-2.5 font-semibold text-navy-800">
+                                {entry.supplier}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {entry.supplier_invoice_code ?? '—'}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {formatDate(entry.return_date)}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-end font-bold text-navy-900">
+                                {formatMoney(entry.total)}
+                            </td>
+                            <td className="px-3 py-2.5">
+                                <span
+                                    className={clsx(
+                                        'badge',
+                                        entry.status === 'posted'
+                                            ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
+                                            : 'bg-slate-100 text-slate-600 ring-1 ring-slate-200',
+                                    )}
+                                >
+                                    {entry.status_label}
+                                </span>
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
                 <div className="space-y-2">
                     {data.data.map((entry) => (

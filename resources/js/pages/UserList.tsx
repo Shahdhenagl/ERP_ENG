@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { tr } from '@/lib/i18n'
 import { KeyRound, Pencil, Plus, Save, Search, Trash2, UserCircle2, Users } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
@@ -29,6 +30,7 @@ export function UserList() {
     const [deleting, setDeleting] = useState<User | undefined>()
     const [permissionsFor, setPermissionsFor] = useState<User | null>(null)
 
+    const [view, setView] = useViewMode('users')
     const { data, isLoading, isError, refetch } = useUsers({ search, role, per_page: 50 })
     const remove = useDeleteUser()
 
@@ -83,6 +85,10 @@ export function UserList() {
                 </Select>
             </div>
 
+            <div className="mb-3 flex justify-end">
+                <ViewToggle view={view} onChange={setView} />
+            </div>
+
             {isError ? (
                 <ErrorState message="تعذّر تحميل المستخدمين." onRetry={() => void refetch()} />
             ) : isLoading ? (
@@ -93,6 +99,43 @@ export function UserList() {
                 </div>
             ) : !data?.data.length ? (
                 <EmptyState icon={Users} title="لا يوجد مستخدمون مطابقون" />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="52rem"
+                    headers={[
+                        'الاسم',
+                        { label: 'الدور', className: 'w-40' },
+                        'البريد الإلكتروني',
+                        { label: 'الهاتف', className: 'w-32' },
+                        { label: 'الحالة', className: 'w-24' },
+                    ]}
+                >
+                    {data.data.map((user) => (
+                        <tr key={user.id} className="border-t border-navy-100 hover:bg-navy-50/60">
+                            <td className="px-3 py-2.5 font-semibold text-navy-800">{user.name}</td>
+                            <td className="px-3 py-2.5">
+                                <span className={clsx('badge', ROLE_STYLES[user.role])}>
+                                    {user.position_label ?? user.role_label}
+                                </span>
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-600" dir="ltr">
+                                <span className="block text-start">{user.email}</span>
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-600" dir="ltr">
+                                <span className="block text-start">{user.phone ?? '—'}</span>
+                            </td>
+                            <td className="px-3 py-2.5">
+                                {user.is_active ? (
+                                    <span className="badge bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">
+                                        نشط
+                                    </span>
+                                ) : (
+                                    <span className="badge bg-red-50 text-red-600">موقوف</span>
+                                )}
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
                 <div className="card divide-y divide-navy-100">
                     {data.data.map((user) => (

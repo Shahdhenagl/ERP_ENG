@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { tr } from '@/lib/i18n'
 import { Banknote, Plus, Search } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
@@ -66,6 +67,7 @@ export function ChequesPage() {
         if (view === 'incoming' || view === 'outgoing') setFilter(view)
     }, [view])
 
+    const [layout, setLayout] = useViewMode('treasury-cheques')
     const { data, isLoading } = useCheques({
         search,
         open: filter === 'open' ? 1 : undefined,
@@ -156,6 +158,10 @@ export function ChequesPage() {
                 </div>
             </div>
 
+            <div className="mb-3 flex justify-end">
+                <ViewToggle view={layout} onChange={setLayout} />
+            </div>
+
             {isLoading ? (
                 <SkeletonCard />
             ) : !data?.data.length ? (
@@ -164,6 +170,64 @@ export function ChequesPage() {
                     title="لا توجد شيكات"
                     description="سجّل الشيكات الواردة والصادرة لتتابع مواعيدها قبل أن تفاجئك."
                 />
+            ) : layout === 'table' ? (
+                <DataTable
+                    minWidth="58rem"
+                    headers={[
+                        { label: 'رقم الشيك', className: 'w-28' },
+                        { label: 'الاتجاه', className: 'w-24' },
+                        'الطرف',
+                        'البنك',
+                        { label: 'تاريخ الاستحقاق', className: 'w-32' },
+                        { label: 'القيمة', className: 'w-28 text-end' },
+                        { label: 'الحالة', className: 'w-28' },
+                    ]}
+                >
+                    {data.data.map((cheque) => (
+                        <tr
+                            key={cheque.id}
+                            className={clsx(
+                                'border-t border-navy-100 hover:bg-navy-50/60',
+                                // A cheque due today is the row somebody opened
+                                // this screen to find.
+                                cheque.is_due && 'bg-amber-50/60',
+                            )}
+                        >
+                            <td className="tabular px-3 py-2.5 font-bold text-brand-600">
+                                {cheque.cheque_number}
+                            </td>
+                            <td className="px-3 py-2.5">
+                                <span
+                                    className={clsx(
+                                        'badge',
+                                        cheque.direction === 'incoming'
+                                            ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
+                                            : 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
+                                    )}
+                                >
+                                    {cheque.direction_label}
+                                </span>
+                            </td>
+                            <td className="px-3 py-2.5 font-semibold text-navy-800">
+                                {cheque.party_name ?? cheque.customer ?? cheque.supplier ?? '—'}
+                            </td>
+                            <td className="px-3 py-2.5 text-navy-600">
+                                {cheque.bank_name ?? '—'}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {formatDate(cheque.due_date)}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-end font-bold text-navy-900">
+                                {formatMoney(cheque.amount)}
+                            </td>
+                            <td className="px-3 py-2.5">
+                                <span className={clsx('badge', STATUS[cheque.status])}>
+                                    {cheque.status_label}
+                                </span>
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
                 <div className="grid gap-2 sm:grid-cols-2">
                     {data.data.map((cheque) => (

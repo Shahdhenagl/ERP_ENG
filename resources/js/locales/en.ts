@@ -2613,4 +2613,6 @@ export const EN: Record<string, string> = {
     الأيام: 'Days',
     العطل: 'Fault',
     'تاريخ البلاغ': 'Reported on',
+    الطرف: 'Party',
+    الجهة: 'Body',
 }

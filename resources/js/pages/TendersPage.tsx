@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { tr } from '@/lib/i18n'
 import { FileSignature, Plus, Search, Send, ThumbsDown, Trophy } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
@@ -35,6 +36,7 @@ type Filter = '' | TenderStatus
 export function TendersPage() {
     const [filter, setFilter] = useState<Filter>('')
     const [search, setSearch] = useState('')
+    const [view, setView] = useViewMode('tenders')
     const { data, isLoading } = useTenders({
         status: filter || undefined,
         search: search.trim() || undefined,
@@ -107,6 +109,10 @@ export function TendersPage() {
                 </div>
             </div>
 
+            <div className="mb-3 flex justify-end">
+                <ViewToggle view={view} onChange={setView} />
+            </div>
+
             {isLoading ? (
                 <SkeletonCard />
             ) : !data?.data.length ? (
@@ -115,6 +121,45 @@ export function TendersPage() {
                     title="لا توجد مناقصات"
                     description="سجّل العطاءات لمتابعة مواعيد التقديم ونتائجها ونسبة الفوز."
                 />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="56rem"
+                    headers={[
+                        { label: 'رقم المناقصة', className: 'w-32' },
+                        'العنوان',
+                        'الجهة',
+                        { label: 'آخر موعد للتقديم', className: 'w-36' },
+                        { label: 'القيمة التقديرية', className: 'w-32 text-end' },
+                        { label: 'الحالة', className: 'w-28' },
+                    ]}
+                >
+                    {data.data.map((tender) => (
+                        <tr
+                            key={tender.id}
+                            onClick={() => setEditing(tender)}
+                            className="cursor-pointer border-t border-navy-100 hover:bg-navy-50/60"
+                        >
+                            <td className="tabular px-3 py-2.5 font-bold text-brand-600">
+                                {tender.reference_no ?? tender.code}
+                            </td>
+                            <td className="px-3 py-2.5 font-semibold text-navy-800">
+                                {tender.title}
+                            </td>
+                            <td className="px-3 py-2.5 text-navy-600">{tender.entity}</td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {tender.submission_deadline ? formatDate(tender.submission_deadline) : '—'}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-end text-navy-700">
+                                {tender.estimated_value ? formatMoney(tender.estimated_value) : '—'}
+                            </td>
+                            <td className="px-3 py-2.5">
+                                <span className={clsx('badge', STATUS[tender.status])}>
+                                    {tender.status_label}
+                                </span>
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
                 <div className="grid gap-2 sm:grid-cols-2">
                     {data.data.map((tender) => (
