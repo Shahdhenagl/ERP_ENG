@@ -38,6 +38,13 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    // The column defaults to true in the database, but a model that was just
+    // created carries whatever it was handed — leaving is_active null on the
+    // instance, which reads as suspended to every guard that checks it.
+    protected $attributes = [
+        'is_active' => true,
+    ];
+
     protected function casts(): array
     {
         return [
