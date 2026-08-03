@@ -108,6 +108,7 @@ import { PaymentsOutPage } from '@/pages/treasury/PaymentsOutPage'
 import { CashOperationsPage } from '@/pages/treasury/CashOperationsPage'
 import { MyStock } from '@/pages/MyStock'
 import { ComingSoon } from '@/pages/ComingSoon'
+import { TechnicianReportsPage } from '@/pages/TechnicianReportsPage'
 import { TechniciansPage } from '@/pages/TechniciansPage'
 import { TechnicianProfile } from '@/pages/TechnicianProfile'
 import { TechLeavePage } from '@/pages/TechLeavePage'
@@ -292,6 +293,10 @@ export function App() {
                                         <Route path="banks/:view" element={<BanksPage />} />
                                         <Route path="technicians" element={<TechniciansPage />} />
                                         <Route path="technicians/:id" element={<TechnicianProfile />} />
+                                        <Route
+                                            path="technician-reports"
+                                            element={<TechnicianReportsPage />}
+                                        />
                                         <Route path="hr" element={<HrPage />} />
                                         <Route path="hr/:tab" element={<HrPage />} />
 

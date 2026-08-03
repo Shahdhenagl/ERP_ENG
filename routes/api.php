@@ -50,6 +50,7 @@ use App\Http\Controllers\Api\PushSubscriptionController;
 use App\Http\Controllers\Api\TaskAttachmentController;
 use App\Http\Controllers\Api\SatisfactionController;
 use App\Http\Controllers\Api\TaskController;
+use App\Http\Controllers\Api\TechnicianMonthlyReportController;
 use App\Http\Controllers\Api\TaskReportController;
 use App\Http\Controllers\Api\TaskStatusController;
 use App\Http\Controllers\Api\UserController;
@@ -205,6 +206,14 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::delete('batteries/{battery}', [BatteryController::class, 'destroy'])->middleware('can:assets.manage');
 
     Route::get('technicians', [UserController::class, 'technicians']);
+
+    // The start-of-month check: who has handed their report in, and to whom.
+    Route::get('technician-reports', [TechnicianMonthlyReportController::class, 'index'])
+        ->middleware('can:hr.manage');
+    Route::post('technician-reports', [TechnicianMonthlyReportController::class, 'store'])
+        ->middleware('can:hr.manage');
+    Route::delete('technician-reports/{technicianMonthlyReport}', [TechnicianMonthlyReportController::class, 'destroy'])
+        ->middleware('can:hr.manage');
 
     // Colleagues by name, for the fields that have to say who did something.
     // Names only, and no permission: the alternative is the users index, which

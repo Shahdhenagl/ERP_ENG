@@ -7,6 +7,7 @@ use App\Models\Attachment;
 use App\Models\Battery;
 use App\Models\Contract;
 use App\Models\SiteSurvey;
+use App\Models\TechnicianMonthlyReport;
 use App\Models\Tender;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
@@ -33,6 +34,8 @@ class AttachmentController extends Controller
         'batteries' => [Battery::class, 'assets.manage'],
         'tenders' => [Tender::class, 'sales.manage'],
         'contracts' => [Contract::class, 'contracts.manage'],
+        // The paperwork handed in with a technician's monthly report.
+        'technician-reports' => [TechnicianMonthlyReport::class, 'hr.manage'],
     ];
 
     public function index(Request $request, string $type, int $id): JsonResponse

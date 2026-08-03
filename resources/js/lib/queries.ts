@@ -122,6 +122,7 @@ export const keys = {
     permissionCatalogue: ['permission-catalogue'] as const,
     jobRoles: ['job-roles'] as const,
     staff: ['staff'] as const,
+    technicianReports: (period: string) => ['technician-reports', period] as const,
     userPermissions: (id: number | string) => ['user-permissions', Number(id)] as const,
     technicians: ['technicians'] as const,
     employees: (f?: Record<string, unknown>) => ['employees', f ?? {}] as const,
@@ -3284,6 +3285,56 @@ export interface StaffMember {
 }
 
 /** Colleagues by name, for the fields that have to say who did something. */
+export interface TechnicianReportRow {
+    technician_id: number
+    technician: string
+    report: {
+        id: number
+        period: string
+        received_by: string | null
+        received_by_user_id: number | null
+        received_on: string | null
+        notes: string | null
+        recorded_by: string | null
+        attachments_count: number
+    } | null
+}
+
+/** The month's roll-call: every technician, handed in or not. */
+export function useTechnicianReports(period: string) {
+    return useQuery({
+        queryKey: keys.technicianReports(period),
+        queryFn: async () =>
+            (
+                await api.get<{
+                    data: TechnicianReportRow[]
+                    meta: { period: string; total: number; received: number }
+                }>('/technician-reports', { params: { period } })
+            ).data,
+    })
+}
+
+export function useSaveTechnicianReport(period: string) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (await api.post('/technician-reports', payload)).data.data,
+        onSuccess: () =>
+            void client.invalidateQueries({ queryKey: keys.technicianReports(period) }),
+    })
+}
+
+export function useDeleteTechnicianReport(period: string) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id: number) => (await api.delete(`/technician-reports/${id}`)).data,
+        onSuccess: () =>
+            void client.invalidateQueries({ queryKey: keys.technicianReports(period) }),
+    })
+}
+
 export function useStaff() {
     return useQuery({
         queryKey: keys.staff,

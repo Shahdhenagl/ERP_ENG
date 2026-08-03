@@ -210,6 +210,12 @@ export const NAV: NavItem[] = [
         children: [
             { to: '/tasks', label: tr('التذاكر وأوامر العمل'), icon: ClipboardList },
             { to: '/technicians', label: tr('الفنيون'), icon: UserCheck },
+            {
+                to: '/technician-reports',
+                label: tr('التقارير الشهرية للفنيين'),
+                icon: ClipboardCheck,
+                permission: 'hr.manage',
+            },
             { to: '/parts-used', permission: 'inventory.manage', label: tr('قطع الغيار المستخدمة'), icon: Wrench },
             { to: '/ppm', permission: 'contracts.manage', label: tr('الصيانة الوقائية (PPM)'), icon: CalendarDays },
             { to: '/batteries', permission: 'assets.manage', label: tr('إدارة البطاريات'), icon: BatteryCharging },
