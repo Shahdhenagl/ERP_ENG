@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, EmptyState, Field, Input, Select, SkeletonCard, Textarea } from '@/components/ui'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import { formatDate } from '@/lib/format'
@@ -20,6 +21,7 @@ const STATUS: Record<LeaveStatus, string> = {
 
 export function LeaveTab() {
     const toast = useToast()
+    const [view, setView] = useViewMode('hr-leave')
     const { can } = useAuth()
     const decide = useLeaveAction()
     const [creating, setCreating] = useState(false)
@@ -59,10 +61,51 @@ export function LeaveTab() {
                 </Button>
             </div>
 
+            <div className="mb-3 flex justify-end">
+                <ViewToggle view={view} onChange={setView} />
+            </div>
+
             {isLoading ? (
                 <SkeletonCard />
             ) : !data?.data.length ? (
                 <EmptyState icon={CalendarDays} title="لا توجد طلبات إجازة" />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="52rem"
+                    headers={[
+                        { label: 'الكود', className: 'w-28' },
+                        'الموظف',
+                        { label: 'النوع', className: 'w-28' },
+                        { label: 'من', className: 'w-32' },
+                        { label: 'إلى', className: 'w-32' },
+                        { label: 'الأيام', className: 'w-20' },
+                        { label: 'الحالة', className: 'w-28' },
+                    ]}
+                >
+                    {data.data.map((leave) => (
+                        <tr key={leave.id} className="border-t border-navy-100 hover:bg-navy-50/60">
+                            <td className="tabular px-3 py-2.5 font-bold text-brand-600">
+                                {leave.code}
+                            </td>
+                            <td className="px-3 py-2.5 font-semibold text-navy-800">
+                                {leave.employee}
+                            </td>
+                            <td className="px-3 py-2.5 text-navy-600">{leave.type_label}</td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {formatDate(leave.from_date)}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {formatDate(leave.to_date)}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">{leave.days}</td>
+                            <td className="px-3 py-2.5">
+                                <span className={clsx('badge', STATUS[leave.status])}>
+                                    {leave.status_label}
+                                </span>
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
                 <div className="space-y-2">
                     {data.data.map((leave) => (

@@ -2610,4 +2610,5 @@ export const EN: Record<string, string> = {
     'لا محطات محددة — أضِف البدل أو المبيت فقط.': 'No stops chosen — add the allowance or the overnight only.',
     'لا يوجد عميل بهذا الاسم.': 'No customer by that name.',
     'لا يوجد فرع بهذا الاسم.': 'No branch by that name.',
+    الأيام: 'Days',
 }

@@ -1,9 +1,11 @@
+import clsx from 'clsx'
 import { Gift, MinusCircle, Plus, Trash2 } from 'lucide-react'
 import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, EmptyState, Field, Input, Select, SkeletonCard } from '@/components/ui'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { formatMoney } from '@/lib/domain'
 import {
@@ -32,6 +34,7 @@ export function AdjustmentsTab() {
     const [month, setMonth] = useState(now.getMonth() + 1)
     const [creating, setCreating] = useState(false)
 
+    const [view, setView] = useViewMode('hr-adjustments')
     const { data, isLoading } = usePayrollAdjustments({ year, month, per_page: 100 })
 
     return (
@@ -63,6 +66,10 @@ export function AdjustmentsTab() {
                 </Button>
             </div>
 
+            <div className="mb-3 flex justify-end">
+                <ViewToggle view={view} onChange={setView} />
+            </div>
+
             {isLoading ? (
                 <SkeletonCard />
             ) : !data?.data.length ? (
@@ -71,6 +78,45 @@ export function AdjustmentsTab() {
                     title="لا توجد خصومات أو مكافآت لهذا الشهر"
                     description="أضف خصمًا أو مكافأة ليظهر في قسيمة راتب الموظف عند تشغيل مسير هذا الشهر."
                 />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="44rem"
+                    headers={[
+                        'الموظف',
+                        { label: 'النوع', className: 'w-24' },
+                        'البيان',
+                        { label: 'المبلغ', className: 'w-28 text-end' },
+                    ]}
+                >
+                    {data.data.map((row) => (
+                        <tr key={row.id} className="border-t border-navy-100 hover:bg-navy-50/60">
+                            <td className="px-3 py-2.5 font-semibold text-navy-800">
+                                {row.employee}
+                            </td>
+                            <td className="px-3 py-2.5">
+                                <span
+                                    className={clsx(
+                                        'badge',
+                                        row.type === 'bonus'
+                                            ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
+                                            : 'bg-red-50 text-red-700 ring-1 ring-red-200',
+                                    )}
+                                >
+                                    {row.type_label}
+                                </span>
+                            </td>
+                            <td className="px-3 py-2.5 text-navy-600">{row.reason ?? '—'}</td>
+                            <td
+                                className={clsx(
+                                    'tabular px-3 py-2.5 text-end font-bold',
+                                    row.type === 'bonus' ? 'text-emerald-600' : 'text-red-600',
+                                )}
+                            >
+                                {row.type === 'bonus' ? '+' : '−'} {formatMoney(row.amount)}
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
                 <div className="space-y-2">
                     {data.data.map((row) => (

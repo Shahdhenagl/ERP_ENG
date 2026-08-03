@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, EmptyState, Field, Input, Select, SkeletonCard, Textarea } from '@/components/ui'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { formatMoney } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
@@ -33,6 +34,7 @@ export function EmployeesTab() {
     const [editing, setEditing] = useState<Employee | null | undefined>(undefined)
     const [viewing, setViewing] = useState<Employee | null>(null)
 
+    const [view, setView] = useViewMode('hr-employees')
     const { data, isLoading } = useEmployees({ search, per_page: 60 })
 
     const timer = useRef<number>(0)
@@ -75,10 +77,66 @@ export function EmployeesTab() {
                 </Button>
             </div>
 
+            <div className="mb-3 flex justify-end">
+                <ViewToggle view={view} onChange={setView} />
+            </div>
+
             {isLoading ? (
                 <SkeletonCard />
             ) : !data?.data.length ? (
                 <EmptyState icon={UserRound} title="لا يوجد موظفون" />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="52rem"
+                    headers={[
+                        { label: 'الكود', className: 'w-24' },
+                        'الاسم',
+                        'الوظيفة',
+                        'القسم',
+                        { label: 'التعيين', className: 'w-32' },
+                        { label: 'الحالة', className: 'w-24' },
+                        { label: 'إجمالي الراتب', className: 'w-32 text-end' },
+                    ]}
+                >
+                    {data.data.map((employee) => (
+                        <tr
+                            key={employee.id}
+                            onClick={() => setViewing(employee)}
+                            className="cursor-pointer border-t border-navy-100 hover:bg-navy-50/60"
+                        >
+                            <td className="tabular px-3 py-2.5 font-bold text-brand-600">
+                                {employee.code}
+                            </td>
+                            <td className="px-3 py-2.5 font-semibold text-navy-800">
+                                {employee.name}
+                            </td>
+                            <td className="px-3 py-2.5 text-navy-600">
+                                {employee.job_title ?? '—'}
+                            </td>
+                            <td className="px-3 py-2.5 text-navy-600">
+                                {employee.department ?? '—'}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {employee.hired_on ? formatDate(employee.hired_on) : '—'}
+                            </td>
+                            <td className="px-3 py-2.5">
+                                <span
+                                    className={clsx(
+                                        'badge',
+                                        employee.status === 'active'
+                                            ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
+                                            : 'bg-slate-100 text-slate-600',
+                                    )}
+                                >
+                                    {employee.status_label}
+                                </span>
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-end font-bold text-navy-900">
+                                {formatMoney(employee.gross_salary)}
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
                 <div className="grid gap-3 sm:grid-cols-2">
                     {data.data.map((employee) => (

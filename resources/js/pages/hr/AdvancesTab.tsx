@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, EmptyState, Field, Input, Select, SkeletonCard, Textarea } from '@/components/ui'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { formatMoney } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
@@ -11,6 +12,7 @@ import { useAdvances, useCashBoxes, useEmployees, useSaveAdvance } from '@/lib/q
 
 export function AdvancesTab() {
     const [creating, setCreating] = useState(false)
+    const [view, setView] = useViewMode('hr-advances')
     const { data, isLoading } = useAdvances({ per_page: 60 })
 
     return (
@@ -21,6 +23,10 @@ export function AdvancesTab() {
                 </Button>
             </div>
 
+            <div className="mb-3 flex justify-end">
+                <ViewToggle view={view} onChange={setView} />
+            </div>
+
             {isLoading ? (
                 <SkeletonCard />
             ) : !data?.data.length ? (
@@ -29,6 +35,49 @@ export function AdvancesTab() {
                     title="لا توجد سلف"
                     description="السلفة تُصرف من الخزينة وتُسترد على أقساط من الرواتب."
                 />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="48rem"
+                    headers={[
+                        { label: 'الكود', className: 'w-28' },
+                        'الموظف',
+                        { label: 'التاريخ', className: 'w-32' },
+                        { label: 'الخزينة', className: 'w-32' },
+                        { label: 'القسط الشهري', className: 'w-28 text-end' },
+                        { label: 'المبلغ', className: 'w-28 text-end' },
+                        { label: 'المتبقي', className: 'w-28 text-end' },
+                    ]}
+                >
+                    {data.data.map((advance) => (
+                        <tr key={advance.id} className="border-t border-navy-100 hover:bg-navy-50/60">
+                            <td className="tabular px-3 py-2.5 font-bold text-brand-600">
+                                {advance.code}
+                            </td>
+                            <td className="px-3 py-2.5 font-semibold text-navy-800">
+                                {advance.employee}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {formatDate(advance.advance_date)}
+                            </td>
+                            <td className="px-3 py-2.5 text-navy-600">{advance.box ?? '—'}</td>
+                            <td className="tabular px-3 py-2.5 text-end text-navy-600">
+                                {advance.installment > 0 ? formatMoney(advance.installment) : '—'}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-end font-bold text-navy-900">
+                                {formatMoney(advance.amount)}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-end">
+                                {advance.outstanding > 0 ? (
+                                    <span className="font-bold text-amber-600">
+                                        {formatMoney(advance.outstanding)}
+                                    </span>
+                                ) : (
+                                    <span className="text-emerald-600">مسددة</span>
+                                )}
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
                 <div className="space-y-2">
                     {data.data.map((advance) => (
