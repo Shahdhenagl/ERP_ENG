@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Support\Terms;
+
 enum AttendanceStatus: string
 {
     case Present = 'present';
@@ -13,11 +15,11 @@ enum AttendanceStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Present => 'حاضر',
-            self::Late => 'متأخر',
-            self::Absent => 'غائب',
-            self::Leave => 'إجازة',
-            self::Holiday => 'عطلة',
+            self::Present => Terms::get('حاضر'),
+            self::Late => Terms::get('متأخر'),
+            self::Absent => Terms::get('غائب'),
+            self::Leave => Terms::get('إجازة'),
+            self::Holiday => Terms::get('عطلة'),
         };
     }
 

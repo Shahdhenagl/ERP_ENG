@@ -27,10 +27,11 @@ function paint(locale: Locale) {
 
     root.lang = locale
     root.dir = locale === 'en' ? 'ltr' : 'rtl'
-    // The backend answers in the caller's language — statuses, validation
-    // messages, the labels on a printed document. Set here rather than per
-    // request so nothing can be sent without it.
-    api.defaults.headers.common['Accept-Language'] = locale
+    // The backend answers in this language — statuses, validation messages,
+    // the labels on a printed document. Our own header, not `Accept-Language`:
+    // the browser sends that one itself, and it says what the machine is set
+    // to rather than what this person chose.
+    api.defaults.headers.common['X-App-Locale'] = locale
 }
 
 // Set at module load, not in an effect: the first queries fire while the tree

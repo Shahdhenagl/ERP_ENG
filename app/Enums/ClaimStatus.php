@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Support\Terms;
+
 enum ClaimStatus: string
 {
     case Open = 'open';
@@ -14,12 +16,12 @@ enum ClaimStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Open => 'تحت الفحص',
-            self::Approved => 'معتمدة',
-            self::Rejected => 'مرفوضة',
-            self::Repaired => 'تم الإصلاح',
-            self::Replaced => 'تم الاستبدال',
-            self::Closed => 'مغلقة',
+            self::Open => Terms::get('تحت الفحص'),
+            self::Approved => Terms::get('معتمدة'),
+            self::Rejected => Terms::get('مرفوضة'),
+            self::Repaired => Terms::get('تم الإصلاح'),
+            self::Replaced => Terms::get('تم الاستبدال'),
+            self::Closed => Terms::get('مغلقة'),
         };
     }
 

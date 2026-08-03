@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Support\Terms;
+
 enum TaskPriority: string
 {
     case Low = 'low';
@@ -12,10 +14,10 @@ enum TaskPriority: string
     public function label(): string
     {
         return match ($this) {
-            self::Low => 'منخفضة',
-            self::Normal => 'عادية',
-            self::High => 'عالية',
-            self::Urgent => 'عاجلة',
+            self::Low => Terms::get('منخفضة'),
+            self::Normal => Terms::get('عادية'),
+            self::High => Terms::get('عالية'),
+            self::Urgent => Terms::get('عاجلة'),
         };
     }
 

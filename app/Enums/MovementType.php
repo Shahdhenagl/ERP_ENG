@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Support\Terms;
+
 enum MovementType: string
 {
     case Receipt = 'receipt';
@@ -17,15 +19,15 @@ enum MovementType: string
     public function label(): string
     {
         return match ($this) {
-            self::Receipt => 'وارد',
-            self::Transfer => 'تحويل',
-            self::Issue => 'صرف على مهمة',
-            self::Return => 'مرتجع من مهمة',
-            self::Adjustment => 'تسوية جرد',
-            self::PurchaseReturn => 'مرتجع مشتريات',
-            self::SalesReturn => 'مرتجع مبيعات',
-            self::Sale => 'بيع بفاتورة',
-            self::SaleVoid => 'إلغاء فاتورة بيع',
+            self::Receipt => Terms::get('وارد'),
+            self::Transfer => Terms::get('تحويل'),
+            self::Issue => Terms::get('صرف على مهمة'),
+            self::Return => Terms::get('مرتجع من مهمة'),
+            self::Adjustment => Terms::get('تسوية جرد'),
+            self::PurchaseReturn => Terms::get('مرتجع مشتريات'),
+            self::SalesReturn => Terms::get('مرتجع مبيعات'),
+            self::Sale => Terms::get('بيع بفاتورة'),
+            self::SaleVoid => Terms::get('إلغاء فاتورة بيع'),
         };
     }
 

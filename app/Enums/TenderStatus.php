@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Support\Terms;
+
 enum TenderStatus: string
 {
     case Registered = 'registered';
@@ -13,11 +15,11 @@ enum TenderStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Registered => 'مسجّلة',
-            self::Submitted => 'مقدَّمة',
-            self::Won => 'فائزة',
-            self::Lost => 'خاسرة',
-            self::Cancelled => 'ملغاة',
+            self::Registered => Terms::get('مسجّلة'),
+            self::Submitted => Terms::get('مقدَّمة'),
+            self::Won => Terms::get('فائزة'),
+            self::Lost => Terms::get('خاسرة'),
+            self::Cancelled => Terms::get('ملغاة'),
         };
     }
 

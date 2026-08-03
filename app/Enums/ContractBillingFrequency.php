@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Support\Terms;
+
 enum ContractBillingFrequency: string
 {
     case Upfront = 'upfront';
@@ -12,10 +14,10 @@ enum ContractBillingFrequency: string
     public function label(): string
     {
         return match ($this) {
-            self::Upfront => 'مقدَّم (دفعة واحدة)',
-            self::Quarterly => 'ربع سنوي',
-            self::SemiAnnual => 'نصف سنوي',
-            self::Annual => 'سنوي',
+            self::Upfront => Terms::get('مقدَّم (دفعة واحدة)'),
+            self::Quarterly => Terms::get('ربع سنوي'),
+            self::SemiAnnual => Terms::get('نصف سنوي'),
+            self::Annual => Terms::get('سنوي'),
         };
     }
 

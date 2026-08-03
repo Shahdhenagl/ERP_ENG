@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Support\Terms;
+
 enum BatteryStatus: string
 {
     case Active = 'active';
@@ -11,9 +13,9 @@ enum BatteryStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Active => 'قيد التشغيل',
-            self::Replaced => 'مُستبدلة',
-            self::Faulty => 'تالفة',
+            self::Active => Terms::get('قيد التشغيل'),
+            self::Replaced => Terms::get('مُستبدلة'),
+            self::Faulty => Terms::get('تالفة'),
         };
     }
 

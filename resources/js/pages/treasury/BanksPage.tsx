@@ -291,8 +291,7 @@ function TransfersView() {
         <div className="mx-auto max-w-lg">
             <div className="card space-y-4 p-5">
                 <p className="text-sm text-navy-500">
-                    الإيداع هو تحويل من خزينة نقدية إلى حساب بنكي؛ ونفس الشاشة تحوّل بين أي
-                    خزينتين أو حسابين.
+                    {tr('الإيداع هو تحويل من خزينة نقدية إلى حساب بنكي؛ ونفس الشاشة تحوّل بين أي خزينتين أو حسابين.')}
                 </p>
 
                 <Field label="من" required error={errors.from_box_id}>

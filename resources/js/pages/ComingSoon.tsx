@@ -35,8 +35,7 @@ export function ComingSoon() {
                 </h1>
 
                 <p className="mt-2 text-sm leading-relaxed text-navy-500">
-                    الشاشة موجودة في خريطة النظام وسيتم تفعيلها قريبًا. البنية جاهزة،
-                    وباقي ربط الواجهة بها.
+                    {tr('الشاشة موجودة في خريطة النظام وسيتم تفعيلها قريبًا. البنية جاهزة، وباقي ربط الواجهة بها.')}
                 </p>
 
                 <span className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">

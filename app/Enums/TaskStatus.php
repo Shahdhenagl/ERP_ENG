@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Support\Terms;
+
 enum TaskStatus: string
 {
     case Pending = 'pending';
@@ -14,12 +16,12 @@ enum TaskStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Pending => 'بانتظار القبول',
-            self::Accepted => 'تم القبول',
-            self::OnTheWay => 'في الطريق',
-            self::InProgress => 'جارٍ العمل',
-            self::Completed => 'منتهية',
-            self::Cancelled => 'ملغاة',
+            self::Pending => Terms::get('بانتظار القبول'),
+            self::Accepted => Terms::get('تم القبول'),
+            self::OnTheWay => Terms::get('في الطريق'),
+            self::InProgress => Terms::get('جارٍ العمل'),
+            self::Completed => Terms::get('منتهية'),
+            self::Cancelled => Terms::get('ملغاة'),
         };
     }
 

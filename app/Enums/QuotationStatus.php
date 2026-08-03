@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Support\Terms;
+
 /**
  * What an operator set. Whether a sent quote has lapsed is a fact about
  * today's date and is derived — see Quotation::effectiveStatus().
@@ -17,11 +19,11 @@ enum QuotationStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Draft => 'مسودة',
-            self::Sent => 'مُرسَل',
-            self::Accepted => 'مقبول',
-            self::Rejected => 'مرفوض',
-            self::Cancelled => 'ملغي',
+            self::Draft => Terms::get('مسودة'),
+            self::Sent => Terms::get('مُرسَل'),
+            self::Accepted => Terms::get('مقبول'),
+            self::Rejected => Terms::get('مرفوض'),
+            self::Cancelled => Terms::get('ملغي'),
         };
     }
 

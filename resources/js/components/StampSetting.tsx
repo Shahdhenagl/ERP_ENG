@@ -26,8 +26,7 @@ export function StampSetting() {
         <section className="card p-5">
             <h2 className="mb-1 text-sm font-bold text-navy-800">ختم الشركة</h2>
             <p className="mb-3 text-[11px] leading-relaxed text-navy-400">
-                يُطبع على عرض السعر بعد اعتماده فقط — لا يظهر على مسودة. يفضَّل ملف PNG
-                بخلفية شفافة حتى يجلس فوق سطر التوقيع.
+                {tr('يُطبع على عرض السعر بعد اعتماده فقط — لا يظهر على مسودة. يفضَّل ملف PNG بخلفية شفافة حتى يجلس فوق سطر التوقيع.')}
             </p>
 
             <div className="flex items-center gap-4">

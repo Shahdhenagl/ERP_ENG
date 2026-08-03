@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Support\Terms;
+
 /** Who honours the cover — which decides whether a repair costs us anything. */
 enum WarrantyKind: string
 {
@@ -12,9 +14,9 @@ enum WarrantyKind: string
     public function label(): string
     {
         return match ($this) {
-            self::Company => 'ضمان الشركة',
-            self::Supplier => 'ضمان المورّد',
-            self::Extension => 'تمديد ضمان',
+            self::Company => Terms::get('ضمان الشركة'),
+            self::Supplier => Terms::get('ضمان المورّد'),
+            self::Extension => Terms::get('تمديد ضمان'),
         };
     }
 }

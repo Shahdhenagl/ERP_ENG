@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Support\Terms;
+
 enum UserRole: string
 {
     case Admin = 'admin';
@@ -11,9 +13,9 @@ enum UserRole: string
     public function label(): string
     {
         return match ($this) {
-            self::Admin => 'مدير النظام',
-            self::Manager => 'مدير',
-            self::Technician => 'فني',
+            self::Admin => Terms::get('مدير النظام'),
+            self::Manager => Terms::get('مدير'),
+            self::Technician => Terms::get('فني'),
         };
     }
 

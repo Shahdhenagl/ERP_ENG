@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Support\Terms;
+
 enum ItemCategory: string
 {
     case Ups = 'ups';
@@ -12,10 +14,10 @@ enum ItemCategory: string
     public function label(): string
     {
         return match ($this) {
-            self::Ups => 'أجهزة UPS',
-            self::Battery => 'بطاريات',
-            self::SparePart => 'قطع غيار',
-            self::Consumable => 'مستهلكات',
+            self::Ups => Terms::get('أجهزة UPS'),
+            self::Battery => Terms::get('بطاريات'),
+            self::SparePart => Terms::get('قطع غيار'),
+            self::Consumable => Terms::get('مستهلكات'),
         };
     }
 

@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Support\Terms;
+
 enum WarehouseType: string
 {
     case Store = 'store';
@@ -10,8 +12,8 @@ enum WarehouseType: string
     public function label(): string
     {
         return match ($this) {
-            self::Store => 'مخزن',
-            self::Van => 'عهدة فني',
+            self::Store => Terms::get('مخزن'),
+            self::Van => Terms::get('عهدة فني'),
         };
     }
 }

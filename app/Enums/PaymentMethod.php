@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Support\Terms;
+
 enum PaymentMethod: string
 {
     case Cash = 'cash';
@@ -14,12 +16,12 @@ enum PaymentMethod: string
     public function label(): string
     {
         return match ($this) {
-            self::Cash => 'نقدًا',
-            self::BankTransfer => 'تحويل بنكي',
-            self::InstaPay => 'إنستاباي',
-            self::VodafoneCash => 'فودافون كاش',
-            self::Cheque => 'شيك',
-            self::Wallet => 'محفظة إلكترونية',
+            self::Cash => Terms::get('نقدًا'),
+            self::BankTransfer => Terms::get('تحويل بنكي'),
+            self::InstaPay => Terms::get('إنستاباي'),
+            self::VodafoneCash => Terms::get('فودافون كاش'),
+            self::Cheque => Terms::get('شيك'),
+            self::Wallet => Terms::get('محفظة إلكترونية'),
         };
     }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Support\Terms;
+
 enum SalesOrderStatus: string
 {
     case Open = 'open';
@@ -11,9 +13,9 @@ enum SalesOrderStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Open => 'قيد التنفيذ',
-            self::Delivered => 'تم التسليم',
-            self::Cancelled => 'ملغي',
+            self::Open => Terms::get('قيد التنفيذ'),
+            self::Delivered => Terms::get('تم التسليم'),
+            self::Cancelled => Terms::get('ملغي'),
         };
     }
 }

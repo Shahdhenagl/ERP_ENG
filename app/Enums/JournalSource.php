@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Support\Terms;
+
 enum JournalSource: string
 {
     case Manual = 'manual';
@@ -20,18 +22,18 @@ enum JournalSource: string
     public function label(): string
     {
         return match ($this) {
-            self::Manual => 'قيد يدوي',
-            self::Invoice => 'فاتورة مبيعات',
-            self::Payment => 'سند قبض',
-            self::Expense => 'مصروف',
-            self::Transfer => 'تحويل بين الخزائن',
-            self::SalesReturn => 'مرتجع مبيعات',
-            self::SupplierInvoice => 'فاتورة مورّد',
-            self::SupplierPayment => 'سند صرف لمورد',
-            self::Custody => 'عهدة موظف',
-            self::Stock => 'حركة مخزون',
-            self::Opening => 'رصيد افتتاحي',
-            self::Payroll => 'مسير رواتب',
+            self::Manual => Terms::get('قيد يدوي'),
+            self::Invoice => Terms::get('فاتورة مبيعات'),
+            self::Payment => Terms::get('سند قبض'),
+            self::Expense => Terms::get('مصروف'),
+            self::Transfer => Terms::get('تحويل بين الخزائن'),
+            self::SalesReturn => Terms::get('مرتجع مبيعات'),
+            self::SupplierInvoice => Terms::get('فاتورة مورّد'),
+            self::SupplierPayment => Terms::get('سند صرف لمورد'),
+            self::Custody => Terms::get('عهدة موظف'),
+            self::Stock => Terms::get('حركة مخزون'),
+            self::Opening => Terms::get('رصيد افتتاحي'),
+            self::Payroll => Terms::get('مسير رواتب'),
         };
     }
 

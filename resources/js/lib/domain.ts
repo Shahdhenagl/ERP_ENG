@@ -12,6 +12,7 @@ import {
     XCircle,
     type LucideIcon,
 } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import type {
     AssetStatus,
     ClaimStatus,
@@ -51,42 +52,42 @@ interface StatusMeta {
 
 export const STATUS: Record<TaskStatus, StatusMeta> = {
     pending: {
-        label: 'بانتظار القبول',
+        label: tr('بانتظار القبول'),
         icon: Clock,
         chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
         solid: 'bg-amber-500',
         accent: 'bg-amber-400',
     },
     accepted: {
-        label: 'تم القبول',
+        label: tr('تم القبول'),
         icon: CheckCircle2,
         chip: 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200',
         solid: 'bg-indigo-500',
         accent: 'bg-indigo-400',
     },
     on_the_way: {
-        label: 'في الطريق',
+        label: tr('في الطريق'),
         icon: Navigation,
         chip: 'bg-cyan-50 text-cyan-700 ring-1 ring-cyan-200',
         solid: 'bg-cyan-500',
         accent: 'bg-cyan-400',
     },
     in_progress: {
-        label: 'جارٍ العمل',
+        label: tr('جارٍ العمل'),
         icon: Hammer,
         chip: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200',
         solid: 'bg-blue-500',
         accent: 'bg-blue-400',
     },
     completed: {
-        label: 'منتهية',
+        label: tr('منتهية'),
         icon: PackageCheck,
         chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
         solid: 'bg-emerald-500',
         accent: 'bg-emerald-400',
     },
     cancelled: {
-        label: 'ملغاة',
+        label: tr('ملغاة'),
         icon: XCircle,
         chip: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200',
         solid: 'bg-slate-400',
@@ -113,25 +114,25 @@ interface PriorityMeta {
 
 export const PRIORITY: Record<TaskPriority, PriorityMeta> = {
     urgent: {
-        label: 'عاجلة',
+        label: tr('عاجلة'),
         chip: 'bg-red-50 text-red-700 ring-1 ring-red-200',
         dot: 'bg-red-500',
         ring: 'ring-2 ring-red-200',
     },
     high: {
-        label: 'عالية',
+        label: tr('عالية'),
         chip: 'bg-orange-50 text-orange-700 ring-1 ring-orange-200',
         dot: 'bg-orange-500',
         ring: '',
     },
     normal: {
-        label: 'عادية',
+        label: tr('عادية'),
         chip: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200',
         dot: 'bg-blue-500',
         ring: '',
     },
     low: {
-        label: 'منخفضة',
+        label: tr('منخفضة'),
         chip: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200',
         dot: 'bg-slate-400',
         ring: '',
@@ -139,11 +140,11 @@ export const PRIORITY: Record<TaskPriority, PriorityMeta> = {
 }
 
 export const TASK_TYPE: Record<TaskType, { label: string; icon: LucideIcon }> = {
-    installation: { label: 'تركيب', icon: Wrench },
-    maintenance: { label: 'صيانة', icon: ClipboardList },
-    repair: { label: 'إصلاح عطل', icon: AlertTriangle },
-    inspection: { label: 'معاينة', icon: Search },
-    delivery: { label: 'تسليم', icon: Truck },
+    installation: { label: tr('تركيب'), icon: Wrench },
+    maintenance: { label: tr('صيانة'), icon: ClipboardList },
+    repair: { label: tr('إصلاح عطل'), icon: AlertTriangle },
+    inspection: { label: tr('معاينة'), icon: Search },
+    delivery: { label: tr('تسليم'), icon: Truck },
 }
 
 /**
@@ -151,19 +152,19 @@ export const TASK_TYPE: Record<TaskType, { label: string; icon: LucideIcon }> = 
  * server derives from today's date rather than storing.
  */
 export const CONTRACT_STATUS: Record<ContractEffectiveStatus, { label: string; chip: string }> = {
-    draft: { label: 'مسودة', chip: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200' },
-    scheduled: { label: 'لم يبدأ', chip: 'bg-sky-50 text-sky-700 ring-1 ring-sky-200' },
-    active: { label: 'ساري', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
-    expired: { label: 'منتهي', chip: 'bg-red-50 text-red-700 ring-1 ring-red-200' },
-    cancelled: { label: 'ملغي', chip: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200' },
+    draft: { label: tr('مسودة'), chip: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200' },
+    scheduled: { label: tr('لم يبدأ'), chip: 'bg-sky-50 text-sky-700 ring-1 ring-sky-200' },
+    active: { label: tr('ساري'), chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
+    expired: { label: tr('منتهي'), chip: 'bg-red-50 text-red-700 ring-1 ring-red-200' },
+    cancelled: { label: tr('ملغي'), chip: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200' },
 }
 
 export const VISIT_STATUS: Record<VisitStatus, { label: string; chip: string }> = {
-    planned: { label: 'مخططة', chip: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200' },
-    scheduled: { label: 'صدر أمر شغل', chip: 'bg-brand-50 text-brand-700 ring-1 ring-brand-200' },
-    done: { label: 'تمت', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
-    skipped: { label: 'تخطّيت', chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' },
-    cancelled: { label: 'ملغاة', chip: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200' },
+    planned: { label: tr('مخططة'), chip: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200' },
+    scheduled: { label: tr('صدر أمر شغل'), chip: 'bg-brand-50 text-brand-700 ring-1 ring-brand-200' },
+    done: { label: tr('تمت'), chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
+    skipped: { label: tr('تخطّيت'), chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' },
+    cancelled: { label: tr('ملغاة'), chip: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200' },
 }
 
 /** Amber while the term is running out, red once it has. */
@@ -175,9 +176,9 @@ export function expiryChip(daysRemaining: number): string {
 }
 
 export const ASSET_STATUS: Record<AssetStatus, { label: string; chip: string }> = {
-    active: { label: 'في الخدمة', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
-    under_repair: { label: 'تحت الإصلاح', chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' },
-    retired: { label: 'خارج الخدمة', chip: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200' },
+    active: { label: tr('في الخدمة'), chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
+    under_repair: { label: tr('تحت الإصلاح'), chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' },
+    retired: { label: tr('خارج الخدمة'), chip: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200' },
 }
 
 /**
@@ -194,56 +195,56 @@ export function warrantyChip(underWarranty: boolean | null): string {
 
 /** Cover, as the server derives it from today's date on every read. */
 export const WARRANTY_STATUS: Record<WarrantyEffectiveStatus, { label: string; chip: string }> = {
-    active: { label: 'ساري', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
-    expiring: { label: 'قارب على الانتهاء', chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' },
-    expired: { label: 'منتهي', chip: 'bg-red-50 text-red-700 ring-1 ring-red-200' },
-    scheduled: { label: 'لم يبدأ', chip: 'bg-sky-50 text-sky-700 ring-1 ring-sky-200' },
-    void: { label: 'ملغي', chip: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200' },
+    active: { label: tr('ساري'), chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
+    expiring: { label: tr('قارب على الانتهاء'), chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' },
+    expired: { label: tr('منتهي'), chip: 'bg-red-50 text-red-700 ring-1 ring-red-200' },
+    scheduled: { label: tr('لم يبدأ'), chip: 'bg-sky-50 text-sky-700 ring-1 ring-sky-200' },
+    void: { label: tr('ملغي'), chip: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200' },
 }
 
 export const WARRANTY_KIND: Record<WarrantyKind, string> = {
-    company: 'ضمان الشركة',
-    supplier: 'ضمان المورّد',
-    extension: 'تمديد ضمان',
+    company: tr('ضمان الشركة'),
+    supplier: tr('ضمان المورّد'),
+    extension: tr('تمديد ضمان'),
 }
 
 export const CLAIM_STATUS: Record<ClaimStatus, { label: string; chip: string }> = {
-    open: { label: 'تحت الفحص', chip: 'bg-sky-50 text-sky-700 ring-1 ring-sky-200' },
-    approved: { label: 'معتمدة', chip: 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200' },
-    rejected: { label: 'مرفوضة', chip: 'bg-red-50 text-red-700 ring-1 ring-red-200' },
-    repaired: { label: 'تم الإصلاح', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
-    replaced: { label: 'تم الاستبدال', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
-    closed: { label: 'مغلقة', chip: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200' },
+    open: { label: tr('تحت الفحص'), chip: 'bg-sky-50 text-sky-700 ring-1 ring-sky-200' },
+    approved: { label: tr('معتمدة'), chip: 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200' },
+    rejected: { label: tr('مرفوضة'), chip: 'bg-red-50 text-red-700 ring-1 ring-red-200' },
+    repaired: { label: tr('تم الإصلاح'), chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
+    replaced: { label: tr('تم الاستبدال'), chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
+    closed: { label: tr('مغلقة'), chip: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200' },
 }
 
 /** Quotations carry the lapse the server derives from today's date. */
 export const QUOTATION_STATUS: Record<QuotationEffectiveStatus, { label: string; chip: string }> = {
-    draft: { label: 'مسودة', chip: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200' },
-    sent: { label: 'مُرسَل', chip: 'bg-sky-50 text-sky-700 ring-1 ring-sky-200' },
-    expired: { label: 'انتهت صلاحيته', chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' },
-    accepted: { label: 'مقبول', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
-    rejected: { label: 'مرفوض', chip: 'bg-red-50 text-red-700 ring-1 ring-red-200' },
-    cancelled: { label: 'ملغي', chip: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200' },
+    draft: { label: tr('مسودة'), chip: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200' },
+    sent: { label: tr('مُرسَل'), chip: 'bg-sky-50 text-sky-700 ring-1 ring-sky-200' },
+    expired: { label: tr('انتهت صلاحيته'), chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' },
+    accepted: { label: tr('مقبول'), chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
+    rejected: { label: tr('مرفوض'), chip: 'bg-red-50 text-red-700 ring-1 ring-red-200' },
+    cancelled: { label: tr('ملغي'), chip: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200' },
 }
 
 export const SALES_ORDER_STATUS: Record<SalesOrderStatus, { label: string; chip: string }> = {
-    open: { label: 'قيد التنفيذ', chip: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200' },
-    delivered: { label: 'تم التسليم', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
-    cancelled: { label: 'ملغي', chip: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200' },
+    open: { label: tr('قيد التنفيذ'), chip: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200' },
+    delivered: { label: tr('تم التسليم'), chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
+    cancelled: { label: tr('ملغي'), chip: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200' },
 }
 
 export const SALES_BILLING_STATE: Record<SalesBillingState, { label: string; chip: string }> = {
-    not_invoiced: { label: 'لم تتم فوترته', chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' },
-    partly_invoiced: { label: 'فوترة جزئية', chip: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200' },
-    invoiced: { label: 'تمت فوترته', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
-    cancelled: { label: 'ملغي', chip: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200' },
+    not_invoiced: { label: tr('لم تتم فوترته'), chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' },
+    partly_invoiced: { label: tr('فوترة جزئية'), chip: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200' },
+    invoiced: { label: tr('تمت فوترته'), chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
+    cancelled: { label: tr('ملغي'), chip: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200' },
 }
 
 export const ITEM_CATEGORY: Record<ItemCategory, { label: string; chip: string }> = {
-    ups: { label: 'أجهزة UPS', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
-    battery: { label: 'بطاريات', chip: 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200' },
-    spare_part: { label: 'قطع غيار', chip: 'bg-sky-50 text-sky-700 ring-1 ring-sky-200' },
-    consumable: { label: 'مستهلكات', chip: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200' },
+    ups: { label: tr('أجهزة UPS'), chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
+    battery: { label: tr('بطاريات'), chip: 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200' },
+    spare_part: { label: tr('قطع غيار'), chip: 'bg-sky-50 text-sky-700 ring-1 ring-sky-200' },
+    consumable: { label: tr('مستهلكات'), chip: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200' },
 }
 
 /** A one-line nameplate for a UPS or battery — brand, model and the key ratings. */
@@ -275,19 +276,19 @@ export function itemSpecSummary(
 }
 
 export const MOVEMENT_TYPE: Record<MovementType, { label: string; chip: string; sign: '+' | '−' | '±' }> = {
-    receipt: { label: 'وارد', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200', sign: '+' },
-    transfer: { label: 'تحويل', chip: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200', sign: '±' },
-    issue: { label: 'صرف على مهمة', chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200', sign: '−' },
-    return: { label: 'مرتجع من مهمة', chip: 'bg-teal-50 text-teal-700 ring-1 ring-teal-200', sign: '+' },
-    adjustment: { label: 'تسوية جرد', chip: 'bg-purple-50 text-purple-700 ring-1 ring-purple-200', sign: '±' },
+    receipt: { label: tr('وارد'), chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200', sign: '+' },
+    transfer: { label: tr('تحويل'), chip: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200', sign: '±' },
+    issue: { label: tr('صرف على مهمة'), chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200', sign: '−' },
+    return: { label: tr('مرتجع من مهمة'), chip: 'bg-teal-50 text-teal-700 ring-1 ring-teal-200', sign: '+' },
+    adjustment: { label: tr('تسوية جرد'), chip: 'bg-purple-50 text-purple-700 ring-1 ring-purple-200', sign: '±' },
     // Goods handed back to a supplier leave stock; a customer's return re-enters it.
-    purchase_return: { label: 'مرتجع مشتريات', chip: 'bg-rose-50 text-rose-700 ring-1 ring-rose-200', sign: '−' },
-    sales_return: { label: 'مرتجع مبيعات', chip: 'bg-teal-50 text-teal-700 ring-1 ring-teal-200', sign: '+' },
+    purchase_return: { label: tr('مرتجع مشتريات'), chip: 'bg-rose-50 text-rose-700 ring-1 ring-rose-200', sign: '−' },
+    sales_return: { label: tr('مرتجع مبيعات'), chip: 'bg-teal-50 text-teal-700 ring-1 ring-teal-200', sign: '+' },
 }
 
 /** Fallback so a movement type the map has not met yet never breaks the list. */
 export const MOVEMENT_TYPE_FALLBACK = {
-    label: 'حركة',
+    label: tr('حركة'),
     chip: 'bg-navy-100 text-navy-600',
     sign: '±' as const,
 }
@@ -299,24 +300,24 @@ export const MOVEMENT_TYPE_FALLBACK = {
 export const DEFAULT_TAX_RATE = 14
 
 export const PAYMENT_STATE: Record<PaymentState, { label: string; chip: string }> = {
-    draft: { label: 'مسودة', chip: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200' },
-    void: { label: 'ملغاة', chip: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200' },
-    unpaid: { label: 'غير مدفوعة', chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' },
-    partly_paid: { label: 'مدفوعة جزئيًا', chip: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200' },
-    paid: { label: 'مدفوعة', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
+    draft: { label: tr('مسودة'), chip: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200' },
+    void: { label: tr('ملغاة'), chip: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200' },
+    unpaid: { label: tr('غير مدفوعة'), chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' },
+    partly_paid: { label: tr('مدفوعة جزئيًا'), chip: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200' },
+    paid: { label: tr('مدفوعة'), chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
     // Violet, not green: a returned sale was never collected, and it should
     // not read as a win on the invoice list.
-    credited: { label: 'مرتجعة', chip: 'bg-violet-50 text-violet-700 ring-1 ring-violet-200' },
-    overdue: { label: 'متأخرة', chip: 'bg-red-50 text-red-700 ring-1 ring-red-200' },
+    credited: { label: tr('مرتجعة'), chip: 'bg-violet-50 text-violet-700 ring-1 ring-violet-200' },
+    overdue: { label: tr('متأخرة'), chip: 'bg-red-50 text-red-700 ring-1 ring-red-200' },
 }
 
 export const PAYMENT_METHOD: Record<PaymentMethod, string> = {
-    cash: 'نقدًا',
-    bank_transfer: 'تحويل بنكي',
-    instapay: 'إنستاباي',
-    vodafone_cash: 'فودافون كاش',
-    cheque: 'شيك',
-    wallet: 'محفظة إلكترونية',
+    cash: tr('نقدًا'),
+    bank_transfer: tr('تحويل بنكي'),
+    instapay: tr('إنستاباي'),
+    vodafone_cash: tr('فودافون كاش'),
+    cheque: tr('شيك'),
+    wallet: tr('محفظة إلكترونية'),
 }
 
 /** Money is shown in whole piastres — technicians read these on a phone. */
@@ -330,10 +331,10 @@ export function formatQty(value: number): string {
 }
 
 export const DEVICE_CONDITION: Record<DeviceCondition, { label: string; chip: string }> = {
-    good: { label: 'جيدة', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
-    fair: { label: 'مقبولة', chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' },
-    poor: { label: 'ضعيفة', chip: 'bg-orange-50 text-orange-700 ring-1 ring-orange-200' },
-    faulty: { label: 'معطلة', chip: 'bg-red-50 text-red-700 ring-1 ring-red-200' },
+    good: { label: tr('جيدة'), chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
+    fair: { label: tr('مقبولة'), chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' },
+    poor: { label: tr('ضعيفة'), chip: 'bg-orange-50 text-orange-700 ring-1 ring-orange-200' },
+    faulty: { label: tr('معطلة'), chip: 'bg-red-50 text-red-700 ring-1 ring-red-200' },
 }
 
 /**
@@ -342,22 +343,22 @@ export const DEVICE_CONDITION: Record<DeviceCondition, { label: string; chip: st
  */
 export const PHASE_READINGS = [
     {
-        label: 'جهد الدخول',
+        label: tr('جهد الدخول'),
         keys: ['input_voltage', 'input_voltage_l2', 'input_voltage_l3'],
     },
     {
-        label: 'جهد الخروج',
+        label: tr('جهد الخروج'),
         keys: ['output_voltage', 'output_voltage_l2', 'output_voltage_l3'],
     },
 ] as const
 
 /** The single-value readings, beside the per-phase voltages above. */
 export const READING_FIELDS = [
-    { key: 'frequency', label: 'التردد', unit: 'هرتز', step: '0.1' },
-    { key: 'load_percent', label: 'نسبة التحميل', unit: '%', step: '0.1' },
-    { key: 'battery_voltage', label: 'جهد البطاريات', unit: 'فولت', step: '0.1' },
-    { key: 'temperature', label: 'درجة الحرارة', unit: '°م', step: '0.1' },
-    { key: 'backup_minutes', label: 'زمن الـ Backup', unit: 'دقيقة', step: '1' },
+    { key: 'frequency', label: tr('التردد'), unit: tr('هرتز'), step: '0.1' },
+    { key: 'load_percent', label: tr('نسبة التحميل'), unit: '%', step: '0.1' },
+    { key: 'battery_voltage', label: tr('جهد البطاريات'), unit: tr('فولت'), step: '0.1' },
+    { key: 'temperature', label: tr('درجة الحرارة'), unit: tr('°م'), step: '0.1' },
+    { key: 'backup_minutes', label: tr('زمن الـ Backup'), unit: tr('دقيقة'), step: '1' },
 ] as const
 
 /** Every numeric reading key, for building and posting the report form. */
@@ -372,15 +373,15 @@ export const EXPENSE_CATEGORIES = ['وقود', 'مواصلات', 'خط السي�
 
 /** UPS topology, on the device nameplate. */
 export const UPS_TYPES: Record<string, string> = {
-    online: 'Online (تحويل مزدوج)',
-    offline: 'Offline (احتياطي)',
+    online: tr('Online (تحويل مزدوج)'),
+    offline: tr('Offline (احتياطي)'),
     line_interactive: 'Line Interactive',
 }
 
 /** Single- or three-phase. */
 export const UPS_PHASES: Record<string, string> = {
-    single: 'أحادي الوجه',
-    three: 'ثلاثي الأوجه',
+    single: tr('أحادي الوجه'),
+    three: tr('ثلاثي الأوجه'),
 }
 
 /** Communication ports a UPS commonly exposes. */
@@ -388,20 +389,20 @@ export const COMM_PORTS = ['USB', 'RS232', 'SNMP', 'USB + RS232', 'USB + SNMP'] 
 
 /** Where a lead came from. */
 export const LEAD_SOURCE: Record<string, string> = {
-    referral: 'ترشيح',
-    call: 'اتصال',
-    walk_in: 'زيارة',
-    social: 'سوشيال ميديا',
-    website: 'الموقع',
-    other: 'أخرى',
+    referral: tr('ترشيح'),
+    call: tr('اتصال'),
+    walk_in: tr('زيارة'),
+    social: tr('سوشيال ميديا'),
+    website: tr('الموقع'),
+    other: tr('أخرى'),
 }
 
 /** How hard a lead is worth chasing — which of thirty to ring first. */
 export const LEAD_PRIORITY: Record<string, { label: string; chip: string; dot: string }> = {
-    urgent: { label: 'عاجلة', chip: 'bg-red-50 text-red-700 ring-1 ring-red-200', dot: 'bg-red-500' },
-    high: { label: 'عالية', chip: 'bg-orange-50 text-orange-700 ring-1 ring-orange-200', dot: 'bg-orange-500' },
-    normal: { label: 'عادية', chip: 'bg-navy-50 text-navy-500 ring-1 ring-navy-200', dot: 'bg-navy-300' },
-    low: { label: 'منخفضة', chip: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200', dot: 'bg-slate-300' },
+    urgent: { label: tr('عاجلة'), chip: 'bg-red-50 text-red-700 ring-1 ring-red-200', dot: 'bg-red-500' },
+    high: { label: tr('عالية'), chip: 'bg-orange-50 text-orange-700 ring-1 ring-orange-200', dot: 'bg-orange-500' },
+    normal: { label: tr('عادية'), chip: 'bg-navy-50 text-navy-500 ring-1 ring-navy-200', dot: 'bg-navy-300' },
+    low: { label: tr('منخفضة'), chip: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200', dot: 'bg-slate-300' },
 }
 
 /** Battery chemistry / construction. */
@@ -423,14 +424,14 @@ export const EGYPT_GOVERNORATES = [
 
 /** The site-inspection checklist, in the order it appears on the paper sheet. */
 export const SITE_CHECKS = [
-    { key: 'earthing', label: 'التأريض' },
-    { key: 'environment', label: 'البيئة المحيطة' },
-    { key: 'charger', label: 'جهد الشاحن' },
-    { key: 'accessories', label: 'المراوح والفلاتر والإنذارات' },
+    { key: 'earthing', label: tr('التأريض') },
+    { key: 'environment', label: tr('البيئة المحيطة') },
+    { key: 'charger', label: tr('جهد الشاحن') },
+    { key: 'accessories', label: tr('المراوح والفلاتر والإنذارات') },
 ] as const
 
 export const SITE_CHECK_OPTIONS: Record<'ok' | 'issue' | 'na', { label: string; chip: string }> = {
-    ok: { label: 'سليم', chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
-    issue: { label: 'يحتاج انتباه', chip: 'bg-red-50 text-red-700 ring-1 ring-red-200' },
-    na: { label: 'لا ينطبق', chip: 'bg-navy-100 text-navy-500 ring-1 ring-navy-200' },
+    ok: { label: tr('سليم'), chip: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
+    issue: { label: tr('يحتاج انتباه'), chip: 'bg-red-50 text-red-700 ring-1 ring-red-200' },
+    na: { label: tr('لا ينطبق'), chip: 'bg-navy-100 text-navy-500 ring-1 ring-navy-200' },
 }

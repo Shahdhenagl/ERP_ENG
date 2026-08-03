@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Support\Terms;
+
 /**
  * What an operator set, not what the calendar says. Expiry is derived —
  * see Contract::effectiveStatus().
@@ -15,9 +17,9 @@ enum ContractStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Draft => 'مسودة',
-            self::Active => 'ساري',
-            self::Cancelled => 'ملغي',
+            self::Draft => Terms::get('مسودة'),
+            self::Active => Terms::get('ساري'),
+            self::Cancelled => Terms::get('ملغي'),
         };
     }
 }

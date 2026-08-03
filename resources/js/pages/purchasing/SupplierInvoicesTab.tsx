@@ -485,8 +485,7 @@ function SupplierInvoiceForm({ onClose }: { onClose: () => void }) {
 
                         {receipts.length === 0 ? (
                             <p className="rounded-xl bg-navy-50 p-3 text-xs text-navy-400">
-                                لا توجد استلامات بانتظار فاتورة من هذا المورّد. احفظ الفاتورة ثم
-                                عدّل بنودها إن كانت عن خدمة أو نقل.
+                                {tr('لا توجد استلامات بانتظار فاتورة من هذا المورّد. احفظ الفاتورة ثم عدّل بنودها إن كانت عن خدمة أو نقل.')}
                             </p>
                         ) : (
                             <div className="max-h-64 space-y-1.5 overflow-y-auto">

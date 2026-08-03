@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Support\Terms;
+
 enum SurveyStatus: string
 {
     case Draft = 'draft';
@@ -11,9 +13,9 @@ enum SurveyStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Draft => 'مسودة',
-            self::Completed => 'مكتملة',
-            self::Approved => 'معتمدة',
+            self::Draft => Terms::get('مسودة'),
+            self::Completed => Terms::get('مكتملة'),
+            self::Approved => Terms::get('معتمدة'),
         };
     }
 

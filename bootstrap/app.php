@@ -23,6 +23,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('alerts:sweep')->dailyAt('07:00');
     })
     ->withMiddleware(function (Middleware $middleware): void {
+        // Every API answer — a status label, a validation message, the words on
+        // a printed document — comes back in the language the caller is reading.
+        $middleware->api(prepend: [\App\Http\Middleware\SetLocaleFromRequest::class]);
+
         $middleware->alias([
             'role' => \App\Http\Middleware\EnsureUserRole::class,
             'can' => \App\Http\Middleware\EnsurePermission::class,

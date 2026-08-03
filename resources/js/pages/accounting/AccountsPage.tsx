@@ -252,8 +252,7 @@ function AccountDialog({
             <div className="space-y-4">
                 {account?.is_system && (
                     <p className="rounded-xl bg-navy-50 p-3 text-xs text-navy-500">
-                        حساب أساسي يعتمد عليه الترحيل الآلي. يمكن تغيير اسمه وموضعه، ولا يمكن حذفه
-                        أو تغيير نوعه.
+                        {tr('حساب أساسي يعتمد عليه الترحيل الآلي. يمكن تغيير اسمه وموضعه، ولا يمكن حذفه أو تغيير نوعه.')}
                     </p>
                 )}
 

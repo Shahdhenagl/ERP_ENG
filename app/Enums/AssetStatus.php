@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Support\Terms;
+
 enum AssetStatus: string
 {
     case Active = 'active';
@@ -11,9 +13,9 @@ enum AssetStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Active => 'في الخدمة',
-            self::UnderRepair => 'تحت الإصلاح',
-            self::Retired => 'خارج الخدمة',
+            self::Active => Terms::get('في الخدمة'),
+            self::UnderRepair => Terms::get('تحت الإصلاح'),
+            self::Retired => Terms::get('خارج الخدمة'),
         };
     }
 }

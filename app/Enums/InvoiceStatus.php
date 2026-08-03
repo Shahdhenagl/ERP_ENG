@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Support\Terms;
+
 /**
  * What an operator set. Whether an invoice is paid is worked out from the
  * receipts against it, not stored here — see Invoice::paymentState().
@@ -15,9 +17,9 @@ enum InvoiceStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Draft => 'مسودة',
-            self::Issued => 'صادرة',
-            self::Void => 'ملغاة',
+            self::Draft => Terms::get('مسودة'),
+            self::Issued => Terms::get('صادرة'),
+            self::Void => Terms::get('ملغاة'),
         };
     }
 

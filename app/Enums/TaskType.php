@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Support\Terms;
+
 enum TaskType: string
 {
     case Installation = 'installation';
@@ -13,11 +15,11 @@ enum TaskType: string
     public function label(): string
     {
         return match ($this) {
-            self::Installation => 'تركيب',
-            self::Maintenance => 'صيانة',
-            self::Repair => 'إصلاح عطل',
-            self::Inspection => 'معاينة',
-            self::Delivery => 'تسليم',
+            self::Installation => Terms::get('تركيب'),
+            self::Maintenance => Terms::get('صيانة'),
+            self::Repair => Terms::get('إصلاح عطل'),
+            self::Inspection => Terms::get('معاينة'),
+            self::Delivery => Terms::get('تسليم'),
         };
     }
 }

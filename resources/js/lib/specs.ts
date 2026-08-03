@@ -1,5 +1,6 @@
 import { BATTERY_TYPES, UPS_PHASES, UPS_TYPES } from '@/lib/domain'
 import type { Asset } from '@/types'
+import { tr } from '@/lib/i18n'
 
 /** A label/value pair from a nameplate, already resolved for display. */
 export type SpecRow = [label: string, value: string]
@@ -25,46 +26,46 @@ export function itemSpecRows(
 
     if (category === 'ups') {
         return rows([
-            ['الماركة', specs.brand],
-            ['الموديل', specs.model],
-            ['النوع', specs.ups_type ? (UPS_TYPES[specs.ups_type] ?? specs.ups_type) : null],
-            ['الأوجه', specs.phase ? (UPS_PHASES[specs.phase] ?? specs.phase) : null],
-            ['القدرة', specs.capacity],
-            ['جهد الدخل', specs.input_voltage],
-            ['جهد الخرج', specs.output_voltage],
-            ['التردد', specs.frequency],
-            ['الكفاءة', specs.efficiency],
-            ['معامل القدرة', specs.power_factor],
-            ['جهد البطاريات', specs.battery_voltage],
-            ['عدد البطاريات', specs.battery_count],
-            ['زمن التغذية', specs.backup_minutes ? `${specs.backup_minutes} دقيقة` : null],
-            ['منفذ الاتصال', specs.comm_port],
+            [tr('الماركة'), specs.brand],
+            [tr('الموديل'), specs.model],
+            [tr('النوع'), specs.ups_type ? (UPS_TYPES[specs.ups_type] ?? specs.ups_type) : null],
+            [tr('الأوجه'), specs.phase ? (UPS_PHASES[specs.phase] ?? specs.phase) : null],
+            [tr('القدرة'), specs.capacity],
+            [tr('جهد الدخل'), specs.input_voltage],
+            [tr('جهد الخرج'), specs.output_voltage],
+            [tr('التردد'), specs.frequency],
+            [tr('الكفاءة'), specs.efficiency],
+            [tr('معامل القدرة'), specs.power_factor],
+            [tr('جهد البطاريات'), specs.battery_voltage],
+            [tr('عدد البطاريات'), specs.battery_count],
+            [tr('زمن التغذية'), specs.backup_minutes ? `${specs.backup_minutes} دقيقة` : null],
+            [tr('منفذ الاتصال'), specs.comm_port],
         ])
     }
 
     if (category === 'battery') {
         return rows([
-            ['الماركة', specs.brand],
-            ['الموديل', specs.model],
+            [tr('الماركة'), specs.brand],
+            [tr('الموديل'), specs.model],
             [
-                'النوع',
+                tr('النوع'),
                 specs.battery_type ? (BATTERY_TYPES[specs.battery_type] ?? specs.battery_type) : null,
             ],
-            ['المقاس', specs.size],
-            ['السعة', specs.capacity_ah ? `${specs.capacity_ah} Ah` : null],
-            ['الجهد', specs.voltage ? `${specs.voltage} V` : null],
-            ['الطاقة', specs.energy_wh ? `${specs.energy_wh} Wh` : null],
-            ['نوع الأطراف', specs.terminal_type],
-            ['المقاومة الداخلية', specs.internal_resistance],
-            ['الوزن', specs.weight],
-            ['الأبعاد', specs.dimensions],
-            ['حرارة التشغيل', specs.operating_temperature],
+            [tr('المقاس'), specs.size],
+            [tr('السعة'), specs.capacity_ah ? `${specs.capacity_ah} Ah` : null],
+            [tr('الجهد'), specs.voltage ? `${specs.voltage} V` : null],
+            [tr('الطاقة'), specs.energy_wh ? `${specs.energy_wh} Wh` : null],
+            [tr('نوع الأطراف'), specs.terminal_type],
+            [tr('المقاومة الداخلية'), specs.internal_resistance],
+            [tr('الوزن'), specs.weight],
+            [tr('الأبعاد'), specs.dimensions],
+            [tr('حرارة التشغيل'), specs.operating_temperature],
         ])
     }
 
     return rows([
-        ['الماركة', specs.brand],
-        ['الموديل', specs.model],
+        [tr('الماركة'), specs.brand],
+        [tr('الموديل'), specs.model],
     ])
 }
 
@@ -77,19 +78,19 @@ export function itemSpecRows(
  */
 export function assetSpecRows(asset: Asset): SpecRow[] {
     return rows([
-        ['الماركة', asset.brand],
-        ['الموديل', asset.model],
-        ['النوع', asset.ups_type ? (UPS_TYPES[asset.ups_type] ?? asset.ups_type) : null],
-        ['الأوجه', asset.phase ? (UPS_PHASES[asset.phase] ?? asset.phase) : null],
-        ['القدرة', asset.capacity],
-        ['جهد الدخل', asset.input_voltage],
-        ['جهد الخرج', asset.output_voltage],
-        ['التردد', asset.frequency],
-        ['الكفاءة', asset.efficiency],
-        ['معامل القدرة', asset.power_factor],
-        ['جهد البطاريات', asset.battery_voltage],
-        ['عدد البطاريات', asset.battery_count],
-        ['زمن التغذية', asset.backup_minutes ? `${asset.backup_minutes} دقيقة` : null],
-        ['منفذ الاتصال', asset.comm_port],
+        [tr('الماركة'), asset.brand],
+        [tr('الموديل'), asset.model],
+        [tr('النوع'), asset.ups_type ? (UPS_TYPES[asset.ups_type] ?? asset.ups_type) : null],
+        [tr('الأوجه'), asset.phase ? (UPS_PHASES[asset.phase] ?? asset.phase) : null],
+        [tr('القدرة'), asset.capacity],
+        [tr('جهد الدخل'), asset.input_voltage],
+        [tr('جهد الخرج'), asset.output_voltage],
+        [tr('التردد'), asset.frequency],
+        [tr('الكفاءة'), asset.efficiency],
+        [tr('معامل القدرة'), asset.power_factor],
+        [tr('جهد البطاريات'), asset.battery_voltage],
+        [tr('عدد البطاريات'), asset.battery_count],
+        [tr('زمن التغذية'), asset.backup_minutes ? `${asset.backup_minutes} دقيقة` : null],
+        [tr('منفذ الاتصال'), asset.comm_port],
     ])
 }

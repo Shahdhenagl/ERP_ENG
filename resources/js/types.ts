@@ -1,3 +1,5 @@
+import { tr } from '@/lib/i18n'
+
 export type Role = 'admin' | 'manager' | 'technician'
 
 export type TaskStatus =
@@ -95,17 +97,17 @@ export interface Customer {
 
 /** The institution kinds, value → Arabic label, mirroring Customer::TYPES. */
 export const CUSTOMER_TYPES: Record<CustomerType, string> = {
-    factory: 'مصنع',
-    hospital: 'مستشفى',
-    hotel: 'فندق',
-    bank: 'بنك',
-    data_center: 'مركز بيانات',
-    government: 'جهة حكومية',
-    company: 'شركة / مؤسسة',
-    tower: 'برج / عقار',
-    education: 'مؤسسة تعليمية',
-    retail: 'محل تجاري',
-    other: 'أخرى',
+    factory: tr('مصنع'),
+    hospital: tr('مستشفى'),
+    hotel: tr('فندق'),
+    bank: tr('بنك'),
+    data_center: tr('مركز بيانات'),
+    government: tr('جهة حكومية'),
+    company: tr('شركة / مؤسسة'),
+    tower: tr('برج / عقار'),
+    education: tr('مؤسسة تعليمية'),
+    retail: tr('محل تجاري'),
+    other: tr('أخرى'),
 }
 
 export interface CustomerProfile {

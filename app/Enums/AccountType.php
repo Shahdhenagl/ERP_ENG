@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Support\Terms;
+
 enum AccountType: string
 {
     case Asset = 'asset';
@@ -13,11 +15,11 @@ enum AccountType: string
     public function label(): string
     {
         return match ($this) {
-            self::Asset => 'أصول',
-            self::Liability => 'خصوم',
-            self::Equity => 'حقوق ملكية',
-            self::Revenue => 'إيرادات',
-            self::Expense => 'مصروفات',
+            self::Asset => Terms::get('أصول'),
+            self::Liability => Terms::get('خصوم'),
+            self::Equity => Terms::get('حقوق ملكية'),
+            self::Revenue => Terms::get('إيرادات'),
+            self::Expense => Terms::get('مصروفات'),
         };
     }
 
