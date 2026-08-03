@@ -1,4 +1,5 @@
 import { HandCoins, Pencil, Printer, RotateCcw, Search } from 'lucide-react'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { tr } from '@/lib/i18n'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -22,6 +23,7 @@ import type { Payment } from '@/types'
 export function CollectionsPage() {
     const { path } = useArea()
     const toast = useToast()
+    const [view, setView] = useViewMode('collections')
     const { data, isLoading } = usePayments({ per_page: 50 })
     const reverse = useReversePayment()
     const [search, setSearch] = useState('')
@@ -64,6 +66,10 @@ export function CollectionsPage() {
                 />
             </div>
 
+            <div className="mb-3 flex justify-end">
+                <ViewToggle view={view} onChange={setView} />
+            </div>
+
             {isLoading ? (
                 <SkeletonCard />
             ) : !rows.length ? (
@@ -72,6 +78,39 @@ export function CollectionsPage() {
                     title="لا توجد تحصيلات"
                     description="تظهر هنا سندات القبض من العملاء بمجرد تسجيلها على الفواتير."
                 />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="52rem"
+                    headers={[
+                        { label: 'الكود', className: 'w-28' },
+                        'العميل',
+                        { label: 'الفاتورة', className: 'w-32' },
+                        { label: 'التاريخ', className: 'w-32' },
+                        { label: 'طريقة الدفع', className: 'w-32' },
+                        { label: 'المبلغ', className: 'w-28 text-end' },
+                    ]}
+                >
+                    {rows.map((payment) => (
+                        <tr key={payment.id} className="border-t border-navy-100 hover:bg-navy-50/60">
+                            <td className="tabular px-3 py-2.5 font-bold text-brand-600">
+                                {payment.code}
+                            </td>
+                            <td className="px-3 py-2.5 font-semibold text-navy-800">
+                                {payment.customer ?? '—'}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {payment.invoice_code ?? '—'}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {payment.paid_at ? formatSmart(payment.paid_at) : '—'}
+                            </td>
+                            <td className="px-3 py-2.5 text-navy-600">{payment.method_label}</td>
+                            <td className="tabular px-3 py-2.5 text-end font-bold text-navy-900">
+                                {formatMoney(payment.amount)}
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
                 <div className="grid gap-2 sm:grid-cols-2">
                     {rows.map((payment) => (

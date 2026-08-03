@@ -2564,4 +2564,5 @@ return [
     'تاريخ البلاغ' => 'Reported on',
     'الطرف' => 'Party',
     'الجهة' => 'Body',
+    'موعد الاستبدال' => 'Replacement due',
 ];

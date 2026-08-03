@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { tr } from '@/lib/i18n'
 import { BatteryCharging, Paperclip, Plus, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
@@ -27,6 +28,7 @@ const STATUS: Record<BatteryStatus, string> = {
  */
 export function BatteriesPage() {
     const [dueOnly, setDueOnly] = useState(false)
+    const [view, setView] = useViewMode('batteries')
     const { data, isLoading } = useBatteries(dueOnly ? { due_within: 30 } : {})
     const [creating, setCreating] = useState(false)
     const [replacing, setReplacing] = useState<Battery | null>(null)
@@ -59,6 +61,10 @@ export function BatteriesPage() {
                 </button>
             </div>
 
+            <div className="mb-3 flex justify-end">
+                <ViewToggle view={view} onChange={setView} />
+            </div>
+
             {isLoading ? (
                 <SkeletonCard />
             ) : !data?.data.length ? (
@@ -67,6 +73,56 @@ export function BatteriesPage() {
                     title={dueOnly ? 'لا توجد بطاريات قاربت على الانتهاء' : 'لا توجد بطاريات مسجّلة'}
                     description="سجّل بنك البطاريات لكل جهاز لمتابعة عمره الافتراضي وموعد استبداله."
                 />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="58rem"
+                    headers={[
+                        { label: 'الكود', className: 'w-28' },
+                        'العميل',
+                        'الجهاز',
+                        { label: 'الماركة', className: 'w-28' },
+                        { label: 'السعة', className: 'w-24' },
+                        { label: 'تاريخ التركيب', className: 'w-32' },
+                        { label: 'موعد الاستبدال', className: 'w-32' },
+                    ]}
+                >
+                    {data.data.map((battery) => (
+                        <tr
+                            key={battery.id}
+                            className={clsx(
+                                'border-t border-navy-100 hover:bg-navy-50/60',
+                                // A bank already past its life is why the list
+                                // is open; a date in a column is easy to read past.
+                                battery.is_overdue && 'bg-red-50/60',
+                            )}
+                        >
+                            <td className="tabular px-3 py-2.5 font-bold text-brand-600">
+                                {battery.code}
+                            </td>
+                            <td className="px-3 py-2.5 font-semibold text-navy-800">
+                                {battery.customer ?? '—'}
+                            </td>
+                            <td className="px-3 py-2.5 text-navy-600">
+                                {battery.asset_label ?? battery.asset ?? '—'}
+                            </td>
+                            <td className="px-3 py-2.5 text-navy-600">{battery.brand ?? '—'}</td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {battery.capacity_ah ? `${battery.capacity_ah} Ah` : '—'}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {battery.installed_on ? formatDate(battery.installed_on) : '—'}
+                            </td>
+                            <td
+                                className={clsx(
+                                    'tabular px-3 py-2.5',
+                                    battery.is_overdue ? 'font-bold text-red-600' : 'text-navy-600',
+                                )}
+                            >
+                                {battery.due_at ? formatDate(battery.due_at) : '—'}
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
                 <div className="grid gap-2 sm:grid-cols-2">
                     {data.data.map((battery) => (

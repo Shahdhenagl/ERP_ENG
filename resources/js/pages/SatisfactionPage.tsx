@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { tr } from '@/lib/i18n'
 import { MessageSquare, Plus, Smile, Star } from 'lucide-react'
 import { useState } from 'react'
@@ -20,6 +21,7 @@ type Filter = '' | 'pending' | 'responded'
 
 export function SatisfactionPage() {
     const [filter, setFilter] = useState<Filter>('')
+    const [view, setView] = useViewMode('satisfaction')
     const { data, isLoading } = useSatisfaction(filter ? { status: filter } : {})
     const { data: summary } = useSatisfactionSummary()
     const [creating, setCreating] = useState(false)
@@ -103,6 +105,10 @@ export function SatisfactionPage() {
                 ))}
             </div>
 
+            <div className="mb-3 flex justify-end">
+                <ViewToggle view={view} onChange={setView} />
+            </div>
+
             {isLoading ? (
                 <SkeletonCard />
             ) : !data?.data.length ? (
@@ -111,6 +117,35 @@ export function SatisfactionPage() {
                     title="لا توجد استطلاعات"
                     description="افتح استطلاعًا لأمر عمل منتهٍ لتسجيل رأي العميل في الخدمة."
                 />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="52rem"
+                    headers={[
+                        { label: 'أمر العمل', className: 'w-32' },
+                        'العميل',
+                        { label: 'التقييم', className: 'w-32' },
+                        'تعليق العميل',
+                        { label: 'الحالة', className: 'w-28' },
+                    ]}
+                >
+                    {data.data.map((survey) => (
+                        <tr key={survey.id} className="border-t border-navy-100 hover:bg-navy-50/60">
+                            <td className="tabular px-3 py-2.5 font-bold text-brand-600">
+                                {survey.task_code}
+                            </td>
+                            <td className="px-3 py-2.5 font-semibold text-navy-800">
+                                {survey.customer ?? '—'}
+                            </td>
+                            <td className="px-3 py-2.5">
+                                {survey.rating ? <Stars value={survey.rating} /> : '—'}
+                            </td>
+                            <td className="max-w-64 truncate px-3 py-2.5 text-navy-600">
+                                {survey.comment ?? '—'}
+                            </td>
+                            <td className="px-3 py-2.5 text-navy-600">{survey.status_label}</td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
                 <div className="grid gap-2 sm:grid-cols-2">
                     {data.data.map((survey) => (

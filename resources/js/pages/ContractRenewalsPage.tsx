@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { tr } from '@/lib/i18n'
 import { CalendarClock, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
@@ -17,6 +18,7 @@ import type { Contract } from '@/types'
  * this one ends, the old one left as it was.
  */
 export function ContractRenewalsPage() {
+    const [view, setView] = useViewMode('contract-renewals')
     const { data, isLoading } = useContracts({ expiring: 1, per_page: 100 })
     const [renewing, setRenewing] = useState<Contract | null>(null)
 
@@ -29,6 +31,10 @@ export function ContractRenewalsPage() {
                 subtitle="العقود التي تقترب على الانتهاء — جدّدها قبل انقطاع التغطية"
             />
 
+            <div className="mb-3 flex justify-end">
+                <ViewToggle view={view} onChange={setView} />
+            </div>
+
             {isLoading ? (
                 <SkeletonCard />
             ) : !rows.length ? (
@@ -37,6 +43,56 @@ export function ContractRenewalsPage() {
                     title="لا توجد عقود تقترب على الانتهاء"
                     description="العقود التي تنتهي خلال 60 يومًا تظهر هنا لتجديدها."
                 />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="54rem"
+                    headers={[
+                        { label: 'الكود', className: 'w-28' },
+                        'العميل',
+                        { label: 'يبدأ', className: 'w-32' },
+                        { label: 'ينتهي', className: 'w-32' },
+                        { label: 'الأيام المتبقية', className: 'w-28' },
+                        { label: 'قيمة العقد', className: 'w-28 text-end' },
+                    ]}
+                >
+                    {rows.map((contract) => (
+                        <tr
+                            key={contract.id}
+                            className={clsx(
+                                'border-t border-navy-100 hover:bg-navy-50/60',
+                                // Cover that has already lapsed is not a renewal
+                                // reminder any more; it is a gap.
+                                contract.days_remaining < 0 && 'bg-red-50/60',
+                            )}
+                        >
+                            <td className="tabular px-3 py-2.5 font-bold text-brand-600">
+                                {contract.code}
+                            </td>
+                            <td className="px-3 py-2.5 font-semibold text-navy-800">
+                                {contract.customer?.name ?? contract.title}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {formatDate(contract.starts_on)}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {formatDate(contract.ends_on)}
+                            </td>
+                            <td
+                                className={clsx(
+                                    'tabular px-3 py-2.5',
+                                    contract.days_remaining < 0
+                                        ? 'font-bold text-red-600'
+                                        : 'text-navy-600',
+                                )}
+                            >
+                                {contract.days_remaining}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-end font-bold text-navy-900">
+                                {contract.value ? formatMoney(Number(contract.value)) : '—'}
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
                 <div className="grid gap-2 sm:grid-cols-2">
                     {rows.map((contract) => {
