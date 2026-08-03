@@ -192,13 +192,13 @@ function BranchAssetList({ branchId }: { branchId: number }) {
 
 function AssetLine({ asset }: { asset: Asset }) {
     const specs: Array<[string, string | null]> = [
-        ['القدرة', asset.capacity],
-        ['النوع', asset.ups_type],
-        ['الأوجه', asset.phase],
-        ['جهد الدخل', asset.input_voltage],
-        ['جهد الخرج', asset.output_voltage],
-        ['البطاريات', asset.battery_count != null ? `${asset.battery_count} × ${asset.battery_voltage ?? '—'}` : null],
-        ['زمن التغذية', asset.backup_minutes != null ? `${asset.backup_minutes} دقيقة` : null],
+        [tr('القدرة'), asset.capacity],
+        [tr('النوع'), asset.ups_type],
+        [tr('الأوجه'), asset.phase],
+        [tr('جهد الدخل'), asset.input_voltage],
+        [tr('جهد الخرج'), asset.output_voltage],
+        [tr('البطاريات'), asset.battery_count != null ? `${asset.battery_count} × ${asset.battery_voltage ?? '—'}` : null],
+        [tr('زمن التغذية'), asset.backup_minutes != null ? `${asset.backup_minutes} دقيقة` : null],
     ]
     const shown = specs.filter((row): row is [string, string] => Boolean(row[1]))
 

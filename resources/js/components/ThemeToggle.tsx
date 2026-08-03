@@ -1,11 +1,12 @@
 import clsx from 'clsx'
+import { tr } from '@/lib/i18n'
 import { Monitor, Moon, Sun } from 'lucide-react'
 import { useTheme, type ThemeChoice } from '@/lib/theme'
 
 const CHOICES: Array<{ value: ThemeChoice; label: string; icon: typeof Sun }> = [
-    { value: 'light', label: 'فاتح', icon: Sun },
-    { value: 'dark', label: 'داكن', icon: Moon },
-    { value: 'system', label: 'حسب الجهاز', icon: Monitor },
+    { value: 'light', label: tr('فاتح'), icon: Sun },
+    { value: 'dark', label: tr('داكن'), icon: Moon },
+    { value: 'system', label: tr('حسب الجهاز'), icon: Monitor },
 ]
 
 /**

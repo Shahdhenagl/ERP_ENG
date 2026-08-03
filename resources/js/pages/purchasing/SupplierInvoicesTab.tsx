@@ -154,13 +154,13 @@ export function SupplierInvoicesTab() {
                 <DataTable
                     minWidth="58rem"
                     headers={[
-                        'الفاتورة',
+                        tr('الفاتورة'),
                         'المورّد',
-                        { label: 'التاريخ', className: 'w-28' },
-                        { label: 'الاستحقاق', className: 'w-28' },
-                        { label: 'الإجمالي', className: 'w-28' },
-                        { label: 'المتبقي', className: 'w-28' },
-                        { label: 'الحالة', className: 'w-28' },
+                        { label: tr('التاريخ'), className: 'w-28' },
+                        { label: tr('الاستحقاق'), className: 'w-28' },
+                        { label: tr('الإجمالي'), className: 'w-28' },
+                        { label: tr('المتبقي'), className: 'w-28' },
+                        { label: tr('الحالة'), className: 'w-28' },
                         { label: '', className: 'w-20' },
                     ]}
                 >

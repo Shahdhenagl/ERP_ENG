@@ -68,7 +68,7 @@ export function InvoiceList() {
                     <>
                     <ExportButton
                         filename="invoices"
-                        headers={['الكود', 'كود العميل', 'العميل', 'النوع', 'التاريخ', 'الاستحقاق', 'الإجمالي', 'السداد']}
+                        headers={[tr('الكود'), 'كود العميل', 'العميل', 'النوع', 'التاريخ', 'الاستحقاق', 'الإجمالي', 'السداد']}
                         disabled={!data?.data.length}
                         rows={async () => {
                             const { data: page } = await api.get('/invoices', {
@@ -220,14 +220,14 @@ export function InvoiceList() {
                 <DataTable
                     minWidth="56rem"
                     headers={[
-                        { label: 'الكود', className: 'w-28' },
-                        { label: 'كود العميل', className: 'w-24' },
+                        { label: tr('الكود'), className: 'w-28' },
+                        { label: tr('كود العميل'), className: 'w-24' },
                         'العميل',
-                        { label: 'النوع', className: 'w-28' },
-                        { label: 'التاريخ', className: 'w-28' },
-                        { label: 'الاستحقاق', className: 'w-28' },
-                        { label: 'الإجمالي', className: 'w-28' },
-                        { label: 'السداد', className: 'w-28' },
+                        { label: tr('النوع'), className: 'w-28' },
+                        { label: tr('التاريخ'), className: 'w-28' },
+                        { label: tr('الاستحقاق'), className: 'w-28' },
+                        { label: tr('الإجمالي'), className: 'w-28' },
+                        { label: tr('السداد'), className: 'w-28' },
                     ]}
                 >
                     {data.data.map((invoice) => {

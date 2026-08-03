@@ -18,11 +18,11 @@ import {
 import type { RecurringExpense } from '@/types'
 
 const CYCLES: Array<{ days: number; label: string }> = [
-    { days: 30, label: 'شهري' },
-    { days: 60, label: 'كل شهرين' },
-    { days: 90, label: 'ربع سنوي' },
-    { days: 180, label: 'نصف سنوي' },
-    { days: 365, label: 'سنوي' },
+    { days: 30, label: tr('شهري') },
+    { days: 60, label: tr('كل شهرين') },
+    { days: 90, label: tr('ربع سنوي') },
+    { days: 180, label: tr('نصف سنوي') },
+    { days: 365, label: tr('سنوي') },
 ]
 
 function cycleLabel(days: number): string {
@@ -32,7 +32,7 @@ function cycleLabel(days: number): string {
 /** How soon it is due, worded and coloured — the reminder at a glance. */
 function dueChip(days: number): { text: string; className: string } {
     if (days < 0) return { text: `متأخر ${Math.abs(days)} يوم`, className: 'bg-red-50 text-red-700' }
-    if (days === 0) return { text: 'مستحق اليوم', className: 'bg-red-50 text-red-700' }
+    if (days === 0) return { text: tr('مستحق اليوم'), className: 'bg-red-50 text-red-700' }
     if (days <= 3) return { text: `خلال ${days} يوم`, className: 'bg-amber-50 text-amber-700' }
     return { text: `بعد ${days} يوم`, className: 'bg-navy-100 text-navy-500' }
 }

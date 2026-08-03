@@ -56,13 +56,13 @@ export function MovementsPage() {
                 <DataTable
                     minWidth="54rem"
                     headers={[
-                        { label: 'النوع', className: 'w-28' },
+                        { label: tr('النوع'), className: 'w-28' },
                         'الصنف',
                         'من / إلى',
-                        { label: 'الكمية', className: 'w-24' },
-                        { label: 'القيمة', className: 'w-28' },
-                        { label: 'المستند', className: 'w-28' },
-                        { label: 'التاريخ', className: 'w-36' },
+                        { label: tr('الكمية'), className: 'w-24' },
+                        { label: tr('القيمة'), className: 'w-28' },
+                        { label: tr('المستند'), className: 'w-28' },
+                        { label: tr('التاريخ'), className: 'w-36' },
                     ]}
                 >
                     {data.data.map((movement) => {

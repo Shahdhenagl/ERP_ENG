@@ -26,14 +26,14 @@ import type { Task, TaskStatus } from '@/types'
 
 
 const QUICK_FILTERS: Array<{ key: string; label: string; params: Record<string, string> }> = [
-    { key: 'all', label: 'الكل', params: {} },
-    { key: 'open', label: 'المفتوحة', params: { open_only: '1' } },
+    { key: 'all', label: tr('الكل'), params: {} },
+    { key: 'open', label: tr('المفتوحة'), params: { open_only: '1' } },
     ...STATUS_FLOW.filter((s) => s !== 'completed').map((status) => ({
         key: status,
         label: STATUS[status].label,
         params: { status },
     })),
-    { key: 'completed', label: 'منتهية', params: { status: 'completed' } },
+    { key: 'completed', label: tr('منتهية'), params: { status: 'completed' } },
 ]
 
 /** The last calendar day of a YYYY-MM, as YYYY-MM-DD. */
@@ -97,7 +97,7 @@ export function TaskList() {
 
             downloadCsv(
                 `tasks-${new Date().toISOString().slice(0, 10)}`,
-                ['كود المهمة', 'العنوان', 'الحالة', 'العميل', 'الفرع', 'الفني', 'بداية التنفيذ', 'انتهاء التنفيذ'],
+                [tr('كود المهمة'), 'العنوان', 'الحالة', 'العميل', 'الفرع', 'الفني', 'بداية التنفيذ', 'انتهاء التنفيذ'],
                 page.data.map((task) => [
                     task.code,
                     task.title,

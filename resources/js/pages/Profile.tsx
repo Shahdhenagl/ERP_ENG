@@ -153,7 +153,7 @@ function PasswordCard() {
         setErrors({})
 
         if (mismatch) {
-            setErrors({ password_confirmation: 'كلمتا المرور غير متطابقتين.' })
+            setErrors({ password_confirmation: tr('كلمتا المرور غير متطابقتين.') })
 
             return
         }

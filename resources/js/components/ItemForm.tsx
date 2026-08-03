@@ -104,7 +104,7 @@ export function ItemForm({
         // Saved without one, an item shows up under "الكل" and under no group
         // at all — invisible on the tab anyone would look for it on.
         if (! effectiveGroup) {
-            setErrors({ item_category_id: 'اختر المجموعة التي يُصنَّف تحتها الصنف.' })
+            setErrors({ item_category_id: tr('اختر المجموعة التي يُصنَّف تحتها الصنف.') })
 
             return
         }

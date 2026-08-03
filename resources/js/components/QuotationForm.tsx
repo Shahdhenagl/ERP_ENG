@@ -199,14 +199,14 @@ export function QuotationForm({
 
                 <LineItems
                     columns={[
-                        { label: 'الصنف', className: 'w-44' },
-                        { label: 'الكود', className: 'w-20' },
+                        { label: tr('الصنف'), className: 'w-44' },
+                        { label: tr('الكود'), className: 'w-20' },
                         // Declares no width on purpose: under a fixed layout
                         // that is what hands it everything the rest leaves.
-                        { label: 'البيان' },
-                        { label: 'الكمية', className: 'w-20' },
-                        { label: 'سعر الوحدة', className: 'w-28' },
-                        { label: 'الإجمالي', className: 'w-28' },
+                        { label: tr('البيان') },
+                        { label: tr('الكمية'), className: 'w-20' },
+                        { label: tr('سعر الوحدة'), className: 'w-28' },
+                        { label: tr('الإجمالي'), className: 'w-28' },
                     ]}
                     error={errors.lines}
                     onAdd={() =>

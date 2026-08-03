@@ -84,7 +84,7 @@ export function ItemsPage() {
 
     const counts = data?.counts
     const tabs: Array<{ value: number | ''; label: string; count?: number }> = [
-        { value: '', label: 'الكل', count: counts?.all },
+        { value: '', label: tr('الكل'), count: counts?.all },
         ...groups.map((group) => ({
             value: group.id,
             label: group.name,

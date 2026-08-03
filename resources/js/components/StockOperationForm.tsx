@@ -17,9 +17,9 @@ import {
 type Operation = 'receive' | 'transfer' | 'adjust'
 
 const TITLES: Record<Operation, string> = {
-    receive: 'تسجيل وارد',
-    transfer: 'تسليم عهدة',
-    adjust: 'تسوية جرد',
+    receive: tr('تسجيل وارد'),
+    transfer: tr('تسليم عهدة'),
+    adjust: tr('تسوية جرد'),
 }
 
 interface StockOperationFormProps {

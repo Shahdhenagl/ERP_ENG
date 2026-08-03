@@ -1,4 +1,5 @@
 import { HardHat, Phone, Search, Wrench } from 'lucide-react'
+import { tr } from '@/lib/i18n'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { EmptyState, Input, PageHeader, SkeletonCard } from '@/components/ui'
@@ -67,10 +68,10 @@ export function TechniciansPage() {
                 <DataTable
                     minWidth="42rem"
                     headers={[
-                        'الفني',
+                        tr('الفني'),
                         'المسمى',
                         'الهاتف',
-                        { label: 'مهام مفتوحة', className: 'w-28' },
+                        { label: tr('مهام مفتوحة'), className: 'w-28' },
                     ]}
                 >
                     {rows.map((tech) => (

@@ -23,9 +23,9 @@ import type { JobRole, JobRoleCatalogue, Role } from '@/types'
 
 /** Which application the role opens — the office one, or the field app. */
 const BASE_ROLES: Array<{ value: Role; label: string; hint: string }> = [
-    { value: 'manager', label: 'موظف مكتب', hint: 'النظام على الويب، بالصلاحيات المحددة' },
-    { value: 'technician', label: 'فني ميداني', hint: 'تطبيق الفني فقط' },
-    { value: 'admin', label: 'مدير النظام', hint: 'كل شيء، ولا يمكن تقييده' },
+    { value: 'manager', label: tr('موظف مكتب'), hint: tr('النظام على الويب، بالصلاحيات المحددة') },
+    { value: 'technician', label: tr('فني ميداني'), hint: tr('تطبيق الفني فقط') },
+    { value: 'admin', label: tr('مدير النظام'), hint: tr('كل شيء، ولا يمكن تقييده') },
 ]
 
 export function RolesPage() {

@@ -335,10 +335,10 @@ function ClaimForm({ onClose }: { onClose: () => void }) {
 /* ── Judging and settling ────────────────────────────────── */
 
 const ACTION_META: Record<Action, { title: string; verb: string; done: string }> = {
-    approve: { title: 'اعتماد البلاغ', verb: 'اعتماد', done: 'تم اعتماد البلاغ.' },
-    reject: { title: 'رفض البلاغ', verb: 'رفض', done: 'تم رفض البلاغ.' },
-    repaired: { title: 'إقفال البلاغ بالإصلاح', verb: 'إقفال', done: 'تم إقفال البلاغ.' },
-    replace: { title: 'استبدال الجهاز', verb: 'استبدال', done: 'تم تسجيل الاستبدال.' },
+    approve: { title: tr('اعتماد البلاغ'), verb: tr('اعتماد'), done: tr('تم اعتماد البلاغ.') },
+    reject: { title: tr('رفض البلاغ'), verb: tr('رفض'), done: tr('تم رفض البلاغ.') },
+    repaired: { title: tr('إقفال البلاغ بالإصلاح'), verb: tr('إقفال'), done: tr('تم إقفال البلاغ.') },
+    replace: { title: tr('استبدال الجهاز'), verb: tr('استبدال'), done: tr('تم تسجيل الاستبدال.') },
 }
 
 function DecideDialog({

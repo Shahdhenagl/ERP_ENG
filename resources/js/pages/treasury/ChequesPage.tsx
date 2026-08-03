@@ -582,10 +582,10 @@ function ChequeForm({
 type Action = 'deposit' | 'clear' | 'bounce' | 'cancel'
 
 const ACTION: Record<Action, { title: string; verb: string; done: string }> = {
-    deposit: { title: 'إيداع بالبنك', verb: 'إيداع', done: 'تم الإيداع.' },
-    clear: { title: 'تحصيل الشيك', verb: 'تحصيل', done: 'تم التحصيل وسُجّل السند.' },
-    bounce: { title: 'ارتداد الشيك', verb: 'تسجيل الارتداد', done: 'تم تسجيل الارتداد.' },
-    cancel: { title: 'إلغاء الشيك', verb: 'إلغاء', done: 'تم إلغاء الشيك.' },
+    deposit: { title: tr('إيداع بالبنك'), verb: tr('إيداع'), done: tr('تم الإيداع.') },
+    clear: { title: tr('تحصيل الشيك'), verb: tr('تحصيل'), done: tr('تم التحصيل وسُجّل السند.') },
+    bounce: { title: tr('ارتداد الشيك'), verb: tr('تسجيل الارتداد'), done: tr('تم تسجيل الارتداد.') },
+    cancel: { title: tr('إلغاء الشيك'), verb: tr('إلغاء'), done: tr('تم إلغاء الشيك.') },
 }
 
 function TransitionDialog({

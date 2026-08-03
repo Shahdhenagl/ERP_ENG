@@ -101,7 +101,7 @@ export function CustomerList() {
                         <ExportButton
                             filename="customers"
                             headers={[
-                                'الكود',
+                                tr('الكود'),
                                 'العميل',
                                 'النوع',
                                 'الهاتف',
@@ -210,22 +210,22 @@ export function CustomerList() {
             {data?.summary && (
                 <StatStrip
                     items={[
-                        { label: 'إجمالي العملاء', value: data.summary.total, tone: 'brand' },
-                        { label: 'نشط', value: data.summary.active, tone: 'up' },
+                        { label: tr('إجمالي العملاء'), value: data.summary.total, tone: 'brand' },
+                        { label: tr('نشط'), value: data.summary.active, tone: 'up' },
                         {
                             // What was invoiced and never collected — the figure
                             // a collections call is actually about.
-                            label: 'المديونيات',
+                            label: tr('المديونيات'),
                             value: formatMoney(data.summary.outstanding),
                             tone: data.summary.outstanding > 0 ? 'down' : 'slate',
                         },
                         {
-                            label: 'إجمالي المدفوعات',
+                            label: tr('إجمالي المدفوعات'),
                             value: formatMoney(data.summary.collected ?? 0),
                             tone: 'up',
                         },
                         {
-                            label: 'إجمالي المرتجعات',
+                            label: tr('إجمالي المرتجعات'),
                             value: formatMoney(data.summary.returned ?? 0),
                             tone: 'slate',
                         },
@@ -244,7 +244,7 @@ export function CustomerList() {
                     <div className="flex items-center gap-2">
                         <ExportButton
                             filename="customers-selected"
-                            headers={['الكود', 'العميل', 'النوع', 'طريقة الدفع', 'الهاتف', 'المحافظة']}
+                            headers={[tr('الكود'), 'العميل', 'النوع', 'طريقة الدفع', 'الهاتف', 'المحافظة']}
                             rows={async () =>
                                 (data?.data ?? [])
                                     .filter((customer) => picked.includes(customer.id))
@@ -303,15 +303,15 @@ export function CustomerList() {
                         />
                     }
                     headers={[
-                        { label: 'الكود', className: 'w-28' },
+                        { label: tr('الكود'), className: 'w-28' },
                         'العميل',
                         'النوع',
-                        { label: 'طريقة الدفع', className: 'w-24' },
+                        { label: tr('طريقة الدفع'), className: 'w-24' },
                         'الهاتف',
                         'المحافظة / الحي',
-                        { label: 'العقود', className: 'w-20' },
-                        { label: 'المهام', className: 'w-20' },
-                        { label: 'الحالة', className: 'w-28' },
+                        { label: tr('العقود'), className: 'w-20' },
+                        { label: tr('المهام'), className: 'w-20' },
+                        { label: tr('الحالة'), className: 'w-28' },
                     ]}
                 >
                     {data.data.map((customer) => (

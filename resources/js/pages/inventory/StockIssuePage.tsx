@@ -85,12 +85,12 @@ export function StockIssuePage() {
                 <DataTable
                     minWidth="48rem"
                     headers={[
-                        'الصنف',
+                        tr('الصنف'),
                         'من مخزن',
-                        { label: 'الكمية', className: 'w-24' },
-                        { label: 'القيمة', className: 'w-28' },
+                        { label: tr('الكمية'), className: 'w-24' },
+                        { label: tr('القيمة'), className: 'w-28' },
                         'السبب',
-                        { label: 'التاريخ', className: 'w-36' },
+                        { label: tr('التاريخ'), className: 'w-36' },
                     ]}
                 >
                     {rows.map((movement) => (

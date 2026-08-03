@@ -26,11 +26,11 @@ export type Range = {
 }
 
 const LABELS: Record<Preset, string> = {
-    today: 'اليوم',
-    month: 'هذا الشهر',
-    quarter: 'هذا الربع',
-    year: 'هذه السنة',
-    all: 'الكل',
+    today: tr('اليوم'),
+    month: tr('هذا الشهر'),
+    quarter: tr('هذا الربع'),
+    year: tr('هذه السنة'),
+    all: tr('الكل'),
 }
 
 /** Built from local parts; `toISOString` shifts to UTC and can land a day out. */

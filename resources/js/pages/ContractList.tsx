@@ -74,7 +74,7 @@ export function ContractList() {
                     <>
                     <ExportButton
                         filename="contracts"
-                        headers={['الكود', 'العقد', 'العميل', 'من', 'إلى', 'الزيارات', 'القيمة', 'الحالة']}
+                        headers={[tr('الكود'), 'العقد', 'العميل', 'من', 'إلى', 'الزيارات', 'القيمة', 'الحالة']}
                         disabled={!data?.data.length}
                         rows={async () => {
                             const { data: page } = await api.get('/contracts', {
@@ -147,13 +147,13 @@ export function ContractList() {
             {data?.summary && (
                 <StatStrip
                     items={[
-                        { label: 'عقود سارية', value: data.summary.active, tone: 'up' },
+                        { label: tr('عقود سارية'), value: data.summary.active, tone: 'up' },
                         {
-                            label: 'قاربت على الانتهاء',
+                            label: tr('قاربت على الانتهاء'),
                             value: data.summary.expiring,
                             tone: data.summary.expiring > 0 ? 'warn' : 'slate',
                         },
-                        { label: 'القيمة السنوية', value: formatMoney(data.summary.annual_value), tone: 'brand' },
+                        { label: tr('القيمة السنوية'), value: formatMoney(data.summary.annual_value), tone: 'brand' },
                     ]}
                 />
             )}
@@ -181,14 +181,14 @@ export function ContractList() {
                 <DataTable
                     minWidth="58rem"
                     headers={[
-                        { label: 'الكود', className: 'w-28' },
+                        { label: tr('الكود'), className: 'w-28' },
                         'العقد',
                         'العميل',
                         'الفترة',
-                        { label: 'الزيارات', className: 'w-24' },
-                        { label: 'القيمة', className: 'w-28' },
-                        { label: 'المتبقي', className: 'w-24' },
-                        { label: 'الحالة', className: 'w-24' },
+                        { label: tr('الزيارات'), className: 'w-24' },
+                        { label: tr('القيمة'), className: 'w-28' },
+                        { label: tr('المتبقي'), className: 'w-24' },
+                        { label: tr('الحالة'), className: 'w-24' },
                     ]}
                 >
                     {data.data.map((contract) => (

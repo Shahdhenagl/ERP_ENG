@@ -123,11 +123,11 @@ export function PurchaseOrderForm({
 
                 <LineItems
                     columns={[
-                        { label: 'الصنف' },
-                        { label: 'الكود', className: 'w-24' },
-                        { label: 'الكمية', className: 'w-24' },
-                        { label: 'سعر الوحدة', className: 'w-28' },
-                        { label: 'الإجمالي', className: 'w-28' },
+                        { label: tr('الصنف') },
+                        { label: tr('الكود'), className: 'w-24' },
+                        { label: tr('الكمية'), className: 'w-24' },
+                        { label: tr('سعر الوحدة'), className: 'w-28' },
+                        { label: tr('الإجمالي'), className: 'w-28' },
                     ]}
                     error={errors.lines}
                     addLabel="إضافة صنف"

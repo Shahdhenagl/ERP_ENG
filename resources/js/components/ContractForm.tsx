@@ -17,10 +17,10 @@ import { assetSpecRows } from '@/lib/specs'
 import type { Contract } from '@/types'
 
 const BILLING_LABEL: Record<string, string> = {
-    upfront: 'مقدَّم (دفعة واحدة)',
-    quarterly: 'ربع سنوي',
-    semi_annual: 'نصف سنوي',
-    annual: 'سنوي',
+    upfront: tr('مقدَّم (دفعة واحدة)'),
+    quarterly: tr('ربع سنوي'),
+    semi_annual: tr('نصف سنوي'),
+    annual: tr('سنوي'),
 }
 
 interface ContractFormProps {

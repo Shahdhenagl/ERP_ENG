@@ -129,21 +129,21 @@ export function AssetDetail() {
 /** The UPS nameplate and specs — only the fields that were filled. */
 function AssetSpecs({ asset }: { asset: Asset }) {
     const specs: Array<[string, string | null]> = [
-        ['الشركة المصنّعة', asset.brand],
-        ['الموديل', asset.model],
-        ['النوع', asset.ups_type ? UPS_TYPES[asset.ups_type] ?? asset.ups_type : null],
-        ['عدد الأوجه', asset.phase ? UPS_PHASES[asset.phase] ?? asset.phase : null],
-        ['رقم الأصل', asset.asset_number],
-        ['الباركود / QR', asset.barcode],
-        ['جهد الإدخال', asset.input_voltage],
-        ['جهد الخرج', asset.output_voltage],
-        ['التردد', asset.frequency],
-        ['الكفاءة', asset.efficiency],
-        ['معامل القدرة', asset.power_factor],
-        ['جهد البطارية', asset.battery_voltage],
-        ['عدد البطاريات', asset.battery_count != null ? String(asset.battery_count) : null],
-        ['مدة التشغيل', asset.backup_minutes != null ? `${asset.backup_minutes} دقيقة` : null],
-        ['منفذ الاتصال', asset.comm_port],
+        [tr('الشركة المصنّعة'), asset.brand],
+        [tr('الموديل'), asset.model],
+        [tr('النوع'), asset.ups_type ? UPS_TYPES[asset.ups_type] ?? asset.ups_type : null],
+        [tr('عدد الأوجه'), asset.phase ? UPS_PHASES[asset.phase] ?? asset.phase : null],
+        [tr('رقم الأصل'), asset.asset_number],
+        [tr('الباركود / QR'), asset.barcode],
+        [tr('جهد الإدخال'), asset.input_voltage],
+        [tr('جهد الخرج'), asset.output_voltage],
+        [tr('التردد'), asset.frequency],
+        [tr('الكفاءة'), asset.efficiency],
+        [tr('معامل القدرة'), asset.power_factor],
+        [tr('جهد البطارية'), asset.battery_voltage],
+        [tr('عدد البطاريات'), asset.battery_count != null ? String(asset.battery_count) : null],
+        [tr('مدة التشغيل'), asset.backup_minutes != null ? `${asset.backup_minutes} دقيقة` : null],
+        [tr('منفذ الاتصال'), asset.comm_port],
     ].filter(([, value]) => value) as Array<[string, string]>
 
     if (specs.length === 0) return null

@@ -170,7 +170,7 @@ function OpenForm({
 }
 
 const MONTHS = [
-    'يناير',
+    tr('يناير'),
     'فبراير',
     'مارس',
     'أبريل',

@@ -997,17 +997,17 @@ function ReportBlock({
                 <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
                     {readings.map(([key, value]) => {
                         const labels: Record<string, string> = {
-                            input_voltage: 'جهد الدخول',
-                            input_voltage_l2: 'دخول L2',
-                            input_voltage_l3: 'دخول L3',
-                            output_voltage: 'جهد الخروج',
-                            output_voltage_l2: 'خروج L2',
-                            output_voltage_l3: 'خروج L3',
-                            frequency: 'التردد',
-                            load_percent: 'التحميل %',
-                            battery_voltage: 'جهد البطاريات',
-                            temperature: 'الحرارة',
-                            backup_minutes: 'Backup (د)',
+                            input_voltage: tr('جهد الدخول'),
+                            input_voltage_l2: tr('دخول L2'),
+                            input_voltage_l3: tr('دخول L3'),
+                            output_voltage: tr('جهد الخروج'),
+                            output_voltage_l2: tr('خروج L2'),
+                            output_voltage_l3: tr('خروج L3'),
+                            frequency: tr('التردد'),
+                            load_percent: tr('التحميل %'),
+                            battery_voltage: tr('جهد البطاريات'),
+                            temperature: tr('الحرارة'),
+                            backup_minutes: tr('Backup (د)'),
                         }
 
                         return (
@@ -1375,7 +1375,7 @@ function RouteExpenseDialog({
                             try {
                                 await spend.mutateAsync({
                                     amount: total,
-                                    category: 'خط السير',
+                                    category: tr('خط السير'),
                                     note: note || null,
                                     task_id: taskId,
                                     receipt: null,
@@ -1480,17 +1480,17 @@ function VisitMeta({ task }: { task: Task }) {
 /** Readings before the work against readings after — the proof the fix took. */
 function BeforeAfter({ before, after }: { before: TaskReport; after: TaskReport }) {
     const labels: Record<string, string> = {
-        input_voltage: 'جهد الدخول L1',
-        input_voltage_l2: 'جهد الدخول L2',
-        input_voltage_l3: 'جهد الدخول L3',
-        output_voltage: 'جهد الخروج L1',
-        output_voltage_l2: 'جهد الخروج L2',
-        output_voltage_l3: 'جهد الخروج L3',
-        frequency: 'التردد',
-        load_percent: 'التحميل %',
-        battery_voltage: 'جهد البطاريات',
-        temperature: 'الحرارة',
-        backup_minutes: 'Backup (د)',
+        input_voltage: tr('جهد الدخول L1'),
+        input_voltage_l2: tr('جهد الدخول L2'),
+        input_voltage_l3: tr('جهد الدخول L3'),
+        output_voltage: tr('جهد الخروج L1'),
+        output_voltage_l2: tr('جهد الخروج L2'),
+        output_voltage_l3: tr('جهد الخروج L3'),
+        frequency: tr('التردد'),
+        load_percent: tr('التحميل %'),
+        battery_voltage: tr('جهد البطاريات'),
+        temperature: tr('الحرارة'),
+        backup_minutes: tr('Backup (د)'),
     }
 
     const rows = Object.keys(labels).filter((key) => {
@@ -1558,9 +1558,9 @@ function AttachmentsSection({
 
     const attachments = task.attachments ?? []
     const groups: Array<{ kind: AttachmentKind; label: string }> = [
-        { kind: 'before', label: 'صور قبل العمل' },
-        { kind: 'after', label: 'صور بعد العمل' },
-        { kind: 'document', label: 'مستندات' },
+        { kind: 'before', label: tr('صور قبل العمل') },
+        { kind: 'after', label: tr('صور بعد العمل') },
+        { kind: 'document', label: tr('مستندات') },
     ]
 
     const handleFiles = async (files: FileList | null) => {

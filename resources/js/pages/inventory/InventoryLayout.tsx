@@ -47,10 +47,10 @@ const SECTIONS = [
  * the button that adds to them.
  */
 const SECTION_META: Record<string, { title: string; stock: boolean }> = {
-    items: { title: 'الأصناف', stock: true },
-    warehouses: { title: 'المخازن', stock: false },
-    movements: { title: 'إذن استلام', stock: false },
-    stocktake: { title: 'الجرد والتسويات', stock: false },
+    items: { title: tr('الأصناف'), stock: true },
+    warehouses: { title: tr('المخازن'), stock: false },
+    movements: { title: tr('إذن استلام'), stock: false },
+    stocktake: { title: tr('الجرد والتسويات'), stock: false },
 }
 
 export function InventoryLayout() {

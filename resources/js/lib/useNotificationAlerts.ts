@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { tr } from '@/lib/i18n'
 import { useToast } from '@/components/Toast'
 import { useNotifications } from '@/lib/queries'
 import type { AppNotification } from '@/types'
@@ -97,9 +98,9 @@ function textFor(n: AppNotification): { title: string; body: string } {
     }
 
     const byType: Record<string, string> = {
-        'task.assigned': 'مهمة جديدة مُسندة إليك',
-        'task.status': 'تحديث حالة مهمة',
-        'followup.due': 'متابعة مستحقة',
+        'task.assigned': tr('مهمة جديدة مُسندة إليك'),
+        'task.status': tr('تحديث حالة مهمة'),
+        'followup.due': tr('متابعة مستحقة'),
     }
 
     return { title: byType[d.type] ?? 'إشعار جديد', body: (d.code as string) ?? '' }

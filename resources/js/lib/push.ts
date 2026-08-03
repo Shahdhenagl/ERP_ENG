@@ -1,4 +1,5 @@
 import { api } from '@/lib/api'
+import { tr } from '@/lib/i18n'
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined
 
@@ -55,13 +56,13 @@ export async function enablePush(): Promise<{ ok: boolean; reason?: string }> {
     }
 
     if (!VAPID_PUBLIC_KEY) {
-        return { ok: false, reason: 'مفتاح الإشعارات غير مضبوط على الخادم.' }
+        return { ok: false, reason: tr('مفتاح الإشعارات غير مضبوط على الخادم.') }
     }
 
     const permission = await Notification.requestPermission()
 
     if (permission !== 'granted') {
-        return { ok: false, reason: 'تم رفض إذن الإشعارات من المتصفح.' }
+        return { ok: false, reason: tr('تم رفض إذن الإشعارات من المتصفح.') }
     }
 
     const registration = await navigator.serviceWorker.ready
@@ -126,17 +127,17 @@ export async function disablePush(): Promise<void> {
  * the browser or the operating system rather than here.
  */
 export async function testLocalNotification(): Promise<{ ok: boolean; reason?: string }> {
-    if (!pushSupported()) return { ok: false, reason: 'المتصفح لا يدعم الإشعارات.' }
+    if (!pushSupported()) return { ok: false, reason: tr('المتصفح لا يدعم الإشعارات.') }
 
     if (Notification.permission !== 'granted') {
-        return { ok: false, reason: 'لم يُمنح إذن الإشعارات بعد.' }
+        return { ok: false, reason: tr('لم يُمنح إذن الإشعارات بعد.') }
     }
 
     try {
         const registration = await navigator.serviceWorker.ready
 
         await registration.showNotification('اختبار الإشعارات', {
-            body: 'لو ظهر هذا الإشعار، جهازك يستقبل الإشعارات ✅',
+            body: tr('لو ظهر هذا الإشعار، جهازك يستقبل الإشعارات ✅'),
             icon: '/brand/icon-192.png',
             badge: '/brand/badge.png',
             requireInteraction: true,

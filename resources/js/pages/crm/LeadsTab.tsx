@@ -104,7 +104,7 @@ export function LeadsTab() {
                 <ExportButton
                     filename="leads"
                     headers={[
-                        'الكود',
+                        tr('الكود'),
                         'الاسم',
                         'الشركة',
                         'الهاتف',

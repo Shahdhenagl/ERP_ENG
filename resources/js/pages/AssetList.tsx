@@ -73,7 +73,7 @@ export function AssetList() {
                     <>
                         <ExportButton
                             filename="assets"
-                            headers={['الكود', 'الجهاز', 'السيريال', 'العميل', 'الحالة', 'الضمان', 'الزيارات']}
+                            headers={[tr('الكود'), 'الجهاز', 'السيريال', 'العميل', 'الحالة', 'الضمان', 'الزيارات']}
                             disabled={!data?.data.length}
                             rows={async () => {
                                 const { data: page } = await api.get('/assets', {
@@ -167,14 +167,14 @@ export function AssetList() {
                 <DataTable
                     minWidth="60rem"
                     headers={[
-                        { label: 'الكود', className: 'w-28' },
+                        { label: tr('الكود'), className: 'w-28' },
                         'الجهاز',
                         'السيريال',
                         'العميل',
                         'المواصفات',
-                        { label: 'الضمان', className: 'w-28' },
-                        { label: 'الحالة', className: 'w-24' },
-                        { label: 'الزيارات', className: 'w-20' },
+                        { label: tr('الضمان'), className: 'w-28' },
+                        { label: tr('الحالة'), className: 'w-24' },
+                        { label: tr('الزيارات'), className: 'w-20' },
                     ]}
                 >
                     {data.data.map((asset) => {

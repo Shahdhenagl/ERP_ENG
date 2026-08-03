@@ -48,9 +48,9 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 type Tab = 'quotations' | 'orders' | 'returns'
 
 const TABS: Array<{ key: Tab; label: string; to: string }> = [
-    { key: 'quotations', label: 'عروض الأسعار', to: '/sales/quotations' },
-    { key: 'orders', label: 'أوامر البيع', to: '/sales/orders' },
-    { key: 'returns', label: 'مرتجعات المبيعات', to: '/sales/returns' },
+    { key: 'quotations', label: tr('عروض الأسعار'), to: '/sales/quotations' },
+    { key: 'orders', label: tr('أوامر البيع'), to: '/sales/orders' },
+    { key: 'returns', label: tr('مرتجعات المبيعات'), to: '/sales/returns' },
 ]
 
 export function Sales() {
@@ -148,15 +148,15 @@ function QuotationsTab() {
                 <DataTable
                     minWidth="56rem"
                     headers={[
-                        { label: 'كود العرض', className: 'w-28' },
+                        { label: tr('كود العرض'), className: 'w-28' },
                         'العرض',
-                        { label: 'كود العميل', className: 'w-24' },
+                        { label: tr('كود العميل'), className: 'w-24' },
                         'العميل',
                         'الفرع',
-                        { label: 'التاريخ', className: 'w-28' },
-                        { label: 'صالح حتى', className: 'w-28' },
-                        { label: 'الإجمالي', className: 'w-28' },
-                        { label: 'الحالة', className: 'w-28' },
+                        { label: tr('التاريخ'), className: 'w-28' },
+                        { label: tr('صالح حتى'), className: 'w-28' },
+                        { label: tr('الإجمالي'), className: 'w-28' },
+                        { label: tr('الحالة'), className: 'w-28' },
                     ]}
                 >
                     {quotations.map((quotation) => (
@@ -778,14 +778,14 @@ function OrdersTab() {
                 <DataTable
                     minWidth="54rem"
                     headers={[
-                        { label: 'كود الأمر', className: 'w-28' },
-                        { label: 'كود العميل', className: 'w-24' },
+                        { label: tr('كود الأمر'), className: 'w-28' },
+                        { label: tr('كود العميل'), className: 'w-24' },
                         'العميل',
                         'الفرع',
-                        { label: 'التاريخ', className: 'w-28' },
-                        { label: 'الإجمالي', className: 'w-28' },
-                        { label: 'الفوترة', className: 'w-28' },
-                        { label: 'الحالة', className: 'w-24' },
+                        { label: tr('التاريخ'), className: 'w-28' },
+                        { label: tr('الإجمالي'), className: 'w-28' },
+                        { label: tr('الفوترة'), className: 'w-28' },
+                        { label: tr('الحالة'), className: 'w-24' },
                     ]}
                 >
                     {orders.map((order) => (

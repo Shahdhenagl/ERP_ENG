@@ -318,9 +318,9 @@ function EmployeeProfile({
 }
 
 const EMPLOYMENT: Record<string, string> = {
-    full_time: 'دوام كامل',
-    part_time: 'دوام جزئي',
-    contract: 'عقد مؤقت',
+    full_time: tr('دوام كامل'),
+    part_time: tr('دوام جزئي'),
+    contract: tr('عقد مؤقت'),
 }
 
 function Info({ label, value, ltr }: { label: string; value: string | null; ltr?: boolean }) {

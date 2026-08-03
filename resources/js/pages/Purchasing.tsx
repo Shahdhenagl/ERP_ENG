@@ -42,11 +42,11 @@ const FULFILMENT_CHIP: Record<string, string> = {
 type Tab = 'requests' | 'orders' | 'invoices' | 'returns' | 'suppliers'
 
 const TABS: Array<{ key: Tab; label: string; to: string }> = [
-    { key: 'requests', label: 'طلبات الشراء', to: '/purchasing/requests' },
-    { key: 'orders', label: 'أوامر الشراء', to: '/purchasing/orders' },
-    { key: 'invoices', label: 'فواتير الموردين', to: '/purchasing/invoices' },
-    { key: 'returns', label: 'مرتجعات المشتريات', to: '/purchasing/returns' },
-    { key: 'suppliers', label: 'الموردون', to: '/purchasing/suppliers' },
+    { key: 'requests', label: tr('طلبات الشراء'), to: '/purchasing/requests' },
+    { key: 'orders', label: tr('أوامر الشراء'), to: '/purchasing/orders' },
+    { key: 'invoices', label: tr('فواتير الموردين'), to: '/purchasing/invoices' },
+    { key: 'returns', label: tr('مرتجعات المشتريات'), to: '/purchasing/returns' },
+    { key: 'suppliers', label: tr('الموردون'), to: '/purchasing/suppliers' },
 ]
 
 export function Purchasing() {
@@ -135,13 +135,13 @@ function OrdersTab() {
                 <DataTable
                     minWidth="52rem"
                     headers={[
-                        { label: 'الكود', className: 'w-28' },
+                        { label: tr('الكود'), className: 'w-28' },
                         'المورّد',
-                        { label: 'التاريخ', className: 'w-28' },
-                        { label: 'الأصناف', className: 'w-20' },
-                        { label: 'الإجمالي', className: 'w-28' },
-                        { label: 'الاستحقاق', className: 'w-28' },
-                        { label: 'الاستلام', className: 'w-28' },
+                        { label: tr('التاريخ'), className: 'w-28' },
+                        { label: tr('الأصناف'), className: 'w-20' },
+                        { label: tr('الإجمالي'), className: 'w-28' },
+                        { label: tr('الاستحقاق'), className: 'w-28' },
+                        { label: tr('الاستلام'), className: 'w-28' },
                     ]}
                 >
                     {orders.map((order) => (
@@ -487,10 +487,10 @@ function SuppliersTab() {
                 <DataTable
                     minWidth="50rem"
                     headers={[
-                        { label: 'الكود', className: 'w-28' },
+                        { label: tr('الكود'), className: 'w-28' },
                         'المورّد',
                         'الهاتف',
-                        { label: 'المستحق عليه', className: 'w-32' },
+                        { label: tr('المستحق عليه'), className: 'w-32' },
                     ]}
                 >
                     {suppliers.map((supplier) => (

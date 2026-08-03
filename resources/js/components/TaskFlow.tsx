@@ -41,29 +41,29 @@ export interface FlowStep {
 }
 
 export const FLOW_STEPS: FlowStep[] = [
-    { key: 'pending', label: 'قبول المهمة', short: 'القبول', hint: 'اقبل المهمة لتبدأ', icon: Check },
+    { key: 'pending', label: tr('قبول المهمة'), short: tr('القبول'), hint: tr('اقبل المهمة لتبدأ'), icon: Check },
     {
         key: 'accepted',
-        label: 'بيانات العميل',
-        short: 'العميل',
-        hint: 'راجع الموقع وخط السير قبل التحرك',
+        label: tr('بيانات العميل'),
+        short: tr('العميل'),
+        hint: tr('راجع الموقع وخط السير قبل التحرك'),
         icon: MapPin,
     },
     {
         key: 'on_the_way',
-        label: 'الوصول والمعاينة',
-        short: 'الوصول',
-        hint: 'صوّر الحالة واملأ تقرير المعاينة',
+        label: tr('الوصول والمعاينة'),
+        short: tr('الوصول'),
+        hint: tr('صوّر الحالة واملأ تقرير المعاينة'),
         icon: Camera,
     },
     {
         key: 'in_progress',
-        label: 'تنفيذ العمل',
-        short: 'التنفيذ',
-        hint: 'أنهِ العمل ثم املأ تقرير الإنهاء',
+        label: tr('تنفيذ العمل'),
+        short: tr('التنفيذ'),
+        hint: tr('أنهِ العمل ثم املأ تقرير الإنهاء'),
         icon: Wrench,
     },
-    { key: 'completed', label: 'تمت المهمة', short: 'الإنهاء', hint: '', icon: ClipboardCheck },
+    { key: 'completed', label: tr('تمت المهمة'), short: tr('الإنهاء'), hint: '', icon: ClipboardCheck },
 ]
 
 /** Where in the run a status sits; a cancelled job is out of the run entirely. */

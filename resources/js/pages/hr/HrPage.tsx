@@ -1,4 +1,5 @@
 import { Navigate, useParams } from 'react-router-dom'
+import { tr } from '@/lib/i18n'
 import { SectionTabs } from '@/components/SectionTabs'
 import { PageHeader } from '@/components/ui'
 import { useAuth } from '@/lib/auth'
@@ -22,12 +23,12 @@ import { PayrollTab } from '@/pages/hr/PayrollTab'
 type Key = 'employees' | 'attendance' | 'leave' | 'advances' | 'adjustments' | 'payroll'
 
 const TABS: Array<{ key: Key; label: string; permission: string; to: string }> = [
-    { key: 'employees', label: 'الموظفون', permission: 'hr.manage', to: '/hr/employees' },
-    { key: 'attendance', label: 'الحضور والغياب', permission: 'hr.manage', to: '/hr/attendance' },
-    { key: 'leave', label: 'الإجازات', permission: 'hr.manage', to: '/hr/leave' },
-    { key: 'advances', label: 'السلف', permission: 'payroll.manage', to: '/hr/advances' },
-    { key: 'adjustments', label: 'الخصومات والمكافآت', permission: 'payroll.manage', to: '/hr/adjustments' },
-    { key: 'payroll', label: 'الرواتب', permission: 'payroll.manage', to: '/hr/payroll' },
+    { key: 'employees', label: tr('الموظفون'), permission: 'hr.manage', to: '/hr/employees' },
+    { key: 'attendance', label: tr('الحضور والغياب'), permission: 'hr.manage', to: '/hr/attendance' },
+    { key: 'leave', label: tr('الإجازات'), permission: 'hr.manage', to: '/hr/leave' },
+    { key: 'advances', label: tr('السلف'), permission: 'payroll.manage', to: '/hr/advances' },
+    { key: 'adjustments', label: tr('الخصومات والمكافآت'), permission: 'payroll.manage', to: '/hr/adjustments' },
+    { key: 'payroll', label: tr('الرواتب'), permission: 'payroll.manage', to: '/hr/payroll' },
 ]
 
 export function HrPage() {
