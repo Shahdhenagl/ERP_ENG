@@ -4,6 +4,7 @@ import { FileText, HandCoins, Printer, ReceiptText, ScrollText, Undo2, Users, Wr
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { EmptyState, Field, PageHeader, Select, SkeletonCard } from '@/components/ui'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { formatMoney } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
 import { useArea } from '@/lib/nav'
@@ -27,6 +28,7 @@ const TYPE: Record<TimelineEvent['type'], { icon: typeof FileText; tint: string 
  */
 export function CustomerLedgerPage() {
     const { path } = useArea()
+    const [view, setView] = useViewMode('customer-ledger')
     const { data: customerPage } = useCustomers({ per_page: 200 })
     const customers = customerPage?.data ?? []
     const [customerId, setCustomerId] = useState<number | null>(null)
@@ -35,7 +37,11 @@ export function CustomerLedgerPage() {
 
     return (
         <>
-            <PageHeader title="سجل تعاملات العميل" subtitle="كل الحركات مرتبة بالتاريخ" />
+            <PageHeader
+                title="سجل تعاملات العميل"
+                subtitle="كل الحركات مرتبة بالتاريخ"
+                actions={<ViewToggle view={view} onChange={setView} />}
+            />
 
             <div className="mb-4 flex max-w-xl items-end gap-2">
                 <Field label="العميل" className="flex-1">
@@ -74,6 +80,62 @@ export function CustomerLedgerPage() {
                 <SkeletonCard />
             ) : !data.data.length ? (
                 <EmptyState icon={FileText} title="لا توجد حركات لهذا العميل بعد" />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="46rem"
+                    headers={[
+                        { label: 'التاريخ', className: 'w-28' },
+                        { label: 'الحركة', className: 'w-32' },
+                        { label: 'الكود', className: 'w-28' },
+                        'البيان',
+                        { label: 'الحالة', className: 'w-28' },
+                        { label: 'المبلغ', className: 'w-32 text-end' },
+                    ]}
+                >
+                    {data.data.map((event, index) => (
+                        <tr
+                            key={`${event.type}-${event.code}-${index}`}
+                            className="border-t border-navy-100 hover:bg-navy-50/60"
+                        >
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {formatDate(event.date)}
+                            </td>
+                            <td className="px-3 py-2.5 font-semibold text-navy-800">
+                                {event.type_label}
+                            </td>
+                            <td className="tabular px-3 py-2.5 font-bold text-brand-600">
+                                {event.code ?? '—'}
+                            </td>
+                            <td className="max-w-64 truncate px-3 py-2.5 text-navy-600">
+                                {event.title ?? '—'}
+                            </td>
+                            <td className="px-3 py-2.5">
+                                {event.status ? (
+                                    <span className="badge bg-navy-100 text-navy-600">
+                                        {event.status}
+                                    </span>
+                                ) : (
+                                    '—'
+                                )}
+                            </td>
+                            <td
+                                className={clsx(
+                                    'tabular px-3 py-2.5 text-end font-extrabold',
+                                    // A receipt lands in the customer's favour and a
+                                    // credit note comes back out: the ledger reads
+                                    // wrong if both are the same colour as an invoice.
+                                    event.type === 'payment'
+                                        ? 'text-emerald-600'
+                                        : event.type === 'return'
+                                          ? 'text-red-600'
+                                          : 'text-navy-900',
+                                )}
+                            >
+                                {event.amount != null ? formatMoney(event.amount) : '—'}
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
                 <div className="relative space-y-2 before:absolute before:top-2 before:bottom-2 before:right-[19px] before:w-px before:bg-navy-100">
                     {data.data.map((event, index) => {

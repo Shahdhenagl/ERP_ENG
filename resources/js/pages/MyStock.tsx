@@ -4,6 +4,7 @@ import { Package, Plus, Receipt, Wallet } from 'lucide-react'
 import { useState } from 'react'
 import { CustodyExpenseModal } from '@/components/CustodyExpenseModal'
 import { Button, EmptyState, PageHeader, SkeletonCard } from '@/components/ui'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import {
     formatMoney,
     formatQty,
@@ -20,6 +21,7 @@ import { useMovements, useMyCustody, useMyStock } from '@/lib/queries'
  * job — never by editing a number here.
  */
 export function MyStock() {
+    const [view, setView] = useViewMode('my-stock')
     const { data: lines, isLoading } = useMyStock()
     const { data: movements } = useMovements({ per_page: 20 })
 
@@ -28,6 +30,7 @@ export function MyStock() {
             <PageHeader
                 title="عهدتي"
                 subtitle={lines ? `${lines.length} صنف معك` : undefined}
+                actions={<ViewToggle view={view} onChange={setView} />}
             />
 
             {/* The float and what has been spent from it. It sat on the home
@@ -43,6 +46,32 @@ export function MyStock() {
                     title="عهدتك فارغة"
                     description="لم يُسلَّم إليك أي قطع غيار بعد. راجع أمين المخزن."
                 />
+            ) : view === 'table' ? (
+                <DataTable
+                    minWidth="34rem"
+                    headers={[
+                        'الصنف',
+                        { label: 'التصنيف', className: 'w-32' },
+                        { label: 'الكمية', className: 'w-28 text-end' },
+                    ]}
+                >
+                    {lines.map((line) => (
+                        <tr key={line.item_id} className="border-t border-navy-100">
+                            <td className="px-3 py-2.5 font-bold text-navy-900">{line.name}</td>
+                            <td className="px-3 py-2.5">
+                                <span className={clsx('badge', ITEM_CATEGORY[line.category].chip)}>
+                                    {ITEM_CATEGORY[line.category].label}
+                                </span>
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-end font-extrabold text-brand-600">
+                                {formatQty(line.qty)}{' '}
+                                <span className="text-[11px] font-semibold text-navy-400">
+                                    {line.unit}
+                                </span>
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
                 <div className="space-y-2">
                     {lines.map((line) => (
@@ -67,6 +96,49 @@ export function MyStock() {
                 <section className="mt-6">
                     <h2 className="mb-3 font-bold text-navy-900">آخر الحركات</h2>
 
+                    {view === 'table' ? (
+                        <DataTable
+                            minWidth="38rem"
+                            headers={[
+                                { label: 'الحركة', className: 'w-32' },
+                                'الصنف',
+                                { label: 'المهمة', className: 'w-28' },
+                                { label: 'التاريخ', className: 'w-36' },
+                                { label: 'الكمية', className: 'w-24 text-end' },
+                            ]}
+                        >
+                            {movements.data.map((movement) => {
+                                const meta =
+                                    MOVEMENT_TYPE[movement.type] ?? MOVEMENT_TYPE_FALLBACK
+
+                                return (
+                                    <tr
+                                        key={movement.id}
+                                        className="border-t border-navy-100"
+                                    >
+                                        <td className="px-3 py-2.5">
+                                            <span className={clsx('badge', meta.chip)}>
+                                                {movement.type_label}
+                                            </span>
+                                        </td>
+                                        <td className="px-3 py-2.5 font-bold text-navy-900">
+                                            {movement.item?.name ?? '—'}
+                                        </td>
+                                        <td className="tabular px-3 py-2.5 text-navy-500">
+                                            {movement.task_code ?? '—'}
+                                        </td>
+                                        <td className="tabular px-3 py-2.5 text-navy-600">
+                                            {formatSmart(movement.created_at)}
+                                        </td>
+                                        <td className="tabular px-3 py-2.5 text-end font-extrabold text-navy-900">
+                                            {meta.sign}
+                                            {formatQty(movement.qty)}
+                                        </td>
+                                    </tr>
+                                )
+                            })}
+                        </DataTable>
+                    ) : (
                     <div className="space-y-2">
                         {movements.data.map((movement) => {
                             const meta = MOVEMENT_TYPE[movement.type] ?? MOVEMENT_TYPE_FALLBACK
@@ -95,6 +167,7 @@ export function MyStock() {
                             )
                         })}
                     </div>
+                    )}
                 </section>
             )}
         </>

@@ -14,6 +14,7 @@ import {
     SkeletonCard,
     Textarea,
 } from '@/components/ui'
+import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { formatMoney, formatQty } from '@/lib/domain'
 import { useAssets, useCashBoxes, useCustody, useCustodyCash, useCustodyDevice, useUsers } from '@/lib/queries'
@@ -25,6 +26,7 @@ import type { CustodyStatement } from '@/types'
  * ever asks one — "what is محمود holding".
  */
 export function CustodyPage() {
+    const [view, setView] = useViewMode('custody')
     const { data: statements, isLoading } = useCustody()
     // A card's holder when topping up their float; a standalone advance to anyone
     // when null-but-open.
@@ -44,6 +46,7 @@ export function CustodyPage() {
                 subtitle={`إجمالي العهد المفتوحة: ${formatMoney(totalOut)}`}
                 actions={
                     <>
+                        <ViewToggle view={view} onChange={setView} />
                         <Button icon={Wallet} onClick={() => setCashOpen(true)}>
                             {tr('صرف عهدة نقدية')}
                         </Button>
@@ -66,6 +69,70 @@ export function CustodyPage() {
                     title="لا توجد عهد مفتوحة"
                     description="اصرف عهدة نقدية أو سلّم جهازًا لأي موظف ليظهر هنا بما في عهدته."
                 />
+            ) : view === 'table' ? (
+                // One row per person, which is the comparison a custody list is
+                // read for; what is inside each holding stays on the cards.
+                <DataTable
+                    minWidth="52rem"
+                    headers={[
+                        'الموظف',
+                        { label: 'نقدية', className: 'w-32 text-end' },
+                        { label: 'أصناف', className: 'w-20' },
+                        { label: 'قيمة المخزون', className: 'w-32 text-end' },
+                        { label: 'أجهزة', className: 'w-20' },
+                        { label: 'إجمالي العهدة', className: 'w-32 text-end' },
+                        { label: '', className: 'w-12' },
+                    ]}
+                >
+                    {statements.map((statement) => (
+                        <tr
+                            key={statement.technician.id}
+                            className="border-t border-navy-100 hover:bg-navy-50/60"
+                        >
+                            <td className="px-3 py-2.5">
+                                <p className="font-bold text-navy-900">
+                                    {statement.technician.name}
+                                </p>
+                                {statement.technician.job_title && (
+                                    <p className="text-[11px] text-navy-400">
+                                        {statement.technician.job_title}
+                                    </p>
+                                )}
+                            </td>
+                            <td
+                                className={clsx(
+                                    'tabular px-3 py-2.5 text-end',
+                                    statement.cash.balance > 0
+                                        ? 'font-bold text-navy-900'
+                                        : 'text-navy-300',
+                                )}
+                            >
+                                {formatMoney(statement.cash.balance)}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {statement.stock.lines.length}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-end text-navy-600">
+                                {formatMoney(statement.stock.value)}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-navy-600">
+                                {statement.devices.length}
+                            </td>
+                            <td className="tabular px-3 py-2.5 text-end font-extrabold text-navy-900">
+                                {formatMoney(statement.total_value)}
+                            </td>
+                            <td className="px-3 py-2.5">
+                                <button
+                                    onClick={() => setCashFor(statement)}
+                                    className="tap grid place-items-center rounded-lg p-1.5 text-navy-400 transition hover:bg-navy-50 hover:text-brand-600"
+                                    aria-label="عهدة نقدية"
+                                >
+                                    <Wallet className="size-4" />
+                                </button>
+                            </td>
+                        </tr>
+                    ))}
+                </DataTable>
             ) : (
             <div className="space-y-3">
                 {statements.map((statement) => (
