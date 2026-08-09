@@ -9,7 +9,11 @@
     ]
   },
   "resources/js/main.tsx": {
+<<<<<<< Updated upstream
     "file": "assets/main-Bw0woGmW.js",
+=======
+    "file": "assets/main-BE2K_Dnm.js",
+>>>>>>> Stashed changes
     "name": "main",
     "src": "resources/js/main.tsx",
     "isEntry": true,
