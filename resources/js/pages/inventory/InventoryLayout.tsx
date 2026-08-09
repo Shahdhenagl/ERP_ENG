@@ -78,7 +78,7 @@ export function InventoryLayout() {
                 title={meta.title}
                 subtitle={
                     meta.stock && summary
-                        ? `${summary.items_count} صنف · ${formatMoney(summary.stock_value)}`
+                        ? `${summary.items_count} ${tr('صنف')} · ${formatMoney(summary.stock_value)}`
                         : undefined
                 }
                 actions={
@@ -92,14 +92,14 @@ export function InventoryLayout() {
 
             {meta.stock && summary && (
                 <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-                    <Stat label="قيمة المخزون" value={formatMoney(summary.stock_value)} />
-                    <Stat label="عدد الأصناف" value={String(summary.items_count)} />
+                    <Stat label={tr('قيمة المخزون')} value={formatMoney(summary.stock_value)} />
+                    <Stat label={tr('عدد الأصناف')} value={String(summary.items_count)} />
                     <Stat
-                        label="تحت حد الطلب"
+                        label={tr('تحت حد الطلب')}
                         value={String(summary.below_reorder)}
                         tone={summary.below_reorder > 0 ? 'warn' : undefined}
                     />
-                    <Stat label="عهد الفنيين" value={String(summary.vans)} />
+                    <Stat label={tr('عهد الفنيين')} value={String(summary.vans)} />
                 </div>
             )}
 

@@ -64,7 +64,7 @@ export function MonthDayFilter({
     return (
         <div className="flex flex-wrap items-end gap-2">
             <label className="flex flex-col gap-1">
-                <span className="text-[11px] font-bold text-navy-400">الشهر</span>
+                <span className="text-[11px] font-bold text-navy-400">{tr('الشهر')}</span>
                 <Input
                     type="month"
                     value={month}
@@ -74,7 +74,7 @@ export function MonthDayFilter({
             </label>
 
             <label className="flex flex-col gap-1">
-                <span className="text-[11px] font-bold text-navy-400">اليوم</span>
+                <span className="text-[11px] font-bold text-navy-400">{tr('اليوم')}</span>
                 <Input
                     type="date"
                     value={day}
@@ -86,7 +86,7 @@ export function MonthDayFilter({
             {onRange && (
                 <>
                     <label className="flex flex-col gap-1">
-                        <span className="text-[11px] font-bold text-navy-400">من</span>
+                        <span className="text-[11px] font-bold text-navy-400">{tr('من')}</span>
                         <Input
                             type="date"
                             value={range.from}
@@ -96,7 +96,7 @@ export function MonthDayFilter({
                     </label>
 
                     <label className="flex flex-col gap-1">
-                        <span className="text-[11px] font-bold text-navy-400">إلى</span>
+                        <span className="text-[11px] font-bold text-navy-400">{tr('إلى')}</span>
                         <Input
                             type="date"
                             value={range.to}

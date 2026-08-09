@@ -40,7 +40,7 @@ export function Dashboard() {
     const { data, isLoading, isError, refetch } = useDashboard()
 
     if (isError) {
-        return <ErrorState message="تعذّر تحميل لوحة المعلومات." onRetry={() => void refetch()} />
+        return <ErrorState message={tr('تعذّر تحميل لوحة المعلومات.')} onRetry={() => void refetch()} />
     }
 
     const stats = data?.stats
@@ -48,11 +48,11 @@ export function Dashboard() {
     return (
         <>
             <PageHeader
-                title={`أهلاً، ${user?.name.split(' ')[0]}`}
+                title={`${tr('أهلاً')}، ${user?.name.split(' ')[0]}`}
                 subtitle={
                     canDispatch
-                        ? 'نظرة عامة على العمليات الجارية'
-                        : 'مهامك الحالية ومواعيدها'
+                        ? tr('نظرة عامة على العمليات الجارية')
+                        : tr('مهامك الحالية ومواعيدها')
                 }
             />
 
@@ -60,7 +60,7 @@ export function Dashboard() {
             <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
                 <StatTile
                     icon={ClipboardList}
-                    label="مهام مفتوحة"
+                    label={tr('مهام مفتوحة')}
                     value={stats?.open_total}
                     loading={isLoading}
                     tone="brand"
@@ -68,14 +68,14 @@ export function Dashboard() {
                 />
                 <StatTile
                     icon={CalendarCheck}
-                    label="منتهية اليوم"
+                    label={tr('منتهية اليوم')}
                     value={stats?.completed_today}
                     loading={isLoading}
                     tone="emerald"
                 />
                 <StatTile
                     icon={AlertTriangle}
-                    label="متأخرة"
+                    label={tr('متأخرة')}
                     value={stats?.overdue}
                     loading={isLoading}
                     tone={stats?.overdue ? 'red' : 'slate'}
@@ -83,7 +83,7 @@ export function Dashboard() {
                 {canDispatch ? (
                     <StatTile
                         icon={UserX}
-                        label="بدون فني"
+                        label={tr('بدون فني')}
                         value={stats?.unassigned}
                         loading={isLoading}
                         tone={stats?.unassigned ? 'amber' : 'slate'}
@@ -91,7 +91,7 @@ export function Dashboard() {
                 ) : (
                     <StatTile
                         icon={TrendingUp}
-                        label="منتهية هذا الشهر"
+                        label={tr('منتهية هذا الشهر')}
                         value={stats?.completed_this_month}
                         loading={isLoading}
                         tone="navy"
@@ -109,7 +109,7 @@ export function Dashboard() {
 
             {/* ── Status breakdown ───────────────────────────── */}
             <section className="mt-6">
-                <h2 className="mb-3 text-sm font-bold text-navy-700">توزيع المهام حسب الحالة</h2>
+                <h2 className="mb-3 text-sm font-bold text-navy-700">{tr('توزيع المهام حسب الحالة')}</h2>
                 <div className="card overflow-hidden p-4">
                     {isLoading ? (
                         <div className="shimmer h-6 rounded-lg" />
@@ -123,7 +123,7 @@ export function Dashboard() {
             {canDispatch && stats?.technician_load && stats.technician_load.length > 0 && (
                 <section className="mt-6">
                     <div className="mb-3 flex items-center justify-between">
-                        <h2 className="text-sm font-bold text-navy-700">حِمل العمل على الفنيين</h2>
+                        <h2 className="text-sm font-bold text-navy-700">{tr('حِمل العمل على الفنيين')}</h2>
                         <Link to={path('/users')} className="text-xs font-bold text-brand-600 hover:underline">
                             {tr('كل المستخدمين')}
                         </Link>
@@ -161,7 +161,7 @@ export function Dashboard() {
                                         <p className="tabular text-lg font-extrabold text-navy-900">
                                             {technician.open_count}
                                         </p>
-                                        <p className="text-[10px] font-semibold text-navy-400">مفتوحة</p>
+                                        <p className="text-[10px] font-semibold text-navy-400">{tr('مفتوحة')}</p>
                                     </div>
                                 </div>
                             )
@@ -175,7 +175,7 @@ export function Dashboard() {
                 <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4">
                     <StatTile
                         icon={Building2}
-                        label="العملاء"
+                        label={tr('العملاء')}
                         value={stats?.customers_total}
                         loading={isLoading}
                         tone="navy"
@@ -183,7 +183,7 @@ export function Dashboard() {
                     />
                     <StatTile
                         icon={Users}
-                        label="الفنيون"
+                        label={tr('الفنيون')}
                         value={stats?.technicians_total}
                         loading={isLoading}
                         tone="navy"
@@ -194,7 +194,7 @@ export function Dashboard() {
             {/* ── The estate overview (was the separate operations board) ── */}
             {canDispatch && (
                 <section className="mt-8">
-                    <h2 className="mb-3 text-sm font-bold text-navy-700">نظرة على المنشأة</h2>
+                    <h2 className="mb-3 text-sm font-bold text-navy-700">{tr('نظرة على المنشأة')}</h2>
                     <OperationsOverview />
                 </section>
             )}
@@ -218,21 +218,21 @@ export function Dashboard() {
                             {(can('inventory.view') || can('inventory.manage')) &&
                                 Boolean(data?.low_stock?.length) && (
                                     <AlertColumn
-                                        title="نواقص المخزون"
+                                        title={tr('نواقص المخزون')}
                                         count={stats?.low_stock}
                                         tone="amber"
                                         to={path('/inventory')}
                                         rows={data!.low_stock!.map((i) => ({
                                             key: `s-${i.id}`,
                                             title: i.name,
-                                            subtitle: `المتاح ${i.qty} ${i.unit} · حد الطلب ${i.reorder_level}`,
+                                            subtitle: `${tr('المتاح')} ${i.qty} ${tr(i.unit)} · ${tr('حد الطلب')} ${i.reorder_level}`,
                                         }))}
                                     />
                                 )}
 
                             {Boolean(data?.pending_approvals?.length) && (
                                 <AlertColumn
-                                    title="عروض بانتظار الاعتماد"
+                                    title={tr('عروض بانتظار الاعتماد')}
                                     count={stats?.pending_approvals}
                                     tone="amber"
                                     to={path('/sales/approvals')}
@@ -247,7 +247,7 @@ export function Dashboard() {
 
                             {Boolean(data?.delayed_tasks?.length) && (
                                 <AlertColumn
-                                    title="مهام متأخرة عن الوقت"
+                                    title={tr('مهام متأخرة عن الوقت')}
                                     count={stats?.delayed}
                                     tone="red"
                                     to={path('/tasks?open_only=1')}
@@ -263,7 +263,7 @@ export function Dashboard() {
                             {(can('invoices.manage') || can('treasury.manage')) &&
                                 Boolean(data?.overdue_invoices?.length) && (
                                     <AlertColumn
-                                        title="فواتير متأخرة السداد"
+                                        title={tr('فواتير متأخرة السداد')}
                                         count={stats?.overdue_invoices}
                                         tone="red"
                                         to={path('/invoices')}
@@ -278,7 +278,7 @@ export function Dashboard() {
 
                             {Boolean(data?.contracts_expiring?.length) && (
                                 <AlertColumn
-                                    title="عقود قاربت على الانتهاء"
+                                    title={tr('عقود قاربت على الانتهاء')}
                                     count={stats?.contracts_expiring}
                                     tone="amber"
                                     to={path('/contracts')}
@@ -288,9 +288,9 @@ export function Dashboard() {
                                         title: c.customer?.name ?? c.label ?? c.code,
                                         subtitle: `${c.code} · ${
                                             c.days_remaining != null
-                                                ? `يتبقى ${c.days_remaining} يوم`
+                                                ? `${tr('يتبقى')} ${c.days_remaining} ${tr('يوم')}`
                                                 : c.ends_on
-                                                  ? `ينتهي ${formatDate(c.ends_on)}`
+                                                  ? `${tr('ينتهي')} ${formatDate(c.ends_on)}`
                                                   : ''
                                         }`,
                                     }))}
@@ -333,10 +333,10 @@ export function Dashboard() {
                 office user who cannot see contracts is not shown their list. */}
             {can('contracts.manage') && Boolean(data?.contracts_expiring?.length) && (
                 <ExpiryAlert
-                    title="عقود قاربت على الانتهاء"
+                    title={tr('عقود قاربت على الانتهاء')}
                     tone="amber"
                     linkTo={path('/contracts')}
-                    linkLabel="العقود"
+                    linkLabel={tr('العقود')}
                     rows={data!.contracts_expiring!.map((contract) => ({
                         id: `c-${contract.id}`,
                         title: contract.customer?.name ?? contract.label,
@@ -349,10 +349,10 @@ export function Dashboard() {
 
             {can('warranties.manage') && Boolean(data?.warranties_expiring?.length) && (
                 <ExpiryAlert
-                    title="ضمانات قاربت على الانتهاء"
+                    title={tr('ضمانات قاربت على الانتهاء')}
                     tone="violet"
                     linkTo={path('/warranties')}
-                    linkLabel="الضمانات"
+                    linkLabel={tr('الضمانات')}
                     rows={data!.warranties_expiring!.map((warranty) => ({
                         id: `w-${warranty.id}`,
                         title: `${warranty.asset_code} · ${warranty.asset ?? ''}`,
@@ -394,7 +394,7 @@ export function Dashboard() {
                                         {followUp.owner && ` · ${followUp.owner}`}
                                     </p>
                                 </div>
-                                <span className="badge shrink-0 bg-red-50 text-red-700">متأخّر</span>
+                                <span className="badge shrink-0 bg-red-50 text-red-700">{tr('متأخّر')}</span>
                             </Link>
                         ))}
                     </div>
@@ -405,7 +405,7 @@ export function Dashboard() {
             <section className="mt-8">
                 <div className="mb-3 flex items-center justify-between">
                     <h2 className="text-sm font-bold text-navy-700">
-                        {canDispatch ? 'الأقرب تنفيذًا' : 'مهامك القادمة'}
+                        {canDispatch ? tr('الأقرب تنفيذًا') : tr('مهامك القادمة')}
                     </h2>
                     <Link to={path('/tasks')} className="text-xs font-bold text-brand-600 hover:underline">
                         {tr('عرض الكل')}
@@ -421,11 +421,11 @@ export function Dashboard() {
                 ) : !data?.upcoming.length ? (
                     <EmptyState
                         icon={Inbox}
-                        title="لا توجد مهام مفتوحة"
+                        title={tr('لا توجد مهام مفتوحة')}
                         description={
                             canDispatch
-                                ? 'كل المهام منتهية — أو لم يتم إنشاء مهام بعد.'
-                                : 'لا توجد مهام مسندة إليك حاليًا.'
+                                ? tr('كل المهام منتهية — أو لم يتم إنشاء مهام بعد.')
+                                : tr('لا توجد مهام مسندة إليك حاليًا.')
                         }
                     />
                 ) : (
@@ -469,9 +469,9 @@ function AttendanceCard() {
         const location = await currentPosition()
         try {
             await (direction === 'check-in' ? checkIn : checkOut).mutateAsync(location)
-            toast.success(direction === 'check-in' ? 'تم تسجيل حضورك.' : 'تم تسجيل انصرافك.')
+            toast.success(direction === 'check-in' ? tr('تم تسجيل حضورك.') : tr('تم تسجيل انصرافك.'))
         } catch (caught) {
-            toast.error(errorMessage(caught, 'تعذّر التنفيذ.'))
+            toast.error(errorMessage(caught, tr('تعذّر التنفيذ.')))
         }
     }
 
@@ -484,20 +484,20 @@ function AttendanceCard() {
                             <Clock className="size-5" />
                         </div>
                         <div>
-                            <p className="text-[11px] font-bold text-navy-400">الحضور اليوم</p>
+                            <p className="text-[11px] font-bold text-navy-400">{tr('الحضور اليوم')}</p>
                             <p className="tabular text-sm font-extrabold text-navy-900">
                                 {checkedIn ? (
                                     <>
-                                        حضور {today!.check_in}
-                                        {checkedOut && ` · انصراف ${today!.check_out}`}
+                                        {tr('حضور')} {today!.check_in}
+                                        {checkedOut && ` · ${tr('انصراف')} ${today!.check_out}`}
                                     </>
                                 ) : (
-                                    'لم تسجّل حضورك بعد'
+                                    tr('لم تسجّل حضورك بعد')
                                 )}
                             </p>
                             {checkedOut && (
                                 <p className="text-[11px] text-navy-400">
-                                    ساعات العمل: {today!.worked_hours}
+                                    {tr('ساعات العمل')}: {today!.worked_hours}
                                 </p>
                             )}
                         </div>
@@ -517,7 +517,7 @@ function AttendanceCard() {
                             {tr('تسجيل انصراف')}
                         </Button>
                     ) : (
-                        <span className="badge bg-emerald-50 text-emerald-700">اكتمل اليوم</span>
+                        <span className="badge bg-emerald-50 text-emerald-700">{tr('اكتمل اليوم')}</span>
                     )}
                 </div>
             </div>
@@ -537,9 +537,9 @@ function AttendanceToday({
         <section className="mt-6">
             <div className="mb-3 flex items-center gap-2">
                 <Clock className="size-4 text-brand-600" />
-                <h2 className="text-sm font-bold text-navy-700">حضور الفنيين اليوم</h2>
+                <h2 className="text-sm font-bold text-navy-700">{tr('حضور الفنيين اليوم')}</h2>
                 <span className="tabular text-[11px] font-semibold text-navy-400">
-                    {stats?.on_site_now ?? 0} في الموقع · {stats?.checked_in_today ?? 0} حضروا
+                    {stats?.on_site_now ?? 0} {tr('في الموقع')} · {stats?.checked_in_today ?? 0} {tr('حضروا')}
                 </span>
             </div>
 
@@ -551,33 +551,33 @@ function AttendanceToday({
                                 'size-2.5 shrink-0 rounded-full',
                                 row.check_out ? 'bg-navy-300' : 'bg-emerald-500',
                             )}
-                            title={row.check_out ? 'انصرف' : 'في الموقع'}
+                            title={row.check_out ? tr('انصرف') : tr('في الموقع')}
                         />
                         <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-bold text-navy-900">{row.employee}</p>
                             <p className="tabular text-[11px] text-navy-400">
-                                حضور {row.check_in ?? '—'}
-                                {row.check_out && ` · انصراف ${row.check_out}`}
-                                {row.check_out && ` · ${row.worked_hours} ساعة`}
+                                {tr('حضور')} {row.check_in ?? '—'}
+                                {row.check_out && ` · ${tr('انصراف')} ${row.check_out}`}
+                                {row.check_out && ` · ${row.worked_hours} ${tr('ساعة')}`}
                             </p>
 
                             {/* A stamp with no coordinates is said out loud rather
                                 than left as a missing pin — "no location" and "not
                                 looked at" must not look the same. */}
                             {!row.check_in_location && !row.check_out_location ? (
-                                <p className="text-[11px] text-navy-300">سُجّل بدون موقع</p>
+                                <p className="text-[11px] text-navy-300">{tr('سُجّل بدون موقع')}</p>
                             ) : (
                                 <div className="mt-1 flex flex-wrap gap-1.5">
                                     {row.check_in_location && (
                                         <MapLink
-                                            label="موقع الحضور"
+                                            label={tr('موقع الحضور')}
                                             point={row.check_in_location}
                                             tone="in"
                                         />
                                     )}
                                     {row.check_out_location && (
                                         <MapLink
-                                            label="موقع الانصراف"
+                                            label={tr('موقع الانصراف')}
                                             point={row.check_out_location}
                                             tone="out"
                                         />
@@ -625,7 +625,7 @@ function MapLink({
             )}
         >
             <MapPin className="size-3.5 shrink-0" />
-            {tone === 'in' ? 'حضور' : 'انصراف'}
+            {tone === 'in' ? tr('حضور') : tr('انصراف')}
             <span className="text-navy-400" dir="ltr">
                 {point.lat.toFixed(4)}, {point.lng.toFixed(4)}
             </span>
@@ -729,7 +729,7 @@ function StatusBar({ counts }: { counts?: Record<string, number> }) {
     const total = Object.values(counts).reduce((sum, count) => sum + count, 0)
 
     if (total === 0) {
-        return <p className="py-2 text-center text-sm text-navy-400">لا توجد مهام بعد</p>
+        return <p className="py-2 text-center text-sm text-navy-400">{tr('لا توجد مهام بعد')}</p>
     }
 
     const order = [...STATUS_FLOW, 'cancelled' as const]
@@ -836,8 +836,8 @@ function ExpiryAlert({
                             )}
                         >
                             {row.daysRemaining >= 0
-                                ? `باقٍ ${row.daysRemaining} يوم`
-                                : `انتهى منذ ${Math.abs(row.daysRemaining)} يوم`}
+                                ? `${tr('باقٍ')} ${row.daysRemaining} ${tr('يوم')}`
+                                : `${tr('انتهى منذ')} ${Math.abs(row.daysRemaining)} ${tr('يوم')}`}
                         </span>
                     </Link>
                 ))}

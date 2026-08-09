@@ -91,7 +91,7 @@ export function ItemsPage() {
         { value: '', label: tr('الكل'), count: counts?.all },
         ...groups.map((group) => ({
             value: group.id,
-            label: group.name,
+            label: tr(group.name),
             count: counts?.by_group?.[group.id],
         })),
     ]
@@ -163,7 +163,7 @@ export function ItemsPage() {
                             className="text-xs"
                             onClick={() => openItemForm(undefined, undefined, groupId)}
                         >
-                            {groups.find((group) => group.id === groupId)?.name} — صنف جديد
+                            {tr(groups.find((group) => group.id === groupId)?.name ?? '')} — {tr('صنف جديد')}
                         </Button>
                     )}
                 </div>
@@ -218,7 +218,7 @@ export function ItemsPage() {
                                                     item.group_chip ?? ITEM_CATEGORY[item.category].chip,
                                                 )}
                                             >
-                                                {item.group ?? item.category_label}
+                                                {tr(item.group ?? item.category_label)}
                                             </span>
                                             {item.below_reorder_level && (
                                                 <span className="badge bg-amber-50 text-amber-700 ring-1 ring-amber-200">
@@ -236,17 +236,17 @@ export function ItemsPage() {
 
                                         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-navy-500">
                                             <span>
-                                                الرصيد:{' '}
+                                                {tr('الرصيد')}:{' '}
                                                 <strong className="tabular text-navy-800">
                                                     {formatQty(item.total_qty)}
                                                 </strong>{' '}
-                                                {item.unit}
+                                                {tr(item.unit)}
                                             </span>
-                                            <span>متوسط التكلفة: {formatMoney(item.avg_cost)}</span>
+                                            <span>{tr('متوسط التكلفة')}: {formatMoney(item.avg_cost)}</span>
                                             {item.sell_price !== null && (
-                                                <span>سعر البيع: {formatMoney(item.sell_price)}</span>
+                                                <span>{tr('سعر البيع')}: {formatMoney(item.sell_price)}</span>
                                             )}
-                                            <span>القيمة: {formatMoney(item.stock_value)}</span>
+                                            <span>{tr('القيمة')}: {formatMoney(item.stock_value)}</span>
                                         </div>
 
                                         {/* Where it physically is — the store plus any van holding some. */}
@@ -361,12 +361,12 @@ function ItemsTable({
             <table className="w-full text-sm">
                 <thead>
                     <tr className="border-b border-navy-100 bg-navy-50 text-start text-[11px] font-bold text-navy-500">
-                        <Th className="p-3">الصنف</Th>
-                        <Th className="p-3">الفئة</Th>
-                        <Th className="p-3">السيريال</Th>
-                        <Th className="p-3 text-left">المتاح</Th>
-                        <Th className="p-3 text-left">متوسط الشراء</Th>
-                        <Th className="p-3 text-left">سعر البيع</Th>
+                        <Th className="p-3">{tr('الصنف')}</Th>
+                        <Th className="p-3">{tr('الفئة')}</Th>
+                        <Th className="p-3">{tr('السيريال')}</Th>
+                        <Th className="p-3 text-left">{tr('المتاح')}</Th>
+                        <Th className="p-3 text-left">{tr('متوسط الشراء')}</Th>
+                        <Th className="p-3 text-left">{tr('سعر البيع')}</Th>
                         <Th className="w-20 p-3" />
                     </tr>
                 </thead>
@@ -400,7 +400,7 @@ function ItemsTable({
                                             item.group_chip ?? ITEM_CATEGORY[item.category].chip,
                                         )}
                                     >
-                                        {item.group ?? item.category_label}
+                                        {tr(item.group ?? item.category_label)}
                                     </span>
                                 </td>
                                 <td className="tabular p-3 text-navy-600" dir="ltr">
@@ -415,7 +415,7 @@ function ItemsTable({
                                     >
                                         {formatQty(item.total_qty)}
                                     </span>{' '}
-                                    <span className="text-[11px] text-navy-400">{item.unit}</span>
+                                    <span className="text-[11px] text-navy-400">{tr(item.unit)}</span>
                                 </td>
                                 <td className="tabular p-3 text-left text-navy-700">
                                     {formatMoney(item.avg_cost)}

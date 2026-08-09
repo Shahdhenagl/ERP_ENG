@@ -1,5 +1,6 @@
 import { Activity, CalendarClock, HardDrive, Wrench } from 'lucide-react'
 import { SkeletonCard } from '@/components/ui'
+import { tr } from '@/lib/i18n'
 import { useOperations } from '@/lib/queries'
 
 /**
@@ -29,45 +30,45 @@ export function OperationsOverview() {
         <>
             {/* ── Devices ───────────────────────────────────── */}
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                <Tile icon={HardDrive} label="إجمالي الأجهزة" value={d.total} tone="brand" />
-                <Tile icon={Activity} label="أجهزة عاملة" value={d.working} tone="up" />
+                <Tile icon={HardDrive} label={tr('إجمالي الأجهزة')} value={d.total} tone="brand" />
+                <Tile icon={Activity} label={tr('أجهزة عاملة')} value={d.working} tone="up" />
                 <Tile
                     icon={Wrench}
-                    label="متوقفة / تحت الإصلاح"
+                    label={tr('متوقفة / تحت الإصلاح')}
                     value={d.stopped}
                     tone={d.stopped ? 'down' : 'slate'}
-                    hint={`${d.under_repair} إصلاح · ${d.retired} خارج الخدمة`}
+                    hint={`${d.under_repair} ${tr('إصلاح')} · ${d.retired} ${tr('خارج الخدمة')}`}
                 />
                 <Tile
                     icon={CalendarClock}
-                    label="صيانة دورية متأخرة"
+                    label={tr('صيانة دورية متأخرة')}
                     value={data.maintenance.overdue}
                     tone={data.maintenance.overdue ? 'warn' : 'up'}
-                    hint={`${data.maintenance.upcoming} قادمة خلال ٣٠ يوم`}
+                    hint={`${data.maintenance.upcoming} ${tr('قادمة خلال ٣٠ يوم')}`}
                 />
             </div>
 
             {/* ── One compact strip of the key numbers ──────── */}
             <div className="card mt-4 grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 lg:grid-cols-6">
                 <Stat
-                    label="بطاريات تحتاج استبدال"
+                    label={tr('بطاريات تحتاج استبدال')}
                     value={b.need_replacement}
                     tone={b.need_replacement ? 'down' : 'up'}
                 />
-                <Stat label="طلبات مفتوحة" value={data.requests.open} tone="brand" />
+                <Stat label={tr('طلبات مفتوحة')} value={data.requests.open} tone="brand" />
                 <Stat
-                    label="تأخّر عن الوقت"
+                    label={tr('تأخّر عن الوقت')}
                     value={data.requests.sla_breaches}
                     tone={data.requests.sla_breaches ? 'down' : 'up'}
                 />
                 <Stat
-                    label="قطع تحت حد الطلب"
+                    label={tr('قطع تحت حد الطلب')}
                     value={data.spare_parts.below_reorder}
                     tone={data.spare_parts.below_reorder ? 'warn' : 'up'}
                 />
-                <Stat label="زمن الاستجابة" value={p.avg_response_hours} suffix="س" tone="brand" />
+                <Stat label={tr('زمن الاستجابة')} value={p.avg_response_hours} suffix={tr('س')} tone="brand" />
                 <Stat
-                    label="مستوى الخدمة"
+                    label={tr('مستوى الخدمة')}
                     value={p.service_level ?? '—'}
                     suffix={p.service_level === null ? '' : '%'}
                     tone={p.service_level !== null && p.service_level >= 90 ? 'up' : 'slate'}
