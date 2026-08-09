@@ -2,6 +2,7 @@ import clsx from 'clsx'
 import { tr } from '@/lib/i18n'
 import {
     AlertTriangle,
+    History,
     MapPin,
     Package,
     Pencil,
@@ -10,6 +11,7 @@ import {
     Trash2,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { AssetForm } from '@/components/AssetForm'
 import { BatteryForm } from '@/components/BatteryForm'
 import { ConfirmDialog } from '@/components/Modal'
@@ -18,6 +20,7 @@ import { Button, EmptyState, ErrorState, Input, SkeletonCard, Th } from '@/compo
 import { errorMessage } from '@/lib/api'
 import { formatMoney, formatQty, ITEM_CATEGORY } from '@/lib/domain'
 import { useDeleteItem, useItemGroups, useItems } from '@/lib/queries'
+import { useArea } from '@/lib/nav'
 import { useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { useInventory } from '@/pages/inventory/InventoryLayout'
 import type { Item } from '@/types'
@@ -39,6 +42,7 @@ function specSummary(item: Item): string | null {
 
 export function ItemsPage() {
     const toast = useToast()
+    const { path } = useArea()
     const { openItemForm } = useInventory()
 
     const [search, setSearch] = useState('')
@@ -193,6 +197,7 @@ export function ItemsPage() {
                     onEdit={(item) => openItemForm(item)}
                     onDelete={setDeleting}
                     onInstall={setInstalling}
+                    movementPath={(item) => path(`/inventory/movements?item_id=${item.id}`)}
                 />
             ) : (
                 <div className="grid gap-3 lg:grid-cols-2">
@@ -262,6 +267,14 @@ export function ItemsPage() {
                                     </div>
 
                                     <div className="flex shrink-0 gap-1">
+                                        <Link
+                                            to={path(`/inventory/movements?item_id=${item.id}`)}
+                                            className="tap grid place-items-center rounded-lg p-2 text-navy-400 transition hover:bg-brand-50 hover:text-brand-700"
+                                            aria-label="حركة الصنف"
+                                            title="حركة الصنف"
+                                        >
+                                            <History className="size-4" />
+                                        </Link>
                                         <button
                                             onClick={() => openItemForm(item)}
                                             className="tap grid place-items-center rounded-lg p-2 text-navy-400 transition hover:bg-navy-50 hover:text-navy-700"
@@ -335,11 +348,13 @@ function ItemsTable({
     onEdit,
     onDelete,
     onInstall,
+    movementPath,
 }: {
     items: Item[]
     onEdit: (item: Item) => void
     onDelete: (item: Item) => void
     onInstall: (item: Item) => void
+    movementPath: (item: Item) => string
 }) {
     return (
         <div className="overflow-x-auto rounded-2xl border border-navy-100">
@@ -410,6 +425,14 @@ function ItemsTable({
                                 </td>
                                 <td className="p-3">
                                     <div className="flex items-center justify-end gap-0.5">
+                                        <Link
+                                            to={movementPath(item)}
+                                            className="tap grid place-items-center rounded-lg p-2 text-navy-400 transition hover:bg-brand-50 hover:text-brand-700"
+                                            aria-label="حركة الصنف"
+                                            title="حركة الصنف"
+                                        >
+                                            <History className="size-4" />
+                                        </Link>
                                         {(item.category === 'ups' || item.category === 'battery') &&
                                             item.total_qty > 0 && (
                                                 <button

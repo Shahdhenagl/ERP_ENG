@@ -31,8 +31,13 @@ export function MovementListPrint() {
         const month = params.get('month') ?? ''
         const day = params.get('day') ?? ''
         const range = { from: params.get('from') ?? '', to: params.get('to') ?? '' }
+        const itemId = params.get('item_id') ?? ''
 
-        return { ...monthDayRange(month, day, range), per_page: '1000' }
+        return {
+            ...monthDayRange(month, day, range),
+            ...(itemId ? { item_id: itemId } : {}),
+            per_page: '1000',
+        }
     }, [params])
 
     const { data, isLoading } = useMovements(filters)

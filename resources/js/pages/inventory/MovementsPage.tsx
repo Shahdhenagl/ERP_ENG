@@ -1,8 +1,8 @@
 import clsx from 'clsx'
 import { tr } from '@/lib/i18n'
-import { ClipboardList, Printer } from 'lucide-react'
+import { ClipboardList, PackageSearch, Printer, X } from 'lucide-react'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { EMPTY_RANGE, MonthDayFilter, monthDayRange } from '@/components/MonthDayFilter'
 import type { DateRange } from '@/components/MonthDayFilter'
 import { EmptyState, SkeletonCard } from '@/components/ui'
@@ -15,12 +15,18 @@ import { useMovements } from '@/lib/queries'
 /** The audit trail: every movement, newest first. */
 export function MovementsPage() {
     const { path } = useArea()
+    const [searchParams] = useSearchParams()
+    const itemId = searchParams.get('item_id') ?? ''
     const [month, setMonth] = useState('')
     const [day, setDay] = useState('')
     const [range, setRange] = useState<DateRange>(EMPTY_RANGE)
     const [view, setView] = useViewMode('movements')
 
-    const { data, isLoading } = useMovements({ per_page: 50, ...monthDayRange(month, day, range) })
+    const { data, isLoading } = useMovements({
+        per_page: 50,
+        ...(itemId ? { item_id: itemId } : {}),
+        ...monthDayRange(month, day, range),
+    })
 
     return (
         <>
@@ -37,6 +43,7 @@ export function MovementsPage() {
                     to={`${path('/print/movements')}?${new URLSearchParams({
                         ...(month ? { month } : {}),
                         ...(day ? { day } : {}),
+                        ...(itemId ? { item_id: itemId } : {}),
                     }).toString()}`}
                     target="_blank"
                     className="btn-secondary"
@@ -47,6 +54,24 @@ export function MovementsPage() {
 
                 <ViewToggle view={view} onChange={setView} className="mb-0.5" />
             </div>
+
+            {itemId && (
+                <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl bg-brand-50 px-3 py-2 text-xs font-bold text-brand-700 ring-1 ring-brand-100">
+                    <PackageSearch className="size-4" />
+                    <span>
+                        حركة الصنف المحدد
+                        {data?.data[0]?.item?.name ? `: ${data.data[0].item.name}` : ''}
+                    </span>
+                    <Link
+                        to={path('/inventory/movements')}
+                        className="tap mr-auto grid place-items-center rounded-lg p-1.5 text-brand-500 transition hover:bg-white hover:text-brand-800"
+                        aria-label="إلغاء فلتر الصنف"
+                        title="إلغاء فلتر الصنف"
+                    >
+                        <X className="size-4" />
+                    </Link>
+                </div>
+            )}
 
             {isLoading ? (
                 <SkeletonCard />
