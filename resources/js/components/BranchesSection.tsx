@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import { tr } from '@/lib/i18n'
-import { ChevronDown, HardDrive, MapPin, Pencil, Phone, Plus, Trash2 } from 'lucide-react'
+import { CalendarClock, ChevronDown, HardDrive, MapPin, Pencil, Phone, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { BranchForm } from '@/components/BranchForm'
 import { ConfirmDialog } from '@/components/Modal'
@@ -83,6 +83,20 @@ export function BranchesSection({ customerId }: { customerId: number }) {
                                             {branch.contact_name && ` · ${branch.contact_name}`}
                                         </p>
                                     )}
+                                    <p className="tabular mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-navy-500">
+                                        <span className="inline-flex items-center gap-1">
+                                            <CalendarClock className="size-3 text-navy-300" />
+                                            آخر زيارة: {branch.last_visit_completed_at ? formatDate(branch.last_visit_completed_at) : 'لا توجد'}
+                                        </span>
+                                        {typeof branch.days_since_last_visit === 'number' && (
+                                            <span>منذ {branch.days_since_last_visit} يوم</span>
+                                        )}
+                                        {branch.next_visit_available_at && (
+                                            <span className="badge bg-amber-50 text-amber-700 ring-1 ring-amber-200">
+                                                التالي بعد {formatDate(branch.next_visit_available_at)}
+                                            </span>
+                                        )}
+                                    </p>
                                 </div>
 
                                 <div className="flex shrink-0 gap-0.5">

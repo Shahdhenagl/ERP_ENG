@@ -21,6 +21,11 @@ class BranchController extends Controller
             ->when($request->boolean('active_only'), fn ($q) => $q->active())
             ->with('customer')
             ->withCount(['assets', 'tasks'])
+            ->withMax([
+                'tasks as last_visit_completed_at' => fn ($q) => $q
+                    ->where('status', \App\Enums\TaskStatus::Completed->value)
+                    ->whereNotNull('completed_at'),
+            ], 'completed_at')
             ->orderBy('customer_id')
             ->orderBy('name')
             ->get()
@@ -34,6 +39,11 @@ class BranchController extends Controller
     {
         $branches = $customer->branches()
             ->withCount(['assets', 'tasks'])
+            ->withMax([
+                'tasks as last_visit_completed_at' => fn ($q) => $q
+                    ->where('status', \App\Enums\TaskStatus::Completed->value)
+                    ->whereNotNull('completed_at'),
+            ], 'completed_at')
             ->orderBy('name')
             ->get()
             ->map(fn (Branch $branch) => $this->present($branch));
@@ -126,6 +136,9 @@ class BranchController extends Controller
 
             'assets_count' => $branch->assets_count ?? null,
             'tasks_count' => $branch->tasks_count ?? null,
+            'last_visit_completed_at' => $branch->lastVisitCompletedAt()?->toIso8601String(),
+            'days_since_last_visit' => $branch->daysSinceLastVisit(),
+            'next_visit_available_at' => $branch->nextVisitAvailableAt()?->toIso8601String(),
         ];
     }
 

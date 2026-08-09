@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\TaskStatus;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -104,6 +106,36 @@ class Branch extends Model
     }
 
     /** "فرع المعادي — بنك القاهرة", for a picker that lists every branch. */
+    public function lastVisitCompletedAt(?int $ignoreTaskId = null): ?CarbonInterface
+    {
+        if ($ignoreTaskId === null && array_key_exists('last_visit_completed_at', $this->attributes)) {
+            return $this->last_visit_completed_at
+                ? $this->asDateTime($this->last_visit_completed_at)
+                : null;
+        }
+
+        $completedAt = $this->tasks()
+            ->where('status', TaskStatus::Completed->value)
+            ->whereNotNull('completed_at')
+            ->when($ignoreTaskId, fn ($q, $id) => $q->whereKeyNot($id))
+            ->latest('completed_at')
+            ->value('completed_at');
+
+        return $completedAt ? $this->asDateTime($completedAt) : null;
+    }
+
+    public function nextVisitAvailableAt(?int $ignoreTaskId = null): ?CarbonInterface
+    {
+        return $this->lastVisitCompletedAt($ignoreTaskId)?->copy()->addDays(22);
+    }
+
+    public function daysSinceLastVisit(?int $ignoreTaskId = null): ?int
+    {
+        $last = $this->lastVisitCompletedAt($ignoreTaskId);
+
+        return $last ? (int) $last->diffInDays(now()) : null;
+    }
+
     public function label(): string
     {
         return $this->customer

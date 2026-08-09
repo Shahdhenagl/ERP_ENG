@@ -342,6 +342,10 @@ class MaintenancePlanner
                     }
                 }
 
+                if (! $first) {
+                    continue;
+                }
+
                 $visit->update([
                     // The representative job keeps the legacy one-to-one link
                     // alive; every job also carries the round id on its own side.
@@ -416,19 +420,27 @@ class MaintenancePlanner
                     && $task->assigned_to === null);
 
                 if ($legacy) {
-                    $branch = $missing->shift();
-                    $assets = $visit->contract->assets->where('branch_id', $branch->id)->values();
+                    $scheduledAt = $this->scheduledAtFor($visit);
+                    $branch = $missing->first(fn (Branch $candidate) => $this->allowedScheduledAt($scheduledAt, $candidate) !== null);
 
-                    $legacy->update([
-                        'branch_id' => $branch->id,
-                        'asset_id' => $assets->count() === 1 ? $assets->first()->id : null,
-                        'title' => 'زيارة صيانة دورية — '.$visit->contract->code.' — '.$branch->name,
-                    ]);
+                    if ($branch) {
+                        $scheduledAt = $this->allowedScheduledAt($scheduledAt, $branch);
+                        $missing = $missing->reject(fn (Branch $candidate) => $candidate->id === $branch->id);
+                        $assets = $visit->contract->assets->where('branch_id', $branch->id)->values();
+
+                        $legacy->update([
+                            'branch_id' => $branch->id,
+                            'asset_id' => $assets->count() === 1 ? $assets->first()->id : null,
+                            'title' => 'زيارة صيانة دورية — '.$visit->contract->code.' — '.$branch->name,
+                            'scheduled_at' => $scheduledAt,
+                        ]);
+                    }
                 }
 
                 foreach ($missing as $branch) {
-                    $this->createTaskFor($visit, $branch);
-                    $created++;
+                    if ($this->createTaskFor($visit, $branch)) {
+                        $created++;
+                    }
                 }
             }
 
@@ -436,9 +448,18 @@ class MaintenancePlanner
         });
     }
 
-    protected function createTaskFor(ContractVisit $visit, ?Branch $branch = null): Task
+    protected function createTaskFor(ContractVisit $visit, ?Branch $branch = null): ?Task
     {
         $contract = $visit->contract;
+        $scheduledAt = $this->scheduledAtFor($visit);
+
+        if ($branch) {
+            $scheduledAt = $this->allowedScheduledAt($scheduledAt, $branch);
+
+            if (! $scheduledAt) {
+                return null;
+            }
+        }
 
         // The devices this job answers for: the branch's own when it is a branch
         // job, the whole covered set otherwise.
@@ -462,8 +483,23 @@ class MaintenancePlanner
             'type' => TaskType::Maintenance,
             'priority' => TaskPriority::Normal,
             'status' => TaskStatus::Pending,
-            'scheduled_at' => $this->scheduledAtFor($visit),
+            'scheduled_at' => $scheduledAt,
         ]);
+    }
+
+    protected function allowedScheduledAt(CarbonImmutable $plannedAt, Branch $branch): ?CarbonImmutable
+    {
+        $availableAt = $branch->nextVisitAvailableAt();
+
+        if (! $availableAt || $plannedAt->gte($availableAt)) {
+            return $plannedAt;
+        }
+
+        if (CarbonImmutable::now()->lt($availableAt)) {
+            return null;
+        }
+
+        return CarbonImmutable::parse($availableAt);
     }
 
     /**

@@ -288,6 +288,71 @@ it('accepts a branch the customer does own', function () {
         ->assertCreated();
 });
 
+it('blocks a new branch task until 22 days after the last completed visit', function () {
+    $branch = branchFor($this->customer);
+
+    Task::factory()->create([
+        'customer_id' => $this->customer->id,
+        'branch_id' => $branch->id,
+        'status' => \App\Enums\TaskStatus::Completed,
+        'completed_at' => now()->subDays(10),
+    ]);
+
+    actingAs($this->manager)
+        ->postJson('/api/tasks', [
+            'customer_id' => $this->customer->id,
+            'branch_id' => $branch->id,
+            'title' => 'صيانة',
+            'type' => 'maintenance',
+            'priority' => 'normal',
+            'scheduled_at' => now()->addDays(5)->toIso8601String(),
+        ])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('branch_id');
+});
+
+it('allows a branch task on the 22 day availability date', function () {
+    $branch = branchFor($this->customer);
+    $completedAt = now()->subDays(10);
+
+    Task::factory()->create([
+        'customer_id' => $this->customer->id,
+        'branch_id' => $branch->id,
+        'status' => \App\Enums\TaskStatus::Completed,
+        'completed_at' => $completedAt,
+    ]);
+
+    actingAs($this->manager)
+        ->postJson('/api/tasks', [
+            'customer_id' => $this->customer->id,
+            'branch_id' => $branch->id,
+            'title' => 'صيانة',
+            'type' => 'maintenance',
+            'priority' => 'normal',
+            'scheduled_at' => $completedAt->copy()->addDays(22)->toIso8601String(),
+        ])
+        ->assertCreated();
+});
+
+it('shows the last branch visit and days since it on the customer profile branches', function () {
+    $branch = branchFor($this->customer);
+
+    Task::factory()->create([
+        'customer_id' => $this->customer->id,
+        'branch_id' => $branch->id,
+        'status' => \App\Enums\TaskStatus::Completed,
+        'completed_at' => now()->subDays(7),
+    ]);
+
+    $response = actingAs($this->manager)
+        ->getJson("/api/customers/{$this->customer->id}/branches")
+        ->assertOk();
+
+    expect($response->json('data.0.days_since_last_visit'))->toBe(7)
+        ->and($response->json('data.0.last_visit_completed_at'))->not->toBeNull()
+        ->and($response->json('data.0.next_visit_available_at'))->not->toBeNull();
+});
+
 it('refuses to delete a branch that still holds devices', function () {
     $branch = branchFor($this->customer);
     Asset::factory()->create([

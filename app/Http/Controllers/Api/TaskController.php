@@ -15,6 +15,8 @@ use App\Models\Task;
 use App\Models\User;
 use App\Services\TaskWorkflow;
 use App\Support\Terms;
+use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -75,6 +77,7 @@ class TaskController extends Controller
         ]);
 
         $this->assertBelongsToCustomer($data);
+        $this->assertBranchVisitWindow($data);
 
         $data['created_by'] = $request->user()->id;
         $data['status'] = TaskStatus::Pending;
@@ -149,6 +152,7 @@ class TaskController extends Controller
         ]);
 
         $this->assertBelongsToCustomer($data);
+        $this->assertBranchVisitWindow($data, $task);
 
         $task->update($data);
 
@@ -188,6 +192,47 @@ class TaskController extends Controller
                 ]);
             }
         }
+    }
+
+    /**
+     * A branch cannot receive another visit until 22 days after the last
+     * completed job there. The candidate date is the scheduled slot when one is
+     * set, or "now" for an immediate unscheduled job.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    protected function assertBranchVisitWindow(array $data, ?Task $ignoreTask = null): void
+    {
+        if (empty($data['branch_id'])) {
+            return;
+        }
+
+        $branch = Branch::find($data['branch_id']);
+        $availableAt = $branch?->nextVisitAvailableAt($ignoreTask?->id);
+
+        if (! $availableAt) {
+            return;
+        }
+
+        $candidate = $this->candidateVisitDate($data);
+
+        if ($candidate->lt($availableAt)) {
+            throw ValidationException::withMessages([
+                'branch_id' => Terms::get(sprintf(
+                    'لا يمكن فتح مهمة أو زيارة جديدة لهذا الفرع قبل %s. آخر زيارة انتهت في %s.',
+                    $availableAt->format('Y-m-d H:i'),
+                    $branch->lastVisitCompletedAt($ignoreTask?->id)?->format('Y-m-d H:i'),
+                )),
+            ]);
+        }
+    }
+
+    /** @param  array<string, mixed>  $data */
+    protected function candidateVisitDate(array $data): CarbonInterface
+    {
+        return ! empty($data['scheduled_at'])
+            ? CarbonImmutable::parse($data['scheduled_at'])
+            : CarbonImmutable::now();
     }
 
     /** Assign or reassign the job to a technician. */

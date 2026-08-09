@@ -530,6 +530,9 @@ export interface Branch {
 
     assets_count?: number | null
     tasks_count?: number | null
+    last_visit_completed_at?: string | null
+    days_since_last_visit?: number | null
+    next_visit_available_at?: string | null
 }
 
 /** خط السير: the legs of the trip to a site and their fares, plus extras. */
