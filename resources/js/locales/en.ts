@@ -13,13 +13,6 @@
  */
 export const EN: Record<string, string> = {
     صنف: 'items',
-    'حركة الصنف المحدد': 'Movements for the selected item',
-    'إلغاء فلتر الصنف': 'Clear item filter',
-    عهدة: 'Custody',
-    'شارع الحجاز': 'El Hegaz Street',
-    'عنوان المخزن': 'Warehouse address',
-    'سيتم حذف': 'This will delete',
-    'المخازن التي بها رصيد لا يمكن حذفها.': 'Warehouses holding stock cannot be deleted.',
     أهلاً: 'Welcome',
     يتبقى: 'Remaining',
     حضروا: 'checked in',

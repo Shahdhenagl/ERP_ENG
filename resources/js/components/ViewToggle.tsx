@@ -62,7 +62,7 @@ export function ViewToggle({
                     )}
                 >
                     <Icon className="size-3.5" />
-                    {t(label)}
+                    {label}
                 </button>
             ))}
         </div>

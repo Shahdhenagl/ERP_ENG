@@ -47,8 +47,8 @@ export function StockIssuePage() {
     return (
         <>
             <PageHeader
-                title={tr('إذن صرف')}
-                subtitle={tr('صرف الأصناف من المخزن بسبب — استهلاك أو تلف أو عيّنة')}
+                title="إذن صرف"
+                subtitle="صرف الأصناف من المخزن بسبب — استهلاك أو تلف أو عيّنة"
                 actions={
                     <Button icon={Plus} onClick={() => setCreating(true)}>
                         {tr('إذن صرف جديد')}
@@ -73,8 +73,8 @@ export function StockIssuePage() {
             ) : rows.length === 0 ? (
                 <EmptyState
                     icon={PackageMinus}
-                    title={tr('لا توجد أذون صرف في هذه الفترة')}
-                    description={tr('سجّل صرفًا من المخزن ليظهر هنا بسببه والكمية التي خرجت.')}
+                    title="لا توجد أذون صرف في هذه الفترة"
+                    description="سجّل صرفًا من المخزن ليظهر هنا بسببه والكمية التي خرجت."
                     action={
                         <Button icon={Plus} onClick={() => setCreating(true)}>
                             {tr('إذن صرف جديد')}
@@ -86,10 +86,10 @@ export function StockIssuePage() {
                     minWidth="48rem"
                     headers={[
                         tr('الصنف'),
-                        tr('من مخزن'),
+                        'من مخزن',
                         { label: tr('الكمية'), className: 'w-24' },
                         { label: tr('القيمة'), className: 'w-28' },
-                        tr('السبب'),
+                        'السبب',
                         { label: tr('التاريخ'), className: 'w-36' },
                     ]}
                 >
@@ -98,7 +98,7 @@ export function StockIssuePage() {
                             <td className="px-3 py-2.5 font-semibold text-navy-800">
                                 {movement.item?.name ?? '—'}
                             </td>
-                            <td className="px-3 py-2.5 text-navy-600">{movement.from ? tr(movement.from) : '—'}</td>
+                            <td className="px-3 py-2.5 text-navy-600">{movement.from ?? '—'}</td>
                             <td className="tabular px-3 py-2.5 font-bold text-navy-800">
                                 −{formatQty(movement.qty)}
                             </td>
@@ -124,7 +124,7 @@ export function StockIssuePage() {
                                     </p>
                                     {movement.from && (
                                         <p className="mt-0.5 text-xs text-navy-500">
-                                            {tr('من')} {tr(movement.from)}
+                                            من {movement.from}
                                         </p>
                                     )}
                                     {movement.note && (
@@ -170,7 +170,7 @@ function IssueDialog({ onClose }: { onClose: () => void }) {
         <Modal
             open
             onClose={onClose}
-            title={tr('إذن صرف جديد')}
+            title="إذن صرف جديد"
             size="sm"
             footer={
                 <>
@@ -191,11 +191,11 @@ function IssueDialog({ onClose }: { onClose: () => void }) {
                                     qty: Number(form.qty),
                                     note: form.note || null,
                                 })
-                                toast.success(tr('تم تسجيل الصرف.'))
+                                toast.success('تم تسجيل الصرف.')
                                 onClose()
                             } catch (caught) {
                                 setErrors(fieldErrors(caught))
-                                toast.error(errorMessage(caught, tr('تعذّر الصرف.')))
+                                toast.error(errorMessage(caught, 'تعذّر الصرف.'))
                             }
                         }}
                     >
@@ -205,9 +205,9 @@ function IssueDialog({ onClose }: { onClose: () => void }) {
             }
         >
             <div className="space-y-4">
-                <Field label={tr('الصنف')} required error={errors.item_id}>
+                <Field label="الصنف" required error={errors.item_id}>
                     <Select value={form.item_id} onChange={(e) => set('item_id')(e.target.value)}>
-                        <option value="">{tr('— اختر —')}</option>
+                        <option value="">— اختر —</option>
                         {items?.data.map((item) => (
                             <option key={item.id} value={item.id}>
                                 {item.name}
@@ -217,23 +217,23 @@ function IssueDialog({ onClose }: { onClose: () => void }) {
                 </Field>
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label={tr('المخزن')} required error={errors.warehouse_id}>
+                    <Field label="المخزن" required error={errors.warehouse_id}>
                         <Select
                             value={form.warehouse_id}
                             onChange={(e) => set('warehouse_id')(e.target.value)}
                         >
-                            <option value="">{tr('— اختر —')}</option>
+                            <option value="">— اختر —</option>
                             {(warehouses ?? [])
                                 .filter((w) => w.type === 'store')
                                 .map((w) => (
                                     <option key={w.id} value={w.id}>
-                                        {tr(w.name)}
+                                        {w.name}
                                     </option>
                                 ))}
                         </Select>
                     </Field>
 
-                    <Field label={tr('الكمية')} required error={errors.qty}>
+                    <Field label="الكمية" required error={errors.qty}>
                         <Input
                             type="number"
                             min={0}
@@ -246,11 +246,11 @@ function IssueDialog({ onClose }: { onClose: () => void }) {
                     </Field>
                 </div>
 
-                <Field label={tr('السبب / ملاحظة')} required error={errors.note}>
+                <Field label="السبب / ملاحظة" required error={errors.note}>
                     <Textarea
                         value={form.note}
                         onChange={(e) => set('note')(e.target.value)}
-                        placeholder={tr('تالف بالمخزن، عيّنة لعميل…')}
+                        placeholder="تالف بالمخزن، عيّنة لعميل…"
                     />
                 </Field>
             </div>

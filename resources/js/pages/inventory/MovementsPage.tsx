@@ -59,14 +59,14 @@ export function MovementsPage() {
                 <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl bg-brand-50 px-3 py-2 text-xs font-bold text-brand-700 ring-1 ring-brand-100">
                     <PackageSearch className="size-4" />
                     <span>
-                        {tr('حركة الصنف المحدد')}
+                        حركة الصنف المحدد
                         {data?.data[0]?.item?.name ? `: ${data.data[0].item.name}` : ''}
                     </span>
                     <Link
                         to={path('/inventory/movements')}
                         className="tap mr-auto grid place-items-center rounded-lg p-1.5 text-brand-500 transition hover:bg-white hover:text-brand-800"
-                        aria-label={tr('إلغاء فلتر الصنف')}
-                        title={tr('إلغاء فلتر الصنف')}
+                        aria-label="إلغاء فلتر الصنف"
+                        title="إلغاء فلتر الصنف"
                     >
                         <X className="size-4" />
                     </Link>
@@ -76,14 +76,14 @@ export function MovementsPage() {
             {isLoading ? (
                 <SkeletonCard />
             ) : !data?.data.length ? (
-                <EmptyState icon={ClipboardList} title={tr('لا توجد حركات في هذه الفترة')} />
+                <EmptyState icon={ClipboardList} title="لا توجد حركات في هذه الفترة" />
             ) : view === 'table' ? (
                 <DataTable
                     minWidth="54rem"
                     headers={[
                         { label: tr('النوع'), className: 'w-28' },
-                        tr('الصنف'),
-                        tr('من / إلى'),
+                        'الصنف',
+                        'من / إلى',
                         { label: tr('الكمية'), className: 'w-24' },
                         { label: tr('القيمة'), className: 'w-28' },
                         { label: tr('المستند'), className: 'w-28' },
@@ -100,17 +100,14 @@ export function MovementsPage() {
                             >
                                 <td className="px-3 py-2.5">
                                     <span className={clsx('badge', meta.chip)}>
-                                        {tr(movement.type_label)}
+                                        {movement.type_label}
                                     </span>
                                 </td>
                                 <td className="px-3 py-2.5 font-semibold text-navy-800">
                                     {movement.item?.name ?? '—'}
                                 </td>
                                 <td className="px-3 py-2.5 text-navy-600">
-                                    {[movement.from, movement.to]
-                                        .filter(Boolean)
-                                        .map((location) => tr(String(location)))
-                                        .join(' ← ') || '—'}
+                                    {[movement.from, movement.to].filter(Boolean).join(' ← ') || '—'}
                                     {movement.supplier && (
                                         <span className="block text-[11px] text-navy-400">
                                             {movement.supplier}
@@ -145,7 +142,7 @@ export function MovementsPage() {
                         <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0 flex-1">
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <span className={clsx('badge', meta.chip)}>{tr(movement.type_label)}</span>
+                                    <span className={clsx('badge', meta.chip)}>{movement.type_label}</span>
                                     {movement.task_code && (
                                         <span className="tabular text-[11px] font-bold text-navy-400">
                                             {movement.task_code}
@@ -158,9 +155,9 @@ export function MovementsPage() {
                                 </p>
 
                                 <p className="mt-0.5 text-xs text-navy-500">
-                                    {movement.from && `${tr('من')} ${tr(movement.from)}`}
+                                    {movement.from && `من ${movement.from}`}
                                     {movement.from && movement.to && ' ← '}
-                                    {movement.to && `${tr('إلى')} ${tr(movement.to)}`}
+                                    {movement.to && `إلى ${movement.to}`}
                                     {movement.supplier && ` · ${movement.supplier}`}
                                 </p>
 

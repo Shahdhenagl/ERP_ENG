@@ -9,14 +9,6 @@ import { formatQty } from '@/lib/domain'
 import { useDeleteWarehouse, useSaveWarehouse, useWarehouses } from '@/lib/queries'
 import type { WarehouseSummary } from '@/types'
 
-function warehouseName(name: string): string {
-    return name.startsWith('عهدة ') ? `${tr('عهدة')} ${name.slice('عهدة '.length)}` : tr(name)
-}
-
-function warehouseAddress(address: string): string {
-    return address.split(' - ').map((part) => tr(part)).join(' - ')
-}
-
 /**
  * The company's stores. Technician custody appears here too, read-only —
  * it is a stock location, but it is filled by handing goods over rather than
@@ -51,10 +43,10 @@ export function WarehousesPage() {
             </div>
 
             <section>
-                <h2 className="mb-2 text-sm font-bold text-navy-700">{tr('المخازن')}</h2>
+                <h2 className="mb-2 text-sm font-bold text-navy-700">المخازن</h2>
 
                 {stores.length === 0 ? (
-                    <EmptyState icon={WarehouseIcon} title={tr('لا توجد مخازن')} />
+                    <EmptyState icon={WarehouseIcon} title="لا توجد مخازن" />
                 ) : (
                     <div className="grid gap-3 sm:grid-cols-2">
                         {stores.map((warehouse) => (
@@ -62,19 +54,19 @@ export function WarehousesPage() {
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="min-w-0">
                                         <p className="flex items-center gap-1.5 truncate font-bold text-navy-900">
-                                            {warehouseName(warehouse.name)}
+                                            {warehouse.name}
                                             {warehouse.is_default && (
                                                 <Star className="size-3.5 shrink-0 fill-amber-400 text-amber-400" />
                                             )}
                                         </p>
                                         {warehouse.address && (
                                             <p className="truncate text-xs text-navy-400">
-                                                {warehouseAddress(warehouse.address)}
+                                                {warehouse.address}
                                             </p>
                                         )}
                                         {warehouse.keeper && (
                                             <p className="text-xs text-navy-400">
-                                                {tr('أمين المخزن')}: {warehouse.keeper}
+                                                أمين المخزن: {warehouse.keeper}
                                             </p>
                                         )}
                                     </div>
@@ -116,7 +108,7 @@ export function WarehousesPage() {
 
             {vans.length > 0 && (
                 <section className="mt-6">
-                    <h2 className="mb-2 text-sm font-bold text-navy-700">{tr('عهد الفنيين')}</h2>
+                    <h2 className="mb-2 text-sm font-bold text-navy-700">عهد الفنيين</h2>
                     <p className="mb-2 text-xs text-navy-400">
                         {tr('تُملأ بتسليم العهدة وتُفرَّغ بصرف القطع على المهام — لا تُحرَّر يدويًا.')}
                     </p>
@@ -127,9 +119,9 @@ export function WarehousesPage() {
                                 <div className="flex items-center justify-between gap-3">
                                     <div className="min-w-0">
                                         <p className="truncate font-bold text-navy-900">
-                                            {warehouse.holder ?? warehouseName(warehouse.name)}
+                                            {warehouse.holder ?? warehouse.name}
                                         </p>
-                                        <p className="text-xs text-navy-400">{tr(warehouse.type_label)}</p>
+                                        <p className="text-xs text-navy-400">{warehouse.type_label}</p>
                                     </div>
                                     <p className="tabular shrink-0 text-lg font-extrabold text-brand-600">
                                         {formatQty(warehouse.total_qty)}
@@ -157,15 +149,15 @@ export function WarehousesPage() {
 
                     try {
                         await remove.mutateAsync(deleting.id)
-                        toast.success(tr('تم حذف المخزن.'))
+                        toast.success('تم حذف المخزن.')
                         setDeleting(undefined)
                     } catch (caught) {
-                        toast.error(errorMessage(caught, tr('تعذّر حذف المخزن.')))
+                        toast.error(errorMessage(caught, 'تعذّر حذف المخزن.'))
                     }
                 }}
-                title={tr('حذف المخزن')}
-                message={`${tr('سيتم حذف')} «${deleting ? warehouseName(deleting.name) : ''}». ${tr('المخازن التي بها رصيد لا يمكن حذفها.')}`}
-                confirmLabel={tr('حذف')}
+                title="حذف المخزن"
+                message={`سيتم حذف «${deleting?.name}». المخازن التي بها رصيد لا يمكن حذفها.`}
+                confirmLabel="حذف"
                 loading={remove.isPending}
                 danger
             />
@@ -193,7 +185,7 @@ function StoreForm({
         <Modal
             open
             onClose={onClose}
-            title={warehouse ? `${tr('تعديل')} ${warehouseName(warehouse.name)}` : tr('مخزن جديد')}
+            title={warehouse ? `تعديل ${warehouse.name}` : 'مخزن جديد'}
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
@@ -211,11 +203,11 @@ function StoreForm({
                                     keeper: keeper || null,
                                     make_default: makeDefault,
                                 })
-                                toast.success(warehouse ? tr('تم حفظ المخزن.') : tr('تم فتح المخزن.'))
+                                toast.success(warehouse ? 'تم حفظ المخزن.' : 'تم فتح المخزن.')
                                 onClose()
                             } catch (caught) {
                                 setErrors(fieldErrors(caught))
-                                toast.error(errorMessage(caught, tr('تعذّر حفظ المخزن.')))
+                                toast.error(errorMessage(caught, 'تعذّر حفظ المخزن.'))
                             }
                         }}
                     >
@@ -225,19 +217,19 @@ function StoreForm({
             }
         >
             <div className="space-y-4">
-                <Field label={tr('اسم المخزن')} required error={errors.name}>
+                <Field label="اسم المخزن" required error={errors.name}>
                     <Input
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        placeholder={tr('مخزن الإسكندرية')}
+                        placeholder="مخزن الإسكندرية"
                     />
                 </Field>
 
-                <Field label={tr('عنوان المخزن')} error={errors.address}>
+                <Field label="العنوان" error={errors.address}>
                     <Textarea value={address} onChange={(e) => setAddress(e.target.value)} rows={2} />
                 </Field>
 
-                <Field label={tr('أمين المخزن')} error={errors.keeper}>
+                <Field label="أمين المخزن" error={errors.keeper}>
                     <Input value={keeper} onChange={(e) => setKeeper(e.target.value)} />
                 </Field>
 
