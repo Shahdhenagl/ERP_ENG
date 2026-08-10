@@ -88,22 +88,22 @@ export function Dashboard() {
                     label={tr('متأخرة')}
                     value={stats?.overdue}
                     loading={isLoading}
-                    tone="danger"
+                    tone="red"
                 />
                 <StatTile
                     icon={CalendarClock}
                     label={tr('غير مسندة')}
                     value={stats?.unassigned}
                     loading={isLoading}
-                    tone="warn"
+                    tone="amber"
                 />
-                {user?.isTechnician() ? (
+                {user?.role === 'technician' ? (
                     <StatTile
                         icon={CalendarCheck}
                         label={tr('منتهية اليوم')}
                         value={stats?.completed_today}
                         loading={isLoading}
-                        tone="ok"
+                        tone="emerald"
                     />
                 ) : (
                     <StatTile
@@ -200,7 +200,7 @@ export function Dashboard() {
                         <SkeletonCard />
                         <SkeletonCard />
                     </div>
-                ) : !data?.upcoming.length ? (
+                ) : !data?.upcoming?.length ? (
                     <EmptyState
                         icon={Inbox}
                         title={tr('لا توجد مهام مفتوحة')}
@@ -212,7 +212,7 @@ export function Dashboard() {
                     />
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {data.upcoming.map((task) => (
+                        {data?.upcoming?.map((task) => (
                             <TaskCard key={task.id} task={task} showTechnician={canDispatch} />
                         ))}
                     </div>
@@ -223,10 +223,7 @@ export function Dashboard() {
             {canDispatch && (
                 <section className="mt-8">
                     <h2 className="mb-3 text-sm font-bold text-navy-700">{tr('نظرة على المنشأة')}</h2>
-                    <OperationsOverview
-                        customersTotal={stats?.customers_total}
-                        techniciansTotal={stats?.technicians_total}
-                    />
+                    <OperationsOverview />
                 </section>
             )}
 
