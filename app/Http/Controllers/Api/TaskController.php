@@ -32,14 +32,14 @@ class TaskController extends Controller
         $user = $request->user();
 
         $tasks = Task::query()
-            ->with(['customer', 'branch', 'technician', 'creator', 'asset'])
+            ->with(['customer', 'branch', 'technicians', 'creator', 'asset'])
             // Technicians only ever see their own work.
             ->when($user->isTechnician(), fn ($q) => $q->forTechnician($user->id))
             ->when($request->string('status')->toString(), fn ($q, $s) => $q->where('status', $s))
             ->when($request->boolean('open_only'), fn ($q) => $q->open())
             ->when($request->string('type')->toString(), fn ($q, $t) => $q->where('type', $t))
             ->when($request->string('priority')->toString(), fn ($q, $p) => $q->where('priority', $p))
-            ->when($request->integer('assigned_to'), fn ($q, $id) => $q->where('assigned_to', $id))
+            ->when($request->integer('assigned_to'), fn ($q, $id) => $q->forTechnician($id))
             ->when($request->integer('customer_id'), fn ($q, $id) => $q->where('customer_id', $id))
             ->when($request->integer('branch_id'), fn ($q, $id) => $q->where('branch_id', $id))
             ->when($request->integer('contract_id'), fn ($q, $id) => $q->where('contract_id', $id))
@@ -63,7 +63,8 @@ class TaskController extends Controller
     {
         $data = $request->validate([
             'customer_id' => ['required', 'exists:customers,id'],
-            'assigned_to' => ['nullable', 'exists:users,id'],
+            'assigned_to' => ['nullable', 'array'],
+            'assigned_to.*' => ['exists:users,id'],
             'title' => ['required', 'string', 'max:200'],
             'description' => ['nullable', 'string', 'max:5000'],
             'type' => ['required', Rule::enum(TaskType::class)],
@@ -98,20 +99,26 @@ class TaskController extends Controller
             $data['site_map_url'] = $source?->map_url;
         }
 
-        $assignee = $data['assigned_to'] ?? null;
+        $assignees = $data['assigned_to'] ?? [];
         unset($data['assigned_to']);
 
         $task = Task::create($data);
+        
+        if (!empty($assignees)) {
+            $task->technicians()->sync($assignees);
+        }
 
         ActivityLog::record('task.created', $task, "تم إنشاء المهمة {$task->code}");
 
         // Assign through the workflow so the technician gets notified.
-        if ($assignee && $technician = User::find($assignee)) {
-            $task = $this->workflow->assign($task, $technician, $request->user());
+        foreach ($assignees as $assignee) {
+            if ($technician = User::find($assignee)) {
+                $task = $this->workflow->assign($task, $technician, $request->user());
+            }
         }
 
         return response()->json(
-            new TaskResource($task->load(['customer', 'branch', 'technician', 'creator', 'asset'])),
+            new TaskResource($task->load(['customer', 'branch', 'technicians', 'creator', 'asset'])),
             201,
         );
     }
@@ -123,7 +130,7 @@ class TaskController extends Controller
         return new TaskResource($task->load([
             'customer',
             'branch',
-            'technician',
+            'technicians',
             'creator',
             'asset',
             'contract',
@@ -159,7 +166,7 @@ class TaskController extends Controller
 
         ActivityLog::record('task.updated', $task, "تم تعديل المهمة {$task->code}");
 
-        return new TaskResource($task->fresh(['customer', 'branch', 'technician', 'creator', 'asset']));
+        return new TaskResource($task->fresh(['customer', 'branch', 'technicians', 'creator', 'asset']));
     }
 
     /**
@@ -236,30 +243,40 @@ class TaskController extends Controller
             : CarbonImmutable::now();
     }
 
-    /** Assign or reassign the job to a technician. */
+    /** Assign or reassign the job to technicians. */
     public function assign(Request $request, Task $task): TaskResource
     {
         $data = $request->validate([
-            'assigned_to' => ['nullable', 'exists:users,id'],
+            'assigned_to' => ['nullable', 'array'],
+            'assigned_to.*' => ['exists:users,id'],
         ]);
 
-        $technician = $data['assigned_to'] ? User::find($data['assigned_to']) : null;
+        $assignees = $data['assigned_to'] ?? [];
 
-        if ($technician && ! $technician->isTechnician()) {
-            throw ValidationException::withMessages([
-                'assigned_to' => Terms::get('يجب اختيار مستخدم بدور «فني».'),
-            ]);
+        foreach ($assignees as $assigneeId) {
+            $technician = User::find($assigneeId);
+            if ($technician && ! $technician->isTechnician()) {
+                throw ValidationException::withMessages([
+                    'assigned_to' => Terms::get('يجب اختيار مستخدمين بدور «فني».'),
+                ]);
+            }
+
+            if ($technician && ! $technician->is_active) {
+                throw ValidationException::withMessages([
+                    'assigned_to' => Terms::get('أحد الفنيين موقوف ولا يمكن إسناد مهام إليه.'),
+                ]);
+            }
         }
 
-        if ($technician && ! $technician->is_active) {
-            throw ValidationException::withMessages([
-                'assigned_to' => Terms::get('هذا الفني موقوف ولا يمكن إسناد مهام إليه.'),
-            ]);
+        $task->technicians()->sync($assignees);
+
+        foreach ($assignees as $assigneeId) {
+            if ($technician = User::find($assigneeId)) {
+                $task = $this->workflow->assign($task, $technician, $request->user());
+            }
         }
 
-        $task = $this->workflow->assign($task, $technician, $request->user());
-
-        return new TaskResource($task);
+        return new TaskResource($task->fresh(['technicians']));
     }
 
     public function destroy(Task $task): JsonResponse
@@ -278,7 +295,7 @@ class TaskController extends Controller
         $user = $request->user();
 
         abort_if(
-            $user->isTechnician() && $task->assigned_to !== $user->id,
+            $user->isTechnician() && ! $task->technicians()->where('users.id', $user->id)->exists(),
             403,
             'هذه المهمة غير مسندة إليك.',
         );

@@ -67,10 +67,10 @@ export function TaskCard({ task, showTechnician = true }: TaskCardProps) {
                         {task.type_label}
                     </span>
 
-                    {showTechnician && task.technician && (
+                    {showTechnician && task.technicians && task.technicians.length > 0 && (
                         <span className="flex min-w-0 items-center gap-1.5">
                             <User2 className="size-3.5 shrink-0 text-navy-300" />
-                            <span className="truncate">{task.technician.name}</span>
+                            <span className="truncate">{task.technicians.map((t) => t.name).join('، ')}</span>
                         </span>
                     )}
 

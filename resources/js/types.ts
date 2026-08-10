@@ -1197,7 +1197,7 @@ export interface Task {
     is_terminal: boolean
 
     customer?: Customer
-    technician?: User
+    technicians?: User[]
     creator?: User
 
     site_address: string | null

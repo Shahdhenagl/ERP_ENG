@@ -104,7 +104,7 @@ export function TaskList() {
                     STATUS[task.status].label,
                     task.customer?.name,
                     task.branch?.name,
-                    task.technician?.name,
+                    task.technicians?.length ? task.technicians.map(t => t.name).join('، ') : '',
                     task.started_at ? formatDateTime(task.started_at) : '',
                     task.completed_at ? formatDateTime(task.completed_at) : '',
                 ]),
@@ -488,7 +488,11 @@ function TaskTable({ tasks, href }: { tasks: Task[]; href: (id: number) => strin
                                 </td>
                                 <td className="px-3 py-2.5 text-navy-700">{task.customer?.name ?? '—'}</td>
                                 <td className="px-3 py-2.5 text-navy-600">{task.branch?.name ?? '—'}</td>
-                                <td className="px-3 py-2.5 font-medium text-navy-800">{task.technician?.name ?? '—'}</td>
+                                <td className="px-3 py-2.5 font-medium text-navy-800">
+                                    {task.technicians && task.technicians.length > 0
+                                        ? task.technicians.map((t) => t.name).join('، ')
+                                        : '—'}
+                                </td>
                                 <td className="px-3 py-2.5">
                                     <span className={clsx('badge', meta.chip)}>{meta.label}</span>
                                 </td>

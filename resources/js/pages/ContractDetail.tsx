@@ -398,7 +398,7 @@ function VisitRow({
                     visit.task && (
                         <span className="tabular block truncate text-[11px] text-navy-400">
                             {visit.task.code}
-                            {visit.task.technician && ` · ${visit.task.technician.name}`}
+                            {visit.task.technicians?.length ? ` · ${visit.task.technicians.map(t => t.name).join('، ')}` : ''}
                         </span>
                     )
                 )}

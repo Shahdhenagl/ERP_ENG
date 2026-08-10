@@ -94,7 +94,7 @@ export function TaskListPrint() {
                                 <td className="text-navy-600">{task.type_label}</td>
                                 <td className="text-navy-600">{task.priority_label}</td>
                                 <td className="text-navy-600">{task.status_label}</td>
-                                <td className="text-navy-600">{task.technician?.name ?? '—'}</td>
+                                <td className="text-navy-600">{task.technicians?.length ? task.technicians.map((t: any) => t.name).join('، ') : '—'}</td>
                                 <td className="tabular text-navy-600">
                                     {task.scheduled_at ? formatDate(task.scheduled_at) : '—'}
                                 </td>

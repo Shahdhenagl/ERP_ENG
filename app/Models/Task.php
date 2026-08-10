@@ -24,7 +24,6 @@ class Task extends Model
         'asset_id',
         'contract_id',
         'contract_visit_id',
-        'assigned_to',
         'created_by',
         'title',
         'description',
@@ -117,9 +116,9 @@ class Task extends Model
         return $this->belongsTo(Branch::class);
     }
 
-    public function technician(): BelongsTo
+    public function technicians(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
-        return $this->belongsTo(User::class, 'assigned_to');
+        return $this->belongsToMany(User::class, 'task_user');
     }
 
     public function creator(): BelongsTo
@@ -240,7 +239,7 @@ class Task extends Model
 
     public function scopeForTechnician(Builder $query, int $userId): Builder
     {
-        return $query->where('assigned_to', $userId);
+        return $query->whereHas('technicians', fn ($q) => $q->where('users.id', $userId));
     }
 
     /**

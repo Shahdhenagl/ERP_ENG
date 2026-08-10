@@ -43,7 +43,7 @@ export function TaskForm() {
 
     const [form, setForm] = useState({
         customer_id: '',
-        assigned_to: '',
+        assigned_to: [] as string[],
         title: '',
         description: '',
         type: 'maintenance' as TaskType,
@@ -60,7 +60,7 @@ export function TaskForm() {
 
         setForm({
             customer_id: String(existing.customer?.id ?? ''),
-            assigned_to: String(existing.technician?.id ?? ''),
+            assigned_to: existing.technicians?.map((t) => String(t.id)) ?? [],
             title: existing.title,
             description: existing.description ?? '',
             type: existing.type,
@@ -97,7 +97,7 @@ export function TaskForm() {
         const payload = {
             ...form,
             customer_id: Number(form.customer_id),
-            assigned_to: form.assigned_to ? Number(form.assigned_to) : null,
+            assigned_to: form.assigned_to.map(Number),
             description: form.description || null,
             scheduled_at: form.scheduled_at || null,
             site_address: form.site_address || null,
@@ -138,8 +138,8 @@ export function TaskForm() {
                         تم إنشاء المهمة {saved.code}
                     </h2>
                     <p className="mt-1 text-sm text-navy-400">
-                        {saved.technician
-                            ? `تم إرسال إشعار إلى ${saved.technician.name}.`
+                        {saved.technicians?.length
+                            ? `تم إرسال إشعار إلى ${saved.technicians.map(t => t.name).join(' و ')}.`
                             : 'لم يتم إسناد فني بعد.'}
                     </p>
 
@@ -415,17 +415,31 @@ export function TaskForm() {
                         hint="سيصله إشعار على التطبيق وبريد إلكتروني فور الإسناد."
                         error={errors.assigned_to}
                     >
-                        <Select
-                            value={form.assigned_to}
-                            onChange={(event) => set('assigned_to')(event.target.value)}
-                        >
-                            <option value="">— بدون إسناد —</option>
+                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                             {technicians?.map((technician) => (
-                                <option key={technician.id} value={technician.id}>
-                                    {technician.name} ({technician.open_tasks_count ?? 0} مهمة مفتوحة)
-                                </option>
+                                <label key={technician.id} className="flex cursor-pointer items-center gap-2 rounded-lg border border-navy-200 p-3 hover:bg-navy-50">
+                                    <input
+                                        type="checkbox"
+                                        className="size-4 rounded border-navy-300 text-brand-600 focus:ring-brand-600"
+                                        checked={form.assigned_to.includes(String(technician.id))}
+                                        onChange={(event) => {
+                                            const id = String(technician.id)
+                                            if (event.target.checked) {
+                                                setForm((f) => ({ ...f, assigned_to: [...f.assigned_to, id] }))
+                                            } else {
+                                                setForm((f) => ({ ...f, assigned_to: f.assigned_to.filter((t) => t !== id) }))
+                                            }
+                                        }}
+                                    />
+                                    <span className="text-sm font-medium text-navy-800">
+                                        {technician.name} <span className="text-[10px] text-navy-400">({technician.open_tasks_count ?? 0})</span>
+                                    </span>
+                                </label>
                             ))}
-                        </Select>
+                            {!technicians?.length && (
+                                <p className="col-span-full text-sm text-navy-400">لا يوجد فنيين متاحين</p>
+                            )}
+                        </div>
                     </Field>
                 </section>
 

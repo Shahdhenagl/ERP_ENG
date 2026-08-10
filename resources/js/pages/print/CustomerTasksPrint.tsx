@@ -74,7 +74,7 @@ export function CustomerTasksPrint() {
                                     {task.title ?? task.type_label}
                                     <span className="block text-[11px] text-navy-400">
                                         {task.type_label}
-                                        {task.technician && ` · ${task.technician}`}
+                                        {task.technicians?.length ? ` · ${task.technicians.map((t: any) => t.name).join('، ')}` : ''}
                                     </span>
                                 </td>
                                 <td className="text-navy-600">{task.customer ?? '—'}</td>

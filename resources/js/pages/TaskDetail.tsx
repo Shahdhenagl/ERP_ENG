@@ -111,7 +111,7 @@ export function TaskDetail() {
     const StatusIcon = status.icon
     const TypeIcon = type.icon
 
-    const isMine = task.technician?.id === user?.id
+    const isMine = task.technicians?.some((t) => t.id === user?.id)
 
     /**
      * Progress is a field record, so only the assigned technician may move a
@@ -451,7 +451,7 @@ export function TaskDetail() {
                         {task.scheduled_at && (
                             <span>الموعد: {formatSmart(task.scheduled_at)}</span>
                         )}
-                        {task.technician && <span>الفني: {task.technician.name}</span>}
+                        {task.technicians?.length ? <span>الفنيين: {task.technicians.map(t => t.name).join('، ')}</span> : null}
                     </div>
 
                     {task.description && (
@@ -783,25 +783,29 @@ export function TaskDetail() {
 
                     {canDispatch && (
                         <section className="card p-5">
-                            <h2 className="mb-3 text-sm font-bold text-navy-800">الفني المسند</h2>
+                            <h2 className="mb-3 text-sm font-bold text-navy-800">الفنيين المسندين</h2>
 
-                            {task.technician ? (
-                                <div className="mb-3 flex items-center gap-3">
-                                    <div className="grid size-10 place-items-center rounded-xl bg-navy-50 font-bold text-navy-600">
-                                        {task.technician.name.charAt(0)}
-                                    </div>
-                                    <div className="min-w-0">
-                                        <p className="truncate text-sm font-bold text-navy-900">
-                                            {task.technician.name}
-                                        </p>
-                                        <p className="truncate text-xs text-navy-400">
-                                            {task.technician.job_title ?? 'فني'}
-                                        </p>
-                                    </div>
+                            {task.technicians && task.technicians.length > 0 ? (
+                                <div className="mb-3 space-y-3">
+                                    {task.technicians.map((technician) => (
+                                        <div key={technician.id} className="flex items-center gap-3">
+                                            <div className="grid size-10 place-items-center rounded-xl bg-navy-50 font-bold text-navy-600">
+                                                {technician.name.charAt(0)}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="truncate text-sm font-bold text-navy-900">
+                                                    {technician.name}
+                                                </p>
+                                                <p className="truncate text-xs text-navy-400">
+                                                    {technician.job_title ?? 'فني'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             ) : (
                                 <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700">
-                                    {tr('لم يتم إسناد فني بعد.')}
+                                    {tr('لم يتم إسناد فنيين بعد.')}
                                 </p>
                             )}
 
@@ -811,7 +815,7 @@ export function TaskDetail() {
                                 block
                                 onClick={() => setAssignOpen(true)}
                             >
-                                {task.technician ? 'تغيير الفني' : 'إسناد فني'}
+                                {task.technicians && task.technicians.length > 0 ? 'تغيير الفنيين' : 'إسناد فنيين'}
                             </Button>
                         </section>
                     )}
@@ -921,7 +925,7 @@ export function TaskDetail() {
                 open={assignOpen}
                 onClose={() => setAssignOpen(false)}
                 taskId={task.id}
-                current={task.technician?.id ?? null}
+                current={task.technicians?.map(t => t.id) ?? []}
             />
 
             <ConfirmDialog
@@ -1690,16 +1694,16 @@ function AssignDialog({
     open: boolean
     onClose: () => void
     taskId: number
-    current: number | null
+    current: number[]
 }) {
     const toast = useToast()
     const { data: technicians } = useTechnicians()
     const assign = useAssignTask(taskId)
-    const [selected, setSelected] = useState<string>(current ? String(current) : '')
+    const [selected, setSelected] = useState<string[]>(current ? current.map(String) : [])
 
     const handleSave = async () => {
         try {
-            await assign.mutateAsync(selected ? Number(selected) : null)
+            await assign.mutateAsync(selected.map(Number))
             toast.success('تم تحديث الإسناد.')
             onClose()
         } catch (caught) {
@@ -1724,15 +1728,32 @@ function AssignDialog({
                 </>
             }
         >
-            <Field label="الفني" hint="يظهر بجانب كل فني عدد مهامه المفتوحة حاليًا.">
-                <Select value={selected} onChange={(event) => setSelected(event.target.value)}>
-                    <option value="">— بدون إسناد —</option>
+            <Field label="الفنيين" hint="يظهر بجانب كل فني عدد مهامه المفتوحة حاليًا.">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     {technicians?.map((technician) => (
-                        <option key={technician.id} value={technician.id}>
-                            {technician.name} ({technician.open_tasks_count ?? 0} مفتوحة)
-                        </option>
+                        <label key={technician.id} className="flex cursor-pointer items-center gap-2 rounded-lg border border-navy-200 p-3 hover:bg-navy-50">
+                            <input
+                                type="checkbox"
+                                className="size-4 rounded border-navy-300 text-brand-600 focus:ring-brand-600"
+                                checked={selected.includes(String(technician.id))}
+                                onChange={(event) => {
+                                    const id = String(technician.id)
+                                    if (event.target.checked) {
+                                        setSelected((s) => [...s, id])
+                                    } else {
+                                        setSelected((s) => s.filter((t) => t !== id))
+                                    }
+                                }}
+                            />
+                            <span className="text-sm font-medium text-navy-800">
+                                {technician.name} <span className="text-[10px] text-navy-400">({technician.open_tasks_count ?? 0} مفتوحة)</span>
+                            </span>
+                        </label>
                     ))}
-                </Select>
+                    {!technicians?.length && (
+                        <p className="col-span-full text-sm text-navy-400">لا يوجد فنيين متاحين</p>
+                    )}
+                </div>
             </Field>
         </Modal>
     )

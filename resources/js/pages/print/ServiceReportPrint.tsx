@@ -62,7 +62,7 @@ export function ServiceReportPrint() {
                         ['رقم التقرير', task.service_report_no],
                         ['أمر الشغل', task.code],
                         ['النوع', task.type_label],
-                        ['الفني', task.technician?.name],
+                        ['الفني', task.technicians?.length ? task.technicians.map((t: any) => t.name).join('، ') : '—'],
                         ['الدخول', task.visit?.time_in ? formatDateTime(task.visit.time_in) : null],
                         ['الخروج', task.visit?.time_out ? formatDateTime(task.visit.time_out) : null],
                         [

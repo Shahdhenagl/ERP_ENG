@@ -258,7 +258,7 @@ function BranchVisitLine({ task, href }: { task: Task; href: string }) {
                     <p className="mt-0.5 truncate text-xs font-bold text-navy-800">{task.title}</p>
                     <p className="tabular text-[11px] text-navy-400">
                         {formatDateTime(visitDate)}
-                        {task.technician?.name && ` · ${task.technician.name}`}
+                        {task.technicians?.length ? ` · ${task.technicians.map(t => t.name).join('، ')}` : ''}
                     </p>
                 </div>
                 <Link
