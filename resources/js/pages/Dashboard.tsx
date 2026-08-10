@@ -219,6 +219,28 @@ export function Dashboard() {
                 )}
             </section>
 
+            {/* ── Secondary counts ───────────────────────────── */}
+            {canDispatch && (
+                <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4">
+                    <StatTile
+                        icon={Building2}
+                        label={tr('العملاء')}
+                        value={stats?.customers_total}
+                        loading={isLoading}
+                        tone="navy"
+                        to={can('customers.manage') ? path('/customers') : undefined}
+                    />
+                    <StatTile
+                        icon={Users}
+                        label={tr('الفنيون')}
+                        value={stats?.technicians_total}
+                        loading={isLoading}
+                        tone="navy"
+                        to={path('/technicians')}
+                    />
+                </div>
+            )}
+
             {/* ── The estate overview (was the separate operations board) ── */}
             {canDispatch && (
                 <section className="mt-8">
@@ -242,7 +264,7 @@ export function Dashboard() {
                             {tr('تنبيهات تحتاج إجراء')}
                         </h2>
 
-                        <div className="grid gap-4 lg:grid-cols-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-2">
                             {(can('inventory.view') || can('inventory.manage')) &&
                                 Boolean(data?.low_stock?.length) && (
                                     <AlertColumn
