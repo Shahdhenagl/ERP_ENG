@@ -116,6 +116,21 @@ class UserController extends Controller
                 ->first()
             : null;
 
+        $assignedCount = $user->assignedTasks()->count();
+        $completedCount = $user->assignedTasks()->where('status', TaskStatus::Completed)->count();
+        $pendingCount = $user->assignedTasks()->whereNotIn('status', [TaskStatus::Completed, TaskStatus::Cancelled])->count();
+        $overdueCount = $user->assignedTasks()->where('status', '!=', TaskStatus::Completed)->where('scheduled_at', '<', now())->count();
+        $completionPercentage = $assignedCount > 0 ? round(($completedCount / $assignedCount) * 100) : 0;
+
+        $avgTimeInMinutes = $user->assignedTasks()
+            ->where('status', TaskStatus::Completed)
+            ->whereNotNull('started_at')
+            ->whereNotNull('completed_at')
+            ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, started_at, completed_at)) as avg_time')
+            ->value('avg_time');
+            
+        $avgTimeFormatted = $avgTimeInMinutes ? round($avgTimeInMinutes / 60, 1) . ' H' : '—';
+
         return response()->json([
             'data' => [
                 'technician' => [
@@ -124,6 +139,14 @@ class UserController extends Controller
                     'phone' => $user->phone,
                     'job_title' => $user->job_title,
                     'open_tasks' => $user->assignedTasks()->open()->count(),
+                ],
+                'performance' => [
+                    'assigned' => $assignedCount,
+                    'completed' => $completedCount,
+                    'pending' => $pendingCount,
+                    'overdue' => $overdueCount,
+                    'completion_percentage' => $completionPercentage,
+                    'avg_time' => $avgTimeFormatted,
                 ],
                 'month' => ['year' => $year, 'month' => $month],
 

@@ -42,8 +42,6 @@ export function ViewToggle({
     onChange: (mode: ViewMode) => void
     className?: string
 }) {
-    const t = useT()
-
     return (
         <div className={clsx('flex items-center gap-1 rounded-xl bg-navy-100 p-1', className)}>
             {(

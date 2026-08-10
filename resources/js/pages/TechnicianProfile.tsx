@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import { tr } from '@/lib/i18n'
-import { ArrowRight, CalendarDays, ClipboardList, Clock, MapPin, Wallet } from 'lucide-react'
+import { Activity, ArrowRight, CalendarDays, ClipboardList, Clock, MapPin, Wallet } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { EmptyState, ErrorState, Field, Input, PageLoader } from '@/components/ui'
@@ -45,7 +45,7 @@ export function TechnicianProfile() {
     if (isError) return <ErrorState message="تعذّر تحميل ملف الفني." onRetry={() => void refetch()} />
     if (isLoading || !data) return <PageLoader />
 
-    const { technician, employee, tasks, attendance, leave, payslip } = data
+    const { technician, performance, employee, tasks, attendance, leave, payslip } = data
 
     return (
         <>
@@ -85,6 +85,18 @@ export function TechnicianProfile() {
                     </Field>
                 </div>
             </div>
+
+            {/* ── Performance ──────────────────────────────── */}
+            <Section title="إحصائيات الأداء (الإجمالي)" icon={Activity}>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                    <Stat label="مسندة" value={performance.assigned.toString()} />
+                    <Stat label="مكتملة" value={performance.completed.toString()} />
+                    <Stat label="قيد العمل" value={performance.pending.toString()} />
+                    <Stat label="متأخرة" value={performance.overdue.toString()} />
+                    <Stat label="نسبة الإنجاز" value={`${performance.completion_percentage}%`} />
+                    <Stat label="متوسط وقت المهمة" value={performance.avg_time} />
+                </div>
+            </Section>
 
             {/* ── Salary ─────────────────────────────────── */}
             {employee ? (

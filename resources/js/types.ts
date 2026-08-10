@@ -2739,6 +2739,14 @@ export interface TechnicianProfile {
         job_title: string | null
         open_tasks: number
     }
+    performance: {
+        assigned: number
+        completed: number
+        pending: number
+        overdue: number
+        completion_percentage: number
+        avg_time: string
+    }
     month: { year: number; month: number }
     employee: {
         id: number
