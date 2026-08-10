@@ -279,12 +279,49 @@ export function useAssignTask(id: number) {
     const client = useQueryClient()
 
     return useMutation({
-        mutationFn: async (assignedTo: number | null) =>
+        mutationFn: async (assignedTo: number[]) =>
             (await api.post<{ data: Task }>(`/tasks/${id}/assign`, { assigned_to: assignedTo })).data.data,
         onSuccess: () => {
             void client.invalidateQueries({ queryKey: keys.task(id) })
             void client.invalidateQueries({ queryKey: ['tasks'] })
             void client.invalidateQueries({ queryKey: keys.dashboard })
+        },
+    })
+}
+
+export function useRequestPostponement(taskId: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: { postponed_to: string; reason: string }) =>
+            (await api.post(`/tasks/${taskId}/postpone`, payload)).data,
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: keys.task(taskId) })
+        },
+    })
+}
+
+export function useApprovePostponement(taskId: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (postponementId: number) =>
+            (await api.post(`/postponements/${postponementId}/approve`)).data,
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: keys.task(taskId) })
+            void client.invalidateQueries({ queryKey: ['tasks'] })
+        },
+    })
+}
+
+export function useRejectPostponement(taskId: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (postponementId: number) =>
+            (await api.post(`/postponements/${postponementId}/reject`)).data,
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: keys.task(taskId) })
         },
     })
 }

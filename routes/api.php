@@ -103,6 +103,8 @@ Route::middleware(['auth:sanctum', 'role'])->group(function () {
     Route::post('tasks/{task}/reports', [TaskReportController::class, 'store']);
     Route::post('tasks/{task}/attachments', [TaskAttachmentController::class, 'store']);
     Route::delete('tasks/{task}/attachments/{attachment}', [TaskAttachmentController::class, 'destroy']);
+    // Any logged-in user (technician or dispatcher) may request a postponement
+    Route::post('tasks/{task}/postpone', [\App\Http\Controllers\Api\PostponementController::class, 'request']);
 
     // A technician needs the customer card for the job they are standing at.
     Route::get('customers/{customer}', [CustomerController::class, 'show']);
@@ -165,6 +167,9 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::put('tasks/{task}', [TaskController::class, 'update'])->middleware('can:tasks.dispatch');
     Route::delete('tasks/{task}', [TaskController::class, 'destroy'])->middleware('can:tasks.dispatch');
     Route::post('tasks/{task}/assign', [TaskController::class, 'assign'])->middleware('can:tasks.dispatch');
+    // Postponement review — admins/managers approve or reject
+    Route::post('postponements/{postponement}/approve', [\App\Http\Controllers\Api\PostponementController::class, 'approve']);
+    Route::post('postponements/{postponement}/reject', [\App\Http\Controllers\Api\PostponementController::class, 'reject']);
 
     // A customer's account is on the sales menu too, so a salesperson can read
     // it without managing the customer record.

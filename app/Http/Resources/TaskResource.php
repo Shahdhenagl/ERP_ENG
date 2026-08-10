@@ -46,7 +46,25 @@ class TaskResource extends JsonResource
 
             'customer' => new CustomerResource($this->whenLoaded('customer')),
             'technician' => new UserResource($this->whenLoaded('technician')),
+            'technicians' => UserResource::collection($this->whenLoaded('technicians')),
             'creator' => new UserResource($this->whenLoaded('creator')),
+
+            // The active postponement request (pending / last resolved)
+            'pending_postponement' => $this->when(
+                $this->relationLoaded('postponements'),
+                fn () => $this->postponements
+                    ->where('status', 'pending')
+                    ->sortByDesc('id')
+                    ->first()
+                    ? [
+                        'id'           => $this->postponements->where('status','pending')->sortByDesc('id')->first()->id,
+                        'postponed_to' => $this->postponements->where('status','pending')->sortByDesc('id')->first()->postponed_to?->toDateString(),
+                        'reason'       => $this->postponements->where('status','pending')->sortByDesc('id')->first()->reason,
+                        'requested_by' => $this->postponements->where('status','pending')->sortByDesc('id')->first()->requester?->name,
+                        'status'       => 'pending',
+                    ]
+                    : null,
+            ),
 
             'site_address' => $this->site_address,
             'site_lat' => $this->site_lat,

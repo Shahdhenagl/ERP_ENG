@@ -1261,6 +1261,15 @@ export interface Task {
         report_manager?: string | null
     }
 
+    /** Active postponement request waiting for admin approval, if any. */
+    pending_postponement?: {
+        id: number
+        postponed_to: string
+        reason: string
+        requested_by: string
+        status: 'pending'
+    } | null
+
     status_logs?: TaskStatusLog[]
     reports?: TaskReport[]
     attachments?: TaskAttachment[]

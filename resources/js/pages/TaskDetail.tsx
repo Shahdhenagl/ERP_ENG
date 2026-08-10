@@ -3,8 +3,10 @@ import { tr } from '@/lib/i18n'
 import {
     ArrowRight,
     Battery,
+    CalendarClock,
     Camera,
     Check,
+    CheckCircle,
     ClipboardCheck,
     Cpu,
     FileText,
@@ -22,6 +24,7 @@ import {
     Trash2,
     UserCog,
     X,
+    XCircle,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -58,11 +61,14 @@ import { useArea } from '@/lib/nav'
 import { useIsPhone } from '@/lib/viewport'
 import {
     useAssignTask,
+    useApprovePostponement,
     useChangeStatus,
     useDeleteAttachment,
     useDeleteTask,
     useInvoiceAction,
     useMyCustody,
+    useRejectPostponement,
+    useRequestPostponement,
     useSpendMine,
     useTask,
     useTechnicians,
@@ -91,6 +97,7 @@ export function TaskDetail() {
     const [routeOpen, setRouteOpen] = useState(false)
     const [attachmentsOpen, setAttachmentsOpen] = useState(false)
     const [viewingReport, setViewingReport] = useState<ReportType | null>(null)
+    const [postponeOpen, setPostponeOpen] = useState(false)
 
     // Ask for a fix while the job is being read rather than at the moment a
     // button is pressed and somebody is waiting on it.
@@ -454,6 +461,14 @@ export function TaskDetail() {
                         {task.technicians?.length ? <span>الفنيين: {task.technicians.map(t => t.name).join('، ')}</span> : null}
                     </div>
 
+                    {/* Postponement pending badge */}
+                    {task.pending_postponement && (
+                        <div className="mt-3 flex items-center gap-2 rounded-xl bg-amber-500/20 px-3 py-2 text-xs font-semibold text-amber-100 ring-1 ring-amber-400/40">
+                            <CalendarClock className="size-3.5 shrink-0" />
+                            طلب تأجيل قيد المراجعة إلى {new Date(task.pending_postponement.postponed_to).toLocaleDateString('ar-EG')}
+                        </div>
+                    )}
+
                     {task.description && (
                         <p className="mt-4 rounded-xl bg-white/10 p-3 text-sm leading-relaxed text-white/90 ring-1 ring-white/10">
                             {task.description}
@@ -495,6 +510,17 @@ export function TaskDetail() {
                                 </Button>
                             )
                         })}
+
+                        {/* Postpone button — any assigned technician or dispatcher can request */}
+                        {!task.pending_postponement && (isMine || canDispatch) && (
+                            <Button
+                                variant="secondary"
+                                icon={CalendarClock}
+                                onClick={() => setPostponeOpen(true)}
+                            >
+                                {tr('طلب تأجيل')}
+                            </Button>
+                        )}
                     </div>
 
                     {canDispatch && !isMine && !task.is_terminal && (
@@ -503,6 +529,11 @@ export function TaskDetail() {
                         </p>
                     )}
                 </section>
+            )}
+
+            {/* ── Admin: approve / reject postponement ──── */}
+            {canDispatch && task.pending_postponement && (
+                <PostponementApprovalCard task={task} />
             )}
 
             <div className="grid gap-5 lg:grid-cols-3">
@@ -927,6 +958,14 @@ export function TaskDetail() {
                 taskId={task.id}
                 current={task.technicians?.map(t => t.id) ?? []}
             />
+
+            {postponeOpen && (
+                <PostponeDialog
+                    open
+                    onClose={() => setPostponeOpen(false)}
+                    task={task}
+                />
+            )}
 
             <ConfirmDialog
                 open={deleteOpen}
@@ -1760,3 +1799,183 @@ function AssignDialog({
 }
 
 /** Best-effort GPS stamp; never blocks the status change. */
+
+/* ── PostponeDialog ──────────────────────────────────────────── */
+
+function PostponeDialog({
+    open,
+    onClose,
+    task,
+}: {
+    open: boolean
+    onClose: () => void
+    task: Task
+}) {
+    const toast = useToast()
+    const request = useRequestPostponement(task.id)
+    const [date, setDate] = useState('')
+    const [reason, setReason] = useState('')
+
+    // Quick shortcuts
+    const addDays = (n: number) => {
+        const d = new Date()
+        d.setDate(d.getDate() + n)
+        return d.toISOString().split('T')[0]
+    }
+
+    const handleSubmit = async () => {
+        if (!date || !reason.trim()) {
+            toast.info('اختر التاريخ واكتب السبب.')
+            return
+        }
+        try {
+            await request.mutateAsync({ postponed_to: date, reason })
+            toast.success('تم إرسال طلب التأجيل للمدير.')
+            onClose()
+        } catch {
+            toast.error('تعذّر إرسال الطلب.')
+        }
+    }
+
+    return (
+        <Modal
+            open={open}
+            onClose={onClose}
+            title="طلب تأجيل الموعد"
+            size="sm"
+            footer={
+                <>
+                    <Button variant="secondary" onClick={onClose}>{tr('إلغاء')}</Button>
+                    <Button
+                        icon={CalendarClock}
+                        loading={request.isPending}
+                        onClick={handleSubmit}
+                    >
+                        {tr('إرسال الطلب')}
+                    </Button>
+                </>
+            }
+        >
+            <div className="space-y-4">
+                {/* Quick date shortcuts */}
+                <div>
+                    <p className="mb-2 text-xs font-semibold text-navy-500">اختيار سريع</p>
+                    <div className="flex flex-wrap gap-2">
+                        {[
+                            { label: 'الأسبوع القادم', days: 7 },
+                            { label: 'بعد أسبوعين', days: 14 },
+                            { label: 'بعد شهر', days: 30 },
+                        ].map(({ label, days }) => (
+                            <button
+                                key={days}
+                                type="button"
+                                onClick={() => setDate(addDays(days))}
+                                className={clsx(
+                                    'rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors',
+                                    date === addDays(days)
+                                        ? 'border-brand-600 bg-brand-50 text-brand-700'
+                                        : 'border-navy-200 text-navy-600 hover:border-brand-400 hover:bg-brand-50',
+                                )}
+                            >
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <Field label="التاريخ المطلوب" required>
+                    <Input
+                        type="date"
+                        value={date}
+                        min={addDays(1)}
+                        onChange={(e) => setDate(e.target.value)}
+                    />
+                </Field>
+
+                <Field label="سبب التأجيل" required>
+                    <Textarea
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        placeholder="اذكر سبب طلب التأجيل…"
+                        rows={3}
+                    />
+                </Field>
+            </div>
+        </Modal>
+    )
+}
+
+/* ── PostponementApprovalCard ────────────────────────────────── */
+
+function PostponementApprovalCard({ task }: { task: Task }) {
+    const toast = useToast()
+    const approve = useApprovePostponement(task.id)
+    const reject = useRejectPostponement(task.id)
+    const p = task.pending_postponement!
+
+    const handleApprove = async () => {
+        try {
+            await approve.mutateAsync(p.id)
+            toast.success('تمت الموافقة على التأجيل وتم تحديث موعد المهمة.')
+        } catch {
+            toast.error('تعذّر قبول الطلب.')
+        }
+    }
+
+    const handleReject = async () => {
+        try {
+            await reject.mutateAsync(p.id)
+            toast.success('تم رفض طلب التأجيل.')
+        } catch {
+            toast.error('تعذّر رفض الطلب.')
+        }
+    }
+
+    return (
+        <section className="card mb-5 border-amber-200 bg-amber-50 p-5">
+            <div className="flex items-start gap-3">
+                <div className="grid size-10 shrink-0 place-items-center rounded-full bg-amber-100 text-amber-600">
+                    <CalendarClock className="size-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                    <h2 className="text-sm font-bold text-amber-900">طلب تأجيل بانتظار الموافقة</h2>
+                    <p className="mt-1 text-xs text-amber-700">
+                        طلب <span className="font-semibold">{p.requested_by}</span> تأجيل المهمة إلى{' '}
+                        <span className="font-semibold">
+                            {new Date(p.postponed_to).toLocaleDateString('ar-EG', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                            })}
+                        </span>
+                    </p>
+                    {p.reason && (
+                        <p className="mt-2 rounded-lg bg-amber-100 px-3 py-2 text-xs text-amber-800">
+                            السبب: {p.reason}
+                        </p>
+                    )}
+                    <div className="mt-3 flex gap-2">
+                        <Button
+                            icon={CheckCircle}
+                            className="bg-green-600 text-white hover:bg-green-700"
+                            loading={approve.isPending}
+                            onClick={handleApprove}
+                        >
+                            {tr('موافقة')}
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            icon={XCircle}
+                            className="text-red-600 hover:bg-red-50"
+                            loading={reject.isPending}
+                            onClick={handleReject}
+                        >
+                            {tr('رفض')}
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    )
+}
