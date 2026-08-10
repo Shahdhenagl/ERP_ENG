@@ -137,11 +137,14 @@ class TaskWorkflow
      */
     protected function notifyStatusChange(Task $task, TaskStatus $from, TaskStatus $to, User $actor): void
     {
+        $techIds = $task->technicians()->pluck('users.id')->all();
+
         $recipients = User::query()
             ->active()
-            ->where(function ($q) use ($task) {
+            ->where(function ($q) use ($task, $techIds) {
                 $q->where('role', 'admin')
-                    ->orWhere('id', $task->created_by);
+                    ->orWhere('id', $task->created_by)
+                    ->orWhereIn('id', $techIds);
             })
             ->where('id', '!=', $actor->id)   // don't notify whoever pushed the button
             ->get();
