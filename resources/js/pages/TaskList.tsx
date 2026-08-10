@@ -370,8 +370,8 @@ export function TaskList() {
             {isError ? (
                 <ErrorState message="تعذّر تحميل المهام." onRetry={() => void refetch()} />
             ) : isLoading ? (
-                <div className="space-y-3">
-                    {Array.from({ length: 5 }).map((_, index) => (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {Array.from({ length: 6 }).map((_, index) => (
                         <SkeletonCard key={index} />
                     ))}
                 </div>
@@ -395,7 +395,7 @@ export function TaskList() {
                         {effectiveView === 'table' ? (
                             <TaskTable tasks={data.data} href={(id) => path(`/tasks/${id}`)} />
                         ) : (
-                            <div className="space-y-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 {data.data.map((task) => (
                                     <TaskCard key={task.id} task={task} showTechnician={canDispatch} />
                                 ))}

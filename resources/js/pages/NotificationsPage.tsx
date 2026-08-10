@@ -78,12 +78,12 @@ export function NotificationsPage() {
                                     <span className={clsx('tabular badge', meta.chip)}>{group.count}</span>
                                 </div>
 
-                                <div className="overflow-hidden rounded-2xl border border-navy-100">
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                     {group.items.map((item, index) => (
                                         <Link
                                             key={`${group.key}-${index}`}
                                             to={path(item.url)}
-                                            className="flex items-start gap-3 border-b border-navy-100 bg-surface p-3.5 transition last:border-0 hover:bg-navy-50"
+                                            className="flex items-start gap-3 rounded-2xl border border-navy-100 bg-surface p-3.5 transition hover:bg-navy-50"
                                         >
                                             <span
                                                 className={clsx(
