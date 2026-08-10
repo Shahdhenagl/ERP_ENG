@@ -432,41 +432,7 @@ export function Dashboard() {
                 </section>
             )}
 
-            {/* ── What needs attention now ───────────────────── */}
-            <section className="mt-8">
-                <div className="mb-3 flex items-center justify-between">
-                    <h2 className="text-sm font-bold text-navy-700">
-                        {canDispatch ? tr('الأقرب تنفيذًا') : tr('مهامك القادمة')}
-                    </h2>
-                    <Link to={path('/tasks')} className="text-xs font-bold text-brand-600 hover:underline">
-                        {tr('عرض الكل')}
-                    </Link>
-                </div>
-
-                {isLoading ? (
-                    <div className="space-y-3">
-                        <SkeletonCard />
-                        <SkeletonCard />
-                        <SkeletonCard />
-                    </div>
-                ) : !data?.upcoming.length ? (
-                    <EmptyState
-                        icon={Inbox}
-                        title={tr('لا توجد مهام مفتوحة')}
-                        description={
-                            canDispatch
-                                ? tr('كل المهام منتهية — أو لم يتم إنشاء مهام بعد.')
-                                : tr('لا توجد مهام مسندة إليك حاليًا.')
-                        }
-                    />
-                ) : (
-                    <div className="space-y-3">
-                        {data.upcoming.map((task) => (
-                            <TaskCard key={task.id} task={task} showTechnician={canDispatch} />
-                        ))}
-                    </div>
-                )}
-            </section>
+            {/* ── End of Dashboard ── */}
         </>
     )
 }
