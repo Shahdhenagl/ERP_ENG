@@ -63,6 +63,10 @@ class DashboardController extends Controller
             TaskStatus::InProgress->value,
         ];
 
+        $year = $request->integer('year') ?: (int) now()->year;
+        $month = $request->integer('month') ?: (int) now()->month;
+        $targetDate = \Carbon\Carbon::createFromDate($year, $month, 1);
+
         $stats = [
             'by_status' => $counts,
             'open_total' => array_sum(array_intersect_key($counts, array_flip($openStatuses))),
@@ -72,7 +76,7 @@ class DashboardController extends Controller
                 ->count(),
             'completed_this_month' => $scoped()
                 ->where('status', TaskStatus::Completed->value)
-                ->whereBetween('completed_at', [now()->startOfMonth(), now()->endOfMonth()])
+                ->whereBetween('completed_at', [$targetDate->copy()->startOfMonth(), $targetDate->copy()->endOfMonth()])
                 ->count(),
             'overdue' => $scoped()
                 ->open()

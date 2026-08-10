@@ -210,10 +210,10 @@ export const keys = {
 
 /* ── Dashboard ───────────────────────────────────────────── */
 
-export function useDashboard() {
+export function useDashboard(params: { year?: number; month?: number } = {}) {
     return useQuery({
-        queryKey: keys.dashboard,
-        queryFn: async () => (await api.get<DashboardData>('/dashboard')).data,
+        queryKey: ['dashboard', params],
+        queryFn: async () => (await api.get<DashboardData>('/dashboard', { params })).data,
         refetchInterval: 60_000,
     })
 }

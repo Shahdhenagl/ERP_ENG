@@ -35,9 +35,13 @@ import {
 import type { DashboardData } from '@/types'
 
 export function Dashboard() {
-    const { user, canDispatch, can } = useAuth()
-    const { path } = useArea()
-    const { data, isLoading, isError, refetch } = useDashboard()
+    const now = new Date()
+    const [monthStr, setMonthStr] = useState(
+        `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`,
+    )
+    const [year, month] = monthStr.split('-').map(Number)
+
+    const { data, isLoading, isError, refetch } = useDashboard({ year, month })
 
     if (isError) {
         return <ErrorState message={tr('تعذّر تحميل لوحة المعلومات.')} onRetry={() => void refetch()} />
@@ -53,6 +57,17 @@ export function Dashboard() {
                     canDispatch
                         ? tr('نظرة عامة على العمليات الجارية')
                         : tr('مهامك الحالية ومواعيدها')
+                }
+                action={
+                    <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-navy-100 shadow-sm">
+                        <span className="text-xs font-semibold text-navy-600">{tr('تصفح الشهر')}:</span>
+                        <input
+                            type="month"
+                            value={monthStr}
+                            onChange={(e) => e.target.value && setMonthStr(e.target.value)}
+                            className="text-xs font-bold text-brand-600 bg-transparent border-0 focus:ring-0 p-0 cursor-pointer"
+                        />
+                    </div>
                 }
             />
 
@@ -543,9 +558,9 @@ function AttendanceToday({
                 </span>
             </div>
 
-            <div className="card divide-y divide-navy-100">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {rows.map((row) => (
-                    <div key={row.id} className="flex items-center gap-3 p-3.5">
+                    <div key={row.id} className="card p-3.5 flex items-center gap-3">
                         <span
                             className={clsx(
                                 'size-2.5 shrink-0 rounded-full',
