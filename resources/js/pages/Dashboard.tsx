@@ -61,8 +61,8 @@ export function Dashboard() {
                         ? tr('نظرة عامة على العمليات الجارية')
                         : tr('مهامك الحالية ومواعيدها')
                 }
-                action={
-                    <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-navy-100 shadow-sm">
+                actions={
+                    <div className="flex items-center gap-2 bg-white px-3.5 py-2 rounded-xl border border-navy-200 shadow-sm">
                         <span className="text-xs font-semibold text-navy-600">{tr('تصفح الشهر')}:</span>
                         <input
                             type="month"
@@ -81,30 +81,29 @@ export function Dashboard() {
                     label={tr('مهام مفتوحة')}
                     value={stats?.open_total}
                     loading={isLoading}
-                    tone="brand"
-                    to={path('/tasks?open_only=1')}
-                />
-                <StatTile
-                    icon={CalendarCheck}
-                    label={tr('منتهية اليوم')}
-                    value={stats?.completed_today}
-                    loading={isLoading}
-                    tone="emerald"
+                    tone="navy"
                 />
                 <StatTile
                     icon={AlertTriangle}
                     label={tr('متأخرة')}
                     value={stats?.overdue}
                     loading={isLoading}
-                    tone={stats?.overdue ? 'red' : 'slate'}
+                    tone="danger"
                 />
-                {canDispatch ? (
+                <StatTile
+                    icon={CalendarClock}
+                    label={tr('غير مسندة')}
+                    value={stats?.unassigned}
+                    loading={isLoading}
+                    tone="warn"
+                />
+                {user?.isTechnician() ? (
                     <StatTile
-                        icon={UserX}
-                        label={tr('بدون فني')}
-                        value={stats?.unassigned}
+                        icon={CalendarCheck}
+                        label={tr('منتهية اليوم')}
+                        value={stats?.completed_today}
                         loading={isLoading}
-                        tone={stats?.unassigned ? 'amber' : 'slate'}
+                        tone="ok"
                     />
                 ) : (
                     <StatTile
@@ -167,19 +166,16 @@ export function Dashboard() {
                                                 {technician.job_title}
                                             </p>
                                         )}
-                                        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-navy-100">
+                                        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-navy-100">
                                             <div
-                                                className="h-full rounded-full bg-gradient-to-l from-brand-600 to-brand-400 transition-all"
+                                                className="h-full rounded-full bg-brand-500 transition-all duration-300"
                                                 style={{ width: `${width}%` }}
                                             />
                                         </div>
                                     </div>
 
-                                    <div className="shrink-0 text-left">
-                                        <p className="tabular text-lg font-extrabold text-navy-900">
-                                            {technician.open_count}
-                                        </p>
-                                        <p className="text-[10px] font-semibold text-navy-400">{tr('مفتوحة')}</p>
+                                    <div className="tabular text-left text-xs font-bold text-navy-700">
+                                        {technician.open_count} {tr('مفتوحة')}
                                     </div>
                                 </div>
                             )
@@ -188,33 +184,49 @@ export function Dashboard() {
                 </section>
             )}
 
-            {/* ── Secondary counts ───────────────────────────── */}
-            {canDispatch && (
-                <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4">
-                    <StatTile
-                        icon={Building2}
-                        label={tr('العملاء')}
-                        value={stats?.customers_total}
-                        loading={isLoading}
-                        tone="navy"
-                        to={can('customers.manage') ? path('/customers') : undefined}
-                    />
-                    <StatTile
-                        icon={Users}
-                        label={tr('الفنيون')}
-                        value={stats?.technicians_total}
-                        loading={isLoading}
-                        tone="navy"
-                        to={path('/technicians')}
-                    />
+            {/* ── What needs attention now ───────────────────── */}
+            <section className="mt-8">
+                <div className="mb-3 flex items-center justify-between">
+                    <h2 className="text-sm font-bold text-navy-700">
+                        {canDispatch ? tr('الأقرب تنفيذًا') : tr('مهامك القادمة')}
+                    </h2>
+                    <Link to={path('/tasks')} className="text-xs font-bold text-brand-600 hover:underline">
+                        {tr('عرض الكل')}
+                    </Link>
                 </div>
-            )}
+
+                {isLoading ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <SkeletonCard />
+                        <SkeletonCard />
+                    </div>
+                ) : !data?.upcoming.length ? (
+                    <EmptyState
+                        icon={Inbox}
+                        title={tr('لا توجد مهام مفتوحة')}
+                        description={
+                            canDispatch
+                                ? tr('كل المهام منتهية — أو لم يتم إنشاء مهام بعد.')
+                                : tr('لا توجد مهام مسندة إليك حاليًا.')
+                        }
+                    />
+                ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {data.upcoming.map((task) => (
+                            <TaskCard key={task.id} task={task} showTechnician={canDispatch} />
+                        ))}
+                    </div>
+                )}
+            </section>
 
             {/* ── The estate overview (was the separate operations board) ── */}
             {canDispatch && (
                 <section className="mt-8">
                     <h2 className="mb-3 text-sm font-bold text-navy-700">{tr('نظرة على المنشأة')}</h2>
-                    <OperationsOverview />
+                    <OperationsOverview
+                        customersTotal={stats?.customers_total}
+                        techniciansTotal={stats?.technicians_total}
+                    />
                 </section>
             )}
 
