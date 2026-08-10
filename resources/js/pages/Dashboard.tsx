@@ -17,6 +17,7 @@ import {
     type LucideIcon,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useState } from 'react'
 import { OperationsOverview } from '@/pages/OperationsDashboard'
 import { TaskCard } from '@/components/TaskCard'
 import { useToast } from '@/components/Toast'
@@ -35,6 +36,8 @@ import {
 import type { DashboardData } from '@/types'
 
 export function Dashboard() {
+    const { user, canDispatch, can } = useAuth()
+    const { path } = useArea()
     const now = new Date()
     const [monthStr, setMonthStr] = useState(
         `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`,
