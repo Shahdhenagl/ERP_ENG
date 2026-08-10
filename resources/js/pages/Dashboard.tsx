@@ -202,6 +202,7 @@ export function Dashboard() {
                         value={stats?.technicians_total}
                         loading={isLoading}
                         tone="navy"
+                        to={path('/technicians')}
                     />
                 </div>
             )}
