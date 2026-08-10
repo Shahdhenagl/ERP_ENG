@@ -250,6 +250,26 @@ export function useCreateTask() {
     })
 }
 
+export function useBulkCreateTasks() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: {
+            assigned_to: number[]
+            title: string
+            description?: string | null
+            type: string
+            priority: string
+            scheduled_at?: string | null
+            targets: Array<{ customer_id: number; branch_id?: number | null; label?: string }>
+        }) => (await api.post<{ count: number; message: string; tasks: Task[] }>('/tasks/bulk', payload)).data,
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: ['tasks'] })
+            void client.invalidateQueries({ queryKey: keys.dashboard })
+        },
+    })
+}
+
 export function useUpdateTask(id: number) {
     const client = useQueryClient()
 

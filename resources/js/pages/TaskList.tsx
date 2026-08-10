@@ -3,6 +3,7 @@ import { tr } from '@/lib/i18n'
 import {
     FileSpreadsheet,
     Inbox,
+    Layers,
     Plus,
     Printer,
     Search,
@@ -196,10 +197,16 @@ export function TaskList() {
                             </>
                         )}
                         {canDispatch && (
-                            <Link to={path('/tasks/new')} className="btn-primary">
-                                <Plus className="size-4" />
-                                {tr('مهمة جديدة')}
-                            </Link>
+                            <>
+                                <Link to={path('/tasks/bulk-new')} className="btn-secondary">
+                                    <Layers className="size-4" />
+                                    {tr('مهام متعددة')}
+                                </Link>
+                                <Link to={path('/tasks/new')} className="btn-primary">
+                                    <Plus className="size-4" />
+                                    {tr('مهمة جديدة')}
+                                </Link>
+                            </>
                         )}
                     </div>
                 }

@@ -120,6 +120,7 @@ import { Login } from '@/pages/Login'
 import { Profile } from '@/pages/Profile'
 import { TaskDetail } from '@/pages/TaskDetail'
 import { TaskForm } from '@/pages/TaskForm'
+import { BulkTaskForm } from '@/pages/BulkTaskForm'
 import { TaskList } from '@/pages/TaskList'
 import { AuditLog } from '@/pages/AuditLog'
 import { RolesPage } from '@/pages/RolesPage'
@@ -212,6 +213,7 @@ export function App() {
                                         <Route index element={<Dashboard />} />
                                         <Route path="tasks" element={<TaskList />} />
                                         <Route path="tasks/new" element={<TaskForm />} />
+                                        <Route path="tasks/bulk-new" element={<BulkTaskForm />} />
                                         <Route path="tasks/:id" element={<TaskDetail />} />
                                         <Route path="tasks/:id/edit" element={<TaskForm />} />
                                         <Route path="customers" element={<CustomerList />} />

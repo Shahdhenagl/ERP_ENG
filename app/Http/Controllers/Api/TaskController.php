@@ -280,6 +280,71 @@ class TaskController extends Controller
         return new TaskResource($task->fresh(['technicians']));
     }
 
+    /**
+     * Bulk-create tasks: the manager picks one technician + shared fields, then
+     * adds as many (customer, branch) targets as needed. One Task is created per
+     * target row, and the technician is notified for every one of them.
+     */
+    public function bulkCreate(Request $request): JsonResponse
+    {
+        $shared = $request->validate([
+            'assigned_to'   => ['nullable', 'array'],
+            'assigned_to.*' => ['exists:users,id'],
+            'title'         => ['required', 'string', 'max:200'],
+            'description'   => ['nullable', 'string', 'max:5000'],
+            'type'          => ['required', Rule::enum(TaskType::class)],
+            'priority'      => ['required', Rule::enum(TaskPriority::class)],
+            'scheduled_at'  => ['nullable', 'date'],
+            'targets'       => ['required', 'array', 'min:1', 'max:50'],
+            'targets.*.customer_id' => ['required', 'exists:customers,id'],
+            'targets.*.branch_id'   => ['nullable', 'exists:branches,id'],
+        ]);
+
+        $assignees = $shared['assigned_to'] ?? [];
+        unset($shared['assigned_to'], $shared['targets']);
+
+        $created = [];
+
+        foreach ($request->input('targets') as $target) {
+            $data = array_merge($shared, [
+                'customer_id' => $target['customer_id'],
+                'branch_id'   => $target['branch_id'] ?? null,
+                'status'      => TaskStatus::Pending,
+                'created_by'  => $request->user()->id,
+            ]);
+
+            // Inherit address from branch or customer if not set
+            $source = ! empty($data['branch_id'])
+                ? Branch::find($data['branch_id'])
+                : Customer::find($data['customer_id']);
+
+            $data['site_address'] = $source?->address;
+            $data['site_lat']     = $source?->lat;
+            $data['site_lng']     = $source?->lng;
+            $data['site_map_url'] = $source?->map_url;
+
+            $task = Task::create($data);
+
+            if (! empty($assignees)) {
+                $task->technicians()->sync($assignees);
+                foreach ($assignees as $assigneeId) {
+                    if ($technician = User::find($assigneeId)) {
+                        $task = $this->workflow->assign($task, $technician, $request->user());
+                    }
+                }
+            }
+
+            ActivityLog::record('task.created', $task, "تم إنشاء المهمة {$task->code} (جماعي)");
+            $created[] = $task->load(['customer', 'branch', 'technicians', 'creator']);
+        }
+
+        return response()->json([
+            'count'   => count($created),
+            'message' => "تم إنشاء " . count($created) . " مهمة بنجاح.",
+            'tasks'   => TaskResource::collection(collect($created)),
+        ], 201);
+    }
+
     public function destroy(Task $task): JsonResponse
     {
         $code = $task->code;

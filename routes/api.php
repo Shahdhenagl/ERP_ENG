@@ -164,6 +164,7 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     // The operational alerts board — live conditions grouped, not the bell.
     Route::get('alerts', [\App\Http\Controllers\Api\AlertsController::class, 'index']);
     Route::post('tasks', [TaskController::class, 'store'])->middleware('can:tasks.dispatch');
+    Route::post('tasks/bulk', [TaskController::class, 'bulkCreate'])->middleware('can:tasks.dispatch');
     Route::put('tasks/{task}', [TaskController::class, 'update'])->middleware('can:tasks.dispatch');
     Route::delete('tasks/{task}', [TaskController::class, 'destroy'])->middleware('can:tasks.dispatch');
     Route::post('tasks/{task}/assign', [TaskController::class, 'assign'])->middleware('can:tasks.dispatch');
