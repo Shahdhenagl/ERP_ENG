@@ -2458,11 +2458,14 @@ export interface PpmVisit {
 }
 
 export interface PpmSummary {
+    total: number
     planned: number
     scheduled: number
     done: number
     skipped: number
     overdue: number
+    due_today: number
+    upcoming_7: number
     upcoming_30: number
     compliance: number | null
 }

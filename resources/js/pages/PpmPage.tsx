@@ -70,15 +70,17 @@ export function PpmPage() {
             />
 
             {summary && (
-                <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                    <Stat label="إجمالي الصيانات" value={String(summary.total)} />
+                    <Stat label="المستحقة اليوم" value={String(summary.due_today)} accent />
+                    <Stat label="خلال 7 أيام" value={String(summary.upcoming_7)} />
+                    <Stat label="المتأخرة" value={String(summary.overdue)} tone={summary.overdue ? 'down' : undefined} />
+                    <Stat label="تم تنفيذها" value={String(summary.done)} tone="up" />
                     <Stat
                         label="نسبة الالتزام"
                         value={summary.compliance !== null ? `${summary.compliance}%` : '—'}
                         accent
                     />
-                    <Stat label="خلال 30 يوم" value={String(summary.upcoming_30)} />
-                    <Stat label="متأخرة" value={String(summary.overdue)} tone={summary.overdue ? 'down' : undefined} />
-                    <Stat label="تمت" value={String(summary.done)} tone="up" />
                 </div>
             )}
 

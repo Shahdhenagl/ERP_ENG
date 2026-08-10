@@ -59,11 +59,16 @@ class PpmController extends Controller
         $overdue = (clone $open())->whereDate('planned_for', '<', $today)->count();
 
         return response()->json([
+            'total' => (clone $live)->count(),
             'planned' => (clone $live)->where('status', VisitStatus::Planned->value)->count(),
             'scheduled' => (clone $live)->where('status', VisitStatus::Scheduled->value)->count(),
             'done' => $done,
             'skipped' => (clone $live)->where('status', VisitStatus::Skipped->value)->count(),
             'overdue' => $overdue,
+            'due_today' => (clone $open())->whereDate('planned_for', $today)->count(),
+            'upcoming_7' => (clone $open())
+                ->whereBetween('planned_for', [now()->addDay()->toDateString(), now()->addDays(7)->toDateString()])
+                ->count(),
             'upcoming_30' => (clone $open())
                 ->whereBetween('planned_for', [$today, now()->addDays(30)->toDateString()])
                 ->count(),
