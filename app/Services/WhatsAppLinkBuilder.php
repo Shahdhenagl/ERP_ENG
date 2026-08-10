@@ -139,8 +139,8 @@ class WhatsAppLinkBuilder
             "*الموضوع:* {$task->title}",
         ];
 
-        if ($task->technician) {
-            $lines[] = "*الفني:* {$task->technician->name}";
+        if ($task->technicians->isNotEmpty()) {
+            $lines[] = "*الفني:* {$task->technicians->map->name->join('، ')}";
         }
 
         if ($task->completed_at) {
