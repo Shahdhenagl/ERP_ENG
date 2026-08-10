@@ -103,7 +103,7 @@ class AssetController extends Controller
         return new AssetResource(
             $asset->load([
                 'customer',
-                'tasks' => fn ($q) => $q->with('technician')->orderByDesc('scheduled_at'),
+                'tasks' => fn ($q) => $q->with('technicians')->orderByDesc('scheduled_at'),
             ])->loadCount('tasks'),
         );
     }

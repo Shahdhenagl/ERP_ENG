@@ -46,7 +46,7 @@ class ContractVisitResource extends JsonResource
                     'status' => $task->status->value,
                     'status_label' => $task->status->label(),
                     'branch' => $task->branch?->name,
-                    'technician' => $task->technician?->name,
+                    'technician' => $task->technicians->map->name->join('، '),
                 ])
                 ->values()),
         ];

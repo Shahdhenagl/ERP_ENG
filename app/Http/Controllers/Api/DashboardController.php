@@ -114,7 +114,7 @@ class DashboardController extends Controller
 
         // What needs attention right now.
         $upcoming = $scoped()
-            ->with(['customer', 'technician', 'asset'])
+            ->with(['customer', 'technicians', 'asset'])
             ->open()
             ->actionable()
             // Live work first. Ordered by date alone, a job being driven to

@@ -135,9 +135,9 @@ class TaskResource extends JsonResource
             // technician reports back to the manager.
             'whatsapp' => [
                 'brief_technician' => $this->whenLoaded(
-                    'technician',
+                    'technicians',
                     fn () => $whatsapp->link(
-                        $this->technician?->whatsappNumber(),
+                        $this->technicians->first()?->whatsappNumber(),
                         $whatsapp->taskBriefMessage($this->resource),
                     ),
                 ),

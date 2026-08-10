@@ -248,7 +248,7 @@ class WarrantyController extends Controller
             "أمر إصلاح {$task->code} للبلاغ {$claim->code}",
         );
 
-        return (new TaskResource($task->load(['customer', 'asset', 'technician'])))
+        return (new TaskResource($task->load(['customer', 'asset', 'technicians'])))
             ->response()->setStatusCode(201);
     }
 }

@@ -220,7 +220,7 @@ class CustomerController extends Controller
                 'status' => $task->status->value,
                 'status_label' => $task->status->label(),
                 'priority_label' => $task->priority->label(),
-                'technician' => $task->technician?->name,
+                'technician' => $task->technicians->map->name->join('، '),
                 'customer' => $customer->name,
                 'branch' => $task->branch?->name,
                 'asset' => $task->asset?->label(),

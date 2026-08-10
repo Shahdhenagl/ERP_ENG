@@ -808,7 +808,7 @@ class ReportService
                 'code' => $task->code,
                 'title' => $task->title,
                 'customer' => $task->customer?->name,
-                'technician' => $task->technician?->name,
+                'technician' => $task->technicians->map->name->join('، '),
                 'completed_at' => $task->completed_at?->toIso8601String(),
             ]);
 

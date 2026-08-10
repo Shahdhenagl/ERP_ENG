@@ -54,6 +54,6 @@ class TaskStatusController extends Controller
             ],
         );
 
-        return new TaskResource($task->load(['customer', 'technician', 'creator', 'asset', 'statusLogs.user']));
+        return new TaskResource($task->load(['customer', 'technicians', 'creator', 'asset', 'statusLogs.user']));
     }
 }
