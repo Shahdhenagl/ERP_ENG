@@ -44,8 +44,23 @@ class DashboardController extends Controller
             fn ($q) => $q->forTechnician($user->id),
         );
 
-        // One grouped query instead of six counts.
-        $byStatus = $scoped()
+        $year = $request->integer('year') ?: (int) now()->year;
+        $month = $request->integer('month') ?: (int) now()->month;
+        $targetDate = \Carbon\Carbon::createFromDate($year, $month, 1);
+        $monthStart = $targetDate->copy()->startOfMonth();
+        $monthEnd = $targetDate->copy()->endOfMonth();
+
+        $isCurrentMonth = $targetDate->isSameMonth(now());
+
+        // One grouped query instead of six counts — scoped to selected month.
+        $statusQuery = $scoped()
+            ->when(!$isCurrentMonth, fn ($q) => $q->where(function ($q) use ($monthStart, $monthEnd) {
+                $q->whereBetween('tasks.created_at', [$monthStart, $monthEnd])
+                  ->orWhereBetween('tasks.scheduled_at', [$monthStart, $monthEnd])
+                  ->orWhereBetween('tasks.completed_at', [$monthStart, $monthEnd]);
+            }));
+
+        $byStatus = $statusQuery
             ->select('status', DB::raw('count(*) as total'))
             ->groupBy('status')
             ->pluck('total', 'status');
@@ -63,32 +78,30 @@ class DashboardController extends Controller
             TaskStatus::InProgress->value,
         ];
 
-        $year = $request->integer('year') ?: (int) now()->year;
-        $month = $request->integer('month') ?: (int) now()->month;
-        $targetDate = \Carbon\Carbon::createFromDate($year, $month, 1);
-
         $stats = [
             'by_status' => $counts,
             'open_total' => array_sum(array_intersect_key($counts, array_flip($openStatuses))),
             'completed_today' => $scoped()
                 ->where('status', TaskStatus::Completed->value)
-                ->whereDate('completed_at', today())
+                ->when($isCurrentMonth,
+                    fn ($q) => $q->whereDate('completed_at', today()),
+                    fn ($q) => $q->whereBetween('completed_at', [$monthStart, $monthEnd]),
+                )
                 ->count(),
             'completed_this_month' => $scoped()
                 ->where('status', TaskStatus::Completed->value)
-                ->whereBetween('completed_at', [$targetDate->copy()->startOfMonth(), $targetDate->copy()->endOfMonth()])
+                ->whereBetween('completed_at', [$monthStart, $monthEnd])
                 ->count(),
             'overdue' => $scoped()
                 ->open()
                 ->whereNotNull('scheduled_at')
                 ->where('scheduled_at', '<', now())
+                ->when(!$isCurrentMonth, fn ($q) => $q->whereBetween('tasks.scheduled_at', [$monthStart, $monthEnd]))
                 ->count(),
-            // Contract visits are cut ahead of their date, so both of these are
-            // held to what a dispatcher could act on this fortnight. Counting
-            // every future visit would turn a signed contract into a badge full
-            // of work nobody is meant to touch yet.
             'unassigned' => $user->canDispatch()
-                ? Task::query()->open()->actionable()->doesntHave('technicians')->count()
+                ? Task::query()->open()->actionable()->doesntHave('technicians')
+                    ->when(!$isCurrentMonth, fn ($q) => $q->whereBetween('tasks.created_at', [$monthStart, $monthEnd]))
+                    ->count()
                 : 0,
         ];
 
