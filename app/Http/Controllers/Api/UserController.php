@@ -94,7 +94,7 @@ class UserController extends Controller
         $month = $request->integer('month') ?: (int) now()->month;
 
         $employee = $user->employee;
-        $effective = 'COALESCE(scheduled_at, created_at)';
+        $effective = 'COALESCE(tasks.scheduled_at, tasks.created_at)';
 
         // The jobs they carried out in the month.
         $tasks = $user->assignedTasks()

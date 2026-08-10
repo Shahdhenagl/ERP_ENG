@@ -195,7 +195,7 @@ class CustomerController extends Controller
         $effective = 'COALESCE(scheduled_at, created_at)';
 
         $query = $customer->tasks()
-            ->with(['technician:id,name', 'branch:id,name', 'asset:id,code,brand,model'])
+            ->with(['technicians:id,name', 'branch:id,name', 'asset:id,code,brand,model'])
             ->when(
                 $request->date('from'),
                 fn ($q, $from) => $q->whereRaw("{$effective} >= ?", [$from->startOfDay()]),
