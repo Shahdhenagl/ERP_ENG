@@ -19,7 +19,7 @@ class TaskAttachmentController extends Controller
         $user = $request->user();
 
         abort_if(
-            $user->isTechnician() && $task->assigned_to !== $user->id,
+            $user->isTechnician() && ! $task->technicians()->where('users.id', $user->id)->exists(),
             403,
             'هذه المهمة غير مسندة إليك.',
         );

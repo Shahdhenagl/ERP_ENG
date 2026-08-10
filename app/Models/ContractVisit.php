@@ -86,7 +86,7 @@ class ContractVisit extends Model
         }
 
         return $tasks->contains(
-            fn (Task $task) => $task->status !== TaskStatus::Pending || $task->assigned_to !== null,
+            fn (Task $task) => $task->status !== TaskStatus::Pending || $task->technicians->isNotEmpty(),
         );
     }
 

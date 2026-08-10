@@ -417,7 +417,7 @@ class MaintenancePlanner
                 // but only while it is still untouched.
                 $legacy = $live->first(fn (Task $task) => $task->branch_id === null
                     && $task->status === TaskStatus::Pending
-                    && $task->assigned_to === null);
+                    && $task->technicians->isEmpty());
 
                 if ($legacy) {
                     $scheduledAt = $this->scheduledAtFor($visit);

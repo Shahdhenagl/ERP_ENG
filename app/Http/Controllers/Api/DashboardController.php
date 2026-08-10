@@ -84,7 +84,7 @@ class DashboardController extends Controller
             // every future visit would turn a signed contract into a badge full
             // of work nobody is meant to touch yet.
             'unassigned' => $user->canDispatch()
-                ? Task::query()->open()->actionable()->whereNull('assigned_to')->count()
+                ? Task::query()->open()->actionable()->doesntHave('technicians')->count()
                 : 0,
         ];
 
@@ -141,7 +141,7 @@ class DashboardController extends Controller
             $visitsDue = Task::query()
                 ->whereNotNull('contract_id')
                 ->open()
-                ->whereNull('assigned_to')
+                ->doesntHave('technicians')
                 ->with(['customer', 'contract'])
                 ->orderByRaw('scheduled_at IS NULL, scheduled_at ASC')
                 ->limit(10)

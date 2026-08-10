@@ -237,13 +237,16 @@ class WarrantyService
                 'description' => $data['description'] ?? $claim->fault,
                 'type' => TaskType::Repair->value,
                 'priority' => $data['priority'] ?? TaskPriority::High->value,
-                'assigned_to' => $data['assigned_to'] ?? null,
                 'scheduled_at' => $data['scheduled_at'] ?? null,
                 'site_address' => $asset->site_address,
                 'site_lat' => $asset->site_lat,
                 'site_lng' => $asset->site_lng,
                 'created_by' => $actor?->id,
             ]);
+
+            if (!empty($data['assigned_to'])) {
+                $task->technicians()->attach($data['assigned_to']);
+            }
 
             $claim->forceFill(['task_id' => $task->id])->save();
 

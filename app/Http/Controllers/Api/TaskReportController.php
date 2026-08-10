@@ -31,7 +31,7 @@ class TaskReportController extends Controller
         $user = $request->user();
 
         abort_if(
-            $user->isTechnician() && $task->assigned_to !== $user->id,
+            $user->isTechnician() && ! $task->technicians()->where('users.id', $user->id)->exists(),
             403,
             'هذه المهمة غير مسندة إليك.',
         );
@@ -106,7 +106,7 @@ class TaskReportController extends Controller
         // Deduct what the technician says they fitted, from their own custody.
         // Reconciled rather than deducted, so editing the report corrects the
         // balance instead of consuming the parts a second time.
-        if ($user->isTechnician() && $task->assigned_to === $user->id) {
+        if ($user->isTechnician() && $task->technicians()->where('users.id', $user->id)->exists()) {
             $this->ledger->syncTaskConsumption($task, $data['parts_used'] ?? [], $user);
         }
 
@@ -123,7 +123,7 @@ class TaskReportController extends Controller
             $data['type'] === 'completion'
             && $task->status === TaskStatus::InProgress
             && $user->isTechnician()
-            && $task->assigned_to === $user->id
+            && $task->technicians()->where('users.id', $user->id)->exists()
         ) {
             $this->workflow->transition($task, TaskStatus::Completed, $user);
         }

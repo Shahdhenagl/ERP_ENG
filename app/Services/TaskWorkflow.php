@@ -112,10 +112,8 @@ class TaskWorkflow
      */
     public function assign(Task $task, ?User $technician, User $actor): Task
     {
-        $previous = $task->assigned_to;
-
-        $task->assigned_to = $technician?->id;
-        $task->save();
+        // The relationship `technicians` is synced before calling this method.
+        // We only need to record the activity and send the push notification.
 
         ActivityLog::record(
             action: 'task.assigned',

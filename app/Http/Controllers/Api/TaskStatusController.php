@@ -36,7 +36,7 @@ class TaskStatusController extends Controller
             abort_unless($user->canDispatch(), 403, 'الإلغاء من صلاحية المدير فقط.');
         } else {
             abort_unless(
-                $user->isTechnician() && $task->assigned_to === $user->id,
+                $user->isTechnician() && $task->technicians()->where('users.id', $user->id)->exists(),
                 403,
                 'تغيير حالة المهمة من صلاحية الفني المسندة إليه فقط.',
             );
