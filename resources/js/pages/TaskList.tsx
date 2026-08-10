@@ -460,6 +460,7 @@ function TaskTable({ tasks, href }: { tasks: Task[]; href: (id: number) => strin
                         <Th className="px-3 py-2.5">المهمة</Th>
                         <Th className="px-3 py-2.5">العميل</Th>
                         <Th className="px-3 py-2.5">الفرع</Th>
+                        <Th className="px-3 py-2.5">الفني</Th>
                         <Th className="w-28 px-3 py-2.5">الحالة</Th>
                         <Th className="w-40 px-3 py-2.5">بداية التنفيذ</Th>
                         <Th className="w-40 px-3 py-2.5">انتهاء التنفيذ</Th>
@@ -487,6 +488,7 @@ function TaskTable({ tasks, href }: { tasks: Task[]; href: (id: number) => strin
                                 </td>
                                 <td className="px-3 py-2.5 text-navy-700">{task.customer?.name ?? '—'}</td>
                                 <td className="px-3 py-2.5 text-navy-600">{task.branch?.name ?? '—'}</td>
+                                <td className="px-3 py-2.5 font-medium text-navy-800">{task.technician?.name ?? '—'}</td>
                                 <td className="px-3 py-2.5">
                                     <span className={clsx('badge', meta.chip)}>{meta.label}</span>
                                 </td>
