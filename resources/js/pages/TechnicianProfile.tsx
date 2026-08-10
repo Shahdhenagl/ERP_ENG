@@ -131,34 +131,52 @@ export function TechnicianProfile() {
                 </div>
 
                 {attendance.rows.length > 0 && (
-                    <div className="overflow-hidden rounded-2xl border border-navy-100">
-                        {attendance.rows.map((row) => (
-                            <div
-                                key={row.id}
-                                className="flex items-center gap-3 border-b border-navy-100 p-3 last:border-0"
-                            >
-                                <span className="tabular w-24 shrink-0 text-xs text-navy-500">
-                                    {formatDate(row.date)}
-                                </span>
-                                <span className="badge bg-navy-100 text-navy-600">{row.status_label}</span>
-                                <span className="tabular flex-1 text-[11px] text-navy-400">
-                                    {row.check_in ?? '—'}
-                                    {row.check_out && ` — ${row.check_out}`}
-                                    {row.check_out ? ` · ${row.worked_hours} ساعة` : ''}
-                                </span>
-                                {row.check_in_location && (
-                                    <a
-                                        href={`https://maps.google.com/?q=${row.check_in_location.lat},${row.check_in_location.lng}`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="tap grid size-8 shrink-0 place-items-center rounded-lg bg-navy-50 text-navy-500 hover:text-brand-600"
-                                        aria-label="موقع الحضور"
-                                    >
-                                        <MapPin className="size-3.5" />
-                                    </a>
-                                )}
-                            </div>
-                        ))}
+                    <div className="overflow-x-auto rounded-2xl border border-navy-100">
+                        <table className="w-full min-w-[560px] text-sm text-right">
+                            <thead className="bg-navy-50 text-xs text-navy-500">
+                                <tr>
+                                    <th className="px-3 py-2 font-medium">التاريخ</th>
+                                    <th className="px-3 py-2 font-medium">الحالة</th>
+                                    <th className="px-3 py-2 font-medium">الحضور والانصراف</th>
+                                    <th className="px-3 py-2 font-medium">ساعات العمل</th>
+                                    <th className="px-3 py-2 font-medium">الموقع</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-navy-100 bg-white">
+                                {attendance.rows.map((row) => (
+                                    <tr key={row.id} className="hover:bg-navy-50/50 transition-colors">
+                                        <td className="px-3 py-2.5 tabular-nums text-navy-600 font-medium text-xs">
+                                            {formatDate(row.date)}
+                                        </td>
+                                        <td className="px-3 py-2.5">
+                                            <span className="badge bg-navy-100 text-navy-700">{row.status_label}</span>
+                                        </td>
+                                        <td className="px-3 py-2.5 tabular-nums text-navy-500 text-xs">
+                                            {row.check_in ?? '—'}
+                                            {row.check_out && ` — ${row.check_out}`}
+                                        </td>
+                                        <td className="px-3 py-2.5 text-navy-500 text-xs">
+                                            {row.check_out ? (
+                                                <span className="font-semibold text-brand-600">{row.worked_hours} ساعة</span>
+                                            ) : '—'}
+                                        </td>
+                                        <td className="px-3 py-2.5">
+                                            {row.check_in_location ? (
+                                                <a
+                                                    href={`https://maps.google.com/?q=${row.check_in_location.lat},${row.check_in_location.lng}`}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="inline-flex items-center justify-center size-7 rounded-lg bg-brand-50 text-brand-600 hover:bg-brand-100 transition-colors"
+                                                    aria-label="موقع الحضور"
+                                                >
+                                                    <MapPin className="size-3.5" />
+                                                </a>
+                                            ) : <span className="text-navy-300">—</span>}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 )}
             </Section>
@@ -173,28 +191,41 @@ export function TechnicianProfile() {
                             منها {tasks.completed} منتهية
                         </p>
                         <div className="overflow-x-auto rounded-2xl border border-navy-100">
-                            <table className="w-full min-w-[560px] text-sm">
-                                <tbody>
+                            <table className="w-full min-w-[640px] text-sm text-right">
+                                <thead className="bg-navy-50 text-xs text-navy-500">
+                                    <tr>
+                                        <th className="px-3 py-2 font-medium">الرقم</th>
+                                        <th className="px-3 py-2 font-medium">التاريخ</th>
+                                        <th className="px-3 py-2 font-medium">العميل والمهمة</th>
+                                        <th className="px-3 py-2 font-medium">النوع</th>
+                                        <th className="px-3 py-2 font-medium">الحالة</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-navy-100 bg-white">
                                     {tasks.rows.map((task) => (
-                                        <tr key={task.id} className="border-b border-navy-100 last:border-0">
-                                            <td className="tabular px-3 py-2.5 text-navy-500">
+                                        <tr key={task.id} className="hover:bg-navy-50/50 transition-colors">
+                                            <td className="px-3 py-2.5">
+                                                <span className="tabular-nums text-[11px] font-bold text-brand-600 bg-brand-50 px-2 py-1 rounded">
+                                                    {task.code}
+                                                </span>
+                                            </td>
+                                            <td className="tabular-nums px-3 py-2.5 text-navy-500 text-xs">
                                                 {task.date ? formatDate(task.date) : '—'}
                                             </td>
                                             <td className="px-3 py-2.5">
-                                                <span className="tabular text-[11px] font-bold text-brand-600">
-                                                    {task.code}
-                                                </span>
                                                 {task.title && (
-                                                    <span className="block text-navy-700">{task.title}</span>
+                                                    <span className="block text-navy-700 font-medium">{task.title}</span>
                                                 )}
                                                 {task.customer && (
-                                                    <span className="block text-[11px] text-navy-400">
-                                                        {task.customer}
+                                                    <span className="block text-[11px] text-navy-400 mt-0.5">
+                                                        <span className="text-navy-500">{task.customer}</span>
                                                         {task.branch && ` · ${task.branch}`}
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="px-3 py-2.5 text-navy-600">{task.type_label}</td>
+                                            <td className="px-3 py-2.5">
+                                                <span className="text-xs text-navy-600 bg-navy-50 px-2 py-1 rounded-md">{task.type_label}</span>
+                                            </td>
                                             <td className="px-3 py-2.5">
                                                 <span
                                                     className={clsx(
