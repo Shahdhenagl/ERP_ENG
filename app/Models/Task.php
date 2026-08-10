@@ -119,7 +119,7 @@ class Task extends Model
 
     public function technicians(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'task_user', 'task_id', 'assigned_to')->withTimestamps();
+        return $this->belongsToMany(User::class, 'task_user', 'task_id', 'user_id')->withTimestamps();
     }
 
     public function postponements(): HasMany

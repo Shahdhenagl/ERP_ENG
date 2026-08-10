@@ -61,7 +61,7 @@ class User extends Authenticatable
     /** Jobs this user has to carry out (they are the technician). */
     public function assignedTasks(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
-        return $this->belongsToMany(Task::class, 'task_user', 'assigned_to', 'task_id')->withTimestamps();
+        return $this->belongsToMany(Task::class, 'task_user', 'user_id', 'task_id')->withTimestamps();
     }
 
     /** Jobs this user dispatched (they are the manager). */
