@@ -104,7 +104,7 @@ class TaskWorkflow
         // the technician already made in the field.
         $this->notifyStatusChange($task, $from, $to, $actor);
 
-        return $task->fresh(['customer', 'technician', 'creator']);
+        return $task->fresh(['customer', 'technicians', 'creator']);
     }
 
     /**
@@ -130,7 +130,7 @@ class TaskWorkflow
             $this->deliver($technician, new TaskAssigned($task));
         }
 
-        return $task->fresh(['customer', 'technician', 'creator']);
+        return $task->fresh(['customer', 'technicians', 'creator']);
     }
 
     /**

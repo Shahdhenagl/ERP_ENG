@@ -45,7 +45,6 @@ class TaskResource extends JsonResource
             'is_terminal' => $this->status->isTerminal(),
 
             'customer' => new CustomerResource($this->whenLoaded('customer')),
-            'technician' => new UserResource($this->whenLoaded('technician')),
             'technicians' => UserResource::collection($this->whenLoaded('technicians')),
             'creator' => new UserResource($this->whenLoaded('creator')),
 

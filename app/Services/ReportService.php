@@ -799,7 +799,7 @@ class ReportService
         $recent = Task::query()
             ->where('status', TaskStatus::Completed->value)
             ->whereNotNull('completed_at')
-            ->with(['customer', 'technician'])
+            ->with(['customer', 'technicians'])
             ->latest('completed_at')
             ->limit(8)
             ->get()
