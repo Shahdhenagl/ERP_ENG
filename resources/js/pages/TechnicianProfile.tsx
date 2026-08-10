@@ -205,16 +205,24 @@ export function TechnicianProfile() {
                                     {tasks.rows.map((task) => (
                                         <tr key={task.id} className="hover:bg-navy-50/50 transition-colors">
                                             <td className="px-3 py-2.5">
-                                                <span className="tabular-nums text-[11px] font-bold text-brand-600 bg-brand-50 px-2 py-1 rounded">
+                                                <Link
+                                                    to={path(`/tasks/${task.id}`)}
+                                                    className="tabular-nums text-[11px] font-bold text-brand-600 bg-brand-50 px-2 py-1 rounded hover:bg-brand-100 transition-colors inline-block"
+                                                >
                                                     {task.code}
-                                                </span>
+                                                </Link>
                                             </td>
                                             <td className="tabular-nums px-3 py-2.5 text-navy-500 text-xs">
                                                 {task.date ? formatDate(task.date) : '—'}
                                             </td>
                                             <td className="px-3 py-2.5">
                                                 {task.title && (
-                                                    <span className="block text-navy-700 font-medium">{task.title}</span>
+                                                    <Link
+                                                        to={path(`/tasks/${task.id}`)}
+                                                        className="block text-navy-700 font-medium hover:text-brand-600 transition-colors"
+                                                    >
+                                                        {task.title}
+                                                    </Link>
                                                 )}
                                                 {task.customer && (
                                                     <span className="block text-[11px] text-navy-400 mt-0.5">
