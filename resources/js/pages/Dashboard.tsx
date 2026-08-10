@@ -55,7 +55,7 @@ export function Dashboard() {
     return (
         <>
             <PageHeader
-                title={`${tr('أهلاً')}، ${user?.name.split(' ')[0]}`}
+                title={`${tr('أهلاً')}، ${user?.name ? user.name.split(' ')[0] : ''}`}
                 subtitle={
                     canDispatch
                         ? tr('نظرة عامة على العمليات الجارية')
