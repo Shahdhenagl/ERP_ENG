@@ -6,6 +6,7 @@ import {
     Hammer,
     Navigation,
     PackageCheck,
+    PauseCircle,
     Search,
     Truck,
     Wrench,
@@ -93,11 +94,19 @@ export const STATUS: Record<TaskStatus, StatusMeta> = {
         solid: 'bg-slate-400',
         accent: 'bg-slate-300',
     },
+    postponed: {
+        label: tr('مؤجلة'),
+        icon: PauseCircle,
+        chip: 'bg-orange-50 text-orange-700 ring-1 ring-orange-200',
+        solid: 'bg-orange-500',
+        accent: 'bg-orange-400',
+    },
 }
 
 /** The happy path, in order — drives the progress rail on the job screen. */
 export const STATUS_FLOW: TaskStatus[] = [
     'pending',
+    'postponed',
     'accepted',
     'on_the_way',
     'in_progress',

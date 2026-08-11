@@ -240,6 +240,7 @@ class Task extends Model
         return $query->whereNotIn('status', [
             TaskStatus::Completed->value,
             TaskStatus::Cancelled->value,
+            TaskStatus::Postponed->value,
         ]);
     }
 

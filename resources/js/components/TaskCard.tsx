@@ -62,6 +62,13 @@ export function TaskCard({ task, showTechnician = true }: TaskCardProps) {
                         </span>
                     )}
 
+                    {task.branch?.name && (
+                        <span className="flex min-w-0 items-center gap-1.5">
+                            <MapPin className="size-3.5 shrink-0 text-navy-300" />
+                            <span className="truncate font-medium">{task.branch.name}</span>
+                        </span>
+                    )}
+
                     <span className="flex items-center gap-1.5">
                         <TypeIcon className="size-3.5 shrink-0 text-navy-300" />
                         {task.type_label}

@@ -328,7 +328,7 @@ export function TaskList() {
                     </label>
 
                     <label className="flex flex-col gap-1">
-                        <span className="text-[11px] font-bold text-navy-400">اليوم</span>
+                        <span className="text-[11px] font-bold text-navy-400">يوم الزيارة</span>
                         <Input
                             type="date"
                             value={searchParams.get('day') ?? ''}

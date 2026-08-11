@@ -9,6 +9,7 @@ export type TaskStatus =
     | 'in_progress'
     | 'completed'
     | 'cancelled'
+    | 'postponed'
 
 export type TaskType = 'installation' | 'maintenance' | 'repair' | 'inspection' | 'delivery'
 export type TaskPriority = 'low' | 'normal' | 'high' | 'urgent'

@@ -32,8 +32,8 @@ class TaskStatusController extends Controller
         // technician who was there may move a job forward. Cancelling is the
         // opposite — a dispatch decision, usually made because the customer
         // called — so it stays with admins and managers.
-        if ($to === TaskStatus::Cancelled) {
-            abort_unless($user->canDispatch(), 403, 'الإلغاء من صلاحية المدير فقط.');
+        if ($to === TaskStatus::Cancelled || $to === TaskStatus::Postponed) {
+            abort_unless($user->canDispatch(), 403, 'تغيير هذه الحالة من صلاحية المدير فقط.');
         } else {
             abort_unless(
                 $user->isTechnician() && $task->technicians()->where('users.id', $user->id)->exists(),

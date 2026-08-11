@@ -12,6 +12,7 @@ enum TaskStatus: string
     case InProgress = 'in_progress';
     case Completed = 'completed';
     case Cancelled = 'cancelled';
+    case Postponed = 'postponed';
 
     public function label(): string
     {
@@ -22,6 +23,7 @@ enum TaskStatus: string
             self::InProgress => Terms::get('جارٍ العمل'),
             self::Completed => Terms::get('منتهية'),
             self::Cancelled => Terms::get('ملغاة'),
+            self::Postponed => Terms::get('مؤجلة'),
         };
     }
 
@@ -34,10 +36,11 @@ enum TaskStatus: string
     public function allowedNext(): array
     {
         return match ($this) {
-            self::Pending => [self::Accepted, self::Cancelled],
-            self::Accepted => [self::OnTheWay, self::InProgress, self::Cancelled],
+            self::Pending => [self::Accepted, self::Cancelled, self::Postponed],
+            self::Accepted => [self::OnTheWay, self::InProgress, self::Cancelled, self::Postponed],
             self::OnTheWay => [self::InProgress, self::Cancelled],
-            self::InProgress => [self::Completed, self::Cancelled],
+            self::InProgress => [self::Completed, self::Cancelled, self::Postponed],
+            self::Postponed => [self::Pending, self::Cancelled],
             self::Completed, self::Cancelled => [],
         };
     }
@@ -61,7 +64,7 @@ enum TaskStatus: string
             self::InProgress => 'started_at',
             self::Completed => 'completed_at',
             self::Cancelled => 'cancelled_at',
-            self::Pending => null,
+            self::Pending, self::Postponed => null,
         };
     }
 }
