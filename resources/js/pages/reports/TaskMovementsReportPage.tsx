@@ -1,11 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
-import { tr } from '@/lib/i18n'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui'
-import { EmptyState } from '@/components/EmptyState'
-import { LoadingState } from '@/components/LoadingState'
-import { getReport } from '@/lib/queries'
+import { useTaskMovementsReport } from '@/lib/queries'
 import { useReports } from './ReportsLayout'
-import { TaskStatusBadge } from '@/components/TaskStatusBadge'
+import { Empty, Section } from './parts'
+import { SkeletonCard } from '@/components/ui'
 
 interface TaskMovementRow {
     id: number
@@ -22,54 +18,50 @@ interface TaskMovementRow {
     note: string | null
 }
 
-export default function TaskMovementsReportPage() {
+export function TaskMovementsReportPage() {
     const { period } = useReports()
+    const { data, isLoading } = useTaskMovementsReport(period.range)
 
-    const { data, isLoading } = useQuery({
-        queryKey: ['report', 'task-movements', period.range],
-        queryFn: () => getReport<TaskMovementRow[]>('task-movements', period.range),
-    })
-
-    if (isLoading) return <LoadingState />
-    if (!data?.length) return <EmptyState text="لا توجد حركات مهام في هذه الفترة." />
+    if (isLoading) return <SkeletonCard />
+    if (!data?.length) return <Empty>لا توجد حركات مهام في هذه الفترة.</Empty>
 
     return (
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead>المهمة</TableHead>
-                    <TableHead>العميل</TableHead>
-                    <TableHead>الفرع</TableHead>
-                    <TableHead>من حالة</TableHead>
-                    <TableHead>إلى حالة</TableHead>
-                    <TableHead>بواسطة</TableHead>
-                    <TableHead>التاريخ والوقت</TableHead>
-                    <TableHead>ملاحظات</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {data.map(row => (
-                    <TableRow key={row.id}>
-                        <TableCell>
-                            <div className="font-medium">{row.task_code}</div>
-                            <div className="text-xs text-muted-foreground">{row.task_title}</div>
-                        </TableCell>
-                        <TableCell>{row.customer}</TableCell>
-                        <TableCell>{row.branch}</TableCell>
-                        <TableCell>
-                            <TaskStatusBadge status={row.from_status as any} />
-                        </TableCell>
-                        <TableCell>
-                            <TaskStatusBadge status={row.to_status as any} />
-                        </TableCell>
-                        <TableCell>{row.user}</TableCell>
-                        <TableCell className="whitespace-nowrap" dir="ltr">
-                            {row.created_at}
-                        </TableCell>
-                        <TableCell>{row.note ?? '-'}</TableCell>
-                    </TableRow>
-                ))}
-            </TableBody>
-        </Table>
+        <Section title="سجل الحركات" count={data.length}>
+            <div className="overflow-x-auto">
+                <table className="w-full text-sm text-right">
+                    <thead className="bg-navy-50 text-navy-400 font-bold border-b border-navy-100">
+                        <tr>
+                            <th className="px-3 py-2">المهمة</th>
+                            <th className="px-3 py-2">العميل</th>
+                            <th className="px-3 py-2">الفرع</th>
+                            <th className="px-3 py-2">من حالة</th>
+                            <th className="px-3 py-2">إلى حالة</th>
+                            <th className="px-3 py-2">بواسطة</th>
+                            <th className="px-3 py-2">التاريخ والوقت</th>
+                            <th className="px-3 py-2">ملاحظات</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-navy-50">
+                        {data.map((row: TaskMovementRow) => (
+                            <tr key={row.id} className="hover:bg-navy-50/50 transition-colors">
+                                <td className="px-3 py-2">
+                                    <div className="font-bold text-navy-900">{row.task_code}</div>
+                                    <div className="text-[11px] text-navy-400">{row.task_title}</div>
+                                </td>
+                                <td className="px-3 py-2 text-navy-700">{row.customer}</td>
+                                <td className="px-3 py-2 text-navy-700">{row.branch}</td>
+                                <td className="px-3 py-2 font-semibold text-navy-600">{row.from_status_label}</td>
+                                <td className="px-3 py-2 font-semibold text-brand-600">{row.to_status_label}</td>
+                                <td className="px-3 py-2 text-navy-700">{row.user}</td>
+                                <td className="px-3 py-2 text-navy-600 whitespace-nowrap" dir="ltr">
+                                    {row.created_at}
+                                </td>
+                                <td className="px-3 py-2 text-navy-500 text-xs">{row.note ?? '-'}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </Section>
     )
 }

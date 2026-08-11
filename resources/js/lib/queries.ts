@@ -2853,6 +2853,9 @@ export const useSalesReport = (range: Record<string, unknown> = {}) =>
 export const useProfitReport = (range: Record<string, unknown> = {}) =>
     useReport<ProfitReport>('profitability', range)
 
+export const useTaskMovementsReport = (range: Record<string, unknown> = {}) =>
+    useReport<any[]>('task-movements', range)
+
 export const useStockReport = (idleDays = 90) =>
     useReport<StockReport>('stock', { idle_days: idleDays })
 
