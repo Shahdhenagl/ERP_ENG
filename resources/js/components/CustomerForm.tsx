@@ -150,14 +150,6 @@ export function CustomerForm({ open, onClose, customer, onSaved }: CustomerFormP
                         />
                     </Field>
 
-                    <Field label="الشركة" error={errors.company}>
-                        <Input
-                            value={form.company}
-                            onChange={(event) => set('company')(event.target.value)}
-                            placeholder="اسم الشركة (اختياري)"
-                        />
-                    </Field>
-
                     <Field
                         label="طريقة الدفع"
                         error={errors.payment_terms}
