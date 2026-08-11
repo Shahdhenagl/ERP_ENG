@@ -121,10 +121,10 @@ class TaskWorkflow
             description: $technician
                 ? "{$task->code} أُسندت إلى {$technician->name}"
                 : "{$task->code} أُلغي إسنادها",
-            properties: ['from' => $previous, 'to' => $technician?->id],
+            properties: ['to' => $technician?->id],
         );
 
-        if ($technician && $technician->id !== $previous) {
+        if ($technician) {
             $this->deliver($technician, new TaskAssigned($task));
         }
 

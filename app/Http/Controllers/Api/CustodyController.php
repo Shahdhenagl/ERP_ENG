@@ -70,8 +70,10 @@ class CustodyController extends Controller
 
         // A technician may only bill a job that is theirs.
         if (! empty($data['task_id'])) {
-            $owned = \App\Models\Task::whereKey($data['task_id'])->value('assigned_to');
-            abort_if($user->isTechnician() && (int) $owned !== $user->id, 403, 'هذه المهمة غير مسندة إليك.');
+            $owned = \App\Models\Task::whereKey($data['task_id'])
+                ->whereHas('technicians', fn ($q) => $q->where('users.id', $user->id))
+                ->exists();
+            abort_if($user->isTechnician() && ! $owned, 403, 'هذه المهمة غير مسندة إليك.');
         }
 
         $data['receipt_path'] = $this->storeReceipt($request);

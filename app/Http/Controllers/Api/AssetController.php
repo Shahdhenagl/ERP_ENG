@@ -94,7 +94,7 @@ class AssetController extends Controller
         // they have actually been dispatched to.
         $user = $request->user();
 
-        if ($user->isTechnician() && ! $asset->tasks()->where('assigned_to', $user->id)->exists()) {
+        if ($user->isTechnician() && ! $asset->tasks()->whereHas('technicians', fn($q) => $q->where('users.id', $user->id))->exists()) {
             abort(403, 'هذا الجهاز خارج نطاق مهامك.');
         }
 
