@@ -82,6 +82,7 @@ export function Dashboard() {
                     value={stats?.open_total}
                     loading={isLoading}
                     tone="navy"
+                    to={path('/tasks?open_only=1')}
                 />
                 <StatTile
                     icon={AlertTriangle}
@@ -89,6 +90,7 @@ export function Dashboard() {
                     value={stats?.overdue}
                     loading={isLoading}
                     tone="red"
+                    to={path('/tasks?open_only=1&overdue=1')}
                 />
                 <StatTile
                     icon={CalendarClock}
@@ -96,6 +98,7 @@ export function Dashboard() {
                     value={stats?.unassigned}
                     loading={isLoading}
                     tone="amber"
+                    to={path('/tasks?open_only=1&unassigned=1')}
                 />
                 {user?.role === 'technician' ? (
                     <StatTile
@@ -104,6 +107,7 @@ export function Dashboard() {
                         value={stats?.completed_today}
                         loading={isLoading}
                         tone="emerald"
+                        to={path('/tasks?status=completed&completed_today=1')}
                     />
                 ) : (
                     <StatTile
@@ -112,6 +116,7 @@ export function Dashboard() {
                         value={stats?.completed_this_month}
                         loading={isLoading}
                         tone="navy"
+                        to={path('/tasks?status=completed&completed_this_month=1')}
                     />
                 )}
             </div>
