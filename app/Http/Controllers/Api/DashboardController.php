@@ -39,26 +39,29 @@ class DashboardController extends Controller
         // on this host, so an overdue invoice would sit on the board for
         // ever and never ring a bell.
         $this->alerts->tick();
+        $year = $request->integer('year') ?: (int) now()->year;
+        $month = $request->integer('month') ?: (int) now()->month;
+
+        $isCurrentMonth = ($year === (int) now()->year && $month === (int) now()->month);
+
+        // Date boundaries as plain strings — avoids any Carbon edge cases.
+        $monthStart = sprintf('%04d-%02d-01 00:00:00', $year, $month);
+        $monthEnd = date('Y-m-t 23:59:59', strtotime($monthStart));
+
         $scoped = fn () => Task::query()->when(
             $user->isTechnician(),
             fn ($q) => $q->forTechnician($user->id),
         );
 
-        $year = $request->integer('year') ?: (int) now()->year;
-        $month = $request->integer('month') ?: (int) now()->month;
-        $targetDate = \Carbon\Carbon::createFromDate($year, $month, 1);
-        $monthStart = $targetDate->copy()->startOfMonth();
-        $monthEnd = $targetDate->copy()->endOfMonth();
-
-        $isCurrentMonth = $targetDate->isSameMonth(now());
-
-        // One grouped query instead of six counts — scoped to selected month.
-        $statusQuery = $scoped()
-            ->when(!$isCurrentMonth, fn ($q) => $q->where(function ($q) use ($monthStart, $monthEnd) {
+        // ── Month-scoped status counts ─────────────────────────────────
+        $statusQuery = $scoped();
+        if (!$isCurrentMonth) {
+            $statusQuery = $statusQuery->where(function ($q) use ($monthStart, $monthEnd) {
                 $q->whereBetween('tasks.created_at', [$monthStart, $monthEnd])
                   ->orWhereBetween('tasks.scheduled_at', [$monthStart, $monthEnd])
                   ->orWhereBetween('tasks.completed_at', [$monthStart, $monthEnd]);
-            }));
+            });
+        }
 
         $byStatus = $statusQuery
             ->select('status', DB::raw('count(*) as total'))
@@ -66,7 +69,6 @@ class DashboardController extends Controller
             ->pluck('total', 'status');
 
         $counts = [];
-
         foreach (TaskStatus::cases() as $status) {
             $counts[$status->value] = (int) ($byStatus[$status->value] ?? 0);
         }
