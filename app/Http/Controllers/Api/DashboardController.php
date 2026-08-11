@@ -131,18 +131,33 @@ class DashboardController extends Controller
                 ]);
         }
 
-        // What needs attention right now.
+        // What needs attention today.
         $upcoming = $scoped()
             ->with(['customer', 'technicians', 'asset'])
-            ->open()
-            ->actionable()
-            // Live work first. Ordered by date alone, a job being driven to
-            // fell below eight rows of things scheduled sooner — which is the
-            // one row a technician opening this screen is looking for.
-            ->orderByRaw("FIELD(status, 'in_progress','on_the_way','accepted','pending')")
+            ->where(function ($q) {
+                // Scheduled for today or overdue
+                $q->whereDate('scheduled_at', '<=', today())
+                  // Or completed today
+                  ->orWhereDate('completed_at', today())
+                  // Or currently active (accepted, on the way, in progress) regardless of date
+                  ->orWhereIn('status', [
+                      TaskStatus::Accepted->value,
+                      TaskStatus::OnTheWay->value,
+                      TaskStatus::InProgress->value,
+                  ])
+                  // Or tasks with no schedule yet (pending assignment/dispatch)
+                  ->orWhereNull('scheduled_at');
+            })
+            // Filter out old completed/cancelled tasks, only keep today's or open
+            ->where(function ($q) {
+                $q->whereNotIn('status', [TaskStatus::Completed->value, TaskStatus::Cancelled->value])
+                  ->orWhereDate('completed_at', today())
+                  ->orWhereDate('cancelled_at', today());
+            })
+            ->orderByRaw("FIELD(status, 'in_progress','on_the_way','accepted','pending','postponed','completed','cancelled')")
             ->orderByRaw("FIELD(priority, 'urgent','high','normal','low')")
             ->orderByRaw('scheduled_at IS NULL, scheduled_at ASC')
-            ->limit(8)
+            ->limit(12)
             ->get();
 
         $payload = [

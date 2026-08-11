@@ -188,7 +188,7 @@ export function Dashboard() {
             <section className="mt-8">
                 <div className="mb-3 flex items-center justify-between">
                     <h2 className="text-sm font-bold text-navy-700">
-                        {canDispatch ? tr('الأقرب تنفيذًا') : tr('مهامك القادمة')}
+                        {canDispatch ? tr('مهام اليوم') : tr('مهامك اليوم')}
                     </h2>
                     <Link to={path('/tasks')} className="text-xs font-bold text-brand-600 hover:underline">
                         {tr('عرض الكل')}
