@@ -40,6 +40,7 @@ const SECTIONS = [
     ['/reports/crm', 'العملاء المحتملون'],
     ['/reports/hr', 'الموارد البشرية'],
     ['/reports/maintenance', 'الصيانة'],
+    ['/reports/task-movements', 'حركة المهام'],
     ['/reports/custom', 'مخصّص'],
 ] as const
 
@@ -54,6 +55,7 @@ const REPORT_BY_PATH: Record<string, { name: string; periodic: boolean }> = {
     crm: { name: 'crm', periodic: true },
     hr: { name: 'hr', periodic: true },
     maintenance: { name: 'maintenance', periodic: true },
+    'task-movements': { name: 'task-movements', periodic: true },
 }
 
 export function ReportsLayout() {

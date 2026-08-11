@@ -327,6 +327,7 @@ export function App() {
                                             <Route path="crm" element={<CrmReportPage />} />
                                             <Route path="hr" element={<HrReportPage />} />
                                             <Route path="maintenance" element={<MaintenanceReportPage />} />
+                                            <Route path="task-movements" element={<TaskMovementsReportPage />} />
                                             <Route path="custom" element={<CustomExportPage />} />
                                         </Route>
 

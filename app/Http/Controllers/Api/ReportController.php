@@ -92,6 +92,13 @@ class ReportController extends Controller
         return response()->json(['data' => $this->reports->operations()]);
     }
 
+    public function taskMovements(Request $request): JsonResponse
+    {
+        [$from, $to] = $this->window($request);
+
+        return response()->json(['data' => $this->reports->taskMovements($from, $to)]);
+    }
+
     /**
      * Any report's own table, as a spreadsheet.
      *
@@ -114,6 +121,7 @@ class ReportController extends Controller
             'crm' => $this->crmRows($from, $to),
             'hr' => $this->hrRows($from, $to),
             'maintenance' => $this->maintenanceRows($from, $to),
+            'task-movements' => $this->taskMovementsRows($from, $to),
             default => abort(404, 'تقرير غير معروف.'),
         };
 

@@ -863,4 +863,31 @@ class ReportService
             ->when($from, fn ($q) => $q->whereDate('issue_date', '>=', $from))
             ->when($to, fn ($q) => $q->whereDate('issue_date', '<=', $to));
     }
+
+    public function taskMovements(?string $from, ?string $to): array
+    {
+        $logs = \App\Models\TaskStatusLog::query()
+            ->with(['task', 'task.customer', 'task.branch', 'user'])
+            ->when($from, fn ($q) => $q->whereDate('created_at', '>=', $from))
+            ->when($to, fn ($q) => $q->whereDate('created_at', '<=', $to))
+            ->orderByDesc('created_at')
+            ->get();
+
+        return $logs->map(function ($log) {
+            return [
+                'id' => $log->id,
+                'task_code' => $log->task->code ?? '-',
+                'task_title' => $log->task->title ?? '-',
+                'customer' => $log->task->customer->name ?? '-',
+                'branch' => $log->task->branch->name ?? '-',
+                'from_status' => $log->from_status,
+                'from_status_label' => \App\Enums\TaskStatus::tryFrom($log->from_status)?->label() ?? $log->from_status,
+                'to_status' => $log->to_status,
+                'to_status_label' => \App\Enums\TaskStatus::tryFrom($log->to_status)?->label() ?? $log->to_status,
+                'user' => $log->user->name ?? '-',
+                'created_at' => $log->created_at->format('Y-m-d H:i:s'),
+                'note' => $log->note,
+            ];
+        })->toArray();
+    }
 }
