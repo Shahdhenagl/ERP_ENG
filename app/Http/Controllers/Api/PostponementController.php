@@ -60,7 +60,7 @@ class PostponementController extends Controller
     /**
      * Admin approves the postponement request — updates task's scheduled_at.
      */
-    public function approve(Request $request, TaskPostponement $postponement): JsonResponse
+    public function approve(Request $request, TaskPostponement $postponement, \App\Services\TaskWorkflow $workflow): JsonResponse
     {
         abort_unless($postponement->isPending(), 422, 'هذا الطلب تمت مراجعته بالفعل.');
 
@@ -72,6 +72,14 @@ class PostponementController extends Controller
 
         // Apply the new date to the task
         $postponement->task->update(['scheduled_at' => $postponement->postponed_to]);
+        
+        try {
+            $workflow->transition($postponement->task, \App\Enums\TaskStatus::Postponed, $request->user(), [
+                'note' => 'تمت الموافقة على طلب التأجيل: ' . $postponement->reason
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Ignore if the transition is not allowed by the state machine
+        }
 
         $postponement->load(['requester', 'reviewer', 'task']);
 
