@@ -124,7 +124,9 @@ export function TaskList() {
             next.delete(key)
         }
 
-        next.delete('page')
+        if (key !== 'page') {
+            next.delete('page')
+        }
         setSearchParams(next)
     }
 
