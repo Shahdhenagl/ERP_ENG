@@ -295,9 +295,19 @@ export function TaskForm() {
                         <Field label="عنوان المهمة" required error={errors.title}>
                             <Input
                                 value={form.title}
+                                name="task_title_history"
+                                list="task-titles"
                                 onChange={(event) => set('title')(event.target.value)}
                                 placeholder="مثال: صيانة دورية لجهاز UPS 20kVA"
                             />
+                            <datalist id="task-titles">
+                                <option value="صيانة دورية" />
+                                <option value="إصلاح عطل" />
+                                <option value="تركيب جهاز" />
+                                <option value="معاينة موقع" />
+                                <option value="زيارة طارئة" />
+                                <option value="استبدال قطع غيار" />
+                            </datalist>
                         </Field>
 
                         <Field label="الوصف" error={errors.description}>
@@ -336,12 +346,28 @@ export function TaskForm() {
                             </Field>
 
                             <Field label="الموعد المحدد" error={errors.scheduled_at}>
-                                <Input
-                                    type="datetime-local"
-                                    value={form.scheduled_at}
-                                    onChange={(event) => set('scheduled_at')(event.target.value)}
-                                    dir="ltr"
-                                />
+                                <div className="flex gap-2" dir="ltr">
+                                    <Input
+                                        type="date"
+                                        value={form.scheduled_at?.slice(0, 10) ?? ''}
+                                        onChange={(e) => {
+                                            const d = e.target.value
+                                            const t = form.scheduled_at?.slice(11, 16) || '09:00'
+                                            set('scheduled_at')(d ? `${d}T${t}` : '')
+                                        }}
+                                        className="w-3/5"
+                                    />
+                                    <Input
+                                        type="time"
+                                        value={form.scheduled_at?.slice(11, 16) ?? ''}
+                                        onChange={(e) => {
+                                            const t = e.target.value
+                                            const d = form.scheduled_at?.slice(0, 10) || new Date().toISOString().slice(0, 10)
+                                            set('scheduled_at')(t ? `${d}T${t}` : '')
+                                        }}
+                                        className="w-2/5"
+                                    />
+                                </div>
                             </Field>
                         </div>
                     </div>
