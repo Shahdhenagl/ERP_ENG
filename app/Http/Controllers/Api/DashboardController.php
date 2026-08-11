@@ -139,20 +139,20 @@ class DashboardController extends Controller
                 $q->whereDate('scheduled_at', '<=', today())
                   // Or completed today
                   ->orWhereDate('completed_at', today())
-                  // Or currently active (accepted, on the way, in progress) regardless of date
+                  // Or currently active (on the way, in progress) regardless of date
                   ->orWhereIn('status', [
-                      TaskStatus::Accepted->value,
                       TaskStatus::OnTheWay->value,
                       TaskStatus::InProgress->value,
-                  ])
-                  // Or tasks with no schedule yet (pending assignment/dispatch)
-                  ->orWhereNull('scheduled_at');
+                  ]);
             })
-            // Filter out old completed/cancelled tasks, only keep today's or open
+            // Filter out old completed/cancelled/postponed tasks, only keep today's or open
             ->where(function ($q) {
-                $q->whereNotIn('status', [TaskStatus::Completed->value, TaskStatus::Cancelled->value])
-                  ->orWhereDate('completed_at', today())
-                  ->orWhereDate('cancelled_at', today());
+                $q->whereNotIn('status', [
+                    TaskStatus::Completed->value, 
+                    TaskStatus::Cancelled->value,
+                    TaskStatus::Postponed->value
+                ])
+                ->orWhereDate('completed_at', today());
             })
             ->orderByRaw("FIELD(status, 'in_progress','on_the_way','accepted','pending','postponed','completed','cancelled')")
             ->orderByRaw("FIELD(priority, 'urgent','high','normal','low')")
