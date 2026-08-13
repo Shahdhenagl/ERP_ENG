@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
  * A fixed expense that comes round on a cycle — rent, a line, a licence. The
@@ -47,7 +48,14 @@ class RecurringExpense extends Model
         return $this->belongsTo(CashBox::class, 'cash_box_id');
     }
 
-    // ── Due dates ────────────────────────────────────────────
+    /** The reusable expense items selected for this recurring bill. */
+    public function items(): BelongsToMany
+    {
+        return $this->belongsToMany(RecurringExpenseItem::class, 'recurring_expense_item_links')
+            ->withTimestamps();
+    }
+
+    // ── Due dates ───────────────────────────────────────────
 
     /** How many days until it is due — negative once it is overdue. */
     public function daysUntilDue(): int

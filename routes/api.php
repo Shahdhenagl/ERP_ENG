@@ -540,6 +540,7 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::post('treasury/deposit', [TreasuryController::class, 'deposit'])->middleware('can:treasury.manage');
 
     // Fixed, recurring bills — rent, a line, a licence — with a due reminder.
+    Route::get('recurring-expense-items', [RecurringExpenseController::class, 'items'])->middleware('can:treasury.manage');
     Route::get('recurring-expenses', [RecurringExpenseController::class, 'index'])->middleware('can:treasury.manage');
     Route::post('recurring-expenses', [RecurringExpenseController::class, 'store'])->middleware('can:treasury.manage');
     Route::put('recurring-expenses/{recurringExpense}', [RecurringExpenseController::class, 'update'])->middleware('can:treasury.manage');

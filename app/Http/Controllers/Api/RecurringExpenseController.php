@@ -6,10 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\CashBox;
 use App\Models\RecurringExpense;
+use App\Models\RecurringExpenseItem;
+use App\Models\User;
 use App\Services\BillingService;
 use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 
 /**
  * The fixed, recurring bills — rent, a line, a licence. Managed as templates
@@ -24,7 +27,7 @@ class RecurringExpenseController extends Controller
     {
         $expenses = RecurringExpense::query()
             ->when($request->boolean('active'), fn ($q) => $q->active())
-            ->with('box')
+            ->with(['box', 'items'])
             ->orderBy('next_due_on')
             ->get()
             ->map(fn (RecurringExpense $e) => $this->present($e));
@@ -38,17 +41,32 @@ class RecurringExpenseController extends Controller
         ]);
     }
 
+    /** The reusable checklist options, ordered for the expense dialog. */
+    public function items(): JsonResponse
+    {
+        return response()->json([
+            'data' => RecurringExpenseItem::query()
+                ->orderBy('label')
+                ->get()
+                ->map(fn (RecurringExpenseItem $item) => [
+                    'id' => $item->id,
+                    'label' => $item->label,
+                ]),
+        ]);
+    }
+
     public function store(Request $request): JsonResponse
     {
         $data = $this->validated($request);
         $data['next_due_on'] = $data['start_on'];
         $data['created_by'] = $request->user()->id;
 
-        $expense = RecurringExpense::create($data);
+        $expense = RecurringExpense::create(Arr::except($data, ['item_ids', 'new_item_labels']));
+        $this->syncItems($expense, $data, $request->user());
 
         ActivityLog::record('recurring_expense.created', $expense, "مصروف دوري: {$expense->name}");
 
-        return response()->json(['data' => $this->present($expense->load('box'))], 201);
+        return response()->json(['data' => $this->present($expense->load(['box', 'items']))], 201);
     }
 
     public function update(Request $request, RecurringExpense $recurringExpense): JsonResponse
@@ -61,9 +79,10 @@ class RecurringExpenseController extends Controller
             $data['next_due_on'] = $data['start_on'];
         }
 
-        $recurringExpense->update($data);
+        $recurringExpense->update(Arr::except($data, ['item_ids', 'new_item_labels']));
+        $this->syncItems($recurringExpense, $data, $request->user());
 
-        return response()->json(['data' => $this->present($recurringExpense->fresh('box'))]);
+        return response()->json(['data' => $this->present($recurringExpense->fresh(['box', 'items']))]);
     }
 
     public function destroy(RecurringExpense $recurringExpense): JsonResponse
@@ -96,7 +115,7 @@ class RecurringExpenseController extends Controller
             "سداد مصروف دوري {$recurringExpense->name} بمبلغ ".number_format((float) $recurringExpense->amount, 2),
         );
 
-        return response()->json(['data' => $this->present($recurringExpense->fresh('box'))]);
+        return response()->json(['data' => $this->present($recurringExpense->fresh(['box', 'items']))]);
     }
 
     /** @return array<string, mixed> */
@@ -105,13 +124,50 @@ class RecurringExpenseController extends Controller
         return $request->validate([
             'name' => ['required', 'string', 'max:160'],
             'amount' => ['required', 'numeric', 'min:0'],
+            // Retained for older records and for the accounting category on payment.
             'category' => ['nullable', 'string', 'max:120'],
             'cash_box_id' => ['nullable', 'exists:cash_boxes,id'],
             'cycle_days' => ['required', 'integer', 'min:1', 'max:3660'],
             'start_on' => ['required', 'date'],
             'is_active' => ['boolean'],
             'notes' => ['nullable', 'string', 'max:2000'],
+            'item_ids' => ['nullable', 'array'],
+            'item_ids.*' => ['integer', 'distinct', 'exists:recurring_expense_items,id'],
+            'new_item_labels' => ['nullable', 'array'],
+            'new_item_labels.*' => ['string', 'max:120', 'distinct'],
         ]);
+    }
+
+    /**
+     * Keep all selected existing entries and newly typed labels in one pivot.
+     * Names entered in the dialog are reused if another operator already added
+     * the same label, so the checklist stays a shared catalogue.
+     *
+     * @param array<string, mixed> $data
+     */
+    protected function syncItems(RecurringExpense $expense, array $data, User $user): void
+    {
+        $ids = collect($data['item_ids'] ?? [])
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->values();
+
+        foreach ($data['new_item_labels'] ?? [] as $label) {
+            $label = trim($label);
+
+            if ($label === '') {
+                continue;
+            }
+
+            $item = RecurringExpenseItem::firstOrCreate(
+                ['label' => $label],
+                ['created_by' => $user->id],
+            );
+
+            $ids->push($item->id);
+        }
+
+        $expense->items()->sync($ids->unique()->values()->all());
     }
 
     /** @return array<string, mixed> */
@@ -122,6 +178,10 @@ class RecurringExpenseController extends Controller
             'name' => $e->name,
             'amount' => (float) $e->amount,
             'category' => $e->category,
+            'items' => $e->items->map(fn (RecurringExpenseItem $item) => [
+                'id' => $item->id,
+                'label' => $item->label,
+            ])->values(),
             'cash_box_id' => $e->cash_box_id,
             'cash_box' => $e->box?->name,
             'cycle_days' => $e->cycle_days,

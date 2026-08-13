@@ -13,6 +13,7 @@ import {
     useCashBoxes,
     useDeleteRecurringExpense,
     usePayRecurringExpense,
+    useRecurringExpenseItems,
     useRecurringExpenses,
     useSaveRecurringExpense,
 } from '@/lib/queries'
@@ -108,7 +109,23 @@ export function RecurringExpensesSection() {
                             <td className="px-3 py-2.5 font-semibold text-navy-800">
                                 {expense.name}
                             </td>
-                            <td className="px-3 py-2.5 text-navy-600">{expense.category ?? '—'}</td>
+                            <td className="px-3 py-2.5 text-navy-600">
+                                {expense.items.length > 0 ? (
+                                    <div className="flex flex-wrap gap-1">
+                                        {expense.items.map((item) => (
+                                            <span
+                                                key={item.id}
+                                                className="inline-flex items-center gap-1 rounded-md bg-brand-50 px-1.5 py-0.5 text-[10px] font-bold text-brand-700 ring-1 ring-brand-100"
+                                            >
+                                                <span className="size-1.5 rounded-full bg-brand-500" />
+                                                {item.label}
+                                            </span>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    expense.category ?? '—'
+                                )}
+                            </td>
                             <td className="px-3 py-2.5 text-navy-600">{expense.cash_box ?? '—'}</td>
                             <td className="tabular px-3 py-2.5 text-navy-600">
                                 {expense.cycle_days} يوم
@@ -160,7 +177,8 @@ export function RecurringExpensesSection() {
                                             {' · '}
                                             الاستحقاق {expense.next_due_on && formatDate(expense.next_due_on)}
                                             {expense.cash_box && ` · ${expense.cash_box}`}
-                                            {expense.category && ` · ${expense.category}`}
+                                            {expense.items.length > 0 && ` · ${expense.items.map((item) => item.label).join('، ')}`}
+                                            {expense.items.length === 0 && expense.category && ` · ${expense.category}`}
                                         </p>
                                     </div>
                                     <span className="tabular shrink-0 font-extrabold text-navy-900">
@@ -257,12 +275,16 @@ function RecurringExpenseDialog({
     const toast = useToast()
     const save = useSaveRecurringExpense(expense?.id)
     const { data: boxes } = useCashBoxes()
+    const { data: availableItems = [] } = useRecurringExpenseItems()
     const [errors, setErrors] = useState<Record<string, string>>({})
+    const [newItemLabel, setNewItemLabel] = useState('')
 
     const [form, setForm] = useState({
         name: expense?.name ?? '',
         amount: expense ? String(expense.amount) : '',
         category: expense?.category ?? '',
+        item_ids: expense?.items.map((item) => item.id) ?? [],
+        new_item_labels: [] as string[],
         cash_box_id: expense?.cash_box_id ? String(expense.cash_box_id) : '',
         cycle_days: String(expense?.cycle_days ?? 30),
         start_on: expense?.start_on ?? new Date().toISOString().slice(0, 10),
@@ -271,6 +293,27 @@ function RecurringExpenseDialog({
     })
     const set = (k: keyof typeof form) => (v: string | boolean) =>
         setForm((c) => ({ ...c, [k]: v }))
+    const toggleItem = (id: number) =>
+        setForm((current) => ({
+            ...current,
+            item_ids: current.item_ids.includes(id)
+                ? current.item_ids.filter((itemId) => itemId !== id)
+                : [...current.item_ids, id],
+        }))
+    const addNewItem = () => {
+        const label = newItemLabel.trim()
+        const hasSameExisting = availableItems.some(
+            (item) => item.label.localeCompare(label, 'ar', { sensitivity: 'accent' }) === 0,
+        )
+        const hasSameNew = form.new_item_labels.some(
+            (item) => item.localeCompare(label, 'ar', { sensitivity: 'accent' }) === 0,
+        )
+
+        if (!label || hasSameExisting || hasSameNew) return
+
+        setForm((current) => ({ ...current, new_item_labels: [...current.new_item_labels, label] }))
+        setNewItemLabel('')
+    }
 
     return (
         <Modal
@@ -292,6 +335,8 @@ function RecurringExpenseDialog({
                                     name: form.name,
                                     amount: Number(form.amount),
                                     category: form.category || null,
+                                    item_ids: form.item_ids,
+                                    new_item_labels: form.new_item_labels,
                                     cash_box_id: form.cash_box_id ? Number(form.cash_box_id) : null,
                                     cycle_days: Number(form.cycle_days),
                                     start_on: form.start_on,
@@ -369,8 +414,85 @@ function RecurringExpenseDialog({
                     </Field>
                 </div>
 
-                <Field label="البند" error={errors.category} hint="إيجارات، اشتراكات…">
-                    <Input value={form.category} onChange={(e) => set('category')(e.target.value)} />
+                <Field
+                    label="البند"
+                    error={errors.item_ids ?? errors.new_item_labels}
+                    hint="اختر بندًا أو أضف بندًا جديدًا ليُستخدم في المصروفات القادمة."
+                >
+                    <div className="space-y-2 rounded-xl border border-navy-100 bg-navy-50/40 p-2.5">
+                        {availableItems.length > 0 ? (
+                            <div className="flex max-h-32 flex-wrap gap-2 overflow-y-auto">
+                                {availableItems.map((item) => {
+                                    const selected = form.item_ids.includes(item.id)
+
+                                    return (
+                                        <label
+                                            key={item.id}
+                                            className={clsx(
+                                                'tap inline-flex cursor-pointer items-center gap-1.5 rounded-lg border px-2 py-1 text-xs font-bold transition',
+                                                selected
+                                                    ? 'border-brand-300 bg-brand-50 text-brand-700'
+                                                    : 'border-navy-100 bg-white text-navy-600 hover:border-brand-200',
+                                            )}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={selected}
+                                                onChange={() => toggleItem(item.id)}
+                                                className="size-3.5 rounded border-navy-300 text-brand-600 focus:ring-brand-500"
+                                            />
+                                            {item.label}
+                                        </label>
+                                    )
+                                })}
+                            </div>
+                        ) : (
+                            <p className="text-xs text-navy-400">لا توجد بنود بعد؛ أضف أول بند أدناه.</p>
+                        )}
+
+                        {form.new_item_labels.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 border-t border-navy-100 pt-2">
+                                {form.new_item_labels.map((label) => (
+                                    <button
+                                        key={label}
+                                        type="button"
+                                        onClick={() =>
+                                            setForm((current) => ({
+                                                ...current,
+                                                new_item_labels: current.new_item_labels.filter((item) => item !== label),
+                                            }))
+                                        }
+                                        className="tap rounded-md bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-700 ring-1 ring-amber-200 hover:bg-amber-100"
+                                        title="إزالة البند الجديد"
+                                    >
+                                        {label} ×
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
+                        <div className="flex gap-2 border-t border-navy-100 pt-2">
+                            <Input
+                                value={newItemLabel}
+                                onChange={(e) => setNewItemLabel(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault()
+                                        addNewItem()
+                                    }
+                                }}
+                                placeholder="بند جديد، مثل: صيانة مصعد"
+                            />
+                            <Button type="button" variant="secondary" className="shrink-0" onClick={addNewItem}>
+                                <Plus className="size-4" />
+                                إضافة
+                            </Button>
+                        </div>
+                    </div>
+                </Field>
+
+                <Field label="التصنيف المحاسبي" error={errors.category} hint="اختياري ويُستخدم عند تسجيل السداد.">
+                    <Input value={form.category} onChange={(e) => set('category')(e.target.value)} placeholder="إيجارات، اشتراكات…" />
                 </Field>
 
                 <Field label="ملاحظة" error={errors.notes}>

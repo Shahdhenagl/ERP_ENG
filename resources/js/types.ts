@@ -1037,12 +1037,19 @@ export interface CashMovementRow {
     created_at: string | null
 }
 
+/** A reusable checklist item that can be assigned to one or more recurring bills. */
+export interface RecurringExpenseItem {
+    id: number
+    label: string
+}
+
 /** A fixed bill that comes round on a cycle — rent, a line, a licence. */
 export interface RecurringExpense {
     id: number
     name: string
     amount: number
     category: string | null
+    items: RecurringExpenseItem[]
     cash_box_id: number | null
     cash_box: string | null
     cycle_days: number

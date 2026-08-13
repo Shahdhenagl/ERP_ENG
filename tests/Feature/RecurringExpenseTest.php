@@ -3,6 +3,7 @@
 use App\Models\CashBox;
 use App\Models\CashMovement;
 use App\Models\RecurringExpense;
+use App\Models\RecurringExpenseItem;
 use App\Models\User;
 
 use function Pest\Laravel\actingAs;
@@ -32,6 +33,63 @@ it('opens a recurring expense with its first due date', function () {
 
     expect($data['next_due_on'])->toBe(now()->addDays(10)->toDateString())
         ->and($data['is_due_soon'])->toBeFalse();
+});
+
+it('saves selected and newly added checklist items on a recurring expense', function () {
+    $existing = RecurringExpenseItem::create([
+        'label' => 'إيجار',
+        'created_by' => $this->manager->id,
+    ]);
+
+    $data = actingAs($this->manager)->postJson('/api/recurring-expenses', [
+        'name' => 'مصروفات مخزن',
+        'amount' => 2500,
+        'cycle_days' => 30,
+        'start_on' => now()->toDateString(),
+        'item_ids' => [$existing->id],
+        'new_item_labels' => ['نظافة شهرية'],
+    ])->assertCreated()->json('data');
+
+    expect(collect($data['items'])->pluck('label')->all())
+        ->toContain('إيجار', 'نظافة شهرية');
+
+    $newItem = RecurringExpenseItem::where('label', 'نظافة شهرية')->firstOrFail();
+
+    $this->assertDatabaseHas('recurring_expense_item_links', [
+        'recurring_expense_id' => $data['id'],
+        'recurring_expense_item_id' => $existing->id,
+    ])->assertDatabaseHas('recurring_expense_item_links', [
+        'recurring_expense_id' => $data['id'],
+        'recurring_expense_item_id' => $newItem->id,
+    ]);
+
+    actingAs($this->manager)->getJson('/api/recurring-expense-items')
+        ->assertOk()
+        ->assertJsonFragment(['label' => 'إيجار'])
+        ->assertJsonFragment(['label' => 'نظافة شهرية']);
+});
+
+it('updates the checklist without duplicating a reused item', function () {
+    $item = RecurringExpenseItem::create([
+        'label' => 'إنترنت',
+        'created_by' => $this->manager->id,
+    ]);
+    $expense = RecurringExpense::create([
+        'name' => 'خدمات المكتب', 'amount' => 900, 'cycle_days' => 30,
+        'start_on' => now()->toDateString(), 'next_due_on' => now()->toDateString(),
+    ]);
+
+    actingAs($this->manager)->putJson("/api/recurring-expenses/{$expense->id}", [
+        'name' => $expense->name,
+        'amount' => $expense->amount,
+        'cycle_days' => $expense->cycle_days,
+        'start_on' => $expense->start_on->toDateString(),
+        'item_ids' => [$item->id],
+        'new_item_labels' => ['إنترنت'],
+    ])->assertOk()->assertJsonCount(1, 'data.items');
+
+    expect($expense->fresh()->items()->pluck('label')->all())->toBe(['إنترنت'])
+        ->and(RecurringExpenseItem::where('label', 'إنترنت')->count())->toBe(1);
 });
 
 it('pays a due expense and rolls the schedule forward one cycle', function () {

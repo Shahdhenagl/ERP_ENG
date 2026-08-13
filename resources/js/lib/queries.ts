@@ -39,6 +39,7 @@ import type {
     CashMovementRow,
     CashVoucher,
     RecurringExpense,
+    RecurringExpenseItem,
     Cheque,
     ChequeOutlook,
     Reconciliation,
@@ -2191,6 +2192,14 @@ export function useRecurringExpenses() {
     })
 }
 
+export function useRecurringExpenseItems() {
+    return useQuery({
+        queryKey: ['recurring-expense-items'],
+        queryFn: async () =>
+            (await api.get<{ data: RecurringExpenseItem[] }>('/recurring-expense-items')).data.data,
+    })
+}
+
 export function useSaveRecurringExpense(id?: number) {
     const client = useQueryClient()
 
@@ -2201,7 +2210,10 @@ export function useSaveRecurringExpense(id?: number) {
                     ? api.put(`/recurring-expenses/${id}`, payload)
                     : api.post('/recurring-expenses', payload))
             ).data,
-        onSuccess: () => client.invalidateQueries({ queryKey: ['recurring-expenses'] }),
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: ['recurring-expenses'] })
+            void client.invalidateQueries({ queryKey: ['recurring-expense-items'] })
+        },
     })
 }
 
