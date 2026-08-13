@@ -68,33 +68,54 @@ export function DaybookPage() {
                         <EmptyState icon={FileText} title="لا توجد حركات في هذه الفترة" />
                     ) : (
                         <div className="overflow-x-auto rounded-2xl border border-navy-100">
-                            <table className="w-full min-w-[560px] text-sm">
+                            <table className="w-full min-w-[1180px] text-sm">
                                 <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
                                     <tr>
-                                        <Th className="px-3 py-2 text-start">التاريخ</Th>
+                                        <Th className="w-24 px-3 py-2 text-start">التاريخ</Th>
+                                        <Th className="w-28 px-3 py-2 text-start">نوع الإيصال</Th>
+                                        <Th className="w-28 px-3 py-2 text-start">الرقم No</Th>
                                         <Th className="px-3 py-2 text-start">البيان</Th>
-                                        <Th className="w-24 px-3 py-2 text-left">وارد</Th>
-                                        <Th className="w-24 px-3 py-2 text-left">منصرف</Th>
-                                        <Th className="w-24 px-3 py-2 text-left">الرصيد</Th>
+                                        <Th className="w-40 px-3 py-2 text-start">مستلم / دافع المبلغ</Th>
+                                        <Th className="w-44 px-3 py-2 text-start">الحساب المقابل / نوعه</Th>
+                                        <Th className="w-24 px-3 py-2 text-left">مدين</Th>
+                                        <Th className="w-24 px-3 py-2 text-left">دائن</Th>
+                                        <Th className="w-28 px-3 py-2 text-left">الرصيد</Th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {data.rows.map((row) => (
                                         <tr key={row.id} className="border-t border-navy-100">
-                                            <td className="px-3 py-2 text-navy-500">{formatDate(row.date)}</td>
+                                            <td className="px-3 py-2 tabular text-navy-500">
+                                                {row.date ? formatDate(row.date) : '—'}
+                                            </td>
+                                            <td className="px-3 py-2 font-semibold text-navy-700">
+                                                {row.voucher_type}
+                                            </td>
+                                            <td className="px-3 py-2 tabular text-[12px] font-bold text-brand-700">
+                                                {row.voucher_number}
+                                                {row.journal_code && (
+                                                    <span className="block text-[10px] font-medium text-navy-400">
+                                                        {row.journal_code}
+                                                    </span>
+                                                )}
+                                            </td>
                                             <td className="px-3 py-2 text-navy-700">
-                                                {row.label}
-                                                {row.customer && (
+                                                {row.description}
+                                            </td>
+                                            <td className="px-3 py-2 text-navy-700">{row.party ?? '—'}</td>
+                                            <td className="px-3 py-2 text-navy-700">
+                                                {row.account_name ?? 'بانتظار الترحيل'}
+                                                {row.account_type && (
                                                     <span className="block text-[11px] text-navy-400">
-                                                        {row.customer}
+                                                        {row.account_type}
                                                     </span>
                                                 )}
                                             </td>
                                             <td className="tabular px-3 py-2 text-left text-emerald-600">
-                                                {row.in ? formatMoney(row.in) : '—'}
+                                                {row.debit ? formatMoney(row.debit) : '—'}
                                             </td>
                                             <td className="tabular px-3 py-2 text-left text-red-600">
-                                                {row.out ? formatMoney(row.out) : '—'}
+                                                {row.credit ? formatMoney(row.credit) : '—'}
                                             </td>
                                             <td className="tabular px-3 py-2 text-left font-bold text-navy-900">
                                                 {formatMoney(row.balance)}

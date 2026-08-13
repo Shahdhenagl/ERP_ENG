@@ -616,13 +616,17 @@ function StatementDialog({
                         </p>
                     ) : (
                         <div className="overflow-x-auto">
-                            <table className="doc-table">
+                            <table className="doc-table min-w-[1120px]">
                                 <thead>
                                     <tr>
                                         <Th className="w-24">التاريخ</Th>
+                                        <Th className="w-28">نوع الإيصال</Th>
+                                        <Th className="w-28">الرقم No</Th>
                                         <Th>البيان</Th>
-                                        <Th className="w-24 text-left">وارد</Th>
-                                        <Th className="w-24 text-left">منصرف</Th>
+                                        <Th className="w-40">مستلم / دافع المبلغ</Th>
+                                        <Th className="w-40">الحساب المقابل / نوعه</Th>
+                                        <Th className="w-24 text-left">مدين</Th>
+                                        <Th className="w-24 text-left">دائن</Th>
                                         <Th className="w-28 text-left">الرصيد</Th>
                                     </tr>
                                 </thead>
@@ -632,21 +636,30 @@ function StatementDialog({
                                             <td className="tabular text-navy-500">
                                                 {row.date ? formatDate(row.date) : '—'}
                                             </td>
-                                            <td>
-                                                <span className="font-semibold text-navy-800">
-                                                    {row.label}
-                                                </span>
-                                                {(row.customer || row.category || row.note) && (
+                                            <td className="font-semibold text-navy-800">{row.voucher_type}</td>
+                                            <td className="tabular text-[12px] font-bold text-brand-700">
+                                                {row.voucher_number}
+                                                {row.journal_code && (
+                                                    <span className="block text-[10px] font-medium text-navy-400">
+                                                        {row.journal_code}
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="text-navy-700">{row.description}</td>
+                                            <td className="text-navy-700">{row.party ?? '—'}</td>
+                                            <td className="text-navy-700">
+                                                {row.account_name ?? 'بانتظار الترحيل'}
+                                                {row.account_type && (
                                                     <span className="block text-[11px] text-navy-400">
-                                                        {row.customer ?? row.category ?? row.note}
+                                                        {row.account_type}
                                                     </span>
                                                 )}
                                             </td>
                                             <td className="tabular text-left text-emerald-700">
-                                                {row.in > 0 ? formatMoney(row.in) : '—'}
+                                                {row.debit > 0 ? formatMoney(row.debit) : '—'}
                                             </td>
                                             <td className="tabular text-left text-red-700">
-                                                {row.out > 0 ? formatMoney(row.out) : '—'}
+                                                {row.credit > 0 ? formatMoney(row.credit) : '—'}
                                             </td>
                                             <td className="tabular text-left font-bold text-navy-900">
                                                 {formatMoney(row.balance)}

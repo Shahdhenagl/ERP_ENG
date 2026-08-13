@@ -153,6 +153,29 @@ it('carries the balance down a box statement', function () {
         ->and($statement['closing_balance'])->toBe(750.0);
 });
 
+it('enriches the cash book with voucher and accounting details', function () {
+    collect_(1000);
+    $this->billing->recordExpense($this->till, 250, $this->manager, ['category' => 'وقود']);
+
+    $statement = $this->report->statement($this->till);
+    $receipt = $statement['rows'][0];
+    $payment = $statement['rows'][1];
+
+    expect($receipt['voucher_type'])->toBe('سند قبض')
+        ->and($receipt['voucher_number'])->not->toBe('')
+        ->and($receipt['party'])->not->toBeNull()
+        ->and($receipt['account_name'])->not->toBeNull()
+        ->and($receipt['account_type'])->not->toBeNull()
+        ->and($receipt['debit'])->toBe(1000.0)
+        ->and($receipt['credit'])->toBe(0.0)
+        ->and($payment['voucher_type'])->toBe('سند صرف')
+        ->and($payment['description'])->toBe('وقود')
+        ->and($payment['account_name'])->not->toBeNull()
+        ->and($payment['account_type'])->not->toBeNull()
+        ->and($payment['debit'])->toBe(0.0)
+        ->and($payment['credit'])->toBe(250.0);
+});
+
 it('starts a windowed statement from the balance before it', function () {
     collect_(1000, now()->subMonths(2)->toDateTimeString());
     collect_(500, now()->toDateTimeString());
@@ -202,6 +225,15 @@ it('serves one box statement through the API', function () {
     $response = actingAs($this->manager)
         ->getJson("/api/treasury/boxes/{$this->till->id}/statement")
         ->assertOk();
+
+    $response->assertJsonStructure([
+        'data' => [
+            'rows' => [[
+                'voucher_type', 'voucher_number', 'description', 'party',
+                'account_name', 'account_type', 'debit', 'credit', 'balance',
+            ]],
+        ],
+    ]);
 
     expect($response->json('data.rows'))->toHaveCount(1)
         ->and((float) $response->json('data.closing_balance'))->toBe(900.0);

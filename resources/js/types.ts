@@ -981,10 +981,24 @@ export interface TreasuryStatementRow {
     direction: 'in' | 'out'
     source: string
     label: string
+    /** Accounting-facing voucher metadata for the cash-book view. */
+    voucher_type: string
+    voucher_number: string
+    journal_code: string | null
     category: string | null
     note: string | null
+    description: string
+    /** The payer for a receipt or the recipient for a payment. */
+    party: string | null
     customer: string | null
     actor: string | null
+    /** The account on the other side of the cash entry. */
+    account_name: string | null
+    account_type: string | null
+    /** Debit/credit from the selected cash box's point of view. */
+    debit: number
+    credit: number
+    /** Legacy cash-book aliases retained for existing consumers. */
     in: number
     out: number
     /** Running balance, carried down from the opening figure. */

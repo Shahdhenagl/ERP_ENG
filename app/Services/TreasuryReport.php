@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\CashBox;
 use App\Models\CashMovement;
+use App\Models\JournalEntry;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
@@ -123,18 +124,41 @@ class TreasuryReport
             ? $box->balanceAsOf(now()->parse($from)->subDay()->toDateString())
             : 0.0;
 
+        // The cash book remains the source for its running balance, while the
+        // posted journal supplies the accounting counterpart. Keeping these two
+        // views together makes any movement that was not posted immediately
+        // visible instead of silently inventing an account for it.
+        $box->loadMissing('account');
+
         $movements = $box->movements()
             ->when($from, fn ($q) => $q->whereDate('created_at', '>=', $from))
             ->when($to, fn ($q) => $q->whereDate('created_at', '<=', $to))
-            ->with(['payment.customer', 'actor'])
+            ->with([
+                'payment.customer',
+                'supplierPayment.supplier',
+                'responsible',
+                'actor',
+                'account',
+                'counterpartBox.account',
+            ])
             ->orderBy('created_at')
             ->orderBy('id')
             ->get();
 
+        $entries = JournalEntry::query()
+            ->where('sourceable_type', (new CashMovement)->getMorphClass())
+            ->whereIn('sourceable_id', $movements->modelKeys())
+            ->where('event', 'posted')
+            ->with('lines.account')
+            ->get()
+            ->keyBy('sourceable_id');
+
         $balance = $opening;
 
-        $rows = $movements->map(function (CashMovement $movement) use (&$balance) {
+        $rows = $movements->map(function (CashMovement $movement) use (&$balance, $box, $entries) {
             $balance = round($balance + $movement->signedAmount(), 2);
+            $entry = $entries->get($movement->id);
+            $accounting = $this->accountingDetails($movement, $entry, $box);
 
             return [
                 'id' => $movement->id,
@@ -142,10 +166,22 @@ class TreasuryReport
                 'direction' => $movement->direction,
                 'source' => $movement->source,
                 'label' => self::LABELS[$movement->source] ?? $movement->source,
+                'voucher_type' => $this->voucherType($movement),
+                'voucher_number' => $this->voucherNumber($movement),
+                'journal_code' => $entry?->code,
                 'category' => $movement->category,
                 'note' => $movement->note,
+                'description' => $this->description($movement),
+                'party' => $this->party($movement),
                 'customer' => $movement->payment?->customer?->name,
                 'actor' => $movement->actor?->name,
+                'account_name' => $accounting['name'],
+                'account_type' => $accounting['type'],
+                // Debit and credit are from the cash account's point of view:
+                // a receipt increases cash on the debit side; a payment reduces
+                // it on the credit side. `in`/`out` stay for older consumers.
+                'debit' => $movement->direction === 'in' ? (float) $movement->amount : 0.0,
+                'credit' => $movement->direction === 'out' ? (float) $movement->amount : 0.0,
                 'in' => $movement->direction === 'in' ? (float) $movement->amount : 0.0,
                 'out' => $movement->direction === 'out' ? (float) $movement->amount : 0.0,
                 'balance' => $balance,
@@ -166,5 +202,86 @@ class TreasuryReport
             'out_total' => round($rows->sum('out'), 2),
             'closing_balance' => $balance,
         ];
+    }
+
+    /** @return array{name: string|null, type: string|null} */
+    protected function accountingDetails(CashMovement $movement, ?JournalEntry $entry, CashBox $box): array
+    {
+        // A transfer's journal is intentionally posted only on its outgoing
+        // leg. The other box is nevertheless its exact accounting counterpart.
+        $account = $movement->counterpartBox?->account;
+
+        if (! $account && $entry) {
+            $account = $entry->lines
+                ->pluck('account')
+                ->filter()
+                ->first(fn ($lineAccount) => $lineAccount->id !== $box->account?->id);
+        }
+
+        // A manual expense names its expense account on the movement itself;
+        // use it as a useful fallback while a legacy row awaits backfill.
+        $account ??= $movement->account;
+
+        return [
+            'name' => $account?->name,
+            'type' => $account?->type?->label(),
+        ];
+    }
+
+    protected function voucherType(CashMovement $movement): string
+    {
+        return match ($movement->source) {
+            'payment' => $movement->direction === 'in' ? 'سند قبض' : 'عكس سند قبض',
+            'external_deposit' => 'سند قبض',
+            'expense' => 'سند صرف',
+            'supplier_payment' => 'سند صرف مورد',
+            'transfer' => 'سند تحويل',
+            'custody_advance' => 'سند صرف عهدة',
+            'custody_settle' => 'سند رد عهدة',
+            'opening' => 'قيد افتتاحي',
+            'advance' => 'سند سلفة',
+            'payroll' => 'سند رواتب',
+            default => 'حركة خزينة',
+        };
+    }
+
+    protected function voucherNumber(CashMovement $movement): string
+    {
+        if ($movement->payment?->code) {
+            return $movement->payment->code;
+        }
+
+        if ($movement->supplierPayment?->code) {
+            return $movement->supplierPayment->code;
+        }
+
+        $prefix = match ($movement->source) {
+            'external_deposit' => 'RC',
+            'expense' => 'PV',
+            'transfer' => 'TR',
+            'opening' => 'OP',
+            'custody_advance', 'advance' => 'AV',
+            'custody_settle' => 'CS',
+            'payroll' => 'PR',
+            default => 'CM',
+        };
+
+        return sprintf('%s-%05d', $prefix, $movement->id);
+    }
+
+    protected function description(CashMovement $movement): string
+    {
+        return $movement->note
+            ?: $movement->category
+            ?: (self::LABELS[$movement->source] ?? 'حركة خزينة');
+    }
+
+    protected function party(CashMovement $movement): ?string
+    {
+        return $movement->payment?->customer?->name
+            ?? $movement->supplierPayment?->supplier?->name
+            ?? $movement->responsible?->name
+            ?? $movement->counterpartBox?->name
+            ?? $movement->category;
     }
 }
