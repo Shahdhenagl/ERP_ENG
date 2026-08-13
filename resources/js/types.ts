@@ -315,6 +315,10 @@ export interface CustodyExpense {
     note: string | null
     task_id?: number | null
     task_code?: string | null
+    /** Derived from the expense task when it is linked to one. */
+    customer?: string | null
+    /** Derived from the expense task when it is linked to one. */
+    branch?: string | null
     receipt_url: string | null
     by: string | null
     created_at: string
@@ -1033,6 +1037,10 @@ export interface CashMovementRow {
     category: string | null
     note: string | null
     customer: string | null
+    /** Present only for a supplier-payment movement; used to print or reverse its voucher. */
+    supplier_payment_id?: number | null
+    /** True when the linked supplier payment was already cancelled by a reverse entry. */
+    supplier_payment_is_cancelled?: boolean
     actor: string | null
     created_at: string | null
 }

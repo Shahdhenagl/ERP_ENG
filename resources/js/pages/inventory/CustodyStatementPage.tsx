@@ -3,6 +3,7 @@ import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Modal } from '@/components/Modal'
+import { DataTable } from '@/components/ViewToggle'
 import { useToast } from '@/components/Toast'
 import { Button, EmptyState, Field, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
 import { errorMessage } from '@/lib/api'
@@ -140,48 +141,61 @@ export function CustodyStatementPage() {
                     {Boolean(data.expenses?.length) && (
                         <section>
                             <p className="mb-2 text-xs font-extrabold text-navy-400">مصروفات العهدة</p>
-                            <div className="space-y-2">
+                            <DataTable
+                                minWidth="66rem"
+                                headers={[
+                                    'التاريخ',
+                                    'البند والبيان',
+                                    'المهمة',
+                                    'العميل',
+                                    'الفرع',
+                                    'الإيصال',
+                                    { label: 'المبلغ', className: 'text-left' },
+                                ]}
+                            >
                                 {data.expenses!.map((expense) => (
-                                    <div
-                                        key={expense.id}
-                                        className="card flex items-center justify-between gap-3 p-3"
-                                    >
-                                        <div className="flex min-w-0 items-center gap-3">
+                                    <tr key={expense.id} className="border-t border-navy-100 text-navy-700">
+                                        <td className="tabular whitespace-nowrap px-3 py-3 text-xs text-navy-500">
+                                            {formatDate(expense.created_at)}
+                                        </td>
+                                        <td className="min-w-48 px-3 py-3">
+                                            <p className="font-bold text-navy-900">{expense.category ?? 'مصروف'}</p>
+                                            {expense.note && (
+                                                <p className="mt-0.5 max-w-64 truncate text-xs text-navy-400">
+                                                    {expense.note}
+                                                </p>
+                                            )}
+                                        </td>
+                                        <td className="tabular whitespace-nowrap px-3 py-3 text-xs">
+                                            {expense.task_code ?? '—'}
+                                        </td>
+                                        <td className="max-w-44 truncate px-3 py-3 text-xs">
+                                            {expense.customer ?? '—'}
+                                        </td>
+                                        <td className="max-w-44 truncate px-3 py-3 text-xs">
+                                            {expense.branch ?? '—'}
+                                        </td>
+                                        <td className="px-3 py-3 text-xs">
                                             {expense.receipt_url ? (
                                                 <a
                                                     href={expense.receipt_url}
                                                     target="_blank"
                                                     rel="noreferrer"
-                                                    className="shrink-0"
+                                                    className="inline-flex items-center gap-1 font-bold text-primary hover:underline"
                                                 >
-                                                    <img
-                                                        src={expense.receipt_url}
-                                                        alt="إيصال"
-                                                        className="size-12 rounded-lg border border-navy-200 object-cover"
-                                                    />
+                                                    <Receipt className="size-3.5" />
+                                                    عرض
                                                 </a>
                                             ) : (
-                                                <div className="grid size-12 shrink-0 place-items-center rounded-lg bg-navy-50 text-navy-300">
-                                                    <Receipt className="size-5" />
-                                                </div>
+                                                '—'
                                             )}
-                                            <div className="min-w-0">
-                                                <p className="truncate text-sm font-bold text-navy-900">
-                                                    {expense.category ?? 'مصروف'}
-                                                </p>
-                                                <p className="truncate text-[11px] text-navy-400">
-                                                    {formatDate(expense.created_at)}
-                                                    {expense.task_code && ` · ${expense.task_code}`}
-                                                    {expense.note && ` · ${expense.note}`}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <p className="tabular shrink-0 font-extrabold text-navy-900">
+                                        </td>
+                                        <td className="tabular whitespace-nowrap px-3 py-3 text-left font-extrabold text-navy-900">
                                             {formatMoney(expense.amount)}
-                                        </p>
-                                    </div>
+                                        </td>
+                                    </tr>
                                 ))}
-                            </div>
+                            </DataTable>
                         </section>
                     )}
                 </div>

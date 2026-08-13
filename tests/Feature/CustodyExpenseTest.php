@@ -1,8 +1,10 @@
 <?php
 
 use App\Enums\TaskStatus;
+use App\Models\Branch;
 use App\Models\CashBox;
 use App\Models\CashMovement;
+use App\Models\Customer;
 use App\Models\Task;
 use App\Models\User;
 use App\Services\CustodyService;
@@ -150,6 +152,34 @@ it('bills an expense to a job and shows it on that task', function () {
 
     expect($data['expenses_total'])->toEqual(100)
         ->and($data['expenses'][0]['note'])->toBe('بنزين الطريق');
+});
+
+it('includes the task customer and branch on custody expense rows', function () {
+    $customer = Customer::factory()->create(['name' => 'شركة الأفق الهندسية']);
+    $branch = Branch::create([
+        'customer_id' => $customer->id,
+        'name' => 'فرع التجمع',
+        'created_by' => $this->manager->id,
+    ]);
+    $task = Task::create([
+        'customer_id' => $customer->id,
+        'branch_id' => $branch->id,
+        'created_by' => $this->manager->id,
+        'title' => 'زيارة فرع التجمع',
+        'status' => TaskStatus::InProgress,
+    ]);
+    $task->technicians()->attach($this->technician);
+
+    actingAs($this->technician)->postJson('/api/custody/mine/spend', [
+        'amount' => 150, 'category' => 'مواصلات', 'task_id' => $task->id,
+    ])->assertCreated()
+        ->assertJsonPath('data.expenses.0.customer', 'شركة الأفق الهندسية')
+        ->assertJsonPath('data.expenses.0.branch', 'فرع التجمع');
+
+    actingAs($this->manager)->getJson("/api/custody/{$this->technician->id}")
+        ->assertOk()
+        ->assertJsonPath('data.expenses.0.customer', 'شركة الأفق الهندسية')
+        ->assertJsonPath('data.expenses.0.branch', 'فرع التجمع');
 });
 
 it('refuses to bill a job that is not the technician\'s', function () {

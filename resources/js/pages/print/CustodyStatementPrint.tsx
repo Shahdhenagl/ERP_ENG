@@ -147,6 +147,8 @@ export function CustodyStatementPrint() {
                                 <th className="w-24">التاريخ</th>
                                 <th>البند</th>
                                 <th>المهمة</th>
+                                <th>العميل</th>
+                                <th>الفرع</th>
                                 <th className="w-28 text-left">المبلغ</th>
                             </tr>
                         </thead>
@@ -165,13 +167,15 @@ export function CustodyStatementPrint() {
                                         )}
                                     </td>
                                     <td className="tabular text-navy-500">{expense.task_code ?? '—'}</td>
+                                    <td>{expense.customer ?? '—'}</td>
+                                    <td>{expense.branch ?? '—'}</td>
                                     <td className="tabular text-left font-bold">
                                         {formatMoney(expense.amount)}
                                     </td>
                                 </tr>
                             ))}
                             <tr className="font-extrabold">
-                                <td colSpan={3} className="text-left">الإجمالي</td>
+                                <td colSpan={5} className="text-left">الإجمالي</td>
                                 <td className="tabular text-left">{formatMoney(expensesTotal)}</td>
                             </tr>
                         </tbody>

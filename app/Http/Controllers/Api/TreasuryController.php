@@ -376,7 +376,7 @@ class TreasuryController extends Controller
                     ->orWhere('category', 'like', "%{$term}%")
                     ->orWhereHas('payment.customer', fn ($c) => $c->where('name', 'like', "%{$term}%")),
             ))
-            ->with(['box', 'actor', 'payment.customer'])
+            ->with(['box', 'actor', 'payment.customer', 'supplierPayment'])
             ->orderByDesc('id')
             ->paginate($request->integer('per_page', 30));
 
@@ -393,6 +393,12 @@ class TreasuryController extends Controller
                 'category' => $m->category,
                 'note' => $m->note,
                 'customer' => $m->payment?->customer?->name,
+                // Supplier payments print and reverse through their own voucher id.
+                'supplier_payment_id' => $m->supplier_payment_id,
+                // A soft-deleted supplier voucher was cancelled by a reverse entry.
+                'supplier_payment_is_cancelled' => $m->source === 'supplier_payment'
+                    && $m->supplier_payment_id !== null
+                    && $m->supplierPayment === null,
                 'actor' => $m->actor?->name,
                 'created_at' => $m->created_at?->toIso8601String(),
             ])->items(),

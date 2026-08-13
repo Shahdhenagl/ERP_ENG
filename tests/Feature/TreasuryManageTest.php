@@ -3,6 +3,7 @@
 use App\Models\CashBox;
 use App\Models\CashMovement;
 use App\Models\Customer;
+use App\Models\JournalEntry;
 use App\Models\User;
 
 use function Pest\Laravel\actingAs;
@@ -127,11 +128,17 @@ it('prints, edits and deletes an expense voucher', function () {
     ])->assertOk();
     expect($expense->fresh()->category)->toBe('صيانة سيارة');
 
-    // Delete: the balance comes back.
+    // Delete: the balance and the journal entry both come back out.
+    $journal = JournalEntry::where('sourceable_type', $expense->getMorphClass())
+        ->where('sourceable_id', $expense->id)
+        ->first();
+    expect($journal)->not->toBeNull();
+
     $before = $box->fresh()->balance();
     actingAs($this->manager)->deleteJson("/api/treasury/movements/{$expense->id}")->assertOk();
 
     expect(CashMovement::find($expense->id))->toBeNull()
+        ->and(JournalEntry::find($journal->id))->toBeNull()
         ->and($box->fresh()->balance())->toBe(round($before + 300, 2));
 });
 
@@ -150,6 +157,25 @@ it('deletes an external deposit voucher and takes the money back out', function 
     actingAs($this->manager)->deleteJson("/api/treasury/movements/{$deposit->id}")->assertOk();
 
     expect($box->fresh()->balance())->toBe(round($before - 1000, 2));
+});
+
+it('refuses to delete a manual voucher after its cash movement is reconciled', function () {
+    $box = CashBox::default();
+    actingAs($this->manager)->postJson('/api/treasury/deposit', [
+        'cash_box_id' => $box->id, 'amount' => 500, 'party' => 'تمويل',
+    ])->assertCreated();
+    actingAs($this->manager)->postJson('/api/treasury/expense', [
+        'cash_box_id' => $box->id, 'amount' => 100, 'category' => 'وقود',
+    ])->assertCreated();
+
+    $expense = CashMovement::where('source', 'expense')->latest('id')->firstOrFail();
+    $expense->update(['reconciled_at' => now()]);
+
+    actingAs($this->manager)->deleteJson("/api/treasury/movements/{$expense->id}")
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('movement');
+
+    expect(CashMovement::find($expense->id))->not->toBeNull();
 });
 
 it('will not touch a customer receipt as a manual voucher', function () {

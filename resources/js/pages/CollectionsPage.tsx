@@ -88,6 +88,7 @@ export function CollectionsPage() {
                         { label: 'التاريخ', className: 'w-32' },
                         { label: 'طريقة الدفع', className: 'w-32' },
                         { label: 'المبلغ', className: 'w-28 text-end' },
+                        { label: 'الإجراءات', className: 'w-32 text-center' },
                     ]}
                 >
                     {rows.map((payment) => (
@@ -107,6 +108,35 @@ export function CollectionsPage() {
                             <td className="px-3 py-2.5 text-navy-600">{payment.method_label}</td>
                             <td className="tabular px-3 py-2.5 text-end font-bold text-navy-900">
                                 {formatMoney(payment.amount)}
+                            </td>
+                            <td className="px-3 py-2.5">
+                                <div className="flex items-center justify-center gap-1">
+                                    <Link
+                                        to={path(`/print/receipts/${payment.id}`)}
+                                        target="_blank"
+                                        className="tap grid size-8 place-items-center rounded-lg text-navy-400 transition hover:bg-navy-50 hover:text-navy-700"
+                                        aria-label="طباعة سند القبض"
+                                        title="طباعة"
+                                    >
+                                        <Printer className="size-4" />
+                                    </Link>
+                                    <button
+                                        onClick={() => setEditing(payment)}
+                                        className="tap grid size-8 place-items-center rounded-lg text-navy-400 transition hover:bg-navy-50 hover:text-navy-700"
+                                        aria-label="تعديل سند القبض"
+                                        title="تعديل"
+                                    >
+                                        <Pencil className="size-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => setReversing(payment)}
+                                        className="tap grid size-8 place-items-center rounded-lg text-navy-400 transition hover:bg-red-50 hover:text-red-600"
+                                        aria-label="إلغاء سند القبض"
+                                        title="إلغاء بقيد عكسي"
+                                    >
+                                        <RotateCcw className="size-4" />
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     ))}

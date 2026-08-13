@@ -398,7 +398,7 @@ class CustodyService
             ->when($month, fn ($q) => $q
                 ->whereYear('created_at', (int) substr($month, 0, 4))
                 ->whereMonth('created_at', (int) substr($month, 5, 2)))
-            ->with(['actor', 'task'])
+            ->with(['actor', 'task.customer', 'task.branch'])
             ->latest('id')
             ->limit($limit)
             ->get()
@@ -409,6 +409,10 @@ class CustodyService
                 'note' => $movement->note,
                 'task_id' => $movement->task_id,
                 'task_code' => $movement->task?->code,
+                // The expense inherits its customer and branch from the job;
+                // no duplicate business identity is stored on a cash movement.
+                'customer' => $movement->task?->customer?->name,
+                'branch' => $movement->task?->branch?->name,
                 'receipt_url' => $movement->receiptUrl(),
                 'by' => $movement->actor?->name,
                 'created_at' => $movement->created_at?->toIso8601String(),

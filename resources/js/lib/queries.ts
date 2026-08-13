@@ -3117,6 +3117,16 @@ export function useSupplierPayment(id: number | string | undefined) {
     })
 }
 
+/** Cancel a supplier-payment voucher through an auditable reverse cash entry. */
+export function useReverseSupplierPayment() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id: number) => (await api.delete(`/supplier-payments/${id}`)).data,
+        onSuccess: () => invalidateMoney(client),
+    })
+}
+
 /* ── Purchase requests ───────────────────────────────────── */
 
 /* ── Supplier quotes ─────────────────────────────────────── */
