@@ -362,11 +362,16 @@ export function TreasuryPage() {
                         toast.success('تم حذف الخزينة.')
                         setDeletingBox(null)
                     } catch (caught) {
-                        toast.error(errorMessage(caught, 'تعذّر الحذف.'))
+                        toast.error(
+                            errorMessage(
+                                caught,
+                                'لا يمكن حذف الخزينة المرتبطة بسندات مالية. قم بإيقافها بدلًا من حذفها.',
+                            ),
+                        )
                     }
                 }}
                 title="حذف الخزينة"
-                message={`حذف «${deletingBox?.name ?? ''}»؟ الخزائن التي لها حركة لا يمكن حذفها.`}
+                message={`حذف «${deletingBox?.name ?? ''}»؟ إذا كانت الخزينة مرتبطة بأي سند مالي فلن تُحذف. استخدم تعديل الخزينة ثم أوقفها بدلًا من حذفها.`}
                 confirmLabel="حذف"
                 loading={deleteBox.isPending}
                 danger
@@ -759,7 +764,7 @@ function CashBoxDialog({ onClose, box }: { onClose: () => void; box?: CashBoxSum
                             onChange={(e) => setIsActive(e.target.checked)}
                             className="size-4 rounded border-navy-300"
                         />
-                        {tr('خزينة نشطة')}
+                        {tr('الخزينة نشطة — أزل التحديد لإيقافها/أرشفتها')}
                     </label>
                 )}
             </div>

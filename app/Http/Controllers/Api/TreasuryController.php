@@ -158,9 +158,9 @@ class TreasuryController extends Controller
             throw ValidationException::withMessages(['box' => Terms::get('لا يمكن حذف الخزينة الرئيسية.')]);
         }
 
-        if ($box->movements()->exists()) {
+        if ($box->hasFinancialReferences()) {
             throw ValidationException::withMessages([
-                'box' => Terms::get('لا يمكن حذف خزينة لها حركة. أوقفها بدلًا من ذلك.'),
+                'box' => Terms::get('لا يمكن حذف هذه الخزينة لأنها مرتبطة بسندات مالية. قم بإيقافها بدلًا من حذفها.'),
             ]);
         }
 

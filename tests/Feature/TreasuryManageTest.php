@@ -4,6 +4,8 @@ use App\Models\CashBox;
 use App\Models\CashMovement;
 use App\Models\Customer;
 use App\Models\JournalEntry;
+use App\Models\Supplier;
+use App\Models\SupplierPayment;
 use App\Models\User;
 
 use function Pest\Laravel\actingAs;
@@ -47,6 +49,43 @@ it('refuses to delete a box that has movement', function () {
     actingAs($this->manager)->deleteJson("/api/treasury/boxes/{$box->id}")->assertStatus(422);
 
     expect(CashBox::find($box->id))->not->toBeNull();
+});
+
+it('refuses to delete a box referenced by a supplier payment', function () {
+    $box = CashBox::create(['name' => 'حساب مورد مرتبط', 'type' => 'bank']);
+    $supplier = Supplier::create(['name' => 'مورد اختبار']);
+    SupplierPayment::create([
+        'supplier_id' => $supplier->id,
+        'cash_box_id' => $box->id,
+        'amount' => 250,
+        'method' => 'cash',
+        'paid_at' => now()->toDateString(),
+    ]);
+
+    actingAs($this->manager)
+        ->deleteJson("/api/treasury/boxes/{$box->id}")
+        ->assertStatus(422)
+        ->assertJsonPath('errors.box.0', 'لا يمكن حذف هذه الخزينة لأنها مرتبطة بسندات مالية. قم بإيقافها بدلًا من حذفها.');
+
+    expect(CashBox::find($box->id))->not->toBeNull();
+});
+
+it('archives a referenced box instead of deleting its financial history', function () {
+    $box = CashBox::create(['name' => 'خزينة موقوفة', 'type' => 'cash']);
+    CashMovement::create([
+        'cash_box_id' => $box->id, 'direction' => 'out', 'amount' => 100, 'source' => 'expense',
+    ]);
+
+    actingAs($this->manager)
+        ->putJson("/api/treasury/boxes/{$box->id}", [
+            'name' => $box->name,
+            'type' => $box->type,
+            'is_active' => false,
+        ])
+        ->assertOk();
+
+    expect($box->fresh()->is_active)->toBeFalse()
+        ->and(CashMovement::where('cash_box_id', $box->id)->count())->toBe(1);
 });
 
 it('refuses to delete the main till', function () {

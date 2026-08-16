@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class CashBox extends Model
 {
@@ -21,6 +22,30 @@ class CashBox extends Model
     public function movements(): HasMany
     {
         return $this->hasMany(CashMovement::class);
+    }
+
+    /**
+     * A box is historical evidence once any financial table points at it.
+     * Check the raw rows, including soft-deleted vouchers, because MySQL
+     * foreign keys still protect those references.
+     */
+    public function hasFinancialReferences(): bool
+    {
+        foreach ([
+            'cash_movements',
+            'payments',
+            'supplier_payments',
+            'cheques',
+            'salary_advances',
+            'payslips',
+            'recurring_expenses',
+        ] as $table) {
+            if (DB::table($table)->where('cash_box_id', $this->getKey())->exists()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function payments(): HasMany
