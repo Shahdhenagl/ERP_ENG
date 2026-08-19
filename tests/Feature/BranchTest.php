@@ -219,6 +219,41 @@ it('rejects a route leg with no label', function () {
         ->assertStatus(422);
 });
 
+it('rejects duplicate branch names for the same customer', function () {
+    branchFor($this->customer, ['name' => 'فرع متكرر']);
+
+    actingAs($this->manager)
+        ->postJson("/api/customers/{$this->customer->id}/branches", [
+            'name' => 'فرع متكرر',
+        ])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors([
+            'name' => 'يوجد فرع بهذا الاسم لنفس العميل.',
+        ]);
+});
+
+it('allows the same branch name for different customers', function () {
+    $other = Customer::factory()->create();
+    branchFor($this->customer, ['name' => 'فرع مشترك']);
+
+    actingAs($this->manager)
+        ->postJson("/api/customers/{$other->id}/branches", [
+            'name' => 'فرع مشترك',
+        ])
+        ->assertCreated();
+});
+
+it('allows updating a branch without changing its own name', function () {
+    $branch = branchFor($this->customer, ['name' => 'فرع ثابت']);
+
+    actingAs($this->manager)
+        ->putJson("/api/branches/{$branch->id}", [
+            'name' => 'فرع ثابت',
+        ])
+        ->assertOk()
+        ->assertJsonPath('data.name', 'فرع ثابت');
+});
+
 /* ── Access ──────────────────────────────────────────────── */
 
 it('lets a manager add a branch to a customer', function () {

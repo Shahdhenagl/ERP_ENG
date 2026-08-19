@@ -9,6 +9,7 @@ use App\Models\Customer;
 use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class BranchController extends Controller
 {
@@ -54,7 +55,7 @@ class BranchController extends Controller
     public function store(Request $request, Customer $customer): JsonResponse
     {
         $branch = $customer->branches()->create([
-            ...$this->validated($request),
+            ...$this->validated($request, $customer->id),
             'created_by' => $request->user()->id,
         ]);
 
@@ -76,7 +77,7 @@ class BranchController extends Controller
 
     public function update(Request $request, Branch $branch): JsonResponse
     {
-        $branch->update($this->validated($request));
+        $branch->update($this->validated($request, $branch->customer_id, $branch->id));
 
         ActivityLog::record('branch.updated', $branch, "تم تعديل فرع {$branch->name}");
 
@@ -143,10 +144,17 @@ class BranchController extends Controller
     }
 
     /** @return array<string, mixed> */
-    protected function validated(Request $request): array
+    protected function validated(Request $request, int $customerId, ?int $ignoreId = null): array
     {
+        $nameRule = Rule::unique('branches')
+            ->where(fn ($query) => $query->where('customer_id', $customerId));
+
+        if ($ignoreId !== null) {
+            $nameRule->ignore($ignoreId);
+        }
+
         return $request->validate([
-            'name' => ['required', 'string', 'max:160'],
+            'name' => ['required', 'string', 'max:160', $nameRule],
             'customer_ref' => ['nullable', 'string', 'max:64'],
             'address' => ['nullable', 'string', 'max:500'],
             'governorate' => ['nullable', 'string', 'max:60'],
@@ -169,6 +177,8 @@ class BranchController extends Controller
             'route.note' => ['nullable', 'string', 'max:500'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'is_active' => ['boolean'],
+        ], [
+            'name.unique' => 'يوجد فرع بهذا الاسم لنفس العميل.',
         ]);
     }
 }
