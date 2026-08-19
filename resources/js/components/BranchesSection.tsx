@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import { tr } from '@/lib/i18n'
-import { ArrowLeft, CalendarClock, ChevronDown, ClipboardList, HardDrive, MapPin, Pencil, Phone, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, CalendarClock, ChevronDown, ClipboardList, HardDrive, MapPin, Pencil, Phone, Plus, Search, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BranchForm } from '@/components/BranchForm'
@@ -32,9 +32,24 @@ export function BranchesSection({ customerId }: { customerId: number }) {
     const [editing, setEditing] = useState<Branch | null>(null)
     const [creating, setCreating] = useState(false)
     const [deleting, setDeleting] = useState<Branch | null>(null)
+    const [search, setSearch] = useState('')
 
     const remove = useDeleteBranch()
     const toast = useToast()
+    const term = search.trim().toLocaleLowerCase()
+    const visibleBranches = (branches ?? []).filter((branch) => {
+        if (!term) return true
+
+        return [
+            branch.name,
+            branch.code,
+            branch.label,
+            branch.customer_ref,
+            branch.address,
+            branch.city,
+            branch.governorate,
+        ].some((value) => value?.toLocaleLowerCase().includes(term))
+    })
 
     return (
         <section className="mt-6">
@@ -60,79 +75,105 @@ export function BranchesSection({ customerId }: { customerId: number }) {
                     description="أضف مواقع العميل في أنحاء مصر ليُسند إليها العمل ويظهر خط سيرها للفني."
                 />
             ) : (
-                <div className="grid gap-2 sm:grid-cols-2">
-                    {branches.map((branch) => (
-                        <div key={branch.id} className="card p-3.5">
-                            <div className="flex items-start justify-between gap-2">
-                                <div className="min-w-0">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <span className="tabular text-[11px] font-bold text-brand-600">
-                                            {branch.code}
-                                        </span>
-                                        {!branch.is_active && (
-                                            <span className="badge bg-navy-100 text-navy-500">موقوف</span>
-                                        )}
-                                    </div>
-                                    <p className="mt-0.5 truncate text-sm font-bold text-navy-900">
-                                        {branch.name}
-                                        {branch.customer_ref && (
-                                            <span className="tabular mr-1.5 text-[11px] font-normal text-navy-400">
-                                                {branch.customer_ref}
-                                            </span>
-                                        )}
-                                    </p>
-                                    {branch.address && (
-                                        <p className="mt-0.5 flex items-start gap-1 text-[11px] text-navy-500">
-                                            <MapPin className="mt-0.5 size-3 shrink-0 text-navy-300" />
-                                            <span className="truncate">{branch.address}</span>
-                                        </p>
-                                    )}
-                                    {branch.contact_phone && (
-                                        <p className="tabular mt-0.5 flex items-center gap-1 text-[11px] text-navy-400">
-                                            <Phone className="size-3 text-navy-300" />
-                                            {branch.contact_phone}
-                                            {branch.contact_name && ` · ${branch.contact_name}`}
-                                        </p>
-                                    )}
-                                    <p className="tabular mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-navy-500">
-                                        <span className="inline-flex items-center gap-1">
-                                            <CalendarClock className="size-3 text-navy-300" />
-                                            آخر زيارة: {branch.last_visit_completed_at ? formatDate(branch.last_visit_completed_at) : 'لا توجد'}
-                                        </span>
-                                        {typeof branch.days_since_last_visit === 'number' && (
-                                            <span>منذ {branch.days_since_last_visit} يوم</span>
-                                        )}
-                                        {branch.next_visit_available_at && (
-                                            <span className="badge bg-amber-50 text-amber-700 ring-1 ring-amber-200">
-                                                التالي بعد {formatDate(branch.next_visit_available_at)}
-                                            </span>
-                                        )}
-                                    </p>
-                                </div>
-
-                                <div className="flex shrink-0 gap-0.5">
-                                    <button
-                                        onClick={() => setEditing(branch)}
-                                        className="tap grid place-items-center rounded-lg p-2 text-navy-400 transition hover:bg-navy-50 hover:text-navy-700"
-                                        aria-label="تعديل"
-                                    >
-                                        <Pencil className="size-4" />
-                                    </button>
-                                    <button
-                                        onClick={() => setDeleting(branch)}
-                                        className="tap grid place-items-center rounded-lg p-2 text-navy-400 transition hover:bg-red-50 hover:text-red-600"
-                                        aria-label="حذف"
-                                    >
-                                        <Trash2 className="size-4" />
-                                    </button>
-                                </div>
-                            </div>
-
-                            <BranchVisits branch={branch} />
-                            <BranchAssets branchId={branch.id} />
+                <>
+                    <div className="mb-3 space-y-2">
+                        <div className="relative">
+                            <Search className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-navy-300" />
+                            <input
+                                value={search}
+                                onChange={(event) => setSearch(event.target.value)}
+                                placeholder="ابحث باسم الفرع أو الكود أو الموقع..."
+                                aria-label="البحث في الفروع"
+                                className="w-full rounded-xl border border-navy-200 bg-white py-2.5 pr-9 pl-3 text-sm text-navy-800 outline-none transition placeholder:text-navy-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+                            />
                         </div>
-                    ))}
-                </div>
+                        {term && (
+                            <p className="text-[11px] text-navy-400">
+                                عرض {visibleBranches.length} من {branches.length} فرع
+                            </p>
+                        )}
+                    </div>
+
+                    {visibleBranches.length ? (
+                        <div className="grid gap-2 sm:grid-cols-2">
+                            {visibleBranches.map((branch) => (
+                                <div key={branch.id} className="card p-3.5">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="min-w-0">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <span className="tabular text-[11px] font-bold text-brand-600">
+                                                    {branch.code}
+                                                </span>
+                                                {!branch.is_active && (
+                                                    <span className="badge bg-navy-100 text-navy-500">موقوف</span>
+                                                )}
+                                            </div>
+                                            <p className="mt-0.5 truncate text-sm font-bold text-navy-900">
+                                                {branch.name}
+                                                {branch.customer_ref && (
+                                                    <span className="tabular mr-1.5 text-[11px] font-normal text-navy-400">
+                                                        {branch.customer_ref}
+                                                    </span>
+                                                )}
+                                            </p>
+                                            {branch.address && (
+                                                <p className="mt-0.5 flex items-start gap-1 text-[11px] text-navy-500">
+                                                    <MapPin className="mt-0.5 size-3 shrink-0 text-navy-300" />
+                                                    <span className="truncate">{branch.address}</span>
+                                                </p>
+                                            )}
+                                            {branch.contact_phone && (
+                                                <p className="tabular mt-0.5 flex items-center gap-1 text-[11px] text-navy-400">
+                                                    <Phone className="size-3 text-navy-300" />
+                                                    {branch.contact_phone}
+                                                    {branch.contact_name && ` · ${branch.contact_name}`}
+                                                </p>
+                                            )}
+                                            <p className="tabular mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-navy-500">
+                                                <span className="inline-flex items-center gap-1">
+                                                    <CalendarClock className="size-3 text-navy-300" />
+                                                    آخر زيارة: {branch.last_visit_completed_at ? formatDate(branch.last_visit_completed_at) : 'لا توجد'}
+                                                </span>
+                                                {typeof branch.days_since_last_visit === 'number' && (
+                                                    <span>منذ {branch.days_since_last_visit} يوم</span>
+                                                )}
+                                                {branch.next_visit_available_at && (
+                                                    <span className="badge bg-amber-50 text-amber-700 ring-1 ring-amber-200">
+                                                        التالي بعد {formatDate(branch.next_visit_available_at)}
+                                                    </span>
+                                                )}
+                                            </p>
+                                        </div>
+
+                                        <div className="flex shrink-0 gap-0.5">
+                                            <button
+                                                onClick={() => setEditing(branch)}
+                                                className="tap grid place-items-center rounded-lg p-2 text-navy-400 transition hover:bg-navy-50 hover:text-navy-700"
+                                                aria-label="تعديل"
+                                            >
+                                                <Pencil className="size-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => setDeleting(branch)}
+                                                className="tap grid place-items-center rounded-lg p-2 text-navy-400 transition hover:bg-red-50 hover:text-red-600"
+                                                aria-label="حذف"
+                                            >
+                                                <Trash2 className="size-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <BranchVisits branch={branch} />
+                                    <BranchAssets branchId={branch.id} />
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="rounded-xl border border-dashed border-navy-200 px-4 py-8 text-center text-sm text-navy-400">
+                            لا توجد فروع تطابق البحث.
+                        </p>
+                    )}
+                </>
             )}
 
             {(creating || editing) && (
