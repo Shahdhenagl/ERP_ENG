@@ -620,59 +620,113 @@ function StatementDialog({
                             {tr('لا توجد حركات في هذه الفترة.')}
                         </p>
                     ) : (
-                        <div className="overflow-x-auto">
-                            <table className="doc-table min-w-[1120px]">
+                        <div className="w-full min-w-0 overflow-hidden">
+                            {/* Desktop: the fixed layout keeps every column inside the dialog. */}
+                            <table className="doc-table hidden w-full table-fixed text-[11px] md:table">
                                 <thead>
                                     <tr>
-                                        <Th className="w-24">التاريخ</Th>
-                                        <Th className="w-28">نوع الإيصال</Th>
-                                        <Th className="w-28">الرقم No</Th>
-                                        <Th>البيان</Th>
-                                        <Th className="w-40">مستلم / دافع المبلغ</Th>
-                                        <Th className="w-40">الحساب المقابل / نوعه</Th>
-                                        <Th className="w-24 text-left">مدين</Th>
-                                        <Th className="w-24 text-left">دائن</Th>
-                                        <Th className="w-28 text-left">الرصيد</Th>
+                                        <Th className="w-[8%]">التاريخ</Th>
+                                        <Th className="w-[10%]">نوع الإيصال</Th>
+                                        <Th className="w-[11%]">الرقم No</Th>
+                                        <Th className="w-[18%]">البيان</Th>
+                                        <Th className="w-[14%]">مستلم / دافع</Th>
+                                        <Th className="w-[16%]">الحساب المقابل</Th>
+                                        <Th className="w-[8%] text-left">مدين</Th>
+                                        <Th className="w-[8%] text-left">دائن</Th>
+                                        <Th className="w-[9%] text-left">الرصيد</Th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {data.rows.map((row) => (
                                         <tr key={row.id}>
-                                            <td className="tabular text-navy-500">
+                                            <td className="break-words tabular text-navy-500">
                                                 {row.date ? formatDate(row.date) : '—'}
                                             </td>
-                                            <td className="font-semibold text-navy-800">{row.voucher_type}</td>
-                                            <td className="tabular text-[12px] font-bold text-brand-700">
+                                            <td className="break-words font-semibold text-navy-800">{row.voucher_type}</td>
+                                            <td className="break-words tabular font-bold text-brand-700">
                                                 {row.voucher_number}
                                                 {row.journal_code && (
-                                                    <span className="block text-[10px] font-medium text-navy-400">
+                                                    <span className="block break-words text-[9px] font-medium text-navy-400">
                                                         {row.journal_code}
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="text-navy-700">{row.description}</td>
-                                            <td className="text-navy-700">{row.party ?? '—'}</td>
-                                            <td className="text-navy-700">
+                                            <td className="break-words text-navy-700">{row.description}</td>
+                                            <td className="break-words text-navy-700">{row.party ?? '—'}</td>
+                                            <td className="break-words text-navy-700">
                                                 {row.account_name ?? 'بانتظار الترحيل'}
                                                 {row.account_type && (
-                                                    <span className="block text-[11px] text-navy-400">
-                                                        {row.account_type}
-                                                    </span>
+                                                    <span className="block text-[10px] text-navy-400">{row.account_type}</span>
                                                 )}
                                             </td>
-                                            <td className="tabular text-left text-emerald-700">
+                                            <td className="break-words tabular text-left text-emerald-700">
                                                 {row.debit > 0 ? formatMoney(row.debit) : '—'}
                                             </td>
-                                            <td className="tabular text-left text-red-700">
+                                            <td className="break-words tabular text-left text-red-700">
                                                 {row.credit > 0 ? formatMoney(row.credit) : '—'}
                                             </td>
-                                            <td className="tabular text-left font-bold text-navy-900">
+                                            <td className="break-words tabular text-left font-bold text-navy-900">
                                                 {formatMoney(row.balance)}
                                             </td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
+
+                            {/* Mobile: each movement becomes a readable card, so no horizontal scrolling is needed. */}
+                            <div className="space-y-2 md:hidden">
+                                {data.rows.map((row) => (
+                                    <article key={row.id} className="rounded-xl border border-navy-100 bg-white p-3">
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="min-w-0">
+                                                <p className="break-words text-xs font-bold text-navy-800">{row.voucher_type}</p>
+                                                <p className="mt-0.5 break-words text-[11px] font-bold text-brand-700">
+                                                    {row.voucher_number}
+                                                    {row.journal_code && ` · ${row.journal_code}`}
+                                                </p>
+                                            </div>
+                                            <span className="tabular shrink-0 text-[11px] text-navy-500">
+                                                {row.date ? formatDate(row.date) : '—'}
+                                            </span>
+                                        </div>
+
+                                        <div className="mt-2 space-y-1.5 border-t border-navy-100 pt-2 text-xs">
+                                            <p className="break-words">
+                                                <span className="font-bold text-navy-500">البيان: </span>
+                                                <span className="text-navy-800">{row.description}</span>
+                                            </p>
+                                            <p className="break-words">
+                                                <span className="font-bold text-navy-500">المستلم / الدافع: </span>
+                                                <span className="text-navy-800">{row.party ?? '—'}</span>
+                                            </p>
+                                            <p className="break-words">
+                                                <span className="font-bold text-navy-500">الحساب المقابل: </span>
+                                                <span className="text-navy-800">{row.account_name ?? 'بانتظار الترحيل'}</span>
+                                                {row.account_type && <span className="text-navy-400"> · {row.account_type}</span>}
+                                            </p>
+                                        </div>
+
+                                        <div className="mt-2 grid grid-cols-3 gap-2 border-t border-navy-100 pt-2 text-center text-[11px]">
+                                            <div>
+                                                <span className="block text-navy-400">مدين</span>
+                                                <span className="tabular font-bold text-emerald-700">
+                                                    {row.debit > 0 ? formatMoney(row.debit) : '—'}
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <span className="block text-navy-400">دائن</span>
+                                                <span className="tabular font-bold text-red-700">
+                                                    {row.credit > 0 ? formatMoney(row.credit) : '—'}
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <span className="block text-navy-400">الرصيد</span>
+                                                <span className="tabular font-bold text-navy-900">{formatMoney(row.balance)}</span>
+                                            </div>
+                                        </div>
+                                    </article>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>
