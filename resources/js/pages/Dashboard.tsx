@@ -11,6 +11,7 @@ import {
     LogIn,
     LogOut,
     MapPin,
+    PauseCircle,
     TrendingUp,
     Users,
     type LucideIcon,
@@ -74,7 +75,7 @@ export function Dashboard() {
             />
 
             {/* ── Headline numbers ───────────────────────────── */}
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
                 <StatTile
                     icon={ClipboardList}
                     label={tr('مهام مفتوحة')}
@@ -82,6 +83,14 @@ export function Dashboard() {
                     loading={isLoading}
                     tone="navy"
                     to={path('/tasks?open_only=1')}
+                />
+                <StatTile
+                    icon={PauseCircle}
+                    label={tr('المهام المؤجلة')}
+                    value={stats?.postponed}
+                    loading={isLoading}
+                    tone="amber"
+                    to={path('/tasks?status=postponed')}
                 />
                 <StatTile
                     icon={AlertTriangle}

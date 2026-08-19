@@ -1314,6 +1314,7 @@ export interface DashboardData {
     stats: {
         by_status: Record<TaskStatus, number>
         open_total: number
+        postponed: number
         completed_today: number
         completed_this_month: number
         overdue: number

@@ -83,6 +83,9 @@ class DashboardController extends Controller
         $stats = [
             'by_status' => $counts,
             'open_total' => array_sum(array_intersect_key($counts, array_flip($openStatuses))),
+            'postponed' => $scoped()
+                ->where('status', TaskStatus::Postponed->value)
+                ->count(),
             'completed_today' => $scoped()
                 ->where('status', TaskStatus::Completed->value)
                 ->when($isCurrentMonth,

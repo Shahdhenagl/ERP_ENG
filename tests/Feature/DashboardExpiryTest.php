@@ -2,7 +2,9 @@
 
 use App\Models\Asset;
 use App\Models\Contract;
+use App\Enums\TaskStatus;
 use App\Models\Customer;
+use App\Models\Task;
 use App\Models\User;
 use App\Services\WarrantyService;
 
@@ -56,6 +58,14 @@ it('surfaces a contract about to expire', function () {
     $response = actingAs($this->manager)->getJson('/api/dashboard')->assertOk();
 
     expect($response->json('contracts_expiring'))->toHaveCount(1);
+});
+
+it('counts postponed tasks on the dashboard', function () {
+    Task::factory()->for($this->customer)->create(['status' => TaskStatus::Postponed]);
+    Task::factory()->for($this->customer)->create(['status' => TaskStatus::Pending]);
+
+    expect(actingAs($this->manager)->getJson('/api/dashboard')->json('stats.postponed'))
+        ->toBe(1);
 });
 
 it('does not compute the alerts for a technician', function () {
