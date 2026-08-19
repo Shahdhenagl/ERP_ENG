@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import { tr } from '@/lib/i18n'
-import { ArrowRight, MessageCircle, Plus, Save } from 'lucide-react'
+import { ArrowRight, MessageCircle, Plus, Save, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AssetForm } from '@/components/AssetForm'
@@ -40,6 +40,7 @@ export function TaskForm() {
     const [errors, setErrors] = useState<Record<string, string>>({})
     const [saved, setSaved] = useState<Task | null>(null)
     const [assetFormOpen, setAssetFormOpen] = useState(false)
+    const [branchSearch, setBranchSearch] = useState('')
 
     const [form, setForm] = useState({
         customer_id: '',
@@ -84,6 +85,20 @@ export function TaskForm() {
         form.customer_id ? Number(form.customer_id) : undefined,
     )
     const branches = branchList ?? []
+    const branchTerm = branchSearch.trim().toLocaleLowerCase()
+    const matchingBranches = branches.filter((branch) => {
+        if (!branchTerm) return true
+
+        return [
+            branch.name,
+            branch.code,
+            branch.label,
+            branch.customer_ref,
+            branch.address,
+            branch.city,
+            branch.governorate,
+        ].some((value) => value?.toLocaleLowerCase().includes(branchTerm))
+    })
 
     const customerAssets = form.customer_id ? (assetPage?.data ?? []) : []
     const selectedAsset = customerAssets.find((asset) => String(asset.id) === form.asset_id)
@@ -205,16 +220,17 @@ export function TaskForm() {
                             <div className="flex gap-2">
                                 <Select
                                     value={form.customer_id}
-                                    onChange={(event) =>
+                                    onChange={(event) => {
                                         // Drop the device too: it belongs to the
                                         // previous customer and the API would reject it.
+                                        setBranchSearch('')
                                         setForm((current) => ({
                                             ...current,
                                             customer_id: event.target.value,
                                             branch_id: '',
-        asset_id: '',
+                                            asset_id: '',
                                         }))
-                                    }
+                                    }}
                                     className="flex-1"
                                 >
                                     <option value="">— اختر العميل —</option>
@@ -247,28 +263,43 @@ export function TaskForm() {
                                 error={errors.branch_id}
                                 hint="اختيار الموقع يملأ عنوانه تلقائيًا"
                             >
-                                <Select
-                                    value={form.branch_id}
-                                    onChange={(event) => {
-                                        const id = event.target.value
-                                        const picked = branches.find((b) => String(b.id) === id)
-                                        setForm((current) => ({
-                                            ...current,
-                                            branch_id: id,
-                                            // Fill the address from the site so the dispatcher
-                                            // sees where it goes; still editable for a one-off.
-                                            site_address: picked?.address ?? current.site_address,
-                                        }))
-                                    }}
-                                >
-                                    <option value="">— بدون موقع محدد —</option>
-                                    {branches.map((branch) => (
-                                        <option key={branch.id} value={branch.id}>
-                                            {branch.name}
-                                            {branch.city ? ` — ${branch.city}` : ''}
-                                        </option>
-                                    ))}
-                                </Select>
+                                <div className="space-y-2">
+                                    <div className="relative">
+                                        <Search className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-navy-300" />
+                                        <Input
+                                            value={branchSearch}
+                                            onChange={(event) => setBranchSearch(event.target.value)}
+                                            placeholder="ابحث باسم الفرع أو الكود أو الموقع..."
+                                            aria-label="البحث في مواقع العميل"
+                                            className="pr-9"
+                                        />
+                                    </div>
+                                    <Select
+                                        value={form.branch_id}
+                                        onChange={(event) => {
+                                            const id = event.target.value
+                                            const picked = branches.find((b) => String(b.id) === id)
+                                            setForm((current) => ({
+                                                ...current,
+                                                branch_id: id,
+                                                // Fill the address from the site so the dispatcher
+                                                // sees where it goes; still editable for a one-off.
+                                                site_address: picked?.address ?? current.site_address,
+                                            }))
+                                        }}
+                                    >
+                                        <option value="">— بدون موقع محدد —</option>
+                                        {matchingBranches.map((branch) => (
+                                            <option key={branch.id} value={branch.id}>
+                                                {branch.name}
+                                                {branch.city ? ` — ${branch.city}` : ''}
+                                            </option>
+                                        ))}
+                                    </Select>
+                                    {branchTerm && !matchingBranches.length && (
+                                        <p className="text-xs text-navy-400">لا توجد مواقع تطابق البحث.</p>
+                                    )}
+                                </div>
                             </Field>
                         )}
 
