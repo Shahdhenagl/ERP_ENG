@@ -27,7 +27,9 @@ class CashBox extends Model
     /**
      * A box is historical evidence once any financial table points at it.
      * Check the raw rows, including soft-deleted vouchers, because MySQL
-     * foreign keys still protect those references.
+     * foreign keys still protect those references. Recurring-expense rows are
+     * templates, not posted money; their nullable foreign key is intentionally
+     * cleared by the database when a box is removed.
      */
     public function hasFinancialReferences(): bool
     {
@@ -38,7 +40,6 @@ class CashBox extends Model
             'cheques',
             'salary_advances',
             'payslips',
-            'recurring_expenses',
         ] as $table) {
             if (DB::table($table)->where('cash_box_id', $this->getKey())->exists()) {
                 return true;

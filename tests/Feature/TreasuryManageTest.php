@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\JournalEntry;
 use App\Models\Supplier;
 use App\Models\SupplierPayment;
+use App\Models\RecurringExpense;
 use App\Models\User;
 
 use function Pest\Laravel\actingAs;
@@ -38,6 +39,25 @@ it('deletes an empty box', function () {
     actingAs($this->manager)->deleteJson("/api/treasury/boxes/{$box->id}")->assertOk();
 
     expect(CashBox::find($box->id))->toBeNull();
+});
+
+it('deletes a box referenced only by an unpaid recurring expense template', function () {
+    $box = CashBox::create(['name' => 'خزينة بقالب دوري', 'type' => 'bank']);
+    $template = RecurringExpense::create([
+        'name' => 'اشتراك بنكي',
+        'amount' => 100,
+        'category' => 'رسوم',
+        'cash_box_id' => $box->id,
+        'cycle_days' => 30,
+        'start_on' => now()->toDateString(),
+        'next_due_on' => now()->addMonth()->toDateString(),
+        'is_active' => true,
+    ]);
+
+    actingAs($this->manager)->deleteJson("/api/treasury/boxes/{$box->id}")->assertOk();
+
+    expect(CashBox::find($box->id))->toBeNull()
+        ->and($template->fresh()->cash_box_id)->toBeNull();
 });
 
 it('refuses to delete a box that has movement', function () {
