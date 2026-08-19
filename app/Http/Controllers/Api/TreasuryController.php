@@ -96,7 +96,11 @@ class TreasuryController extends Controller
         // approach the stock module takes with the main warehouse.
         CashBox::default();
 
-        $boxes = CashBox::query()->orderBy('type')->get()->map(fn (CashBox $box) => [
+        $boxes = CashBox::query()
+            ->whereNull('user_id')
+            ->orderBy('type')
+            ->get()
+            ->map(fn (CashBox $box) => [
             'id' => $box->id,
             'name' => $box->name,
             'type' => $box->isCustody() ? 'custody' : $box->type,

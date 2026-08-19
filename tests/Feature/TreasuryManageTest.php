@@ -23,6 +23,24 @@ beforeEach(function () {
     CashBox::default();
 });
 
+it('omits technician custody boxes from the general cash-box list', function () {
+    $technician = User::factory()->technician()->create();
+    $custody = CashBox::create([
+        'name' => 'خزينة عهدة الفني',
+        'type' => 'cash',
+        'user_id' => $technician->id,
+    ]);
+    $companyBox = CashBox::create(['name' => 'حساب الشركة', 'type' => 'bank']);
+
+    $ids = actingAs($this->manager)
+        ->getJson('/api/treasury/boxes')
+        ->assertOk()
+        ->json('data.*.id');
+
+    expect($ids)->toContain($companyBox->id)
+        ->not->toContain($custody->id);
+});
+
 it('renames a cash box', function () {
     $box = CashBox::create(['name' => 'حساب قديم', 'type' => 'bank']);
 
