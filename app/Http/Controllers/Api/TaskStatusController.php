@@ -28,6 +28,12 @@ class TaskStatusController extends Controller
 
         $to = TaskStatus::from($data['status']);
 
+        if ($task->status === TaskStatus::Postponed
+            && $to === TaskStatus::Accepted
+            && (! $task->scheduled_at || $task->scheduled_at->isFuture())) {
+            abort(422, 'لا يمكن قبول المهمة المؤجلة قبل موعدها المحدد.');
+        }
+
         // Progress is a record of what happened in the field, so only the
         // technician who was there may move a job forward. Cancelling is the
         // opposite — a dispatch decision, usually made because the customer

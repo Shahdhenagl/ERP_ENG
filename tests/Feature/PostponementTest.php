@@ -104,3 +104,81 @@ it('rejects approving an already reviewed postponement', function () {
         ->postJson("/api/postponements/{$postponement->id}/approve")
         ->assertStatus(422);
 });
+
+it('hides a postponed task from the technician open list before its due date', function () {
+    $task = Task::factory()
+        ->assignedTo($this->technician)
+        ->status(TaskStatus::Postponed)
+        ->create(['scheduled_at' => now()->addDay()]);
+
+    actingAs($this->technician)
+        ->getJson('/api/tasks?open_only=1')
+        ->assertOk()
+        ->assertJsonCount(0, 'data');
+
+    expect($task->fresh()->status)->toBe(TaskStatus::Postponed);
+});
+
+it('shows a postponed task in the technician open list when its due date arrives', function () {
+    $task = Task::factory()
+        ->assignedTo($this->technician)
+        ->status(TaskStatus::Postponed)
+        ->create(['scheduled_at' => now()->subMinute()]);
+
+    actingAs($this->technician)
+        ->getJson('/api/tasks?open_only=1')
+        ->assertOk()
+        ->assertJsonPath('data.0.id', $task->id)
+        ->assertJsonPath('data.0.status', TaskStatus::Postponed->value)
+        ->assertJsonPath('data.0.allowed_next.0.value', TaskStatus::Accepted->value);
+});
+
+it('rejects accepting a postponed task before its due date with 422', function () {
+    $task = Task::factory()
+        ->assignedTo($this->technician)
+        ->status(TaskStatus::Postponed)
+        ->create(['scheduled_at' => now()->addHour()]);
+
+    actingAs($this->technician)
+        ->postJson("/api/tasks/{$task->id}/status", ['status' => TaskStatus::Accepted->value])
+        ->assertStatus(422)
+        ->assertJsonPath('message', 'لا يمكن قبول المهمة المؤجلة قبل موعدها المحدد.');
+
+    expect($task->fresh()->status)->toBe(TaskStatus::Postponed);
+});
+
+it('allows a technician to accept a postponed task after its due date', function () {
+    $task = Task::factory()
+        ->assignedTo($this->technician)
+        ->status(TaskStatus::Postponed)
+        ->create(['scheduled_at' => now()->subMinute()]);
+
+    actingAs($this->technician)
+        ->postJson("/api/tasks/{$task->id}/status", ['status' => TaskStatus::Accepted->value])
+        ->assertOk()
+        ->assertJsonPath('data.status', TaskStatus::Accepted->value);
+
+    expect($task->fresh()->status)->toBe(TaskStatus::Accepted)
+        ->and($task->fresh()->accepted_at)->not->toBeNull();
+});
+
+it('follows the full postponed cycle back to on-the-way after the due date', function () {
+    $task = Task::factory()
+        ->assignedTo($this->technician)
+        ->status(TaskStatus::Postponed)
+        ->create(['scheduled_at' => now()->subMinute()]);
+
+    actingAs($this->technician)
+        ->postJson("/api/tasks/{$task->id}/status", ['status' => TaskStatus::Accepted->value])
+        ->assertOk()
+        ->assertJsonPath('data.status', TaskStatus::Accepted->value);
+
+    actingAs($this->technician)
+        ->postJson("/api/tasks/{$task->id}/status", ['status' => TaskStatus::OnTheWay->value])
+        ->assertOk()
+        ->assertJsonPath('data.status', TaskStatus::OnTheWay->value);
+
+    expect($task->fresh()->status)->toBe(TaskStatus::OnTheWay)
+        ->and($task->fresh()->statusLogs()->pluck('to_status')->all())
+        ->toBe([TaskStatus::Accepted->value, TaskStatus::OnTheWay->value]);
+});

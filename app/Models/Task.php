@@ -237,11 +237,17 @@ class Task extends Model
 
     public function scopeOpen(Builder $query): Builder
     {
-        return $query->whereNotIn('status', [
-            TaskStatus::Completed->value,
-            TaskStatus::Cancelled->value,
-            TaskStatus::Postponed->value,
-        ]);
+        return $query->where(function (Builder $q) {
+            $q->whereNotIn('status', [
+                TaskStatus::Completed->value,
+                TaskStatus::Cancelled->value,
+                TaskStatus::Postponed->value,
+            ])->orWhere(function (Builder $postponed) {
+                $postponed->where('status', TaskStatus::Postponed->value)
+                    ->whereNotNull('scheduled_at')
+                    ->where('scheduled_at', '<=', now());
+            });
+        });
     }
 
     public function scopeForTechnician(Builder $query, int $userId): Builder

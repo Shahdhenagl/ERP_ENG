@@ -129,7 +129,8 @@ export function TaskDetail() {
         next.value === 'cancelled' ? canDispatch : isTechnician && isMine,
     )
 
-    const canDrive = isTechnician && isMine
+    const canDrive = isTechnician && Boolean(isMine)
+    const isPostponed = task.status === 'postponed'
     const completionReport = task.reports?.find((report) => report.type === 'completion')
     const diagnosisReport = task.reports?.find((report) => report.type === 'diagnosis')
 
@@ -234,25 +235,56 @@ export function TaskDetail() {
                     />
                 ) : (
                     <>
-                        <FlowRail status={task.status} />
+                        {isPostponed ? (
+                            <section className="card overflow-hidden">
+                                <header className="flex items-center gap-3 border-b border-amber-200 bg-amber-50 px-4 py-3">
+                                    <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white text-amber-600 shadow-sm">
+                                        <CalendarClock className="size-4.5" />
+                                    </span>
+                                    <div className="min-w-0">
+                                        <h2 className="text-sm font-extrabold text-amber-900">المهمة مؤجلة</h2>
+                                        <p className="text-[11px] text-amber-700">
+                                            {task.scheduled_at
+                                                ? `تظهر إجراءات القبول في ${formatDateTime(task.scheduled_at)}`
+                                                : 'لم يُحدَّد موعد العودة بعد.'}
+                                        </p>
+                                    </div>
+                                </header>
+                                <div className="space-y-3 p-4">
+                                    <SiteCard task={task} />
+                                    {nextStep && (
+                                        <Button
+                                            className="w-full"
+                                            loading={changeStatus.isPending}
+                                            disabled={Boolean(gate)}
+                                            onClick={() => void handleStatus(nextStep.value)}
+                                        >
+                                            {nextStep.label}
+                                        </Button>
+                                    )}
+                                </div>
+                            </section>
+                        ) : (
+                            <>
+                                <FlowRail status={task.status} />
 
-                        <FlowStepCard
-                            status={task.status}
-                            blockedBy={gate}
-                            action={
-                                nextStep && (
-                                    <Button
-                                        className="w-full"
-                                        loading={changeStatus.isPending}
-                                        disabled={Boolean(gate)}
-                                        onClick={() => void handleStatus(nextStep.value)}
-                                    >
-                                        {nextStep.label}
-                                    </Button>
-                                )
-                            }
-                        >
-                            <SiteCard task={task} />
+                                <FlowStepCard
+                                    status={task.status}
+                                    blockedBy={gate}
+                                    action={
+                                        nextStep && (
+                                            <Button
+                                                className="w-full"
+                                                loading={changeStatus.isPending}
+                                                disabled={Boolean(gate)}
+                                                onClick={() => void handleStatus(nextStep.value)}
+                                            >
+                                                {nextStep.label}
+                                            </Button>
+                                        )
+                                    }
+                                >
+                                    <SiteCard task={task} />
 
                             {task.description && (
                                 <p className="rounded-2xl bg-navy-50 p-3 text-xs leading-relaxed text-navy-600">
@@ -309,7 +341,9 @@ export function TaskDetail() {
                                     />
                                 </>
                             )}
-                        </FlowStepCard>
+                                </FlowStepCard>
+                            </>
+                        )}
                     </>
                 )}
 
@@ -317,6 +351,7 @@ export function TaskDetail() {
                     task={task}
                     onAdd={() => setExpenseOpen(true)}
                     onRoute={() => setRouteOpen(true)}
+                    interactive={!isPostponed}
                 />
 
                 {/* The same blocks the desk screen carries, opened as sheets so

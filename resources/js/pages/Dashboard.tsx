@@ -12,7 +12,6 @@ import {
     LogOut,
     MapPin,
     TrendingUp,
-    UserX,
     Users,
     type LucideIcon,
 } from 'lucide-react'

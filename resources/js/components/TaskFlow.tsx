@@ -276,10 +276,12 @@ export function ExpenseBar({
     task,
     onAdd,
     onRoute,
+    interactive = true,
 }: {
     task: Task
     onAdd: () => void
     onRoute: () => void
+    interactive?: boolean
 }) {
     const spent = task.expenses_total ?? 0
     const route = task.branch?.route_total ?? 0
@@ -290,7 +292,8 @@ export function ExpenseBar({
                 <button
                     type="button"
                     onClick={onAdd}
-                    className="tap flex items-center gap-2.5 rounded-2xl bg-brand-600 px-3 py-2.5 text-start text-white shadow-lg shadow-brand-600/20 transition active:scale-[0.98]"
+                    disabled={!interactive}
+                    className="tap flex items-center gap-2.5 rounded-2xl bg-brand-600 px-3 py-2.5 text-start text-white shadow-lg shadow-brand-600/20 transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                     <Receipt className="size-4 shrink-0" />
                     <span className="min-w-0">
@@ -304,7 +307,7 @@ export function ExpenseBar({
                 <button
                     type="button"
                     onClick={onRoute}
-                    disabled={!task.branch}
+                    disabled={!interactive || !task.branch}
                     className="tap flex items-center gap-2.5 rounded-2xl bg-navy-100 px-3 py-2.5 text-start text-navy-800 transition active:scale-[0.98] disabled:opacity-40"
                 >
                     <Route className="size-4 shrink-0" />

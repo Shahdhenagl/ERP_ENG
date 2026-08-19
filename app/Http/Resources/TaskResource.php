@@ -20,6 +20,16 @@ class TaskResource extends JsonResource
         $timeIn = $reports->firstWhere('type', 'diagnosis')?->created_at;
         $timeOut = $reports->firstWhere('type', 'completion')?->created_at;
 
+        $allowedNext = $this->status->allowedNext();
+
+        // A postponed job stays out of the technician's actionable flow until
+        // its scheduled date arrives. Once due, it can be accepted again and
+        // then follows the normal accepted -> on_the_way -> in_progress flow.
+        if ($this->status === \App\Enums\TaskStatus::Postponed
+            && (! $this->scheduled_at || $this->scheduled_at->isFuture())) {
+            $allowedNext = [];
+        }
+
         return [
             'id' => $this->id,
             'code' => $this->code,
@@ -40,7 +50,7 @@ class TaskResource extends JsonResource
             'status_label' => $this->status->label(),
             'allowed_next' => array_map(
                 fn ($s) => ['value' => $s->value, 'label' => $s->label()],
-                $this->status->allowedNext(),
+                $allowedNext,
             ),
             'is_terminal' => $this->status->isTerminal(),
 

@@ -7,7 +7,6 @@ import { useToast } from '@/components/Toast'
 import { Button, Field, Input, PageHeader, Select, Textarea } from '@/components/ui'
 import { errorMessage } from '@/lib/api'
 import { PRIORITY, TASK_TYPE } from '@/lib/domain'
-import { toDateTimeLocal } from '@/lib/format'
 import { useArea } from '@/lib/nav'
 import {
     useBulkCreateTasks,
