@@ -38,7 +38,7 @@ enum TaskStatus: string
         return match ($this) {
             self::Pending => [self::Accepted, self::Cancelled, self::Postponed],
             self::Accepted => [self::OnTheWay, self::InProgress, self::Cancelled, self::Postponed],
-            self::OnTheWay => [self::InProgress, self::Cancelled],
+            self::OnTheWay => [self::InProgress, self::Cancelled, self::Postponed],
             self::InProgress => [self::Completed, self::Cancelled, self::Postponed],
             self::Postponed => [self::Pending, self::Cancelled],
             self::Completed, self::Cancelled => [],

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\TaskStatus;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\Task;
@@ -47,9 +48,13 @@ class PostponementController extends Controller
 
         $postponement->load('requester');
 
-        // Notify all admins
-        User::where('role', UserRole::Admin->value)->get()
-            ->each(fn (User $admin) => $admin->notify(new PostponementRequested($task, $postponement)));
+        // Only active managers and system administrators should review the request.
+        User::query()
+            ->active()
+            ->whereIn('role', [UserRole::Manager->value, UserRole::Admin->value])
+            ->where('id', '!=', $user->id)
+            ->get()
+            ->each(fn (User $reviewer) => $reviewer->notify(new PostponementRequested($task, $postponement)));
 
         return response()->json([
             'message'      => 'تم إرسال طلب التأجيل بنجاح.',
@@ -58,28 +63,32 @@ class PostponementController extends Controller
     }
 
     /**
-     * Admin approves the postponement request — updates task's scheduled_at.
+     * Admin approves the postponement request — changes the task status and date.
      */
     public function approve(Request $request, TaskPostponement $postponement, \App\Services\TaskWorkflow $workflow): JsonResponse
     {
         abort_unless($postponement->isPending(), 422, 'هذا الطلب تمت مراجعته بالفعل.');
 
+        $task = $postponement->task;
+        abort_unless(
+            $task->status->canTransitionTo(TaskStatus::Postponed),
+            422,
+            "لا يمكن تأجيل المهمة من حالتها الحالية «{$task->status->label()}»."
+        );
+
+        // The workflow owns the status, audit log, and status notifications.
+        // Do not swallow a rejected transition: approval must never claim success
+        // while the task remains in its previous state.
+        $task = $workflow->transition($task, TaskStatus::Postponed, $request->user(), [
+            'note' => 'تمت الموافقة على طلب التأجيل: ' . $postponement->reason,
+        ]);
+
+        $task->update(['scheduled_at' => $postponement->postponed_to]);
         $postponement->update([
             'status'      => 'approved',
             'reviewed_by' => $request->user()->id,
             'reviewed_at' => now(),
         ]);
-
-        // Apply the new date to the task
-        $postponement->task->update(['scheduled_at' => $postponement->postponed_to]);
-        
-        try {
-            $workflow->transition($postponement->task, \App\Enums\TaskStatus::Postponed, $request->user(), [
-                'note' => 'تمت الموافقة على طلب التأجيل: ' . $postponement->reason
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            // Ignore if the transition is not allowed by the state machine
-        }
 
         $postponement->load(['requester', 'reviewer', 'task']);
 

@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { tr } from '@/lib/i18n'
 import { useToast } from '@/components/Toast'
-import { useNotifications } from '@/lib/queries'
+import { keys, useNotifications } from '@/lib/queries'
 import type { AppNotification } from '@/types'
 
 /**
@@ -14,6 +15,7 @@ import type { AppNotification } from '@/types'
 export function useNotificationAlerts() {
     const { data } = useNotifications()
     const toast = useToast()
+    const queryClient = useQueryClient()
     const seen = useRef<Set<string> | null>(null)
 
     // Ask once, up front, so a later arrival can pop outside the tab.
@@ -35,6 +37,17 @@ export function useNotificationAlerts() {
         const fresh = list.filter((n) => !seen.current!.has(n.id) && !n.read_at)
         list.forEach((n) => seen.current!.add(n.id))
 
+        fresh.forEach((notification) => {
+            if (['task.status_changed', 'postponement_reviewed'].includes(notification.data.type)) {
+                void queryClient.invalidateQueries({ queryKey: ['tasks'] })
+                void queryClient.invalidateQueries({ queryKey: keys.dashboard })
+                void queryClient.invalidateQueries({ queryKey: keys.notifications })
+                if (notification.data.task_id) {
+                    void queryClient.invalidateQueries({ queryKey: keys.task(notification.data.task_id) })
+                }
+            }
+        })
+
         if (fresh.length === 0) return
 
         chime()
@@ -55,7 +68,7 @@ export function useNotificationAlerts() {
                 /* some browsers refuse construction; the toast already covered it */
             }
         }
-    }, [data, toast])
+    }, [data, queryClient, toast])
 }
 
 /** A short two-note chime, synthesized so no audio file has to ship. */

@@ -21,7 +21,6 @@ class TaskFactory extends Factory
         return [
             'customer_id' => Customer::factory(),
             'created_by' => User::factory()->manager(),
-            'assigned_to' => null,
             'title' => fake()->sentence(4),
             'description' => fake()->optional()->paragraph(),
             'type' => fake()->randomElement(TaskType::cases()),
@@ -44,7 +43,9 @@ class TaskFactory extends Factory
 
     public function assignedTo(User $technician): static
     {
-        return $this->state(fn () => ['assigned_to' => $technician->id]);
+        return $this->afterCreating(function (Task $task) use ($technician) {
+            $task->technicians()->syncWithoutDetaching([$technician->id]);
+        });
     }
 
     public function status(TaskStatus $status): static

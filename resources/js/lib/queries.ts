@@ -331,6 +331,8 @@ export function useApprovePostponement(taskId: number) {
         onSuccess: () => {
             void client.invalidateQueries({ queryKey: keys.task(taskId) })
             void client.invalidateQueries({ queryKey: ['tasks'] })
+            void client.invalidateQueries({ queryKey: keys.dashboard })
+            void client.invalidateQueries({ queryKey: keys.notifications })
         },
     })
 }

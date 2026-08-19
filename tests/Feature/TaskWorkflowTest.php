@@ -68,7 +68,7 @@ it('notifies the technician when a job is assigned to them', function () {
     actingAs($this->manager)
         ->postJson('/api/tasks', [
             'customer_id' => $this->customer->id,
-            'assigned_to' => $this->technician->id,
+            'assigned_to' => [$this->technician->id],
             'title' => 'عطل عاجل',
             'type' => 'repair',
             'priority' => 'urgent',
