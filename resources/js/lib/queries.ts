@@ -732,15 +732,26 @@ export function useCustomerTimeline(customerId: number | undefined) {
 
 /* ── Contacts ────────────────────────────────────────────── */
 
-export function useContacts(filters: Record<string, unknown> = {}) {
+export function useContacts(filters: Record<string, unknown> = {}, options: { enabled?: boolean } = {}) {
     const { canDispatch } = useAuth()
 
     return useQuery({
         queryKey: keys.contacts(filters),
         queryFn: async () =>
             (await api.get<{ data: Contact[] }>('/contacts', { params: filters })).data.data,
-        enabled: canDispatch,
+        enabled: canDispatch && options.enabled !== false,
         placeholderData: (previous) => previous,
+    })
+}
+
+export function useCustomerContacts(customerId: number | string | undefined) {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: ['customer-contacts', Number(customerId ?? 0)],
+        queryFn: async () =>
+            (await api.get<{ data: Contact[] }>(`/customers/${customerId}/contacts`)).data.data,
+        enabled: canDispatch && Boolean(customerId),
     })
 }
 
@@ -758,7 +769,10 @@ export function useSaveContact() {
                 ? (await api.put<{ data: Contact }>(`/contacts/${id}`, payload)).data.data
                 : (await api.post<{ data: Contact }>(`/customers/${customer_id}/contacts`, payload)).data
                       .data,
-        onSuccess: () => void client.invalidateQueries({ queryKey: ['contacts'] }),
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: ['contacts'] })
+            void client.invalidateQueries({ queryKey: ['customer-contacts'] })
+        },
     })
 }
 
@@ -767,7 +781,10 @@ export function useDeleteContact() {
 
     return useMutation({
         mutationFn: async (id: number) => (await api.delete(`/contacts/${id}`)).data,
-        onSuccess: () => void client.invalidateQueries({ queryKey: ['contacts'] }),
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: ['contacts'] })
+            void client.invalidateQueries({ queryKey: ['customer-contacts'] })
+        },
     })
 }
 
@@ -824,7 +841,7 @@ export function useSaveCustomer(id?: number) {
         mutationFn: async (payload: Record<string, unknown>) =>
             id
                 ? (await api.put<{ data: Customer }>(`/customers/${id}`, payload)).data.data
-                : (await api.post<Customer>('/customers', payload)).data,
+                : (await api.post<{ data: Customer }>('/customers', payload)).data.data,
         onSuccess: () => {
             void client.invalidateQueries({ queryKey: ['customers'] })
             void client.invalidateQueries({ queryKey: keys.dashboard })

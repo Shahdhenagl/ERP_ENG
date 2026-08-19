@@ -75,3 +75,37 @@ it('bars a technician from the contacts', function () {
         ->postJson("/api/customers/{$this->customer->id}/contacts", ['name' => 'x'])
         ->assertForbidden();
 });
+
+it('stores multiple contact people with their roles and communication details', function () {
+    actingAs($this->manager)
+        ->postJson("/api/customers/{$this->customer->id}/contacts", [
+            'name' => 'م. أحمد سالم',
+            'job_title' => 'مدير الصيانة',
+            'phone' => '01000000000',
+            'email' => 'ahmed@example.com',
+            'is_primary' => true,
+        ])
+        ->assertCreated();
+
+    actingAs($this->manager)
+        ->postJson("/api/customers/{$this->customer->id}/contacts", [
+            'name' => 'سارة محمد',
+            'job_title' => 'مسؤول المشتريات',
+            'phone' => '01111111111',
+            'email' => 'sara@example.com',
+        ])
+        ->assertCreated();
+
+    $rows = actingAs($this->manager)
+        ->getJson("/api/customers/{$this->customer->id}/contacts")
+        ->assertOk()
+        ->json('data');
+
+    expect($rows)->toHaveCount(2)
+        ->and(collect($rows)->pluck('job_title')->all())
+        ->toContain('مدير الصيانة', 'مسؤول المشتريات')
+        ->and(collect($rows)->pluck('phone')->all())
+        ->toContain('01000000000', '01111111111')
+        ->and(collect($rows)->pluck('email')->all())
+        ->toContain('ahmed@example.com', 'sara@example.com');
+});

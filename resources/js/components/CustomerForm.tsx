@@ -1,13 +1,13 @@
-import { MapPin, Save } from 'lucide-react'
+import { MapPin, Plus, Save, Trash2 } from 'lucide-react'
 import { tr } from '@/lib/i18n'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, Field, Input, Select, Textarea } from '@/components/ui'
 import { LocationSelect } from '@/components/LocationSelect'
 import { errorMessage, fieldErrors } from '@/lib/api'
-import { useSaveCustomer } from '@/lib/queries'
-import { CUSTOMER_TYPES, type Customer } from '@/types'
+import { useCustomerContacts, useDeleteContact, useSaveContact, useSaveCustomer } from '@/lib/queries'
+import { CUSTOMER_TYPES, type Contact, type Customer } from '@/types'
 
 interface CustomerFormProps {
     open: boolean
@@ -17,10 +17,82 @@ interface CustomerFormProps {
     onSaved?: (customer: Customer) => void
 }
 
+interface ContactDraft {
+    id?: number
+    name: string
+    job_title: string
+    phone: string
+    email: string
+    is_primary: boolean
+    is_active: boolean
+}
+
+const emptyContact = (): ContactDraft => ({
+    name: '',
+    job_title: '',
+    phone: '',
+    email: '',
+    is_primary: false,
+    is_active: true,
+})
+
+const contactDraft = (contact: Contact): ContactDraft => ({
+    id: contact.id,
+    name: contact.name,
+    job_title: contact.job_title ?? '',
+    phone: contact.phone ?? '',
+    email: contact.email ?? '',
+    is_primary: contact.is_primary,
+    is_active: contact.is_active,
+})
+
 export function CustomerForm({ open, onClose, customer, onSaved }: CustomerFormProps) {
     const toast = useToast()
     const save = useSaveCustomer(customer?.id)
+    const saveContact = useSaveContact()
+    const deleteContact = useDeleteContact()
+    const { data: existingContacts } = useCustomerContacts(customer?.id)
     const [errors, setErrors] = useState<Record<string, string>>({})
+    const [contactRows, setContactRows] = useState<ContactDraft[]>([])
+    const [removedContactIds, setRemovedContactIds] = useState<number[]>([])
+    const [contactsInitializedFor, setContactsInitializedFor] = useState<number | null>(null)
+
+    useEffect(() => {
+        if (!customer) {
+            setContactRows([])
+            setRemovedContactIds([])
+            setContactsInitializedFor(null)
+            return
+        }
+
+        if (existingContacts && contactsInitializedFor !== customer.id) {
+            setContactRows(existingContacts.map(contactDraft))
+            setRemovedContactIds([])
+            setContactsInitializedFor(customer.id)
+        }
+    }, [customer?.id, existingContacts, contactsInitializedFor])
+
+    const updateContact = (index: number, key: keyof ContactDraft, value: string | boolean) => {
+        setContactRows((current) =>
+            current.map((row, rowIndex) => {
+                if (rowIndex !== index) {
+                    return key === 'is_primary' && value === true ? { ...row, is_primary: false } : row
+                }
+
+                return { ...row, [key]: value }
+            }),
+        )
+    }
+
+    const removeContactRow = (index: number) => {
+        setContactRows((current) => {
+            const row = current[index]
+            if (row?.id) {
+                setRemovedContactIds((ids) => (ids.includes(row.id!) ? ids : [...ids, row.id!]))
+            }
+            return current.filter((_, rowIndex) => rowIndex !== index)
+        })
+    }
 
     const [form, setForm] = useState({
         name: customer?.name ?? '',
@@ -80,8 +152,19 @@ export function CustomerForm({ open, onClose, customer, onSaved }: CustomerFormP
         )
     }
 
+    const isSaving = save.isPending || saveContact.isPending || deleteContact.isPending
+
     const handleSave = async () => {
         setErrors({})
+
+        const incompleteContact = contactRows.find((row) =>
+            !row.name.trim() && [row.job_title, row.phone, row.email].some((value) => value.trim()),
+        )
+        if (incompleteContact) {
+            setErrors({ contacts: 'اسم الشخص مطلوب عند إدخال الوظيفة أو الهاتف أو البريد.' })
+            toast.error('أكمل اسم جهة الاتصال أو احذف الصف الفارغ.')
+            return
+        }
 
         try {
             const saved = await save.mutateAsync({
@@ -103,6 +186,23 @@ export function CustomerForm({ open, onClose, customer, onSaved }: CustomerFormP
                 notes: form.notes || null,
             })
 
+            for (const id of removedContactIds) {
+                await deleteContact.mutateAsync(id)
+            }
+
+            for (const contact of contactRows.filter((row) => row.name.trim())) {
+                await saveContact.mutateAsync({
+                    id: contact.id,
+                    customer_id: saved.id,
+                    name: contact.name.trim(),
+                    job_title: contact.job_title.trim() || null,
+                    phone: contact.phone.trim() || null,
+                    email: contact.email.trim() || null,
+                    is_primary: contact.is_primary,
+                    is_active: contact.is_active,
+                })
+            }
+
             toast.success(customer ? 'تم تحديث بيانات العميل.' : 'تم إضافة العميل.')
             onSaved?.(saved as Customer)
             onClose()
@@ -120,10 +220,10 @@ export function CustomerForm({ open, onClose, customer, onSaved }: CustomerFormP
             title={customer ? 'تعديل بيانات العميل' : 'عميل جديد'}
             footer={
                 <>
-                    <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
+                    <Button variant="secondary" onClick={onClose} disabled={isSaving}>
                         {tr('إلغاء')}
                     </Button>
-                    <Button icon={Save} loading={save.isPending} onClick={handleSave}>
+                    <Button icon={Save} loading={isSaving} onClick={handleSave}>
                         {tr('حفظ')}
                     </Button>
                 </>
@@ -252,6 +352,99 @@ export function CustomerForm({ open, onClose, customer, onSaved }: CustomerFormP
                             className="text-left"
                         />
                     </Field>
+                </div>
+
+                <div className="rounded-2xl border border-navy-100 bg-navy-50/50 p-4">
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <h3 className="text-sm font-bold text-navy-800">أشخاص وبيانات الاتصال</h3>
+                            <p className="mt-1 text-xs text-navy-400">أضف أكثر من شخص، ولكل شخص رقم هاتف وبريد إلكتروني ووظيفته.</p>
+                        </div>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            icon={Plus}
+                            className="text-xs"
+                            onClick={() => setContactRows((current) => [...current, emptyContact()])}
+                        >
+                            إضافة شخص
+                        </Button>
+                    </div>
+
+                    {contactRows.length === 0 ? (
+                        <p className="rounded-xl border border-dashed border-navy-200 bg-white/70 p-3 text-center text-xs text-navy-400">
+                            لا توجد جهات اتصال إضافية. اضغط «إضافة شخص» لإضافة رقم أو بريد آخر.
+                        </p>
+                    ) : (
+                        <div className="space-y-3">
+                            {contactRows.map((contact, index) => (
+                                <div
+                                    key={contact.id ?? `new-contact-${index}`}
+                                    className="rounded-xl border border-navy-100 bg-white p-3 shadow-sm"
+                                >
+                                    <div className="mb-3 flex items-center justify-between gap-2">
+                                        <span className="text-xs font-bold text-navy-500">جهة اتصال {index + 1}</span>
+                                        <button
+                                            type="button"
+                                            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-50"
+                                            onClick={() => removeContactRow(index)}
+                                        >
+                                            <Trash2 className="size-3.5" />
+                                            حذف
+                                        </button>
+                                    </div>
+
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                        <Field label="اسم الشخص" required={Boolean(contact.job_title || contact.phone || contact.email)} error={errors.contacts}>
+                                            <Input
+                                                value={contact.name}
+                                                onChange={(event) => updateContact(index, 'name', event.target.value)}
+                                                placeholder="اسم المسؤول أو الشخص المتعامل"
+                                            />
+                                        </Field>
+                                        <Field label="وظيفة الشخص">
+                                            <Input
+                                                value={contact.job_title}
+                                                onChange={(event) => updateContact(index, 'job_title', event.target.value)}
+                                                placeholder="مثل: مدير الصيانة"
+                                            />
+                                        </Field>
+                                        <Field label="رقم الهاتف">
+                                            <Input
+                                                value={contact.phone}
+                                                onChange={(event) => updateContact(index, 'phone', event.target.value)}
+                                                placeholder="01xxxxxxxxx"
+                                                dir="ltr"
+                                                className="text-left"
+                                                inputMode="tel"
+                                            />
+                                        </Field>
+                                        <Field label="البريد الإلكتروني">
+                                            <Input
+                                                type="email"
+                                                value={contact.email}
+                                                onChange={(event) => updateContact(index, 'email', event.target.value)}
+                                                dir="ltr"
+                                                className="text-left"
+                                            />
+                                        </Field>
+                                    </div>
+
+                                    <label className="mt-3 inline-flex cursor-pointer items-center gap-2 text-xs font-semibold text-navy-600">
+                                        <input
+                                            type="checkbox"
+                                            checked={contact.is_primary}
+                                            onChange={(event) => updateContact(index, 'is_primary', event.target.checked)}
+                                            className="size-4 rounded border-navy-300 text-brand-600 focus:ring-brand-500"
+                                        />
+                                        جهة الاتصال الأساسية
+                                    </label>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {errors.contacts && <p className="mt-2 text-xs font-semibold text-red-600">{errors.contacts}</p>}
                 </div>
 
                 <Field label="العنوان التفصيلي" error={errors.address}>
