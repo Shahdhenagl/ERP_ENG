@@ -25,7 +25,7 @@ enum JournalSource: string
             self::Manual => Terms::get('قيد يدوي'),
             self::Invoice => Terms::get('فاتورة مبيعات'),
             self::Payment => Terms::get('سند قبض'),
-            self::Expense => Terms::get('مصروف'),
+            self::Expense => Terms::get('سند صرف'),
             self::Transfer => Terms::get('تحويل بين الخزائن'),
             self::SalesReturn => Terms::get('مرتجع مبيعات'),
             self::SupplierInvoice => Terms::get('فاتورة مورّد'),

@@ -1489,6 +1489,7 @@ export interface JournalEntry {
     memo: string | null
     source: string
     source_label: string
+    source_reference: string | null
     /** Only a hand-written entry may be struck out rather than reversed. */
     is_manual: boolean
     is_void: boolean

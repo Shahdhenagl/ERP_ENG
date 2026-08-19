@@ -27,7 +27,7 @@ const SOURCES: Array<[string, string]> = [
     ['manual', 'قيد يدوي'],
     ['invoice', 'فاتورة مبيعات'],
     ['payment', 'سند قبض'],
-    ['expense', 'مصروف'],
+    ['expense', 'سند صرف'],
     ['supplier_payment', 'سند صرف لمورد'],
     ['transfer', 'تحويل بين الخزائن'],
     ['custody', 'عهدة موظف'],
@@ -119,6 +119,7 @@ export function JournalPage() {
                                     </p>
                                     <p className="mt-0.5 text-[11px] text-navy-400">
                                         {entry.code}
+                                        {entry.source_reference && ` · ${entry.source_reference}`}
                                         {entry.entry_date && ` · ${formatDate(entry.entry_date)}`}
                                         {entry.created_by && ` · ${entry.created_by}`}
                                     </p>
@@ -213,6 +214,12 @@ function EntryDialog({ entry, onClose }: { entry: JournalEntry; onClose: () => v
                     <span>
                         المصدر: <span className="font-bold text-navy-800">{entry.source_label}</span>
                     </span>
+                    {entry.source_reference && (
+                        <span>
+                            المستند المرتبط:{' '}
+                            <span className="font-bold text-navy-800">{entry.source_reference}</span>
+                        </span>
+                    )}
                     {entry.created_by && (
                         <span>
                             بواسطة: <span className="font-bold text-navy-800">{entry.created_by}</span>

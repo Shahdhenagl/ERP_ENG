@@ -193,6 +193,18 @@ it('prints, edits and deletes an expense voucher', function () {
 
     $expense = CashMovement::where('source', 'expense')->latest('id')->first();
 
+    // The voucher is visible in the daily journal under its document name and reference.
+    actingAs($this->manager)->getJson('/api/accounting/entries?source=expense')
+        ->assertOk()
+        ->assertJsonPath('data.0.source_label', 'سند صرف')
+        ->assertJsonPath('data.0.source_reference', "سند صرف #{$expense->id}");
+
+    $journal = JournalEntry::where('sourceable_type', $expense->getMorphClass())
+        ->where('sourceable_id', $expense->id)
+        ->firstOrFail();
+    expect($journal->source->value)->toBe('expense')
+        ->and($journal->total)->toEqual('300.00');
+
     // Print: the voucher reads as a payment out.
     actingAs($this->manager)->getJson("/api/treasury/movements/{$expense->id}/voucher")
         ->assertOk()
@@ -206,9 +218,6 @@ it('prints, edits and deletes an expense voucher', function () {
     expect($expense->fresh()->category)->toBe('صيانة سيارة');
 
     // Delete: the balance and the journal entry both come back out.
-    $journal = JournalEntry::where('sourceable_type', $expense->getMorphClass())
-        ->where('sourceable_id', $expense->id)
-        ->first();
     expect($journal)->not->toBeNull();
 
     $before = $box->fresh()->balance();

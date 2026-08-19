@@ -415,6 +415,9 @@ class AccountingController extends Controller
             'memo' => $entry->memo,
             'source' => $entry->source->value,
             'source_label' => $entry->source->label(),
+            'source_reference' => $entry->source->value === 'expense' && $entry->sourceable_id
+                ? 'سند صرف #'.$entry->sourceable_id
+                : null,
             'is_manual' => $entry->source->isManual(),
             'is_void' => $entry->is_void,
             'reverses' => $entry->reverses?->code,
