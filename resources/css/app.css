@@ -731,3 +731,17 @@
     padding-right: 2.5rem;
     background-position: right 0.75rem center;
 }
+
+/* Compact on-screen ledger used by the treasury statement. Keep printed and
+   purchasing documents on the roomier document scale. */
+.doc-table.treasury-table th {
+    padding: 7px 8px;
+    font-size: 10px;
+    line-height: 1.35;
+}
+
+.doc-table.treasury-table td {
+    padding: 8px;
+    font-size: 11px;
+    line-height: 1.45;
+}

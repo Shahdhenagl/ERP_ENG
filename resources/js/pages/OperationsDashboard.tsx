@@ -14,7 +14,7 @@ export function OperationsOverview() {
 
     if (isLoading || !data) {
         return (
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
                 {Array.from({ length: 4 }).map((_, i) => (
                     <SkeletonCard key={i} />
                 ))}
@@ -29,7 +29,7 @@ export function OperationsOverview() {
     return (
         <>
             {/* ── Devices ───────────────────────────────────── */}
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
                 <Tile icon={HardDrive} label={tr('إجمالي الأجهزة')} value={d.total} tone="brand" />
                 <Tile icon={Activity} label={tr('أجهزة عاملة')} value={d.working} tone="up" />
                 <Tile
@@ -49,7 +49,7 @@ export function OperationsOverview() {
             </div>
 
             {/* ── One compact strip of the key numbers ──────── */}
-            <div className="card mt-4 grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="card mt-3 grid grid-cols-2 gap-2.5 p-3 sm:grid-cols-3 lg:grid-cols-6">
                 <Stat
                     label={tr('بطاريات تحتاج استبدال')}
                     value={b.need_replacement}
@@ -100,10 +100,10 @@ function Tile({
     hint?: string
 }) {
     return (
-        <div className="card p-4">
-            <Icon className={`size-5 ${TONES[tone]}`} />
+        <div className="card p-3">
+            <Icon className={`size-4 ${TONES[tone]}`} />
             <p className="mt-2 text-[11px] font-bold text-navy-400">{label}</p>
-            <p className={`tabular mt-0.5 text-2xl font-extrabold ${TONES[tone]}`}>{value}</p>
+            <p className={`tabular mt-0.5 text-xl font-extrabold ${TONES[tone]}`}>{value}</p>
             {hint && <p className="mt-0.5 text-[10px] text-navy-400">{hint}</p>}
         </div>
     )
@@ -121,12 +121,12 @@ function Stat({
     suffix?: string
 }) {
     return (
-        <div className="rounded-xl bg-navy-50 p-3 text-center">
-            <p className={`tabular text-lg font-extrabold ${TONES[tone]}`}>
+        <div className="rounded-lg bg-navy-50 p-2.5 text-center">
+            <p className={`tabular text-base font-extrabold ${TONES[tone]}`}>
                 {value}
                 {suffix && <span className="mr-0.5 text-xs font-bold">{suffix}</span>}
             </p>
-            <p className="mt-0.5 text-[11px] font-semibold text-navy-500">{label}</p>
+            <p className="mt-0.5 text-[10px] font-semibold text-navy-500">{label}</p>
         </div>
     )
 }

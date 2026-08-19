@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Account;
 use App\Models\CashBox;
 use App\Models\CashMovement;
 use App\Models\Customer;
@@ -187,8 +188,18 @@ it('prints, edits and deletes an expense voucher', function () {
         'cash_box_id' => $box->id, 'amount' => 2000, 'party' => 'تمويل',
     ])->assertCreated();
 
+    $expenseAccount = Account::query()
+        ->where('type', 'expense')
+        ->where('is_group', false)
+        ->where('is_active', true)
+        ->firstOrFail();
+
     actingAs($this->manager)->postJson('/api/treasury/expense', [
-        'cash_box_id' => $box->id, 'amount' => 300, 'category' => 'وقود', 'note' => 'بنزين',
+        'cash_box_id' => $box->id,
+        'amount' => 300,
+        'account_id' => $expenseAccount->id,
+        'category' => 'وقود',
+        'note' => 'بنزين',
     ])->assertCreated();
 
     $expense = CashMovement::where('source', 'expense')->latest('id')->first();
@@ -202,8 +213,11 @@ it('prints, edits and deletes an expense voucher', function () {
     $journal = JournalEntry::where('sourceable_type', $expense->getMorphClass())
         ->where('sourceable_id', $expense->id)
         ->firstOrFail();
-    expect($journal->source->value)->toBe('expense')
-        ->and($journal->total)->toEqual('300.00');
+    expect($expense->account_id)->toBe($expenseAccount->id)
+        ->and($expense->category)->toBe($expenseAccount->name)
+        ->and($journal->source->value)->toBe('expense')
+        ->and($journal->total)->toEqual('300.00')
+        ->and($journal->lines()->where('account_id', $expenseAccount->id)->where('debit', 300)->exists())->toBeTrue();
 
     // Print: the voucher reads as a payment out.
     actingAs($this->manager)->getJson("/api/treasury/movements/{$expense->id}/voucher")
@@ -250,8 +264,17 @@ it('refuses to delete a manual voucher after its cash movement is reconciled', f
     actingAs($this->manager)->postJson('/api/treasury/deposit', [
         'cash_box_id' => $box->id, 'amount' => 500, 'party' => 'تمويل',
     ])->assertCreated();
+    $expenseAccount = Account::query()
+        ->where('type', 'expense')
+        ->where('is_group', false)
+        ->where('is_active', true)
+        ->firstOrFail();
+
     actingAs($this->manager)->postJson('/api/treasury/expense', [
-        'cash_box_id' => $box->id, 'amount' => 100, 'category' => 'وقود',
+        'cash_box_id' => $box->id,
+        'amount' => 100,
+        'account_id' => $expenseAccount->id,
+        'category' => 'وقود',
     ])->assertCreated();
 
     $expense = CashMovement::where('source', 'expense')->latest('id')->firstOrFail();

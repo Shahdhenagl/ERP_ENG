@@ -312,6 +312,7 @@ class BillingService
             'direction' => 'out',
             'amount' => $amount,
             'source' => 'expense',
+            'account_id' => $context['account_id'] ?? null,
             'category' => $context['category'] ?? null,
             'note' => $context['note'] ?? null,
             'receipt_path' => $context['receipt_path'] ?? null,

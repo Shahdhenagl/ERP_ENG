@@ -62,7 +62,7 @@ export function Dashboard() {
                         : tr('مهامك الحالية ومواعيدها')
                 }
                 actions={
-                    <div className="flex items-center gap-2 bg-white px-3.5 py-2 rounded-xl border border-navy-200 shadow-sm">
+                    <div className="flex items-center gap-2 rounded-xl border border-navy-200 bg-white px-3 py-1.5 shadow-sm">
                         <span className="text-xs font-semibold text-navy-600">{tr('تصفح الشهر')}:</span>
                         <input
                             type="month"
@@ -75,7 +75,7 @@ export function Dashboard() {
             />
 
             {/* ── Headline numbers ───────────────────────────── */}
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-5">
                 <StatTile
                     icon={ClipboardList}
                     label={tr('مهام مفتوحة')}
@@ -138,9 +138,9 @@ export function Dashboard() {
             )}
 
             {/* ── Status breakdown ───────────────────────────── */}
-            <section className="mt-6">
-                <h2 className="mb-3 text-sm font-bold text-navy-700">{tr('توزيع المهام حسب الحالة')}</h2>
-                <div className="card overflow-hidden p-4">
+            <section className="mt-5">
+                <h2 className="mb-2 text-xs font-bold text-navy-700">{tr('توزيع المهام حسب الحالة')}</h2>
+                <div className="card overflow-hidden p-3">
                     {isLoading ? (
                         <div className="shimmer h-6 rounded-lg" />
                     ) : (
@@ -151,8 +151,8 @@ export function Dashboard() {
 
             {/* ── Technician workload (dispatchers only) ─────── */}
             {canDispatch && stats?.technician_load && stats.technician_load.length > 0 && (
-                <section className="mt-6">
-                    <div className="mb-3 flex items-center justify-between">
+                <section className="mt-5">
+                    <div className="mb-2 flex items-center justify-between">
                         <h2 className="text-sm font-bold text-navy-700">{tr('حِمل العمل على الفنيين')}</h2>
                         <Link to={path('/users')} className="text-xs font-bold text-brand-600 hover:underline">
                             {tr('كل المستخدمين')}
@@ -165,8 +165,8 @@ export function Dashboard() {
                             const width = (technician.open_count / max) * 100
 
                             return (
-                                <div key={technician.id} className="flex items-center gap-4 p-4">
-                                    <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-navy-50 text-sm font-bold text-navy-600">
+                                <div key={technician.id} className="flex items-center gap-3 p-3">
+                                    <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-navy-50 text-xs font-bold text-navy-600">
                                         {technician.name.charAt(0)}
                                     </div>
 
@@ -179,7 +179,7 @@ export function Dashboard() {
                                                 {technician.job_title}
                                             </p>
                                         )}
-                                        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-navy-100">
+                                        <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-navy-100">
                                             <div
                                                 className="h-full rounded-full bg-brand-500 transition-all duration-300"
                                                 style={{ width: `${width}%` }}
@@ -198,9 +198,9 @@ export function Dashboard() {
             )}
 
             {/* ── What needs attention now ───────────────────── */}
-            <section className="mt-8">
-                <div className="mb-3 flex items-center justify-between">
-                    <h2 className="text-sm font-bold text-navy-700">
+            <section className="mt-6">
+                <div className="mb-2 flex items-center justify-between">
+                    <h2 className="text-xs font-bold text-navy-700">
                         {canDispatch ? tr('مهام اليوم') : tr('مهامك اليوم')}
                     </h2>
                     <Link to={path('/tasks')} className="text-xs font-bold text-brand-600 hover:underline">
@@ -209,7 +209,7 @@ export function Dashboard() {
                 </div>
 
                 {isLoading ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                         <SkeletonCard />
                         <SkeletonCard />
                     </div>
@@ -224,7 +224,7 @@ export function Dashboard() {
                         }
                     />
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                         {data?.upcoming?.map((task) => (
                             <TaskCard key={task.id} task={task} showTechnician={canDispatch} />
                         ))}
@@ -234,7 +234,7 @@ export function Dashboard() {
 
             {/* ── Secondary counts ───────────────────────────── */}
             {canDispatch && (
-                <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4">
+                <div className="mt-5 grid grid-cols-2 gap-2.5 sm:gap-3">
                     <StatTile
                         icon={Building2}
                         label={tr('العملاء')}
@@ -256,8 +256,8 @@ export function Dashboard() {
 
             {/* ── The estate overview (was the separate operations board) ── */}
             {canDispatch && (
-                <section className="mt-8">
-                    <h2 className="mb-3 text-sm font-bold text-navy-700">{tr('نظرة على المنشأة')}</h2>
+                <section className="mt-6">
+                    <h2 className="mb-2 text-xs font-bold text-navy-700">{tr('نظرة على المنشأة')}</h2>
                     <OperationsOverview />
                 </section>
             )}
@@ -271,13 +271,13 @@ export function Dashboard() {
                         data?.pending_approvals?.length ||
                         data?.contracts_expiring?.length,
                 ) && (
-                    <section className="mt-8">
+                    <section className="mt-6">
                         <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-navy-700">
                             <AlertTriangle className="size-4 text-amber-600" />
                             {tr('تنبيهات تحتاج إجراء')}
                         </h2>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
                             {(can('inventory.view') || can('inventory.manage')) &&
                                 Boolean(data?.low_stock?.length) && (
                                     <AlertColumn
@@ -367,7 +367,7 @@ export function Dashboard() {
             {/* The reason contracts exist: a signed schedule is worthless if
                 nobody is told the date has come round. */}
             {canDispatch && Boolean(data?.maintenance_due?.length) && (
-                <section className="mt-8">
+                <section className="mt-6">
                     <div className="mb-3 flex items-center justify-between">
                         <h2 className="flex items-center gap-2 text-sm font-bold text-navy-700">
                             <CalendarClock className="size-4 text-brand-600" />
@@ -429,7 +429,7 @@ export function Dashboard() {
             {/* Someone you promised to get back to, past the date. Gated by the
                 CRM permission, like the alerts above are by their modules'. */}
             {can('crm.manage') && Boolean(data?.follow_ups_due?.length) && (
-                <section className="mt-8">
+                <section className="mt-6">
                     <div className="mb-3 flex items-center justify-between">
                         <h2 className="flex items-center gap-2 text-sm font-bold text-navy-700">
                             <AlertTriangle className="size-4 text-red-600" />
@@ -445,13 +445,13 @@ export function Dashboard() {
                             <Link
                                 key={followUp.id}
                                 to={path('/crm')}
-                                className="card-interactive flex items-center justify-between gap-3 p-3.5"
+                                className="card-interactive flex items-center justify-between gap-3 p-3"
                             >
                                 <div className="min-w-0">
                                     <p className="truncate text-sm font-bold text-navy-900">
                                         {followUp.subject ?? '—'}
                                     </p>
-                                    <p className="tabular truncate text-[11px] text-navy-400">
+                                    <p className="tabular truncate text-[10px] text-navy-400">
                                         {followUp.type_label}
                                         {followUp.due_at && ` · ${followUp.due_at}`}
                                         {followUp.owner && ` · ${followUp.owner}`}
@@ -506,11 +506,11 @@ function AttendanceCard() {
 
     return (
         <section className="mt-6">
-            <div className="card p-5">
+            <div className="card p-4">
                 <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                        <div className="grid size-11 place-items-center rounded-xl bg-brand-50 text-brand-600">
-                            <Clock className="size-5" />
+                        <div className="grid size-10 place-items-center rounded-xl bg-brand-50 text-brand-600">
+                            <Clock className="size-4" />
                         </div>
                         <div>
                             <p className="text-[11px] font-bold text-navy-400">{tr('الحضور اليوم')}</p>
@@ -564,27 +564,27 @@ function AttendanceToday({
 }) {
     return (
         <section className="mt-6">
-            <div className="mb-3 flex items-center gap-2">
+            <div className="mb-2 flex items-center gap-2">
                 <Clock className="size-4 text-brand-600" />
-                <h2 className="text-sm font-bold text-navy-700">{tr('حضور الفنيين اليوم')}</h2>
-                <span className="tabular text-[11px] font-semibold text-navy-400">
+                <h2 className="text-xs font-bold text-navy-700">{tr('حضور الفنيين اليوم')}</h2>
+                <span className="tabular text-[10px] font-semibold text-navy-400">
                     {stats?.on_site_now ?? 0} {tr('في الموقع')} · {stats?.checked_in_today ?? 0} {tr('حضروا')}
                 </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                 {rows.map((row) => (
-                    <div key={row.id} className="card p-3.5 flex items-center gap-3">
+                    <div key={row.id} className="card flex items-center gap-3 p-3">
                         <span
                             className={clsx(
-                                'size-2.5 shrink-0 rounded-full',
+                                'size-2 shrink-0 rounded-full',
                                 row.check_out ? 'bg-navy-300' : 'bg-emerald-500',
                             )}
                             title={row.check_out ? tr('انصرف') : tr('في الموقع')}
                         />
                         <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-bold text-navy-900">{row.employee}</p>
-                            <p className="tabular text-[11px] text-navy-400">
+                            <p className="truncate text-xs font-bold text-navy-900">{row.employee}</p>
+                            <p className="tabular text-[10px] text-navy-400">
                                 {tr('حضور')} {row.check_in ?? '—'}
                                 {row.check_out && ` · ${tr('انصراف')} ${row.check_out}`}
                                 {row.check_out && ` · ${row.worked_hours} ${tr('ساعة')}`}
@@ -594,7 +594,7 @@ function AttendanceToday({
                                 than left as a missing pin — "no location" and "not
                                 looked at" must not look the same. */}
                             {!row.check_in_location && !row.check_out_location ? (
-                                <p className="text-[11px] text-navy-300">{tr('سُجّل بدون موقع')}</p>
+                                <p className="text-[10px] text-navy-300">{tr('سُجّل بدون موقع')}</p>
                             ) : (
                                 <div className="mt-1 flex flex-wrap gap-1.5">
                                     {row.check_in_location && (
@@ -612,7 +612,7 @@ function AttendanceToday({
                                         />
                                     )}
                                     {row.check_out && !row.check_out_location && (
-                                        <span className="text-[11px] text-navy-300">
+                                        <span className="text-[10px] text-navy-300">
                                             {tr('الانصراف بدون موقع')}
                                         </span>
                                     )}
@@ -647,13 +647,13 @@ function MapLink({
             rel="noreferrer"
             title={label}
             className={clsx(
-                'tabular inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-bold transition',
+                'tabular inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-bold transition',
                 tone === 'in'
                     ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
                     : 'bg-navy-50 text-navy-500 hover:bg-navy-100',
             )}
         >
-            <MapPin className="size-3.5 shrink-0" />
+            <MapPin className="size-3 shrink-0" />
             {tone === 'in' ? tr('حضور') : tr('انصراف')}
             <span className="text-navy-400" dir="ltr">
                 {point.lat.toFixed(4)}, {point.lng.toFixed(4)}
@@ -673,25 +673,25 @@ interface StatTileProps {
 
 function StatTile({ icon: Icon, label, value, loading, tone, to }: StatTileProps) {
     const content = (
-        <div className="card flex items-center gap-3 p-4 transition-all hover:shadow-[var(--shadow-card-hover)]">
+        <div className="card flex items-center gap-2.5 p-3 transition-all hover:shadow-[var(--shadow-card-hover)]">
             <span
                 className={clsx(
-                    'grid size-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br shadow-lg',
+                    'grid size-9 shrink-0 place-items-center rounded-lg bg-gradient-to-br shadow-lg',
                     TONES[tone],
                 )}
             >
-                <Icon className="size-5" />
+                <Icon className="size-4" />
             </span>
 
             <div className="min-w-0">
                 {loading ? (
-                    <div className="shimmer h-7 w-12 rounded-md" />
+                    <div className="shimmer h-6 w-10 rounded-md" />
                 ) : (
-                    <p className="tabular text-2xl leading-none font-extrabold text-navy-900">
+                    <p className="tabular text-xl leading-none font-extrabold text-navy-900">
                         {value ?? 0}
                     </p>
                 )}
-                <p className="mt-1 truncate text-xs font-semibold text-navy-400">{label}</p>
+                <p className="mt-1 truncate text-[11px] font-semibold text-navy-400">{label}</p>
             </div>
         </div>
     )
@@ -716,9 +716,9 @@ function AlertColumn({
     const chip = tone === 'red' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'
 
     return (
-        <div className="card p-4">
+        <div className="card p-3">
             <div className="mb-2 flex items-center justify-between gap-2">
-                <Link to={to} className="text-sm font-bold text-navy-800 hover:underline">
+                <Link to={to} className="text-xs font-bold text-navy-800 hover:underline">
                     {title}
                 </Link>
                 {typeof count === 'number' && count > 0 && (
@@ -730,8 +730,8 @@ function AlertColumn({
                 {rows.map((row) => {
                     const body = (
                         <>
-                            <p className="truncate text-sm font-semibold text-navy-800">{row.title}</p>
-                            <p className="tabular truncate text-[11px] text-navy-400">{row.subtitle}</p>
+                            <p className="truncate text-xs font-semibold text-navy-800">{row.title}</p>
+                            <p className="tabular truncate text-[10px] text-navy-400">{row.subtitle}</p>
                         </>
                     )
 
@@ -764,8 +764,8 @@ function StatusBar({ counts }: { counts?: Record<string, number> }) {
     const order = [...STATUS_FLOW, 'cancelled' as const]
 
     return (
-        <div className="space-y-3">
-            <div className="flex h-3 overflow-hidden rounded-full bg-navy-100">
+        <div className="space-y-2">
+            <div className="flex h-2.5 overflow-hidden rounded-full bg-navy-100">
                 {order.map((status) => {
                     const count = counts[status] ?? 0
 
@@ -782,15 +782,15 @@ function StatusBar({ counts }: { counts?: Record<string, number> }) {
                 })}
             </div>
 
-            <div className="flex flex-wrap gap-x-4 gap-y-2">
+            <div className="flex flex-wrap gap-x-3 gap-y-1.5">
                 {order.map((status) => {
                     const count = counts[status] ?? 0
 
                     if (!count) return null
 
                     return (
-                        <span key={status} className="flex items-center gap-1.5 text-xs">
-                            <span className={clsx('size-2.5 rounded-full', STATUS[status].solid)} />
+                        <span key={status} className="flex items-center gap-1 text-[11px]">
+                            <span className={clsx('size-2 rounded-full', STATUS[status].solid)} />
                             <span className="font-semibold text-navy-600">{STATUS[status].label}</span>
                             <span className="tabular font-bold text-navy-900">{count}</span>
                         </span>
@@ -833,9 +833,9 @@ function ExpiryAlert({
     const accent = tone === 'amber' ? 'text-amber-600' : 'text-violet-600'
 
     return (
-        <section className="mt-8">
-            <div className="mb-3 flex items-center justify-between">
-                <h2 className="flex items-center gap-2 text-sm font-bold text-navy-700">
+        <section className="mt-6">
+            <div className="mb-2 flex items-center justify-between">
+                <h2 className="flex items-center gap-2 text-xs font-bold text-navy-700">
                     <AlertTriangle className={clsx('size-4', accent)} />
                     {title}
                 </h2>
@@ -849,11 +849,11 @@ function ExpiryAlert({
                     <Link
                         key={row.id}
                         to={linkTo}
-                        className="card-interactive flex items-center justify-between gap-3 p-3.5"
+                        className="card-interactive flex items-center justify-between gap-3 p-3"
                     >
                         <div className="min-w-0">
-                            <p className="truncate text-sm font-bold text-navy-900">{row.title}</p>
-                            <p className="tabular truncate text-[11px] text-navy-400">
+                            <p className="truncate text-xs font-bold text-navy-900">{row.title}</p>
+                            <p className="tabular truncate text-[10px] text-navy-400">
                                 {row.subtitle}
                             </p>
                         </div>

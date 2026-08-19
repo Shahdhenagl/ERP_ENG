@@ -7,6 +7,7 @@ import { errorMessage, fieldErrors } from '@/lib/api'
 import { formatMoney } from '@/lib/domain'
 import { useCashBoxes, useTreasuryOperation, useUsers } from '@/lib/queries'
 import { RecurringExpensesSection } from '@/pages/treasury/RecurringExpensesSection'
+import { ExpenseAccountChecklist } from '@/components/ExpenseAccountChecklist'
 
 /**
  * The two cash operations that are not a customer or supplier settlement:
@@ -117,6 +118,7 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
     const [form, setForm] = useState({
         cash_box_id: '',
         amount: '',
+        account_id: '',
         category: '',
         responsible_user_id: '',
         note: '',
@@ -144,9 +146,11 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
                     ))}
                 </Select>
             </Field>
-            <Field label="البند" error={errors.category} hint="إيجار، كهرباء، وقود…">
-                <Input value={form.category} onChange={(e) => set('category')(e.target.value)} />
-            </Field>
+            <ExpenseAccountChecklist
+                value={form.account_id}
+                onChange={set('account_id')}
+                error={errors.account_id || errors.category}
+            />
             <Field label="المبلغ" required error={errors.amount}>
                 <Input type="number" min={0} step="any" value={form.amount} onChange={(e) => set('amount')(e.target.value)} dir="ltr" className="text-left" />
             </Field>
@@ -163,7 +167,9 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
                     {userPage?.data.map((user) => (
                         <option key={user.id} value={user.id}>
                             {user.name}
-                            {user.role_label ? ` — ${user.role_label}` : ''}
+                            {(user.effective_role_label ?? user.role_label)
+                                ? ` — ${user.effective_role_label ?? user.role_label}`
+                                : ''}
                         </option>
                     ))}
                 </Select>
@@ -177,13 +183,14 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
                 variant="secondary"
                 className="w-full"
                 loading={expense.isPending}
-                disabled={!form.cash_box_id || !form.amount}
+                disabled={!form.cash_box_id || !form.amount || !form.account_id}
                 onClick={async () => {
                     setErrors({})
                     try {
                         await expense.mutateAsync({
                             cash_box_id: Number(form.cash_box_id),
                             amount: Number(form.amount),
+                            account_id: Number(form.account_id),
                             category: form.category || null,
                             responsible_user_id: form.responsible_user_id
                                 ? Number(form.responsible_user_id)
@@ -194,6 +201,7 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
                         setForm({
                             cash_box_id: '',
                             amount: '',
+                            account_id: '',
                             category: '',
                             responsible_user_id: '',
                             note: '',

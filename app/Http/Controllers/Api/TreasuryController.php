@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Enums\PaymentMethod;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PaymentResource;
+use App\Models\Account;
 use App\Models\ActivityLog;
 use App\Models\CashBox;
 use App\Models\CashMovement;
@@ -201,10 +202,27 @@ class TreasuryController extends Controller
         $data = $request->validate([
             'cash_box_id' => ['required', 'exists:cash_boxes,id'],
             'amount' => ['required', 'numeric', 'gt:0'],
+            'account_id' => [
+                'required',
+                Rule::exists('accounts', 'id')->where(fn ($query) => $query
+                    ->where('type', 'expense')
+                    ->where('is_group', false)
+                    ->where('is_active', true)),
+            ],
             'category' => ['nullable', 'string', 'max:64'],
             'responsible_user_id' => ['nullable', 'exists:users,id'],
             'note' => ['nullable', 'string', 'max:1000'],
         ]);
+
+        // The account is the source of truth for posting. Keep category as a
+        // snapshot for existing reports and vouchers, but never trust a free
+        // text category to choose the journal account.
+        $expenseAccount = Account::query()
+            ->where('type', 'expense')
+            ->where('is_group', false)
+            ->where('is_active', true)
+            ->findOrFail($data['account_id']);
+        $data['category'] = $expenseAccount->name;
 
         $movement = $this->billing->recordExpense(
             CashBox::findOrFail($data['cash_box_id']),

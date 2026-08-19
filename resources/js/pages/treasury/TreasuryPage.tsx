@@ -89,7 +89,7 @@ export function TreasuryPage() {
                 <SkeletonCard />
             ) : (
                 <>
-                    <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+                    <div className="mb-4 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
                         <Stat label="رصيد أول المدة" value={formatMoney(analysis.opening_balance)} tone="muted" />
                         <Stat
                             label="إجمالي الإيراد"
@@ -110,18 +110,18 @@ export function TreasuryPage() {
                         be worked out from the two above it. */}
                     <div
                         className={clsx(
-                            'mb-5 flex items-center justify-between rounded-2xl p-4',
+                            'mb-5 flex items-center justify-between rounded-xl p-3',
                             analysis.net >= 0
                                 ? 'bg-emerald-50 ring-1 ring-emerald-200'
                                 : 'bg-red-50 ring-1 ring-red-200',
                         )}
                     >
-                        <span className="text-sm font-bold text-navy-700">
+                        <span className="text-xs font-bold text-navy-700">
                             صافي الفترة {analysis.net >= 0 ? '(فائض)' : '(عجز)'}
                         </span>
                         <span
                             className={clsx(
-                                'tabular text-xl font-extrabold',
+                                'tabular text-lg font-extrabold',
                                 analysis.net >= 0 ? 'text-emerald-700' : 'text-red-700',
                             )}
                         >
@@ -129,7 +129,7 @@ export function TreasuryPage() {
                         </span>
                     </div>
 
-                    <div className="mb-6 grid gap-4 lg:grid-cols-2">
+                    <div className="mb-5 grid gap-3 lg:grid-cols-2">
                         <Breakdown title="الإيراد" rows={analysis.income} tone="up" />
                         <Breakdown title="المصروف" rows={analysis.expense} tone="down" />
                     </div>
@@ -149,18 +149,18 @@ export function TreasuryPage() {
             {!boxes?.length ? (
                 <EmptyState icon={Wallet} title="لا توجد خزائن" />
             ) : (
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-2.5 sm:grid-cols-2">
                     {boxes.map((box) => (
                         <button
                             key={box.id}
                             onClick={() => setOpenBox(box)}
-                            className="card-interactive p-4 text-start"
+                            className="card-interactive p-3.5 text-start"
                         >
                             <div className="flex items-center justify-between gap-3">
-                                <div className="flex min-w-0 items-center gap-3">
+                                <div className="flex min-w-0 items-center gap-2.5">
                                     <span
                                         className={clsx(
-                                            'grid size-10 shrink-0 place-items-center rounded-2xl',
+                                            'grid size-9 shrink-0 place-items-center rounded-xl',
                                             box.type === 'bank'
                                                 ? 'bg-indigo-50 text-indigo-600'
                                                 : box.type === 'custody'
@@ -169,15 +169,15 @@ export function TreasuryPage() {
                                         )}
                                     >
                                         {box.type === 'bank' ? (
-                                            <Landmark className="size-5" />
+                                            <Landmark className="size-4" />
                                         ) : (
-                                            <Wallet className="size-5" />
+                                            <Wallet className="size-4" />
                                         )}
                                     </span>
 
                                     <div className="min-w-0">
-                                        <p className="truncate font-bold text-navy-900">{box.name}</p>
-                                        <p className="truncate text-[11px] text-navy-400">
+                                        <p className="truncate text-sm font-bold text-navy-900">{box.name}</p>
+                                        <p className="truncate text-[10px] text-navy-400">
                                             {box.type === 'custody'
                                                 ? `عهدة ${box.holder ?? ''}`
                                                 : box.type_label}
@@ -188,7 +188,7 @@ export function TreasuryPage() {
 
                                 <p
                                     className={clsx(
-                                        'tabular shrink-0 font-extrabold',
+                                        'tabular shrink-0 text-sm font-extrabold',
                                         box.balance < 0 ? 'text-red-600' : 'text-navy-900',
                                     )}
                                 >
@@ -243,12 +243,12 @@ export function TreasuryPage() {
                 {!movements?.length ? (
                     <EmptyState icon={Banknote} title="لا توجد حركات في هذه الفترة" />
                 ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                         {movements.map((movement) => {
                             const isVoucher = VOUCHER_SOURCES.has(movement.source)
 
                             return (
-                                <div key={movement.id} className="card p-3.5">
+                                <div key={movement.id} className="card p-3">
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="min-w-0">
                                             <span
@@ -262,11 +262,11 @@ export function TreasuryPage() {
                                                 {movement.source_label}
                                             </span>
 
-                                            <p className="mt-1 truncate text-sm font-bold text-navy-900">
+                                            <p className="mt-1 truncate text-xs font-bold text-navy-900">
                                                 {movement.customer ?? movement.category ?? movement.box}
                                             </p>
 
-                                            <p className="mt-0.5 text-[11px] text-navy-400">
+                                            <p className="mt-0.5 text-[10px] text-navy-400">
                                                 {movement.box}
                                                 {movement.note && ` · ${movement.note}`}
                                                 {movement.actor && ` · ${movement.actor}`}
@@ -277,7 +277,7 @@ export function TreasuryPage() {
 
                                         <p
                                             className={clsx(
-                                                'tabular shrink-0 font-extrabold',
+                                                'tabular shrink-0 text-sm font-extrabold',
                                                 movement.direction === 'in'
                                                     ? 'text-emerald-600'
                                                     : 'text-red-600',
@@ -292,7 +292,7 @@ export function TreasuryPage() {
                                         taken — carry these. A customer or supplier receipt is
                                         undone from its own screen. */}
                                     {isVoucher && (
-                                        <div className="mt-2.5 flex items-center gap-1 border-t border-navy-100 pt-2.5">
+                                        <div className="mt-2 flex items-center gap-1 border-t border-navy-100 pt-2">
                                             <Link
                                                 to={path(`/print/cash-vouchers/${movement.id}`)}
                                                 target="_blank"
@@ -499,12 +499,12 @@ function Stat({
     }[tone]
 
     return (
-        <div className="card p-4">
-            <p className="flex items-center gap-1.5 text-[11px] font-bold text-navy-400">
+        <div className="card p-3">
+            <p className="flex items-center gap-1.5 text-[10px] font-bold text-navy-400">
                 {Icon && <Icon className="size-3.5" />}
                 {label}
             </p>
-            <p className={clsx('tabular mt-1 text-lg font-extrabold', colour)}>{value}</p>
+            <p className={clsx('tabular mt-1 text-base font-extrabold', colour)}>{value}</p>
         </div>
     )
 }
@@ -521,16 +521,16 @@ function Breakdown({
     const total = rows.reduce((sum, row) => sum + row.total, 0)
 
     return (
-        <section className="card p-4">
-            <h2 className="mb-3 text-sm font-bold text-navy-800">{title}</h2>
+        <section className="card p-3">
+            <h2 className="mb-2 text-xs font-bold text-navy-800">{title}</h2>
 
             {rows.length === 0 ? (
                 <p className="text-xs text-navy-400">لا توجد حركات في هذه الفترة.</p>
             ) : (
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                     {rows.map((row) => (
                         <div key={row.source}>
-                            <div className="flex items-center justify-between text-sm">
+                            <div className="flex items-center justify-between text-xs">
                                 <span className="text-navy-600">
                                     {row.label}
                                     <span className="tabular mr-1.5 text-[11px] text-navy-400">
@@ -544,7 +544,7 @@ function Breakdown({
 
                             {/* Share of its own side, so the biggest line is
                                 obvious without reading every figure. */}
-                            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-navy-100">
+                            <div className="mt-1 h-1 overflow-hidden rounded-full bg-navy-100">
                                 <div
                                     className={clsx(
                                         'h-full rounded-full',
@@ -607,8 +607,8 @@ function StatementDialog({
             {isLoading || !data ? (
                 <SkeletonCard />
             ) : (
-                <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                         <Stat label="أول المدة" value={formatMoney(data.opening_balance)} tone="muted" />
                         <Stat label="وارد" value={formatMoney(data.in_total)} tone="up" />
                         <Stat label="منصرف" value={formatMoney(data.out_total)} tone="down" />
@@ -616,13 +616,13 @@ function StatementDialog({
                     </div>
 
                     {data.rows.length === 0 ? (
-                        <p className="rounded-xl bg-navy-50 p-4 text-center text-sm text-navy-400">
+                        <p className="rounded-xl bg-navy-50 p-3 text-center text-xs text-navy-400">
                             {tr('لا توجد حركات في هذه الفترة.')}
                         </p>
                     ) : (
                         <div className="w-full min-w-0 overflow-hidden">
                             {/* Desktop: the fixed layout keeps every column inside the dialog. */}
-                            <table className="doc-table hidden w-full table-fixed text-[11px] md:table">
+                            <table className="doc-table treasury-table hidden w-full table-fixed md:table">
                                 <thead>
                                     <tr>
                                         <Th className="w-[8%]">التاريخ</Th>
@@ -674,18 +674,18 @@ function StatementDialog({
                             </table>
 
                             {/* Mobile: each movement becomes a readable card, so no horizontal scrolling is needed. */}
-                            <div className="space-y-2 md:hidden">
+                            <div className="space-y-1.5 md:hidden">
                                 {data.rows.map((row) => (
                                     <article key={row.id} className="rounded-xl border border-navy-100 bg-white p-3">
                                         <div className="flex items-start justify-between gap-3">
                                             <div className="min-w-0">
                                                 <p className="break-words text-xs font-bold text-navy-800">{row.voucher_type}</p>
-                                                <p className="mt-0.5 break-words text-[11px] font-bold text-brand-700">
+                                                <p className="mt-0.5 break-words text-[10px] font-bold text-brand-700">
                                                     {row.voucher_number}
                                                     {row.journal_code && ` · ${row.journal_code}`}
                                                 </p>
                                             </div>
-                                            <span className="tabular shrink-0 text-[11px] text-navy-500">
+                                            <span className="tabular shrink-0 text-[10px] text-navy-500">
                                                 {row.date ? formatDate(row.date) : '—'}
                                             </span>
                                         </div>
@@ -706,7 +706,7 @@ function StatementDialog({
                                             </p>
                                         </div>
 
-                                        <div className="mt-2 grid grid-cols-3 gap-2 border-t border-navy-100 pt-2 text-center text-[11px]">
+                                        <div className="mt-2 grid grid-cols-3 gap-2 border-t border-navy-100 pt-2 text-center text-[10px]">
                                             <div>
                                                 <span className="block text-navy-400">مدين</span>
                                                 <span className="tabular font-bold text-emerald-700">

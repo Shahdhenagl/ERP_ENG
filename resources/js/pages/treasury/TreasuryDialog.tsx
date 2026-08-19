@@ -6,6 +6,7 @@ import { Button, Field, Input, Select, Textarea } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { formatMoney } from '@/lib/domain'
 import { useCashBoxes, useTreasuryOperation } from '@/lib/queries'
+import { ExpenseAccountChecklist } from '@/components/ExpenseAccountChecklist'
 
 /** Paying something out, or moving it between two of our own boxes. */
 
@@ -26,6 +27,7 @@ export function TreasuryDialog({
         from_box_id: '',
         to_box_id: '',
         amount: '',
+        account_id: '',
         category: '',
         note: '',
     })
@@ -41,6 +43,7 @@ export function TreasuryDialog({
                 ? {
                       cash_box_id: Number(form.cash_box_id || boxes?.[0]?.id),
                       amount: Number(form.amount),
+                      account_id: Number(form.account_id),
                       category: form.category || null,
                       note: form.note || null,
                   }
@@ -94,13 +97,11 @@ export function TreasuryDialog({
                             </Select>
                         </Field>
 
-                        <Field label="بند المصروف" error={errors.category}>
-                            <Input
-                                value={form.category}
-                                onChange={(event) => set('category')(event.target.value)}
-                                placeholder="وقود / أجور / مشتريات"
-                            />
-                        </Field>
+                        <ExpenseAccountChecklist
+                            value={form.account_id}
+                            onChange={set('account_id')}
+                            error={errors.account_id || errors.category}
+                        />
                     </>
                 ) : (
                     <div className="grid gap-4 sm:grid-cols-2">
