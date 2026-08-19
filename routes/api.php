@@ -42,6 +42,7 @@ use App\Http\Controllers\Api\ImportController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\StatementController;
 use App\Http\Controllers\Api\SupplierController;
+use App\Http\Controllers\Api\SupplierCleanupController;
 use App\Http\Controllers\Api\SupplierInvoiceController;
 use App\Http\Controllers\Api\TreasuryController;
 use App\Http\Controllers\Api\NotificationController;
@@ -417,6 +418,7 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::get('suppliers/{supplier}', [SupplierController::class, 'show'])->middleware('can:purchasing.manage');
     Route::put('suppliers/{supplier}', [SupplierController::class, 'update'])->middleware('can:purchasing.manage');
     Route::delete('suppliers/{supplier}', [SupplierController::class, 'destroy'])->middleware('can:purchasing.manage');
+    Route::post('admin/cleanup/experimental-supplier', [SupplierCleanupController::class, 'purgeExperimentalSupplier'])->middleware(['role:admin,manager', 'can:purchasing.manage']);
 
     Route::post('supplier-payments', [SupplierController::class, 'pay'])->middleware('can:purchasing.manage');
     Route::get('supplier-payments/{payment}', [SupplierController::class, 'showPayment'])->middleware('can:purchasing.manage');
