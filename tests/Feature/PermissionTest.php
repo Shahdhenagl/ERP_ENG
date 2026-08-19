@@ -238,3 +238,52 @@ it('defaults for a role and the registry agree', function () {
     expect(PermissionRegistry::defaultsFor(UserRole::Admin))
         ->toBe(PermissionRegistry::keys());
 });
+
+
+describe('effective role labels', function () {
+    it('keeps the configured job label when effective permissions match', function () {
+        expect($this->manager->effectiveRoleLabel())->toBe($this->manager->role->label());
+    });
+
+    it('shows a custom label when a manager has a permission override', function () {
+        override($this->manager, 'treasury.manage', false);
+
+        expect($this->manager->fresh()->effectiveRoleLabel())
+            ->toBe('مستخدم بصلاحيات مخصصة');
+    });
+});
+
+it('returns the effective role label from the user resource', function () {
+    override($this->manager, 'sales.manage', false);
+
+    $response = actingAs($this->admin)->getJson('/api/users')->assertOk();
+    $row = collect($response->json('data'))->firstWhere('id', $this->manager->id);
+
+    expect($row['effective_role_label'])->toBe('مستخدم بصلاحيات مخصصة');
+});
+
+it('does not expose a manager-only permission after it is revoked', function () {
+    override($this->manager, 'treasury.manage', false);
+
+    actingAs($this->manager)->getJson('/api/treasury/summary')->assertForbidden();
+});
+
+it('does not let a manager reach the sales API after sales is revoked', function () {
+    override($this->manager, 'sales.manage', false);
+    override($this->manager, 'sales.approve', false);
+
+    actingAs($this->manager)->getJson('/api/quotations')->assertForbidden();
+});
+
+it('does not let a manager reach the accounting API after accounting is revoked', function () {
+    override($this->manager, 'accounting.view', false);
+
+    actingAs($this->manager)->getJson('/api/accounting/entries')->assertForbidden();
+});
+
+it('does not let a manager reach the inventory API after inventory is revoked', function () {
+    override($this->manager, 'inventory.view', false);
+    override($this->manager, 'inventory.manage', false);
+
+    actingAs($this->manager)->getJson('/api/items')->assertForbidden();
+});

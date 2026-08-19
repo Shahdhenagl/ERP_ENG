@@ -76,7 +76,7 @@ function DetailsCard() {
                 </div>
                 <div className="min-w-0">
                     <p className="truncate font-bold text-navy-900">{user?.name}</p>
-                    <Badge className="mt-1 bg-navy-100 text-navy-600">{user?.role_label}</Badge>
+                    <Badge className="mt-1 bg-navy-100 text-navy-600">{user?.effective_role_label ?? user?.position_label ?? user?.role_label}</Badge>
                 </div>
             </div>
 

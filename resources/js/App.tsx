@@ -8,6 +8,7 @@ import {
     useLocation,
     useParams,
 } from 'react-router-dom'
+import type { ReactNode } from 'react'
 import { AppLayout } from '@/components/AppLayout'
 import { ToastProvider } from '@/components/Toast'
 import { PageLoader } from '@/components/ui'
@@ -15,6 +16,7 @@ import { AuthProvider, useAuth } from '@/lib/auth'
 import { I18nProvider } from '@/lib/i18n'
 import { ThemeProvider } from '@/lib/theme'
 import { areaFor } from '@/lib/nav'
+import { menuPermissionForPath } from '@/lib/menu'
 import { AccountingLayout } from '@/pages/accounting/AccountingLayout'
 import { AccountsPage } from '@/pages/accounting/AccountsPage'
 import { BalanceSheetPage } from '@/pages/accounting/BalanceSheetPage'
@@ -210,7 +212,14 @@ export function App() {
                                     </Route>
 
                                     {/* ── Dispatcher area ──────────────── */}
-                                    <Route path="manager" element={<RequireRole roles={['admin', 'manager']} />}>
+                                    <Route
+                                        path="manager"
+                                        element={
+                                            <RequireRole roles={['admin', 'manager']}>
+                                                <RequireAreaPermission />
+                                            </RequireRole>
+                                        }
+                                    >
                                         <Route index element={<Dashboard />} />
                                         <Route path="tasks" element={<TaskList />} />
                                         <Route path="tasks/new" element={<TaskForm />} />
@@ -377,14 +386,30 @@ function RequireAuth() {
     return <Outlet />
 }
 
-function RequireRole({ roles }: { roles: Role[] }) {
+function RequireRole({ roles, children }: { roles: Role[]; children?: ReactNode }) {
     const { user } = useAuth()
 
     // Silently send the user to their own area rather than showing a dead-end
     // error page — a technician who opens /manager just lands on /tech.
     if (!user || !roles.includes(user.role)) return <AreaRedirect to="/" />
 
-    return <Outlet />
+    return children ? <>{children}</> : <Outlet />
+}
+
+function RequireAreaPermission() {
+    const { user } = useAuth()
+    const { pathname } = useLocation()
+
+    if (!user) return <AreaRedirect to="/" />
+
+    const within = pathname.replace(/^\/manager/, '') || '/'
+    const required = menuPermissionForPath(within)
+    const permissions = user.permissions ?? []
+    const allowed = !required || (Array.isArray(required)
+        ? required.some((permission) => permissions.includes(permission))
+        : permissions.includes(required))
+
+    return allowed ? <Outlet /> : <AreaRedirect to="/" />
 }
 
 /**

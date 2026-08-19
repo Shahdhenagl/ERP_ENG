@@ -24,6 +24,7 @@ class UserResource extends JsonResource
             // screen nobody may open is never offered in the first place.
             'permissions' => $this->permissions(),
             'role_label' => $this->role->label(),
+            'effective_role_label' => $this->effectiveRoleLabel(),
             'phone' => $this->phone,
             'whatsapp' => $this->whatsapp,
             'whatsapp_number' => $this->whatsappNumber(),

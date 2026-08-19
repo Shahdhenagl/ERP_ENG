@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\UserRole;
 use App\Services\PermissionRegistry;
+use App\Support\Terms;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -145,6 +146,32 @@ class User extends Authenticatable
             fn (string $key) => $overrides[$key]
                 ?? in_array($key, $defaults, true),
         ));
+    }
+
+    /**
+     * A truthful label for the account's effective access.
+     *
+     * The base role decides the application area, but per-user overrides may
+     * remove most of a manager's permissions. Calling that account "مدير" in
+     * the UI is then misleading, so expose a separate label for display.
+     */
+    public function effectiveRoleLabel(): string
+    {
+        if ($this->role === UserRole::Admin) {
+            return $this->role->label();
+        }
+
+        if ($this->role === UserRole::Technician) {
+            return $this->role->label();
+        }
+
+        if ($this->permissionOverrides()->exists()) {
+            return Terms::get('مستخدم بصلاحيات مخصصة');
+        }
+
+        return $this->position && JobRole::exists($this->position)
+            ? JobRole::label($this->position)
+            : $this->role->label();
     }
 
     /**

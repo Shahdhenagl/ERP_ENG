@@ -90,7 +90,7 @@ export const NAV: NavItem[] = [
         children: [
             { to: '/', label: tr('لوحة التحكم'), icon: LayoutDashboard },
             { to: '/notifications', label: tr('التنبيهات'), icon: Bell },
-            { to: '/tasks', label: tr('المهام المطلوبة'), icon: ClipboardList },
+            { to: '/tasks', permission: 'tasks.dispatch', label: tr('المهام المطلوبة'), icon: ClipboardList },
         ],
     },
 
@@ -208,8 +208,8 @@ export const NAV: NavItem[] = [
         roles: ['admin', 'manager'],
         short: tr('صيانة'),
         children: [
-            { to: '/tasks', label: tr('التذاكر وأوامر العمل'), icon: ClipboardList },
-            { to: '/technicians', label: tr('الفنيون'), icon: UserCheck },
+            { to: '/tasks', permission: 'tasks.dispatch', label: tr('التذاكر وأوامر العمل'), icon: ClipboardList },
+            { to: '/technicians', permission: 'tasks.dispatch', label: tr('الفنيون'), icon: UserCheck },
             {
                 to: '/technician-reports',
                 label: tr('التقارير الشهرية للفنيين'),
@@ -366,4 +366,39 @@ export function menuLabelForPath(within: string): string | undefined {
     }
 
     return undefined
+}
+
+/**
+ * Return the permission required by the closest sidebar screen for a path.
+ * Detail/edit routes intentionally inherit their list screen's permission.
+ */
+const ROUTE_PERMISSION_ALIASES: Array<{
+    prefix: string
+    permission?: string
+    anyPermission?: string[]
+}> = [
+    { prefix: '/sales', anyPermission: ['sales.manage', 'sales.approve', 'invoices.manage'] },
+    { prefix: '/purchasing', permission: 'purchasing.manage' },
+    { prefix: '/inventory', anyPermission: ['inventory.view', 'inventory.manage'] },
+    { prefix: '/warranties', anyPermission: ['warranties.manage', 'assets.manage'] },
+    { prefix: '/hr', anyPermission: ['hr.manage', 'payroll.manage'] },
+    { prefix: '/accounting', permission: 'accounting.view' },
+    { prefix: '/reports', permission: 'reports.view' },
+]
+
+export function menuPermissionForPath(within: string): string | string[] | undefined {
+    const candidates = NAV.flatMap((item) => item.children ?? [item])
+        .filter((entry) => within === entry.to || within.startsWith(`${entry.to}/`))
+        .sort((a, b) => b.to.length - a.to.length)
+
+    const match = candidates[0]
+    if (match?.permission || match?.anyPermission) {
+        return match.permission ?? match.anyPermission
+    }
+
+    const alias = ROUTE_PERMISSION_ALIASES
+        .filter((entry) => within === entry.prefix || within.startsWith(`${entry.prefix}/`))
+        .sort((a, b) => b.prefix.length - a.prefix.length)[0]
+
+    return alias?.permission ?? alias?.anyPermission
 }

@@ -393,7 +393,7 @@ function CashDialog({
                             {userPage?.data.map((user) => (
                                 <option key={user.id} value={user.id}>
                                     {user.name}
-                                    {user.role_label ? ` — ${user.role_label}` : ''}
+                                    {(user.effective_role_label ?? user.position_label ?? user.role_label) ? ` — ${user.effective_role_label ?? user.position_label ?? user.role_label}` : ''}
                                 </option>
                             ))}
                         </Select>
@@ -520,7 +520,7 @@ function DeviceDialog({ onClose }: { onClose: () => void }) {
                         {userPage?.data.map((user) => (
                             <option key={user.id} value={user.id}>
                                 {user.name}
-                                {user.role_label ? ` — ${user.role_label}` : ''}
+                                {(user.effective_role_label ?? user.position_label ?? user.role_label) ? ` — ${user.effective_role_label ?? user.position_label ?? user.role_label}` : ''}
                             </option>
                         ))}
                     </Select>

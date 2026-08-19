@@ -9,7 +9,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Models\ActivityLog;
 use App\Models\Attendance;
-use App\Models\JobRole;
 use App\Models\Payslip;
 use App\Models\User;
 use App\Support\Terms;
@@ -59,9 +58,7 @@ class UserController extends Controller
                 ->map(fn (User $user) => [
                     'id' => $user->id,
                     'name' => $user->name,
-                    'label' => $user->position
-                        ? JobRole::label($user->position)
-                        : $user->role->label(),
+                    'label' => $user->effectiveRoleLabel(),
                 ])
         );
     }

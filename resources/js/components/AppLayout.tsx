@@ -40,9 +40,17 @@ export function AppLayout() {
         (! item.permission || can(item.permission)) &&
         (! item.anyPermission || item.anyPermission.some((p) => can(p)))
 
-    const visibleNav = NAV.filter(allowed).map((item) =>
-        item.children ? { ...item, children: item.children.filter(allowed) } : item,
-    )
+    const visibleNav = NAV.flatMap((item) => {
+        if (!allowed(item)) return []
+        if (!item.children) return [item]
+
+        const children = item.children.filter(allowed)
+
+        // A module with no permitted screen must disappear completely. Keeping
+        // the parent made a removed permission look as if the module still
+        // existed, even though every child had been filtered out.
+        return children.length ? [{ ...item, children }] : []
+    })
 
     /**
      * Who gets the sidebar on a wide screen.
@@ -133,7 +141,7 @@ export function AppLayout() {
                                 {user?.name}
                             </span>
                             <span className="block truncate text-[11px] text-navy-400">
-                                {user?.role_label}
+                                {user?.effective_role_label ?? user?.position_label ?? user?.role_label}
                             </span>
                         </span>
                     </Link>

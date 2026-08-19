@@ -41,6 +41,7 @@ export interface User {
     email: string
     role: Role
     role_label: string
+    effective_role_label?: string
     position: string | null
     position_label: string | null
     phone: string | null

@@ -115,7 +115,7 @@ export function UserList() {
                             <td className="px-3 py-2.5 font-semibold text-navy-800">{user.name}</td>
                             <td className="px-3 py-2.5">
                                 <span className={clsx('badge', ROLE_STYLES[user.role])}>
-                                    {user.position_label ?? user.role_label}
+                                    {user.effective_role_label ?? user.position_label ?? user.role_label}
                                 </span>
                             </td>
                             <td className="tabular px-3 py-2.5 text-navy-600" dir="ltr">
@@ -153,7 +153,7 @@ export function UserList() {
                                 <div className="flex flex-wrap items-center gap-2">
                                     <h3 className="truncate text-sm font-bold text-navy-900">{user.name}</h3>
                                     <span className={clsx('badge', ROLE_STYLES[user.role])}>
-                                        {user.position_label ?? user.role_label}
+                                        {user.effective_role_label ?? user.position_label ?? user.role_label}
                                     </span>
                                     {!user.is_active && (
                                         <span className="badge bg-red-50 text-red-600">موقوف</span>

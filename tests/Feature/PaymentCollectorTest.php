@@ -65,6 +65,20 @@ it('gives everyone signed in the roster of colleagues to name', function () {
     $this->getJson('/api/users')->assertForbidden();
 });
 
+it('uses the effective label in the staff roster for customized managers', function () {
+    $manager = User::factory()->manager()->create();
+    \App\Models\UserPermission::create([
+        'user_id' => $manager->id,
+        'permission' => 'sales.manage',
+        'granted' => false,
+    ]);
+
+    $roster = $this->actingAs($manager)->getJson('/api/staff')->assertOk()->json();
+
+    expect(collect($roster)->firstWhere('id', $manager->id)['label'])
+        ->toBe('مستخدم بصلاحيات مخصصة');
+});
+
 it('names the collector without charging anything to them', function () {
     // Naming somebody on a receipt must not quietly open a custody against
     // them, or move a piastre of their pay. The money lands in the box, and

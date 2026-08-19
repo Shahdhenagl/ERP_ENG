@@ -49,7 +49,7 @@ export function PermissionMatrix({ user, onClose }: { user: User; onClose: () =>
             open
             onClose={onClose}
             title={`صلاحيات ${user.name}`}
-            description={`الدور «${user.role_label}» يمنح ما هو مُعلَّم تلقائيًا — والتعديل هنا استثناء عليه.`}
+            description={`المسمى «${user.effective_role_label ?? user.position_label ?? user.role_label}». صلاحيات الدور الأساسية مُعلَّمة تلقائياً، والتعديل هنا استثناء على المستخدم.`}
             size="lg"
             footer={
                 <>
