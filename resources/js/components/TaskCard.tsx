@@ -33,17 +33,17 @@ export function TaskCard({ task, showTechnician = true }: TaskCardProps) {
             {/* Status accent rail — lets you read a long feed by colour alone */}
             <span className={clsx('w-1.5 shrink-0', status.accent)} aria-hidden />
 
-            <div className="flex min-w-0 flex-1 flex-col gap-3 p-4">
-                <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 flex-1 flex-col gap-2.5 p-3">
+                <div className="flex items-start justify-between gap-2.5">
                     <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                            <span className="tabular text-xs font-bold text-brand-600">{task.code}</span>
+                        <div className="flex items-center gap-1.5">
+                            <span className="tabular text-[11px] font-bold text-brand-600">{task.code}</span>
                             <span className={clsx('badge', priority.chip)}>
                                 <span className={clsx('size-1.5 rounded-full', priority.dot)} />
                                 {task.priority_label}
                             </span>
                         </div>
-                        <h3 className="mt-1.5 truncate text-sm font-bold text-navy-900 group-hover:text-brand-700">
+                        <h3 className="mt-1 truncate text-xs font-bold text-navy-900 group-hover:text-brand-700">
                             {task.title}
                         </h3>
                     </div>
@@ -54,36 +54,36 @@ export function TaskCard({ task, showTechnician = true }: TaskCardProps) {
                     </span>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-navy-500">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-navy-500">
                     {task.customer && (
                         <span className="flex min-w-0 items-center gap-1.5">
-                            <Building2 className="size-3.5 shrink-0 text-navy-300" />
+                            <Building2 className="size-3 shrink-0 text-navy-300" />
                             <span className="truncate font-medium">{task.customer.name}</span>
                         </span>
                     )}
 
                     {task.branch?.name && (
                         <span className="flex min-w-0 items-center gap-1.5">
-                            <MapPin className="size-3.5 shrink-0 text-navy-300" />
+                            <MapPin className="size-3 shrink-0 text-navy-300" />
                             <span className="truncate font-medium">{task.branch.name}</span>
                         </span>
                     )}
 
                     <span className="flex items-center gap-1.5">
-                        <TypeIcon className="size-3.5 shrink-0 text-navy-300" />
+                        <TypeIcon className="size-3 shrink-0 text-navy-300" />
                         {task.type_label}
                     </span>
 
                     {showTechnician && task.technicians && task.technicians.length > 0 && (
                         <span className="flex min-w-0 items-center gap-1.5">
-                            <User2 className="size-3.5 shrink-0 text-navy-300" />
+                            <User2 className="size-3 shrink-0 text-navy-300" />
                             <span className="truncate">{task.technicians.map((t) => t.name).join('، ')}</span>
                         </span>
                     )}
 
                     {task.effective_address && (
                         <span className="flex min-w-0 items-center gap-1.5">
-                            <MapPin className="size-3.5 shrink-0 text-navy-300" />
+                            <MapPin className="size-3 shrink-0 text-navy-300" />
                             <span className="truncate">{task.effective_address}</span>
                         </span>
                     )}
@@ -92,7 +92,7 @@ export function TaskCard({ task, showTechnician = true }: TaskCardProps) {
                 {task.scheduled_at && (
                     <div
                         className={clsx(
-                            'flex items-center gap-1.5 text-xs font-semibold',
+                            'flex items-center gap-1.5 text-[11px] font-semibold',
                             overdue ? 'text-red-600' : 'text-navy-400',
                         )}
                     >
@@ -103,7 +103,7 @@ export function TaskCard({ task, showTechnician = true }: TaskCardProps) {
                 )}
             </div>
 
-            <ChevronLeft className="mt-4 ml-3 size-5 shrink-0 self-start text-navy-200 transition group-hover:text-brand-400" />
+            <ChevronLeft className="mt-3 ml-2 size-4 shrink-0 self-start text-navy-200 transition group-hover:text-brand-400" />
         </Link>
     )
 }

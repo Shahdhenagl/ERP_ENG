@@ -745,3 +745,114 @@
     font-size: 11px;
     line-height: 1.45;
 }
+
+
+/* ── Treasury and dashboard density polish ───────────────────── */
+@layer components {
+    .card,
+    .card-interactive {
+        @apply rounded-xl;
+    }
+
+    .input {
+        @apply rounded-lg px-3 py-2 text-xs;
+    }
+
+    .label {
+        @apply mb-1 text-xs;
+    }
+
+    .btn,
+    .btn-primary,
+    .btn-secondary,
+    .btn-ghost,
+    .btn-danger,
+    .btn-whatsapp {
+        @apply rounded-lg px-3 py-2 text-xs;
+    }
+
+    .badge {
+        @apply rounded-lg px-2 py-0.5 text-[10px];
+    }
+
+    .treasury-table-wrap {
+        @apply overflow-hidden rounded-xl border border-navy-100 bg-surface shadow-[var(--shadow-card)];
+    }
+
+    .treasury-table {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .treasury-table thead {
+        @apply bg-navy-50;
+    }
+
+    .treasury-table th {
+        @apply whitespace-nowrap border-b border-navy-100 px-2.5 py-2 text-[10px] font-extrabold text-navy-500;
+    }
+
+    .treasury-table td {
+        @apply border-b border-navy-100 px-2.5 py-2 text-[11px] leading-5;
+    }
+
+    .treasury-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+    .treasury-table tbody tr {
+        @apply transition-colors hover:bg-navy-50/60;
+    }
+}
+
+@media (max-width: 767px) {
+    .treasury-table-wrap {
+        @apply overflow-visible border-0 bg-transparent shadow-none;
+    }
+
+    .treasury-table,
+    .treasury-table tbody,
+    .treasury-table tr,
+    .treasury-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .treasury-table thead {
+        display: none;
+    }
+
+    .treasury-table tr {
+        @apply mb-2 rounded-xl border border-navy-100 bg-surface p-2.5 shadow-[var(--shadow-card)];
+    }
+
+    .treasury-table tbody tr:last-child {
+        @apply mb-0;
+    }
+
+    .treasury-table td {
+        @apply flex items-center justify-between gap-3 border-0 px-0 py-1 text-[10px];
+    }
+
+    .treasury-table td::before {
+        content: attr(data-label);
+        @apply shrink-0 font-bold text-navy-400;
+    }
+
+    .treasury-table td:nth-child(3) {
+        @apply block border-b border-navy-100 pb-2;
+    }
+
+    .treasury-table td:nth-child(3)::before {
+        display: block;
+        margin-bottom: 0.125rem;
+    }
+
+    .treasury-table td:last-child {
+        @apply justify-end pt-2;
+    }
+
+    .treasury-table td:last-child::before {
+        display: none;
+    }
+}

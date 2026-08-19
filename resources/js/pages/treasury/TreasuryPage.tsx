@@ -243,83 +243,91 @@ export function TreasuryPage() {
                 {!movements?.length ? (
                     <EmptyState icon={Banknote} title="لا توجد حركات في هذه الفترة" />
                 ) : (
-                    <div className="space-y-1.5">
-                        {movements.map((movement) => {
-                            const isVoucher = VOUCHER_SOURCES.has(movement.source)
+                    <div className="treasury-table-wrap">
+                        <table className="treasury-table w-full text-right">
+                            <thead>
+                                <tr>
+                                    <Th>التاريخ</Th>
+                                    <Th>نوع الإيصال</Th>
+                                    <Th>البيان</Th>
+                                    <Th>الخزينة</Th>
+                                    <Th>مدين</Th>
+                                    <Th>دائن</Th>
+                                    <Th>الإجراء</Th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {movements.map((movement) => {
+                                    const isVoucher = VOUCHER_SOURCES.has(movement.source)
+                                    const isIncome = movement.direction === 'in'
 
-                            return (
-                                <div key={movement.id} className="card p-3">
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div className="min-w-0">
-                                            <span
-                                                className={clsx(
-                                                    'badge',
-                                                    movement.direction === 'in'
-                                                        ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
-                                                        : 'bg-red-50 text-red-700 ring-1 ring-red-200',
+                                    return (
+                                        <tr key={movement.id}>
+                                            <td data-label="التاريخ" className="tabular whitespace-nowrap text-navy-500">
+                                                {movement.created_at ? formatSmart(movement.created_at) : '—'}
+                                            </td>
+                                            <td data-label="نوع الإيصال">
+                                                <span
+                                                    className={clsx(
+                                                        'badge',
+                                                        isIncome
+                                                            ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
+                                                            : 'bg-red-50 text-red-700 ring-1 ring-red-200',
+                                                    )}
+                                                >
+                                                    {movement.source_label}
+                                                </span>
+                                            </td>
+                                            <td data-label="البيان" className="max-w-[19rem]">
+                                                <p className="truncate font-bold text-navy-900">
+                                                    {movement.customer ?? movement.category ?? movement.box}
+                                                </p>
+                                                <p className="mt-0.5 truncate text-[10px] text-navy-400">
+                                                    {movement.note ?? movement.actor ?? '—'}
+                                                </p>
+                                            </td>
+                                            <td data-label="الخزينة" className="max-w-[10rem] truncate text-navy-500">{movement.box}</td>
+                                            <td data-label="مدين" className="tabular whitespace-nowrap font-extrabold text-red-600">
+                                                {!isIncome ? formatMoney(movement.amount) : '—'}
+                                            </td>
+                                            <td data-label="دائن" className="tabular whitespace-nowrap font-extrabold text-emerald-600">
+                                                {isIncome ? formatMoney(movement.amount) : '—'}
+                                            </td>
+                                            <td data-label="الإجراء">
+                                                {isVoucher ? (
+                                                    <div className="flex items-center gap-1">
+                                                        <Link
+                                                            to={path(`/print/cash-vouchers/${movement.id}`)}
+                                                            target="_blank"
+                                                            className="tap rounded-lg p-2 text-navy-500 transition hover:bg-navy-50 hover:text-navy-800"
+                                                            title={tr('طباعة')}
+                                                        >
+                                                            <Printer className="size-3.5" />
+                                                        </Link>
+                                                        <button
+                                                            onClick={() => setEditingMove(movement)}
+                                                            className="tap rounded-lg p-2 text-navy-500 transition hover:bg-navy-50 hover:text-navy-800"
+                                                            title={tr('تعديل')}
+                                                        >
+                                                            <Pencil className="size-3.5" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setDeletingMove(movement)}
+                                                            className="tap rounded-lg p-2 text-red-500 transition hover:bg-red-50 hover:text-red-700"
+                                                            title={tr('حذف')}
+                                                        >
+                                                            <Trash2 className="size-3.5" />
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-[10px] text-navy-300">—</span>
                                                 )}
-                                            >
-                                                {movement.source_label}
-                                            </span>
-
-                                            <p className="mt-1 truncate text-xs font-bold text-navy-900">
-                                                {movement.customer ?? movement.category ?? movement.box}
-                                            </p>
-
-                                            <p className="mt-0.5 text-[10px] text-navy-400">
-                                                {movement.box}
-                                                {movement.note && ` · ${movement.note}`}
-                                                {movement.actor && ` · ${movement.actor}`}
-                                                {movement.created_at &&
-                                                    ` · ${formatSmart(movement.created_at)}`}
-                                            </p>
-                                        </div>
-
-                                        <p
-                                            className={clsx(
-                                                'tabular shrink-0 text-sm font-extrabold',
-                                                movement.direction === 'in'
-                                                    ? 'text-emerald-600'
-                                                    : 'text-red-600',
-                                            )}
-                                        >
-                                            {movement.direction === 'in' ? '+' : '−'}
-                                            {formatMoney(movement.amount)}
-                                        </p>
-                                    </div>
-
-                                    {/* Only the manual vouchers — an expense paid, a deposit
-                                        taken — carry these. A customer or supplier receipt is
-                                        undone from its own screen. */}
-                                    {isVoucher && (
-                                        <div className="mt-2 flex items-center gap-1 border-t border-navy-100 pt-2">
-                                            <Link
-                                                to={path(`/print/cash-vouchers/${movement.id}`)}
-                                                target="_blank"
-                                                className="tap flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-bold text-navy-500 transition hover:bg-navy-50 hover:text-navy-800"
-                                            >
-                                                <Printer className="size-3.5" />
-                                                {tr('طباعة')}
-                                            </Link>
-                                            <button
-                                                onClick={() => setEditingMove(movement)}
-                                                className="tap flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-bold text-navy-500 transition hover:bg-navy-50 hover:text-navy-800"
-                                            >
-                                                <Pencil className="size-3.5" />
-                                                {tr('تعديل')}
-                                            </button>
-                                            <button
-                                                onClick={() => setDeletingMove(movement)}
-                                                className="tap flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-bold text-red-500 transition hover:bg-red-50 hover:text-red-700"
-                                            >
-                                                <Trash2 className="size-3.5" />
-                                                {tr('حذف')}
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            )
-                        })}
+                                            </td>
+                                        </tr>
+                                    )
+                                })}
+                            </tbody>
+                        </table>
                     </div>
                 )}
             </section>

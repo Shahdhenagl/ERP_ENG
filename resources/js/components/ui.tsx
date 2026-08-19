@@ -227,10 +227,10 @@ export function PageHeader({ title, subtitle, actions }: PageHeaderProps) {
     const t = useT()
 
     return (
-        <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
             <div>
-                <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t(title)}</h1>
-                {subtitle && <p className="mt-1 text-sm text-navy-400">{t(subtitle)}</p>}
+                <h1 className="text-xl font-extrabold tracking-tight text-navy-900 sm:text-2xl">{t(title)}</h1>
+                {subtitle && <p className="mt-0.5 text-xs text-navy-400">{t(subtitle)}</p>}
             </div>
             {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
         </div>
