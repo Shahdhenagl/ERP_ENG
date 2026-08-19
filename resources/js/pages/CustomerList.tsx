@@ -3,11 +3,12 @@ import { tr } from '@/lib/i18n'
 import {
     Building2,
     ChevronDown,
-    FileText,
+    Eye,
     MapPin,
     MessageCircle,
     Pencil,
     Phone,
+    Printer,
     Plus,
     Search,
     Store,
@@ -312,6 +313,7 @@ export function CustomerList() {
                         { label: tr('العقود'), className: 'w-20' },
                         { label: tr('المهام'), className: 'w-20' },
                         { label: tr('الحالة'), className: 'w-28' },
+                        { label: tr('الإجراءات'), className: 'w-44' },
                     ]}
                 >
                     {data.data.map((customer) => (
@@ -382,6 +384,46 @@ export function CustomerList() {
                                     <span className="badge bg-navy-100 text-navy-500">بلا عقد</span>
                                 )}
                             </td>
+                            <td className="px-3 py-2.5" onClick={(event) => event.stopPropagation()}>
+                                <div className="flex items-center gap-0.5">
+                                    <Link
+                                        to={path(`/customers/${customer.id}`)}
+                                        className="tap grid size-8 place-items-center rounded-lg text-navy-400 transition hover:bg-brand-50 hover:text-brand-700"
+                                        aria-label="عرض العميل"
+                                        title="عرض"
+                                    >
+                                        <Eye className="size-4" />
+                                    </Link>
+                                    <button
+                                        type="button"
+                                        onClick={() => openEdit(customer)}
+                                        className="tap grid size-8 place-items-center rounded-lg text-navy-400 transition hover:bg-navy-50 hover:text-navy-700"
+                                        aria-label="تعديل العميل"
+                                        title="تعديل"
+                                    >
+                                        <Pencil className="size-4" />
+                                    </button>
+                                    <Link
+                                        to={path(`/print/statements/${customer.id}`)}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="tap grid size-8 place-items-center rounded-lg text-navy-400 transition hover:bg-navy-50 hover:text-navy-700"
+                                        aria-label="طباعة كشف حساب العميل"
+                                        title="طباعة"
+                                    >
+                                        <Printer className="size-4" />
+                                    </Link>
+                                    <button
+                                        type="button"
+                                        onClick={() => setDeleting(customer)}
+                                        className="tap grid size-8 place-items-center rounded-lg text-navy-400 transition hover:bg-red-50 hover:text-red-600"
+                                        aria-label="حذف العميل"
+                                        title="حذف"
+                                    >
+                                        <Trash2 className="size-4" />
+                                    </button>
+                                </div>
+                            </td>
                         </tr>
                     ))}
                 </DataTable>
@@ -425,11 +467,22 @@ export function CustomerList() {
                                 <div className="flex shrink-0 gap-0.5">
                                     {/* What you send when chasing money. */}
                                     <Link
-                                        to={path(`/print/statements/${customer.id}`)}
-                                        className="tap grid place-items-center rounded-lg p-2 text-navy-400 transition hover:bg-navy-50 hover:text-navy-700"
-                                        aria-label="كشف حساب"
+                                        to={path(`/customers/${customer.id}`)}
+                                        className="tap grid place-items-center rounded-lg p-2 text-navy-400 transition hover:bg-brand-50 hover:text-brand-700"
+                                        aria-label="عرض العميل"
+                                        title="عرض"
                                     >
-                                        <FileText className="size-4" />
+                                        <Eye className="size-4" />
+                                    </Link>
+                                    <Link
+                                        to={path(`/print/statements/${customer.id}`)}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="tap grid place-items-center rounded-lg p-2 text-navy-400 transition hover:bg-navy-50 hover:text-navy-700"
+                                        aria-label="طباعة كشف حساب"
+                                        title="طباعة"
+                                    >
+                                        <Printer className="size-4" />
                                     </Link>
                                     <button
                                         onClick={() => openEdit(customer)}
