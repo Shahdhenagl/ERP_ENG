@@ -3560,14 +3560,24 @@ export function useUserPermissions(userId: number | null | undefined) {
     })
 }
 
-export function useSavePermissions(userId: number) {
+export function useSavePermissions(userId?: number) {
     const client = useQueryClient()
 
     return useMutation({
-        mutationFn: async (payload: { permissions: Record<string, boolean> }) =>
-            (await api.put<UserPermissions>(`/users/${userId}/permissions`, payload)).data,
-        onSuccess: () => {
-            void client.invalidateQueries({ queryKey: keys.userPermissions(userId) })
+        mutationFn: async (payload: {
+            permissions: Record<string, boolean>
+            userId?: number
+        }) => {
+            const targetId = payload.userId ?? userId
+            if (!targetId) throw new Error('Missing user id')
+
+            return (await api.put<UserPermissions>(`/users/${targetId}/permissions`, {
+                permissions: payload.permissions,
+            })).data
+        },
+        onSuccess: (_data, variables) => {
+            const targetId = variables.userId ?? userId
+            if (targetId) void client.invalidateQueries({ queryKey: keys.userPermissions(targetId) })
             void client.invalidateQueries({ queryKey: ['users'] })
         },
     })

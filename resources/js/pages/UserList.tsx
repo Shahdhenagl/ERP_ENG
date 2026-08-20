@@ -11,7 +11,15 @@ import { Button, EmptyState, ErrorState, Field, Input, PageHeader, Select, Skele
 import { ADMIN_SECTIONS } from '@/lib/sections'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
-import { useDeleteUser, useJobRoles, useSaveUser, useUsers } from '@/lib/queries'
+import {
+    useDeleteUser,
+    useJobRoles,
+    usePermissionCatalogue,
+    useSavePermissions,
+    useSaveUser,
+    useUserPermissions,
+    useUsers,
+} from '@/lib/queries'
 import type { Role, User } from '@/types'
 
 const ROLE_STYLES: Record<Role, string> = {
@@ -257,8 +265,12 @@ function UserFormDialog({
 }) {
     const toast = useToast()
     const save = useSaveUser(user?.id)
+    const savePermissions = useSavePermissions(user?.id)
     const { data: roles } = useJobRoles()
+    const { data: catalogue } = usePermissionCatalogue()
+    const { data: currentPermissions, isLoading: permissionsLoading } = useUserPermissions(user?.id)
     const [errors, setErrors] = useState<Record<string, string>>({})
+    const [permissionDraft, setPermissionDraft] = useState<Record<string, boolean>>({})
 
     const [form, setForm] = useState({
         name: user?.name ?? '',
@@ -274,17 +286,45 @@ function UserFormDialog({
     const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
         setForm((current) => ({ ...current, [key]: value }))
 
+    const allPermissionKeys = catalogue?.groups.flatMap((group) => group.permissions.map((permission) => permission.key)) ?? []
+    const selectedRole = roles?.roles.find((role) => role.key === form.position)
+    const isAdminRole = selectedRole?.base_role === 'admin'
+
+    useEffect(() => {
+        if (currentPermissions) {
+            setPermissionDraft(Object.fromEntries(currentPermissions.effective.map((key) => [key, true])))
+            return
+        }
+
+        if (!user && selectedRole) {
+            const defaults = selectedRole.permissions.length > 0
+                ? selectedRole.permissions
+                : selectedRole.base_role === 'admin'
+                    ? allPermissionKeys
+                    : []
+            setPermissionDraft(Object.fromEntries(defaults.map((key) => [key, true])))
+        }
+    }, [allPermissionKeys.join('|'), currentPermissions, selectedRole, user])
+
     const handleSave = async () => {
         setErrors({})
 
         try {
-            await save.mutateAsync({
+            const saved = await save.mutateAsync({
                 ...form,
                 password: form.password || undefined,
                 phone: form.phone || null,
                 whatsapp: form.whatsapp || null,
                 job_title: form.job_title || null,
             })
+            const savedUser = (saved as User & { data?: User }).data ?? saved as User
+
+            if (savedUser?.id && catalogue && !isAdminRole) {
+                await savePermissions.mutateAsync({
+                    userId: savedUser.id,
+                    permissions: permissionDraft,
+                })
+            }
 
             toast.success(user ? 'تم تحديث المستخدم.' : 'تم إنشاء المستخدم.')
             onClose()
@@ -354,7 +394,19 @@ function UserFormDialog({
                     >
                         <Select
                             value={form.position}
-                            onChange={(event) => set('position', event.target.value)}
+                            onChange={(event) => {
+                                const position = event.target.value
+                                set('position', position)
+                                const nextRole = roles?.roles.find((role) => role.key === position)
+                                if (!user && nextRole) {
+                                    const defaults = nextRole.permissions.length > 0
+                                        ? nextRole.permissions
+                                        : nextRole.base_role === 'admin'
+                                            ? allPermissionKeys
+                                            : []
+                                    setPermissionDraft(Object.fromEntries(defaults.map((key) => [key, true])))
+                                }
+                            }}
                         >
                             <option value="">— اختر الدور —</option>
                             {(roles?.roles ?? []).map((role) => (
@@ -397,6 +449,67 @@ function UserFormDialog({
                         />
                     </Field>
                 </div>
+
+                {catalogue && (
+                    <section className="space-y-3 rounded-2xl border border-navy-100 bg-surface p-3">
+                        <div className="flex items-start justify-between gap-3">
+                            <div>
+                                <h3 className="text-sm font-extrabold text-navy-800">صلاحيات الموديولات</h3>
+                                <p className="mt-1 text-[11px] leading-relaxed text-navy-400">
+                                    كل عنوان يمثل موديول، والخيارات تحته هي الـSub-modules التي يمكن منحها لهذا المستخدم.
+                                </p>
+                            </div>
+                            {isAdminRole && <span className="badge bg-amber-50 text-amber-700">مدير النظام: وصول كامل</span>}
+                        </div>
+
+                        {permissionsLoading && user ? (
+                            <p className="rounded-xl bg-navy-50 px-3 py-2 text-xs text-navy-500">جاري تحميل الصلاحيات الحالية…</p>
+                        ) : (
+                            <div className="grid gap-3 md:grid-cols-2">
+                                {catalogue.groups.map((group) => {
+                                    const keys = group.permissions.map((permission) => permission.key)
+                                    const all = keys.every((key) => permissionDraft[key])
+
+                                    return (
+                                        <section key={group.group} className="overflow-hidden rounded-xl border border-navy-100">
+                                            <div className="flex items-center justify-between bg-navy-50 px-3 py-2">
+                                                <h4 className="text-xs font-extrabold text-navy-800">{group.group}</h4>
+                                                <button
+                                                    type="button"
+                                                    disabled={isAdminRole}
+                                                    onClick={() => setPermissionDraft((current) => ({
+                                                        ...current,
+                                                        ...Object.fromEntries(keys.map((key) => [key, !all])),
+                                                    }))}
+                                                    className="tap rounded-lg bg-surface px-2 py-1 text-[10px] font-bold text-navy-600 disabled:cursor-not-allowed disabled:opacity-50"
+                                                >
+                                                    {all ? 'إلغاء الكل' : 'تحديد الكل'}
+                                                </button>
+                                            </div>
+                                            <div className="divide-y divide-navy-50">
+                                                {group.permissions.map((permission) => (
+                                                    <label key={permission.key} className="flex cursor-pointer items-center gap-2 px-3 py-2 hover:bg-navy-50/60">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={isAdminRole || Boolean(permissionDraft[permission.key])}
+                                                            disabled={isAdminRole}
+                                                            onChange={(event) => setPermissionDraft((current) => ({
+                                                                ...current,
+                                                                [permission.key]: event.target.checked,
+                                                            }))}
+                                                            className="size-3.5"
+                                                        />
+                                                        <span className="text-xs font-semibold text-navy-700">{permission.label}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </section>
+                                    )
+                                })}
+                            </div>
+                        )}
+                    </section>
+                )}
 
                 <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-navy-200 px-4 py-3 transition hover:bg-navy-50">
                     <input

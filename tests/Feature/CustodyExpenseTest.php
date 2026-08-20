@@ -46,7 +46,7 @@ it('logs an expense with a receipt and takes it off the balance', function () {
             'amount' => 250,
             'category' => 'وقود',
             'note' => 'بنزين للسيارة',
-            'receipt' => UploadedFile::fake()->image('receipt.jpg'),
+            'receipt' => UploadedFile::fake()->create('receipt.jpg', 10, 'image/jpeg'),
         ])
         ->assertCreated()
         ->assertJsonPath('data.cash.balance', 750);
@@ -72,7 +72,7 @@ it('allows an expense larger than the float, owing the technician the rest', fun
 it('serves the expense back with a receipt url', function () {
     actingAs($this->technician)->post('/api/custody/mine/spend', [
         'amount' => 100, 'category' => 'مواصلات',
-        'receipt' => UploadedFile::fake()->image('r.jpg'),
+        'receipt' => UploadedFile::fake()->create('r.jpg', 10, 'image/jpeg'),
     ])->assertCreated();
 
     $expenses = actingAs($this->technician)->getJson('/api/custody/mine')->json('data.expenses');
@@ -140,9 +140,8 @@ it('lets a technician spend past their float, dropping it negative', function ()
 });
 
 it('bills an expense to a job and shows it on that task', function () {
-    $task = Task::factory()->create([
-        'assigned_to' => $this->technician->id, 'status' => TaskStatus::InProgress,
-    ]);
+    $task = Task::factory()->create(['status' => TaskStatus::InProgress]);
+    $task->technicians()->attach($this->technician);
 
     actingAs($this->technician)->post('/api/custody/mine/spend', [
         'amount' => 100, 'category' => 'وقود', 'note' => 'بنزين الطريق', 'task_id' => $task->id,
@@ -183,10 +182,9 @@ it('includes the task customer and branch on custody expense rows', function () 
 });
 
 it('refuses to bill a job that is not the technician\'s', function () {
-    $other = Task::factory()->create([
-        'assigned_to' => User::factory()->technician()->create()->id,
-        'status' => TaskStatus::InProgress,
-    ]);
+    $otherTechnician = User::factory()->technician()->create();
+    $other = Task::factory()->create(['status' => TaskStatus::InProgress]);
+    $other->technicians()->attach($otherTechnician);
 
     actingAs($this->technician)->postJson('/api/custody/mine/spend', [
         'amount' => 50, 'task_id' => $other->id,

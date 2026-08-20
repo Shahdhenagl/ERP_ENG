@@ -28,12 +28,13 @@ beforeEach(function () {
     $this->ledger->receive($this->item, $this->main, 6, 100, $this->manager);
     $this->ledger->transfer($this->item, $this->main, $this->van, 6, $this->manager);
 
-    $this->task = Task::factory()->create([
-        'customer_id' => Customer::factory(),
-        'assigned_to' => $this->technician->id,
-        'created_by' => $this->manager->id,
-        'status' => TaskStatus::InProgress,
-    ]);
+    $this->task = Task::factory()
+        ->assignedTo($this->technician)
+        ->create([
+            'customer_id' => Customer::factory(),
+            'created_by' => $this->manager->id,
+            'status' => TaskStatus::InProgress,
+        ]);
 });
 
 function fileReport(array $parts): \Illuminate\Testing\TestResponse
