@@ -29,6 +29,8 @@ import type {
     JournalEntry,
     TrialBalance,
     Contract,
+    InstallmentWorkflow,
+    WorkflowTemplate,
     CustodyStatement,
     Customer,
     CustomerProfile,
@@ -1106,6 +1108,62 @@ export function useCollectContractPayment(contractId: number) {
             void client.invalidateQueries({ queryKey: keys.contract(contractId) })
             void client.invalidateQueries({ queryKey: ['contracts'] })
             void client.invalidateQueries({ queryKey: keys.dashboard })
+        },
+    })
+}
+
+export function useWorkflowTemplates() {
+    return useQuery({
+        queryKey: ['workflow-templates'],
+        queryFn: async () => (await api.get<{ data: WorkflowTemplate[] }>('/workflow-templates')).data.data,
+    })
+}
+
+export function useCreateWorkflowTemplate() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: {
+            name: string
+            description?: string
+            steps: Array<{ name: string; description?: string; sort_order: number; is_required: boolean }>
+        }) => (await api.post<{ data: WorkflowTemplate }>('/workflow-templates', payload)).data.data,
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: ['workflow-templates'] })
+        },
+    })
+}
+
+export function useAssignPaymentWorkflow(contractId: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ paymentId, workflowTemplateId }: { paymentId: number; workflowTemplateId: number }) =>
+            (
+                await api.post<{ data: InstallmentWorkflow }>(
+                    `/contracts/${contractId}/payments/${paymentId}/workflow`,
+                    { workflow_template_id: workflowTemplateId },
+                )
+            ).data.data,
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: keys.contract(contractId) })
+        },
+    })
+}
+
+export function useUpdateWorkflowStep(contractId: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ stepId, completed, notes }: { stepId: number; completed: boolean; notes?: string }) =>
+            (
+                await api.patch<{ data: InstallmentWorkflow }>(`/workflow-steps/${stepId}`, {
+                    completed,
+                    notes,
+                })
+            ).data.data,
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: keys.contract(contractId) })
         },
     })
 }

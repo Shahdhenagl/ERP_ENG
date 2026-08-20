@@ -41,6 +41,11 @@ class ContractResource extends JsonResource
 
             'billing_frequency' => $this->billing_frequency->value,
             'billing_frequency_label' => $this->billing_frequency->label(),
+            'collection_timing' => $this->collection_timing ?? 'upfront',
+            'collection_timing_label' => ($this->collection_timing ?? 'upfront') === 'arrears'
+                ? 'مؤخر بعد الخدمة'
+                : 'مقدّم مع اعتماد العقد',
+            'includes_spare_parts' => (bool) $this->includes_spare_parts,
 
             // The instalment schedule, and the two facts the UI gates on: whether
             // the contract may be activated yet, and which visits are held for pay.
@@ -53,6 +58,14 @@ class ContractResource extends JsonResource
                 'id' => $p->id,
                 'sequence' => $p->sequence,
                 'amount' => (float) $p->amount,
+                'service_year' => $p->service_year ?? (int) ceil($p->sequence / max(1, $this->instalmentsPerYear())),
+                'period_number' => $p->period_number ?? ((($p->sequence - 1) % max(1, $this->instalmentsPerYear())) + 1),
+                'service_from_visit_sequence' => $p->service_from_visit_sequence,
+                'service_to_visit_sequence' => $p->service_to_visit_sequence,
+                'due_on' => $p->due_on?->toDateString(),
+                'service_label' => $p->service_from_visit_sequence && $p->service_to_visit_sequence
+                    ? "بعد الزيارات {$p->service_from_visit_sequence}–{$p->service_to_visit_sequence}"
+                    : (($this->collection_timing ?? 'upfront') === 'arrears' ? 'بعد تنفيذ الخدمة' : 'مع اعتماد العقد'),
                 'due_visit_sequence' => $p->due_visit_sequence,
                 'status' => $p->status,
                 'status_label' => $p->statusLabel(),
@@ -60,6 +73,36 @@ class ContractResource extends JsonResource
                 'collected_at' => $p->collected_at?->toIso8601String(),
                 'invoice_id' => $p->invoice_id,
                 'invoice_code' => $p->invoice?->code,
+                'service_stats' => $this->paymentVisitStats($p),
+                'workflow' => $p->relationLoaded('installmentWorkflow') && $p->installmentWorkflow ? [
+                    'id' => $p->installmentWorkflow->id,
+                    'status' => $p->installmentWorkflow->status,
+                    'completed_at' => $p->installmentWorkflow->completed_at?->toIso8601String(),
+                    'template' => $p->installmentWorkflow->relationLoaded('template') && $p->installmentWorkflow->template ? [
+                        'id' => $p->installmentWorkflow->template->id,
+                        'name' => $p->installmentWorkflow->template->name,
+                    ] : null,
+                    'steps' => $p->installmentWorkflow->relationLoaded('steps') ? $p->installmentWorkflow->steps->map(fn ($step) => [
+                        'id' => $step->id,
+                        'name' => $step->name,
+                        'description' => $step->description,
+                        'sort_order' => $step->sort_order,
+                        'is_required' => (bool) $step->is_required,
+                        'completed' => $step->completed_at !== null,
+                        'completed_at' => $step->completed_at?->toIso8601String(),
+                        'completed_by' => $step->completer?->name,
+                        'notes' => $step->notes,
+                        'attachments' => $step->relationLoaded('attachments') ? $step->attachments->map(fn ($attachment) => [
+                            'id' => $attachment->id,
+                            'url' => $attachment->url,
+                            'is_image' => $attachment->is_image,
+                            'original_name' => $attachment->original_name,
+                            'mime' => $attachment->mime,
+                            'size' => $attachment->size,
+                            'caption' => $attachment->caption,
+                        ])->values() : [],
+                    ])->values() : [],
+                ] : null,
             ])->values()),
             'payments_total' => $this->relationLoaded('payments')
                 ? round((float) $this->payments->sum('amount'), 2)
@@ -108,6 +151,39 @@ class ContractResource extends JsonResource
             ),
 
             'created_at' => $this->created_at?->toIso8601String(),
+        ];
+    }
+
+    /** @return array<string, mixed>|null */
+    protected function paymentVisitStats($payment): ?array
+    {
+        if (! $this->relationLoaded('visits') || ! $payment->service_from_visit_sequence || ! $payment->service_to_visit_sequence) {
+            return null;
+        }
+
+        $visits = $this->visits->whereBetween('sequence', [
+            $payment->service_from_visit_sequence,
+            $payment->service_to_visit_sequence,
+        ]);
+        $statusCounts = $visits->groupBy(fn ($visit) => $visit->status->value)
+            ->map(fn ($group) => $group->count())
+            ->all();
+        $tasks = $visits->flatMap(fn ($visit) => $visit->relationLoaded('tasks') ? $visit->tasks : collect());
+        $branchCounts = $tasks->groupBy(fn ($task) => $task->branch?->name ?? 'الموقع الرئيسي')
+            ->map(fn ($branchTasks, $branch) => [
+                'branch' => $branch,
+                'total' => $branchTasks->count(),
+                'completed' => $branchTasks->where('status', \App\Enums\TaskStatus::Completed)->count(),
+                'statuses' => $branchTasks->groupBy(fn ($task) => $task->status->value)->map->count()->all(),
+            ])->values()->all();
+
+        return [
+            'visits_total' => $visits->count(),
+            'visits_completed' => $visits->where('status', \App\Enums\VisitStatus::Done)->count(),
+            'visits_statuses' => $statusCounts,
+            'branch_tasks_total' => $tasks->count(),
+            'branch_tasks_completed' => $tasks->where('status', \App\Enums\TaskStatus::Completed)->count(),
+            'branches' => $branchCounts,
         ];
     }
 }

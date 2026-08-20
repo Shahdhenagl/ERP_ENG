@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * One instalment on a maintenance contract.
@@ -18,7 +19,8 @@ class ContractPayment extends Model
     use HasFactory;
 
     protected $fillable = [
-        'contract_id', 'sequence', 'amount', 'due_visit_sequence',
+        'contract_id', 'sequence', 'amount', 'service_year', 'period_number',
+        'due_visit_sequence', 'service_from_visit_sequence', 'service_to_visit_sequence', 'due_on',
         'status', 'invoice_id', 'payment_id', 'collected_at', 'collected_by', 'notes',
     ];
 
@@ -27,7 +29,12 @@ class ContractPayment extends Model
         return [
             'amount' => 'decimal:2',
             'sequence' => 'integer',
+            'service_year' => 'integer',
+            'period_number' => 'integer',
             'due_visit_sequence' => 'integer',
+            'service_from_visit_sequence' => 'integer',
+            'service_to_visit_sequence' => 'integer',
+            'due_on' => 'date',
             'collected_at' => 'datetime',
         ];
     }
@@ -54,6 +61,11 @@ class ContractPayment extends Model
         return $this->belongsTo(User::class, 'collected_by');
     }
 
+    public function installmentWorkflow(): HasOne
+    {
+        return $this->hasOne(InstallmentWorkflow::class);
+    }
+
     // ── State ────────────────────────────────────────────────
 
     public function isCollected(): bool
@@ -65,6 +77,20 @@ class ContractPayment extends Model
     public function isUpfront(): bool
     {
         return $this->due_visit_sequence === null;
+    }
+
+    public function isArrears(): bool
+    {
+        return $this->contract?->isArrears() === true;
+    }
+
+    public function serviceLabel(): string
+    {
+        if ($this->service_from_visit_sequence && $this->service_to_visit_sequence) {
+            return "بعد الزيارات {$this->service_from_visit_sequence}–{$this->service_to_visit_sequence}";
+        }
+
+        return $this->isArrears() ? 'بعد تنفيذ الخدمة' : 'مع اعتماد العقد';
     }
 
     public function statusLabel(): string

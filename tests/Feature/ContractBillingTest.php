@@ -213,3 +213,34 @@ it('never rewrites a schedule once money has been taken', function () {
     expect($contract->payments()->where('status', 'collected')->count())->toBe(1)
         ->and($contract->payments()->count())->toBe(4);   // unchanged
 });
+
+it('keeps quarterly cadence at four instalments per contract year', function () {
+    $contract = draftContract([
+        'starts_on' => now()->toDateString(),
+        'ends_on' => now()->addYears(3)->subDay()->toDateString(),
+        'collection_timing' => 'arrears',
+    ]);
+
+    $payments = $contract->payments()->orderBy('sequence')->get();
+
+    expect($payments)->toHaveCount(12)
+        ->and($payments->where('service_year', 1))->toHaveCount(4)
+        ->and($payments->where('service_year', 2))->toHaveCount(4)
+        ->and($payments->where('service_year', 3))->toHaveCount(4)
+        ->and($payments->pluck('service_to_visit_sequence')->all())->toBe([3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36]);
+});
+
+it('activates an arrears contract before collection but blocks collection until its service range is done', function () {
+    $contract = draftContract(['collection_timing' => 'arrears']);
+    $first = $contract->payments()->where('sequence', 1)->first();
+
+    actingAs($this->manager)
+        ->postJson("/api/contracts/{$contract->id}/activate")
+        ->assertOk()
+        ->assertJsonPath('data.status', 'active');
+
+    actingAs($this->manager)
+        ->postJson("/api/contracts/{$contract->id}/payments/{$first->id}/collect", [])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('payment');
+});

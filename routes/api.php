@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\ChequeController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\ContractController;
+use App\Http\Controllers\Api\WorkflowController;
 use App\Http\Controllers\Api\PpmController;
 use App\Http\Controllers\Api\CustodyController;
 use App\Http\Controllers\Api\CustomerController;
@@ -374,6 +375,15 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     // money permission on top of the contract one.
     Route::post('contracts/{contract}/payments/{payment}/collect', [ContractController::class, 'collectPayment'])
         ->middleware('can:contracts.manage,invoices.manage');
+
+    // Reusable legal/collection procedures, snapshotted onto each instalment.
+    Route::get('workflow-templates', [WorkflowController::class, 'templates'])->middleware('can:contracts.manage');
+    Route::post('workflow-templates', [WorkflowController::class, 'storeTemplate'])->middleware('can:contracts.manage');
+    Route::put('workflow-templates/{workflowTemplate}', [WorkflowController::class, 'updateTemplate'])->middleware('can:contracts.manage');
+    Route::delete('workflow-templates/{workflowTemplate}', [WorkflowController::class, 'destroyTemplate'])->middleware('can:contracts.manage');
+    Route::get('contracts/{contract}/payments/{payment}/workflow', [WorkflowController::class, 'show'])->middleware('can:contracts.manage');
+    Route::post('contracts/{contract}/payments/{payment}/workflow', [WorkflowController::class, 'assign'])->middleware('can:contracts.manage');
+    Route::patch('workflow-steps/{workflowStepCompletion}', [WorkflowController::class, 'updateStep'])->middleware('can:contracts.manage');
 
     // Preventive maintenance — the visit schedule the planner lays out.
     Route::get('ppm/visits', [PpmController::class, 'visits'])->middleware('can:contracts.manage');

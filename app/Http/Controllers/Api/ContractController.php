@@ -130,7 +130,8 @@ class ContractController extends Controller
         // The value or the cadence changing re-splits the instalments — but only
         // while nothing has been collected, which the schedule planner enforces.
         $billingChanged = (float) $contract->value !== (float) ($data['value'] ?? 0)
-            || $contract->billing_frequency->value !== ($data['billing_frequency'] ?? $contract->billing_frequency->value);
+            || $contract->billing_frequency->value !== ($data['billing_frequency'] ?? $contract->billing_frequency->value)
+            || $contract->collection_timing !== ($data['collection_timing'] ?? $contract->collection_timing);
 
         $contract->update($data);
         $contract->assets()->sync($assetIds);
@@ -179,12 +180,12 @@ class ContractController extends Controller
             ]);
         }
 
-        // The first instalment is taken with activation — a contract with a
-        // schedule does not go live on a promise to pay. Contracts with no
-        // schedule (value-less, or drafted before this feature) are unaffected.
-        if (! $contract->firstPaymentCollected()) {
+        // Legacy/upfront contracts still require the first instalment before
+        // activation. Arrears contracts deliberately go live first: service is
+        // delivered, then the related instalment becomes collectible.
+        if (! $contract->isArrears() && ! $contract->firstPaymentCollected()) {
             throw ValidationException::withMessages([
-                'payment' => Terms::get('يجب تحصيل الدفعة الأولى قبل اعتماد العقد.'),
+                'payment' => Terms::get('يجب تحصيل الدفعة الأولى قبل اعتماد العقد في نظام التحصيل المقدّم.'),
             ]);
         }
 
@@ -213,6 +214,10 @@ class ContractController extends Controller
 
         if ($payment->isCollected()) {
             throw ValidationException::withMessages(['payment' => Terms::get('هذه الدفعة محصّلة بالفعل.')]);
+        }
+
+        if ($contract->isArrears()) {
+            $this->assertArrearsPaymentReady($contract, $payment);
         }
 
         $data = $request->validate([
@@ -280,6 +285,55 @@ class ContractController extends Controller
         return new ContractResource($this->loaded($contract->fresh()));
     }
 
+    /** Ensure an arrears instalment follows the service it bills for. */
+    protected function assertArrearsPaymentReady(Contract $contract, ContractPayment $payment): void
+    {
+        $previousDue = $contract->payments()
+            ->where('sequence', '<', $payment->sequence)
+            ->where('status', 'due')
+            ->exists();
+
+        if ($previousDue) {
+            throw ValidationException::withMessages([
+                'payment' => Terms::get('يجب تحصيل الدفعات السابقة أولًا.'),
+            ]);
+        }
+
+        $workflow = $payment->installmentWorkflow()->with('steps')->first();
+        if (! $workflow) {
+            throw ValidationException::withMessages([
+                'payment' => Terms::get('لا يمكن تحصيل الدفعة قبل اختيار Workflow وإكمال جميع إجراءاته.'),
+            ]);
+        }
+
+        $openSteps = $workflow->steps->where('is_required', true)->whereNull('completed_at')->count();
+        if ($openSteps > 0) {
+            throw ValidationException::withMessages([
+                'payment' => Terms::get("لا يمكن تحصيل الدفعة قبل إكمال {$openSteps} إجراء مطلوب في Workflow."),
+            ]);
+        }
+
+        $from = $payment->service_from_visit_sequence;
+        $to = $payment->service_to_visit_sequence;
+
+        if (! $from || ! $to) {
+            throw ValidationException::withMessages([
+                'payment' => Terms::get('لا يمكن تحصيل هذه الدفعة قبل تحديد نطاق الخدمة.'),
+            ]);
+        }
+
+        $unfinished = $contract->visits()
+            ->whereBetween('sequence', [$from, $to])
+            ->where('status', '!=', \App\Enums\VisitStatus::Done->value)
+            ->exists();
+
+        if ($unfinished) {
+            throw ValidationException::withMessages([
+                'payment' => Terms::get('لا يمكن تحصيل الدفعة قبل اكتمال جميع زيارات نطاق الخدمة.'),
+            ]);
+        }
+    }
+
     /**
      * Renew a contract for another term.
      *
@@ -320,6 +374,10 @@ class ContractController extends Controller
                 'visits_per_year' => $data['visits_per_year'] ?? $contract->visits_per_year,
                 'value' => $data['value'] ?? $contract->value,
                 'currency' => $contract->currency,
+                'billing_frequency' => $contract->billing_frequency?->value,
+                'collection_timing' => $contract->collection_timing,
+                'includes_spare_parts' => $contract->includes_spare_parts,
+                'first_visit_on' => $contract->first_visit_on?->toDateString(),
                 'sla_response_hours' => $contract->sla_response_hours,
                 'sla_resolution_hours' => $contract->sla_resolution_hours,
                 'notes' => $data['notes'] ?? $contract->notes,
@@ -377,12 +435,15 @@ class ContractController extends Controller
             'customer',
             // The device schedule prints per site, so each unit needs its branch.
             'assets.branch',
-            'visits.task.technician',
+            'visits.task.technicians',
             // A round's branch jobs, so the screen can open one and show which
             // sites are done rather than a single representative work order.
             'visits.tasks.branch',
-            'visits.tasks.technician',
+            'visits.tasks.technicians',
             'payments.invoice',
+            'payments.installmentWorkflow.template',
+            'payments.installmentWorkflow.steps.completer',
+            'payments.installmentWorkflow.steps.attachments',
         ])->loadCount(['assets', 'visits']);
     }
 
@@ -457,6 +518,8 @@ class ContractController extends Controller
 
             'value' => ['nullable', 'numeric', 'min:0'],
             'billing_frequency' => ['nullable', Rule::enum(\App\Enums\ContractBillingFrequency::class)],
+            'collection_timing' => ['nullable', Rule::in(['upfront', 'arrears'])],
+            'includes_spare_parts' => ['nullable', 'boolean'],
             'currency' => ['nullable', 'string', 'size:3'],
 
             'sla_response_hours' => ['nullable', 'integer', 'min:1', 'max:8760'],

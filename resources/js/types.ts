@@ -458,6 +458,9 @@ export interface Contract {
     currency: string
     billing_frequency: ContractBillingFrequency
     billing_frequency_label: string
+    collection_timing: 'upfront' | 'arrears'
+    collection_timing_label: string
+    includes_spare_parts: boolean
     /** Whether the contract may be activated yet, and which visits are held. */
     first_payment_collected: boolean
     held_visit_sequences: number[]
@@ -487,10 +490,67 @@ export interface Contract {
 export type ContractBillingFrequency = 'upfront' | 'quarterly' | 'semi_annual' | 'annual'
 
 /** One instalment on a contract — the first with activation, the rest on visits. */
+export interface WorkflowTemplateStep {
+    id: number
+    name: string
+    description?: string | null
+    sort_order: number
+    is_required: boolean
+}
+
+export interface WorkflowTemplate {
+    id: number
+    name: string
+    description?: string | null
+    is_active?: boolean
+    steps: WorkflowTemplateStep[]
+}
+
+export interface WorkflowStep {
+    id: number
+    name: string
+    description: string | null
+    sort_order: number
+    is_required: boolean
+    completed: boolean
+    completed_at: string | null
+    completed_by: string | null
+    notes: string | null
+    attachments: FileAttachment[]
+}
+
+export interface InstallmentWorkflow {
+    id: number
+    status: 'pending' | 'completed'
+    completed_at: string | null
+    template: Pick<WorkflowTemplate, 'id' | 'name'> | null
+    steps: WorkflowStep[]
+}
+
+export interface ContractPaymentServiceStats {
+    visits_total: number
+    visits_completed: number
+    visits_statuses: Record<string, number>
+    branch_tasks_total: number
+    branch_tasks_completed: number
+    branches: Array<{
+        branch: string
+        total: number
+        completed: number
+        statuses: Record<string, number>
+    }>
+}
+
 export interface ContractPayment {
     id: number
     sequence: number
     amount: number
+    service_year: number | null
+    period_number: number | null
+    service_from_visit_sequence: number | null
+    service_to_visit_sequence: number | null
+    due_on: string | null
+    service_label: string
     /** The visit its collection gates; null for the upfront instalment. */
     due_visit_sequence: number | null
     status: 'due' | 'collected'
@@ -499,6 +559,8 @@ export interface ContractPayment {
     collected_at: string | null
     invoice_id: number | null
     invoice_code: string | null
+    service_stats?: ContractPaymentServiceStats | null
+    workflow?: InstallmentWorkflow | null
 }
 
 /** A customer site: where devices sit and where jobs are sent. */

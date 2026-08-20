@@ -48,6 +48,8 @@ export function ContractForm({ open, onClose, contract, customerId, onSaved }: C
         first_visit_on: contract?.first_visit_on ?? '',
         value: contract?.value ?? '',
         billing_frequency: contract?.billing_frequency ?? 'upfront',
+        collection_timing: contract?.collection_timing ?? 'arrears',
+        includes_spare_parts: contract?.includes_spare_parts ?? false,
         sla_response_hours: contract?.sla_response_hours?.toString() ?? '',
         sla_resolution_hours: contract?.sla_resolution_hours?.toString() ?? '',
         notes: contract?.notes ?? '',
@@ -121,6 +123,8 @@ export function ContractForm({ open, onClose, contract, customerId, onSaved }: C
                 first_visit_on: form.first_visit_on || null,
                 value: form.value ? Number(form.value) : null,
                 billing_frequency: form.billing_frequency,
+                collection_timing: form.collection_timing,
+                includes_spare_parts: form.includes_spare_parts,
                 sla_response_hours: form.sla_response_hours ? Number(form.sla_response_hours) : null,
                 sla_resolution_hours: form.sla_resolution_hours ? Number(form.sla_resolution_hours) : null,
                 asset_ids: assetIds,
@@ -275,21 +279,48 @@ export function ContractForm({ open, onClose, contract, customerId, onSaved }: C
                     </Field>
 
                     <Field
-                        label="طريقة التحصيل"
-                        hint="تقسّم قيمة العقد دفعات على الزيارات."
+                        label="دورية التحصيل"
+                        hint="تحدد عدد الدفعات في كل سنة، ولا تتأثر بعدد الزيارات."
                         error={errors.billing_frequency}
                     >
                         <Select
                             value={form.billing_frequency}
                             onChange={(event) => set('billing_frequency')(event.target.value)}
                         >
-                            <option value="upfront">مقدَّم (دفعة واحدة)</option>
-                            <option value="quarterly">ربع سنوي</option>
+                            <option value="upfront">دفعة واحدة</option>
+                            <option value="quarterly">ربع سنوي — 4 دفعات سنويًا</option>
                             <option value="semi_annual">نصف سنوي</option>
                             <option value="annual">سنوي</option>
                         </Select>
                     </Field>
+
+                    <Field
+                        label="توقيت التحصيل"
+                        hint="المؤخر يفتح التحصيل بعد تنفيذ نطاق الزيارات واكتمال الإجراءات."
+                        error={errors.collection_timing}
+                    >
+                        <Select
+                            value={form.collection_timing}
+                            onChange={(event) => set('collection_timing')(event.target.value)}
+                        >
+                            <option value="arrears">مؤخر — بعد الخدمة</option>
+                            <option value="upfront">مقدّم — مع اعتماد العقد</option>
+                        </Select>
+                    </Field>
                 </div>
+
+                <label className="flex items-start gap-3 rounded-xl border border-navy-100 bg-navy-50 p-3 text-sm">
+                    <input
+                        type="checkbox"
+                        checked={form.includes_spare_parts}
+                        onChange={(event) => setForm((current) => ({ ...current, includes_spare_parts: event.target.checked }))}
+                        className="mt-0.5 size-4 accent-brand-600"
+                    />
+                    <span>
+                        <span className="block font-semibold text-navy-900">العقد شامل قطع الغيار</span>
+                        <span className="block text-xs text-navy-600">سيظهر هذا بوضوح في ملف العقد والتقارير المطبوعة.</span>
+                    </span>
+                </label>
 
                 {/* No selection means the contract covers everything the customer
                     owns, including devices bought later. */}

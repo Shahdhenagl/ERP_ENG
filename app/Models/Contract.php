@@ -32,6 +32,8 @@ class Contract extends Model
         'status',
         'value',
         'billing_frequency',
+        'collection_timing',
+        'includes_spare_parts',
         'currency',
         'sla_response_hours',
         'sla_resolution_hours',
@@ -50,6 +52,8 @@ class Contract extends Model
             'first_visit_on' => 'date',
             'value' => 'decimal:2',
             'billing_frequency' => \App\Enums\ContractBillingFrequency::class,
+            'collection_timing' => 'string',
+            'includes_spare_parts' => 'boolean',
             'sla_response_hours' => 'integer',
             'sla_resolution_hours' => 'integer',
         ];
@@ -63,6 +67,8 @@ class Contract extends Model
             // created model would carry a null status back to the resource.
             $contract->status ??= ContractStatus::Draft;
             $contract->billing_frequency ??= \App\Enums\ContractBillingFrequency::Upfront;
+            $contract->collection_timing ??= 'upfront';
+            $contract->includes_spare_parts ??= false;
         });
     }
 
@@ -112,6 +118,23 @@ class Contract extends Model
     public function tasks(): HasMany
     {
         return $this->hasMany(Task::class);
+    }
+
+    /** The instalment schedule — the whole value split by the billing frequency. */
+    public function isArrears(): bool
+    {
+        return $this->collection_timing === 'arrears';
+    }
+
+    /** Number of instalments expected in one contract year. */
+    public function instalmentsPerYear(): int
+    {
+        return match ($this->billing_frequency?->value) {
+            'quarterly' => 4,
+            'semi_annual' => 2,
+            'annual', 'upfront' => 1,
+            default => 1,
+        };
     }
 
     /** The instalment schedule — the whole value split by the billing frequency. */

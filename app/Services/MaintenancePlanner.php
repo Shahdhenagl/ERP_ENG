@@ -360,13 +360,30 @@ class MaintenancePlanner
         });
     }
 
-    /** True while a visit carries an instalment that has not yet been collected. */
+    /**
+     * Whether this visit is blocked by an unpaid contract instalment.
+     *
+     * In arrears mode a payment covers its whole service range, so that range
+     * must be allowed to run. The next range is held only after the previous
+     * range has finished and its payment is still due. Legacy upfront schedules
+     * keep their exact visit gate.
+     */
     public function isHeldForPayment(ContractVisit $visit): bool
     {
-        return \App\Models\ContractPayment::query()
+        $contract = $visit->relationLoaded('contract') ? $visit->contract : $visit->contract()->first();
+        $payments = \App\Models\ContractPayment::query()
             ->where('contract_id', $visit->contract_id)
+            ->where('status', 'due');
+
+        if ($contract?->isArrears()) {
+            return $payments
+                ->whereNotNull('service_to_visit_sequence')
+                ->where('service_to_visit_sequence', '<', $visit->sequence)
+                ->exists();
+        }
+
+        return $payments
             ->where('due_visit_sequence', $visit->sequence)
-            ->where('status', 'due')
             ->exists();
     }
 

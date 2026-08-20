@@ -8,6 +8,7 @@ use App\Models\Battery;
 use App\Models\Contract;
 use App\Models\SiteSurvey;
 use App\Models\TechnicianMonthlyReport;
+use App\Models\WorkflowStepCompletion;
 use App\Models\Tender;
 use App\Support\Terms;
 use Illuminate\Database\Eloquent\Model;
@@ -37,6 +38,7 @@ class AttachmentController extends Controller
         'contracts' => [Contract::class, 'contracts.manage'],
         // The paperwork handed in with a technician's monthly report.
         'technician-reports' => [TechnicianMonthlyReport::class, 'hr.manage'],
+        'workflow-steps' => [WorkflowStepCompletion::class, 'contracts.manage'],
     ];
 
     public function index(Request $request, string $type, int $id): JsonResponse
