@@ -86,11 +86,10 @@ export function RecurringExpensesSection() {
                 />
             ) : view === 'table' ? (
                 <DataTable
-                    minWidth="52rem"
+                    minWidth="44rem"
                     headers={[
                         'بند المصروف',
-                        { label: 'البند', className: 'w-32' },
-                        { label: 'الخزينة', className: 'w-32' },
+                        { label: 'الخزينة', className: 'w-40' },
                         { label: 'الدورة', className: 'w-24' },
                         { label: 'الاستحقاق القادم', className: 'w-36' },
                         { label: 'المبلغ', className: 'w-28 text-end' },
@@ -108,23 +107,6 @@ export function RecurringExpensesSection() {
                         >
                             <td className="px-3 py-2.5 font-semibold text-navy-800">
                                 {expense.name}
-                            </td>
-                            <td className="px-3 py-2.5 text-navy-600">
-                                {expense.items.length > 0 ? (
-                                    <div className="flex flex-wrap gap-1">
-                                        {expense.items.map((item) => (
-                                            <span
-                                                key={item.id}
-                                                className="inline-flex items-center gap-1 rounded-md bg-brand-50 px-1.5 py-0.5 text-[10px] font-bold text-brand-700 ring-1 ring-brand-100"
-                                            >
-                                                <span className="size-1.5 rounded-full bg-brand-500" />
-                                                {item.label}
-                                            </span>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    expense.category ?? '—'
-                                )}
                             </td>
                             <td className="px-3 py-2.5 text-navy-600">{expense.cash_box ?? '—'}</td>
                             <td className="tabular px-3 py-2.5 text-navy-600">
