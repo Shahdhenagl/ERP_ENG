@@ -900,6 +900,18 @@
     .daybook-table td {
         @apply border-s border-slate-200 px-2 py-2 text-[10px] leading-snug;
     }
+
+    /* Keep monetary values readable, especially the final running-balance column. */
+    .daybook-table th:nth-child(7),
+    .daybook-table th:nth-child(8),
+    .daybook-table th:nth-child(9),
+    .daybook-table td:nth-child(7),
+    .daybook-table td:nth-child(8),
+    .daybook-table td:nth-child(9) {
+        white-space: nowrap;
+        overflow-wrap: normal;
+        word-break: normal;
+    }
 }
 
 @media (max-width: 1023px) and (min-width: 768px) {

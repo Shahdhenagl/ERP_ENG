@@ -83,12 +83,12 @@ export function DaybookPage() {
                                         <LedgerHead className="w-[8%]">التاريخ</LedgerHead>
                                         <LedgerHead className="w-[10%]">نوع الإيصال</LedgerHead>
                                         <LedgerHead className="w-[10%]">الرقم No</LedgerHead>
-                                        <LedgerHead className="w-[23%]">البيان Description</LedgerHead>
-                                        <LedgerHead className="w-[15%]">اسم مستلم / دافع المبلغ</LedgerHead>
-                                        <LedgerHead className="w-[15%]">فرع / نوع الحساب</LedgerHead>
+                                        <LedgerHead className="w-[21%]">البيان Description</LedgerHead>
+                                        <LedgerHead className="w-[14%]">اسم مستلم / دافع المبلغ</LedgerHead>
+                                        <LedgerHead className="w-[14%]">فرع / نوع الحساب</LedgerHead>
                                         <LedgerHead className="w-[7%]" align="numeric">مدين</LedgerHead>
                                         <LedgerHead className="w-[7%]" align="numeric">دائن</LedgerHead>
-                                        <LedgerHead className="w-[5%]" align="numeric">الرصيد</LedgerHead>
+                                        <LedgerHead className="w-[9%]" align="numeric">الرصيد</LedgerHead>
                                     </tr>
                                 </thead>
                                 <tbody>
