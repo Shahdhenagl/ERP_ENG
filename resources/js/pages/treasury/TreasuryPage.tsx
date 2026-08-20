@@ -6,39 +6,30 @@ import {
     Landmark,
     Pencil,
     Plus,
-    Printer,
     Trash2,
     TrendingDown,
     TrendingUp,
     Wallet,
 } from 'lucide-react'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { ConfirmDialog, Modal } from '@/components/Modal'
 import { PeriodPicker, usePeriod } from '@/components/PeriodPicker'
 import { SectionTabs } from '@/components/SectionTabs'
 import { MONEY_SECTIONS } from '@/lib/sections'
 import { useToast } from '@/components/Toast'
-import { Button, EmptyState, Field, Input, PageHeader, Select, SkeletonCard, Textarea, Th } from '@/components/ui'
+import { Button, EmptyState, Field, Input, PageHeader, Select, SkeletonCard, Th } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { formatMoney } from '@/lib/domain'
-import { formatDate, formatSmart } from '@/lib/format'
-import { useArea } from '@/lib/nav'
+import { formatDate } from '@/lib/format'
 import {
     useCashBoxes,
-    useCashMovements,
     useDeleteCashBox,
-    useDeleteCashMovement,
     useSaveCashBox,
     useTreasuryStatement,
     useTreasurySummary,
-    useUpdateCashMovement,
 } from '@/lib/queries'
 import { TreasuryDialog } from '@/pages/treasury/TreasuryDialog'
-import type { CashBoxSummary, CashMovementRow } from '@/types'
-
-/** The two manual vouchers a hand raises here — printable, editable, deletable. */
-const VOUCHER_SOURCES = new Set(['expense', 'external_deposit'])
+import type { CashBoxSummary } from '@/types'
 
 export function TreasuryPage() {
     const period = usePeriod('month')
@@ -49,23 +40,9 @@ export function TreasuryPage() {
     const deleteBox = useDeleteCashBox()
     const toast = useToast()
 
-    const [moveBox, setMoveBox] = useState('')
-    const [moveDir, setMoveDir] = useState<'' | 'in' | 'out'>('')
-    const [editingMove, setEditingMove] = useState<CashMovementRow | null>(null)
-    const [deletingMove, setDeletingMove] = useState<CashMovementRow | null>(null)
-    const deleteMove = useDeleteCashMovement()
-    const { path } = useArea()
-
     const { range } = period
     const { data: summary, isLoading } = useTreasurySummary(range)
     const { data: boxes } = useCashBoxes()
-    const { data: movements } = useCashMovements({
-        ...range,
-        cash_box_id: moveBox || undefined,
-        direction: moveDir || undefined,
-        per_page: 40,
-    })
-
     const analysis = summary?.analysis
 
     return (
@@ -200,138 +177,6 @@ export function TreasuryPage() {
                 </div>
             )}
 
-            {/* ══ Recent movement across every box ══════════════ */}
-            <section className="mt-6">
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                    <h2 className="font-bold text-navy-900">حركة الخزينة</h2>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                        <Select
-                            value={moveBox}
-                            onChange={(e) => setMoveBox(e.target.value)}
-                            className="w-auto text-xs"
-                        >
-                            <option value="">كل الخزائن</option>
-                            {boxes?.map((box) => (
-                                <option key={box.id} value={box.id}>
-                                    {box.name}
-                                </option>
-                            ))}
-                        </Select>
-
-                        {(['', 'in', 'out'] as const).map((dir) => (
-                            <button
-                                key={dir || 'all'}
-                                onClick={() => setMoveDir(dir)}
-                                className={clsx(
-                                    'tap rounded-xl px-3 py-2 text-xs font-bold ring-1 transition',
-                                    moveDir === dir
-                                        ? dir === 'in'
-                                            ? 'bg-emerald-600 text-white ring-emerald-600'
-                                            : dir === 'out'
-                                              ? 'bg-red-600 text-white ring-red-600'
-                                              : 'bg-brand-600 text-white ring-brand-600'
-                                        : 'bg-surface text-navy-500 ring-navy-200 hover:bg-navy-50',
-                                )}
-                            >
-                                {dir === 'in' ? 'وارد' : dir === 'out' ? 'منصرف' : 'الكل'}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {!movements?.length ? (
-                    <EmptyState icon={Banknote} title="لا توجد حركات في هذه الفترة" />
-                ) : (
-                    <div className="treasury-table-wrap">
-                        <table className="treasury-table w-full text-right">
-                            <thead>
-                                <tr>
-                                    <Th>التاريخ</Th>
-                                    <Th>نوع الإيصال</Th>
-                                    <Th>البيان</Th>
-                                    <Th>الخزينة</Th>
-                                    <Th>مدين</Th>
-                                    <Th>دائن</Th>
-                                    <Th>الإجراء</Th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {movements.map((movement) => {
-                                    const isVoucher = VOUCHER_SOURCES.has(movement.source)
-                                    const isIncome = movement.direction === 'in'
-
-                                    return (
-                                        <tr key={movement.id}>
-                                            <td data-label="التاريخ" className="tabular whitespace-nowrap text-navy-500">
-                                                {movement.created_at ? formatSmart(movement.created_at) : '—'}
-                                            </td>
-                                            <td data-label="نوع الإيصال">
-                                                <span
-                                                    className={clsx(
-                                                        'badge',
-                                                        isIncome
-                                                            ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
-                                                            : 'bg-red-50 text-red-700 ring-1 ring-red-200',
-                                                    )}
-                                                >
-                                                    {movement.source_label}
-                                                </span>
-                                            </td>
-                                            <td data-label="البيان" className="max-w-[19rem]">
-                                                <p className="truncate font-bold text-navy-900">
-                                                    {movement.customer ?? movement.category ?? movement.box}
-                                                </p>
-                                                <p className="mt-0.5 truncate text-[10px] text-navy-400">
-                                                    {movement.note ?? movement.actor ?? '—'}
-                                                </p>
-                                            </td>
-                                            <td data-label="الخزينة" className="max-w-[10rem] truncate text-navy-500">{movement.box}</td>
-                                            <td data-label="مدين" className="tabular whitespace-nowrap font-extrabold text-red-600">
-                                                {!isIncome ? formatMoney(movement.amount) : '—'}
-                                            </td>
-                                            <td data-label="دائن" className="tabular whitespace-nowrap font-extrabold text-emerald-600">
-                                                {isIncome ? formatMoney(movement.amount) : '—'}
-                                            </td>
-                                            <td data-label="الإجراء">
-                                                {isVoucher ? (
-                                                    <div className="flex items-center gap-1">
-                                                        <Link
-                                                            to={path(`/print/cash-vouchers/${movement.id}`)}
-                                                            target="_blank"
-                                                            className="tap rounded-lg p-2 text-navy-500 transition hover:bg-navy-50 hover:text-navy-800"
-                                                            title={tr('طباعة')}
-                                                        >
-                                                            <Printer className="size-3.5" />
-                                                        </Link>
-                                                        <button
-                                                            onClick={() => setEditingMove(movement)}
-                                                            className="tap rounded-lg p-2 text-navy-500 transition hover:bg-navy-50 hover:text-navy-800"
-                                                            title={tr('تعديل')}
-                                                        >
-                                                            <Pencil className="size-3.5" />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => setDeletingMove(movement)}
-                                                            className="tap rounded-lg p-2 text-red-500 transition hover:bg-red-50 hover:text-red-700"
-                                                            title={tr('حذف')}
-                                                        >
-                                                            <Trash2 className="size-3.5" />
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-[10px] text-navy-300">—</span>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    )
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </section>
-
             {dialog === 'box' || editingBox ? (
                 <CashBoxDialog
                     box={editingBox ?? undefined}
@@ -385,106 +230,7 @@ export function TreasuryPage() {
                 danger
             />
 
-            {editingMove && (
-                <VoucherEditDialog movement={editingMove} onClose={() => setEditingMove(null)} />
-            )}
-
-            <ConfirmDialog
-                open={Boolean(deletingMove)}
-                onClose={() => setDeletingMove(null)}
-                onConfirm={async () => {
-                    if (!deletingMove) return
-                    try {
-                        await deleteMove.mutateAsync(deletingMove.id)
-                        toast.success('تم حذف السند وإرجاع الرصيد.')
-                        setDeletingMove(null)
-                    } catch (caught) {
-                        toast.error(errorMessage(caught, 'تعذّر الحذف.'))
-                    }
-                }}
-                title="حذف السند"
-                message={`حذف ${deletingMove?.source_label ?? ''} بمبلغ ${formatMoney(deletingMove?.amount ?? 0)}؟ سيُعاد الرصيد إلى الخزينة.`}
-                confirmLabel="حذف"
-                loading={deleteMove.isPending}
-                danger
-            />
         </>
-    )
-}
-
-/* ── Editing a manual voucher ────────────────────────────── */
-
-function VoucherEditDialog({
-    movement,
-    onClose,
-}: {
-    movement: CashMovementRow
-    onClose: () => void
-}) {
-    const toast = useToast()
-    const update = useUpdateCashMovement()
-    const [errors, setErrors] = useState<Record<string, string>>({})
-    const isDeposit = movement.source === 'external_deposit'
-
-    // For a deposit the heading holds the party; for an expense it is the item.
-    const [category, setCategory] = useState(movement.category ?? '')
-    const [note, setNote] = useState(movement.note ?? '')
-
-    return (
-        <Modal
-            open
-            onClose={onClose}
-            title="تعديل السند"
-            size="sm"
-            footer={
-                <>
-                    <Button variant="secondary" onClick={onClose} disabled={update.isPending}>
-                        {tr('إلغاء')}
-                    </Button>
-                    <Button
-                        loading={update.isPending}
-                        onClick={async () => {
-                            setErrors({})
-                            try {
-                                await update.mutateAsync({
-                                    id: movement.id,
-                                    category: category || null,
-                                    note: note || null,
-                                })
-                                toast.success('تم حفظ التعديل.')
-                                onClose()
-                            } catch (caught) {
-                                setErrors(fieldErrors(caught))
-                                toast.error(errorMessage(caught, 'تعذّر الحفظ.'))
-                            }
-                        }}
-                    >
-                        {tr('حفظ')}
-                    </Button>
-                </>
-            }
-        >
-            <div className="space-y-4">
-                <div className="flex items-center justify-between rounded-2xl bg-navy-50 p-3 text-sm">
-                    <span className="text-navy-500">المبلغ (ثابت)</span>
-                    <span className="tabular font-extrabold text-navy-900">
-                        {formatMoney(movement.amount)}
-                    </span>
-                </div>
-
-                <Field label={isDeposit ? 'الجهة المودِعة' : 'البند'} error={errors.category}>
-                    <Input value={category} onChange={(e) => setCategory(e.target.value)} />
-                </Field>
-
-                <Field label="ملاحظة" error={errors.note}>
-                    <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} />
-                </Field>
-
-                <p className="text-[11px] text-navy-400">
-                    {tr('لتغيير المبلغ أو الخزينة، احذف السند وسجّل واحدًا جديدًا.')}
-                </p>
-            </div>
-        </Modal>
     )
 }
 

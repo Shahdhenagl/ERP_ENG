@@ -76,29 +76,29 @@ export function DaybookPage() {
                             <EmptyState icon={FileText} title="لا توجد حركات في هذه الفترة" />
                         </div>
                     ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full min-w-[1390px] border-collapse text-xs" dir="rtl">
+                        <div className="daybook-table-wrap">
+                            <table className="daybook-table w-full table-fixed border-collapse text-[11px]" dir="rtl">
                                 <thead className="bg-slate-700 text-white">
                                     <tr>
-                                        <LedgerHead className="w-28">التاريخ</LedgerHead>
-                                        <LedgerHead className="w-28">نوع الإيصال</LedgerHead>
-                                        <LedgerHead className="w-28">الرقم No</LedgerHead>
-                                        <LedgerHead className="min-w-80">البيان Description</LedgerHead>
-                                        <LedgerHead className="w-48">اسم مستلم / دافع المبلغ</LedgerHead>
-                                        <LedgerHead className="w-48">فرع / نوع الحساب</LedgerHead>
-                                        <LedgerHead className="w-28" align="numeric">مدين</LedgerHead>
-                                        <LedgerHead className="w-28" align="numeric">دائن</LedgerHead>
-                                        <LedgerHead className="w-32" align="numeric">الرصيد</LedgerHead>
+                                        <LedgerHead className="w-[8%]">التاريخ</LedgerHead>
+                                        <LedgerHead className="w-[10%]">نوع الإيصال</LedgerHead>
+                                        <LedgerHead className="w-[10%]">الرقم No</LedgerHead>
+                                        <LedgerHead className="w-[23%]">البيان Description</LedgerHead>
+                                        <LedgerHead className="w-[15%]">اسم مستلم / دافع المبلغ</LedgerHead>
+                                        <LedgerHead className="w-[15%]">فرع / نوع الحساب</LedgerHead>
+                                        <LedgerHead className="w-[7%]" align="numeric">مدين</LedgerHead>
+                                        <LedgerHead className="w-[7%]" align="numeric">دائن</LedgerHead>
+                                        <LedgerHead className="w-[5%]" align="numeric">الرصيد</LedgerHead>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {data.rows.map((row) => (
                                         <tr key={row.id} className="border-b border-slate-300 bg-white transition-colors even:bg-slate-50 hover:bg-amber-50/70">
-                                            <LedgerCell className="font-semibold text-slate-700">
+                                            <LedgerCell dataLabel="التاريخ" className="font-semibold text-slate-700">
                                                 {row.date ? formatDate(row.date) : '—'}
                                             </LedgerCell>
-                                            <LedgerCell className="font-bold text-slate-800">{row.voucher_type}</LedgerCell>
-                                            <LedgerCell className="font-bold text-blue-700">
+                                            <LedgerCell dataLabel="نوع الإيصال" className="font-bold text-slate-800">{row.voucher_type}</LedgerCell>
+                                            <LedgerCell dataLabel="الرقم" className="font-bold text-blue-700">
                                                 {row.voucher_number}
                                                 {row.journal_code && (
                                                     <span className="mt-0.5 block text-[10px] font-medium text-slate-500">
@@ -106,9 +106,9 @@ export function DaybookPage() {
                                                     </span>
                                                 )}
                                             </LedgerCell>
-                                            <LedgerCell className="whitespace-normal text-slate-800">{row.description}</LedgerCell>
-                                            <LedgerCell className="font-semibold text-slate-700">{row.party ?? '—'}</LedgerCell>
-                                            <LedgerCell className="text-slate-800">
+                                            <LedgerCell dataLabel="البيان" className="whitespace-normal break-words text-slate-800">{row.description}</LedgerCell>
+                                            <LedgerCell dataLabel="المستلم / الدافع" className="break-words font-semibold text-slate-700">{row.party ?? '—'}</LedgerCell>
+                                            <LedgerCell dataLabel="فرع / نوع الحساب" className="break-words text-slate-800">
                                                 {row.account_name ?? 'بانتظار الترحيل'}
                                                 {row.account_type && (
                                                     <span className="mt-0.5 block text-[10px] font-medium text-slate-500">
@@ -116,13 +116,14 @@ export function DaybookPage() {
                                                     </span>
                                                 )}
                                             </LedgerCell>
-                                            <LedgerCell align="numeric" className="font-extrabold text-emerald-700">
+                                            <LedgerCell dataLabel="مدين" align="numeric" className="font-extrabold text-emerald-700">
                                                 {row.debit ? formatMoney(row.debit) : '—'}
                                             </LedgerCell>
-                                            <LedgerCell align="numeric" className="font-extrabold text-red-700">
+                                            <LedgerCell dataLabel="دائن" align="numeric" className="font-extrabold text-red-700">
                                                 {row.credit ? formatMoney(row.credit) : '—'}
                                             </LedgerCell>
                                             <LedgerCell
+                                                dataLabel="الرصيد"
                                                 align="numeric"
                                                 className={clsx(
                                                     'font-extrabold',
@@ -172,13 +173,16 @@ function LedgerCell({
     children,
     className,
     align = 'start',
+    dataLabel,
 }: {
     children: React.ReactNode
     className?: string
     align?: 'start' | 'numeric'
+    dataLabel?: string
 }) {
     return (
         <td
+            data-label={dataLabel}
             className={clsx(
                 'border-s border-slate-300 px-3 py-2 align-middle leading-snug',
                 align === 'numeric' ? 'tabular text-end' : 'text-start',
