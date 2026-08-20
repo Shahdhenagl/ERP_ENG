@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Models\ActivityLog;
 use App\Models\Attendance;
+use App\Models\JobRole;
 use App\Models\Payslip;
 use App\Models\User;
 use App\Support\Terms;

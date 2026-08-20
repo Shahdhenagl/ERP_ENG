@@ -104,7 +104,8 @@ export function SpecRowList({ rows }: { rows: SpecRow[] }) {
     if (rows.length === 0) return null
 
     return (
-        <span className="doc-specs">
+        <span className="doc-specs" aria-label="المواصفات الفنية">
+            <span className="doc-specs-title">المواصفات الفنية</span>
             {rows.map(([label, value]) => (
                 <span key={label} className="doc-spec">
                     <span className="doc-spec-label">{label}</span>
