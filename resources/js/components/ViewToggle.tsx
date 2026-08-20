@@ -76,18 +76,22 @@ export function DataTable({
     minWidth = '52rem',
     children,
     lead,
+    className,
+    tableClassName,
 }: {
     headers: Array<string | { label: string; className?: string }>
     minWidth?: string
     children: React.ReactNode
     /** Rendered as a first column — the select-all box, when a list has one. */
     lead?: React.ReactNode
+    className?: string
+    tableClassName?: string
 }) {
     const t = useT()
 
     return (
-        <div className="card overflow-x-auto">
-            <table className="w-full text-start text-sm" style={{ minWidth }}>
+        <div className={clsx('card overflow-x-auto', className)}>
+            <table className={clsx('w-full text-start text-sm', tableClassName)} style={{ minWidth }}>
                 <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
                     <tr>
                         {lead !== undefined && <th className="w-10 px-3 py-2.5">{lead}</th>}

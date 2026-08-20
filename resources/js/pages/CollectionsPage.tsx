@@ -111,16 +111,18 @@ export function CollectionsPage() {
                 />
             ) : view === 'table' ? (
                 <DataTable
-                    minWidth="64rem"
+                    minWidth="0"
+                    className="collections-table-wrap"
+                    tableClassName="collections-table table-fixed"
                     headers={[
-                        { label: 'الكود', className: 'w-28' },
-                        { label: 'النوع', className: 'w-32' },
-                        'العميل / الجهة',
-                        { label: 'الفاتورة', className: 'w-32' },
-                        { label: 'التاريخ', className: 'w-32' },
-                        { label: 'طريقة القبض', className: 'w-32' },
-                        { label: 'المبلغ', className: 'w-28 text-end' },
-                        { label: 'الإجراءات', className: 'w-36 text-center' },
+                        { label: 'الكود', className: 'w-[8%]' },
+                        { label: 'النوع', className: 'w-[13%]' },
+                        { label: 'العميل / الجهة', className: 'w-[20%]' },
+                        { label: 'الفاتورة', className: 'w-[12%]' },
+                        { label: 'التاريخ', className: 'w-[13%]' },
+                        { label: 'طريقة القبض', className: 'w-[13%]' },
+                        { label: 'المبلغ', className: 'w-[10%] text-end' },
+                        { label: 'الإجراءات', className: 'w-[11%] text-center' },
                     ]}
                 >
                     {rows.map((row) => {
@@ -129,31 +131,31 @@ export function CollectionsPage() {
 
                         return (
                             <tr key={`${row.kind}-${rowId(row)}`} className="border-t border-navy-100 hover:bg-navy-50/60">
-                                <td className="tabular px-3 py-2.5 font-bold text-brand-600">{rowCode(row)}</td>
-                                <td className="px-3 py-2.5">
+                                <td data-label="الكود" className="tabular px-2 py-2.5 font-bold text-brand-600">{rowCode(row)}</td>
+                                <td data-label="النوع" className="px-2 py-2.5">
                                     <span className={customer ? 'badge bg-emerald-50 text-emerald-700' : 'badge bg-blue-50 text-blue-700'}>
                                         {customer ? 'تحصيل عميل' : 'سند قبض خارجي'}
                                     </span>
                                 </td>
-                                <td className="max-w-sm px-3 py-2.5">
+                                <td data-label="العميل / الجهة" className="max-w-sm px-2 py-2.5">
                                     <p className="truncate font-semibold text-navy-800" title={rowParty(row)}>
                                         {rowParty(row)}
                                     </p>
                                     {movement?.box && <p className="mt-0.5 truncate text-[11px] text-navy-400">{movement.box}</p>}
                                 </td>
-                                <td className="tabular px-3 py-2.5 text-navy-600">
+                                <td data-label="الفاتورة" className="tabular px-2 py-2.5 text-navy-600">
                                     {customer?.invoice_code ?? '—'}
                                 </td>
-                                <td className="tabular px-3 py-2.5 text-navy-600">
+                                <td data-label="التاريخ" className="tabular px-2 py-2.5 text-navy-600">
                                     {rowDate(row) ? formatSmart(rowDate(row)!) : '—'}
                                 </td>
-                                <td className="px-3 py-2.5 text-navy-600">
+                                <td data-label="طريقة القبض" className="px-2 py-2.5 text-navy-600">
                                     {customer?.method_label ?? 'إيداع خارجي'}
                                 </td>
-                                <td className="tabular px-3 py-2.5 text-end font-bold text-emerald-600">
+                                <td data-label="المبلغ" className="tabular px-2 py-2.5 text-end font-bold text-emerald-600">
                                     {formatMoney(rowAmount(row))}
                                 </td>
-                                <td className="px-3 py-2.5">
+                                <td data-label="الإجراءات" className="px-2 py-2.5">
                                     <div className="flex items-center justify-center gap-1">
                                         <ReceiptActions
                                             row={row}
