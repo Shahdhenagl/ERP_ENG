@@ -1,4 +1,4 @@
-import { ArrowLeftRight, Banknote, HandCoins } from 'lucide-react'
+import { Banknote, HandCoins } from 'lucide-react'
 import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { useToast } from '@/components/Toast'
@@ -10,9 +10,9 @@ import { RecurringExpensesSection } from '@/pages/treasury/RecurringExpensesSect
 import { ExpenseAccountChecklist } from '@/components/ExpenseAccountChecklist'
 
 /**
- * The two cash operations that are not a customer or supplier settlement:
- * moving money between boxes, and paying a plain expense. Kept on one screen —
- * the day's petty-cash desk — beside the boxes they draw on.
+ * Cash operations that are not customer or supplier settlements: recording
+ * expenses and external deposits. Transfers between boxes are managed from
+ * the dedicated treasury workflow and are not recorded from this screen.
  */
 export function CashOperationsPage() {
     const { data: boxes } = useCashBoxes()
@@ -21,11 +21,10 @@ export function CashOperationsPage() {
         <>
             <PageHeader
                 title="عمليات الخزينة"
-                subtitle="تحويل بين الخزائن وتسجيل المصروفات والإيداعات الخارجية"
+                subtitle="تسجيل المصروفات والإيداعات الخارجية على الخزائن"
             />
 
             <div className="grid gap-4 lg:grid-cols-2">
-                <TransferCard boxes={boxes ?? []} />
                 <ExpenseCard boxes={boxes ?? []} />
                 <DepositCard boxes={boxes ?? []} />
             </div>
@@ -39,78 +38,6 @@ export function CashOperationsPage() {
 
 type Box = { id: number; name: string; type_label: string; balance: number }
 
-function TransferCard({ boxes }: { boxes: Box[] }) {
-    const toast = useToast()
-    const transfer = useTreasuryOperation('transfer')
-    const [errors, setErrors] = useState<Record<string, string>>({})
-    const [form, setForm] = useState({ from_box_id: '', to_box_id: '', amount: '', note: '' })
-    const set = (k: keyof typeof form) => (v: string) => setForm((c) => ({ ...c, [k]: v }))
-    const same = form.from_box_id && form.from_box_id === form.to_box_id
-
-    return (
-        <div className="card space-y-4 p-5">
-            <h2 className="flex items-center gap-2 font-bold text-navy-900">
-                <ArrowLeftRight className="size-4.5 text-brand-600" />
-                {tr('تحويل بين الخزائن')}
-            </h2>
-
-            <Field label="من" required error={errors.from_box_id}>
-                <Select value={form.from_box_id} onChange={(e) => set('from_box_id')(e.target.value)}>
-                    <option value="">— اختر —</option>
-                    {boxes.map((b) => (
-                        <option key={b.id} value={b.id}>
-                            {b.name} · {formatMoney(b.balance)}
-                        </option>
-                    ))}
-                </Select>
-            </Field>
-            <Field label="إلى" required error={errors.to_box_id}>
-                <Select value={form.to_box_id} onChange={(e) => set('to_box_id')(e.target.value)}>
-                    <option value="">— اختر —</option>
-                    {boxes.map((b) => (
-                        <option key={b.id} value={b.id}>
-                            {b.name} · {b.type_label}
-                        </option>
-                    ))}
-                </Select>
-            </Field>
-            {same && (
-                <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700">
-                    {tr('لا يمكن التحويل إلى نفس الخزينة.')}
-                </p>
-            )}
-            <Field label="المبلغ" required error={errors.amount}>
-                <Input type="number" min={0} step="any" value={form.amount} onChange={(e) => set('amount')(e.target.value)} dir="ltr" className="text-left" />
-            </Field>
-
-            <Button
-                icon={ArrowLeftRight}
-                className="w-full"
-                loading={transfer.isPending}
-                disabled={!form.from_box_id || !form.to_box_id || !form.amount || Boolean(same)}
-                onClick={async () => {
-                    setErrors({})
-                    try {
-                        await transfer.mutateAsync({
-                            from_box_id: Number(form.from_box_id),
-                            to_box_id: Number(form.to_box_id),
-                            amount: Number(form.amount),
-                            note: form.note || null,
-                        })
-                        toast.success('تم التحويل.')
-                        setForm({ from_box_id: '', to_box_id: '', amount: '', note: '' })
-                    } catch (caught) {
-                        setErrors(fieldErrors(caught))
-                        toast.error(errorMessage(caught, 'تعذّر التحويل.'))
-                    }
-                }}
-            >
-                {tr('تنفيذ التحويل')}
-            </Button>
-        </div>
-    )
-}
-
 function ExpenseCard({ boxes }: { boxes: Box[] }) {
     const toast = useToast()
     const expense = useTreasuryOperation('expense')
@@ -119,101 +46,128 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
         cash_box_id: '',
         amount: '',
         account_id: '',
-        category: '',
         responsible_user_id: '',
         note: '',
     })
-    const set = (k: keyof typeof form) => (v: string) => setForm((c) => ({ ...c, [k]: v }))
+    const set = (k: keyof typeof form) => (v: string) => setForm((current) => ({ ...current, [k]: v }))
 
-    // Who the money was spent for. Separate from whoever is at the screen:
-    // a manager records a technician's fuel, and later the question is whose.
+    // Who the money was spent for. Separate from whoever is at the screen.
     const { data: userPage } = useUsers({ active_only: 1, per_page: 200 })
 
     return (
-        <div className="card space-y-4 p-5">
-            <h2 className="flex items-center gap-2 font-bold text-navy-900">
-                <Banknote className="size-4.5 text-red-600" />
-                {tr('تسجيل مصروف')}
-            </h2>
+        <div className="card overflow-hidden p-0">
+            <div className="border-b border-red-100 bg-gradient-to-l from-red-50 via-white to-white px-5 py-4">
+                <div className="flex items-start justify-between gap-3">
+                    <div>
+                        <h2 className="flex items-center gap-2 font-bold text-navy-900">
+                            <span className="grid size-9 place-items-center rounded-xl bg-red-100 text-red-600">
+                                <Banknote className="size-4.5" />
+                            </span>
+                            {tr('تسجيل مصروف')}
+                        </h2>
+                        <p className="mt-1 text-xs text-navy-400">سجّل المصروف واربطه بحساب المصروف المناسب.</p>
+                    </div>
+                    <span className="badge bg-red-50 text-red-600">مصروف</span>
+                </div>
+            </div>
 
-            <Field label="الخزينة" required error={errors.cash_box_id}>
-                <Select value={form.cash_box_id} onChange={(e) => set('cash_box_id')(e.target.value)}>
-                    <option value="">— اختر —</option>
-                    {boxes.map((b) => (
-                        <option key={b.id} value={b.id}>
-                            {b.name} · {formatMoney(b.balance)}
-                        </option>
-                    ))}
-                </Select>
-            </Field>
-            <ExpenseAccountChecklist
-                value={form.account_id}
-                onChange={set('account_id')}
-                error={errors.account_id || errors.category}
-            />
-            <Field label="المبلغ" required error={errors.amount}>
-                <Input type="number" min={0} step="any" value={form.amount} onChange={(e) => set('amount')(e.target.value)} dir="ltr" className="text-left" />
-            </Field>
-            <Field
-                label="الموظف المسؤول"
-                error={errors.responsible_user_id}
-                hint="من صُرف عليه المصروف — اتركه فارغًا لو مصروف عام على الشركة."
-            >
-                <Select
-                    value={form.responsible_user_id}
-                    onChange={(e) => set('responsible_user_id')(e.target.value)}
+            <div className="space-y-4 p-5">
+                <Field label="الخزينة" required error={errors.cash_box_id}>
+                    <Select value={form.cash_box_id} onChange={(e) => set('cash_box_id')(e.target.value)}>
+                        <option value="">— اختر الخزينة —</option>
+                        {boxes.map((box) => (
+                            <option key={box.id} value={box.id}>
+                                {box.name} · الرصيد {formatMoney(box.balance)}
+                            </option>
+                        ))}
+                    </Select>
+                </Field>
+
+                <ExpenseAccountChecklist
+                    value={form.account_id}
+                    onChange={set('account_id')}
+                    error={errors.account_id}
+                />
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label="المبلغ" required error={errors.amount}>
+                        <Input
+                            type="number"
+                            min={0}
+                            step="any"
+                            value={form.amount}
+                            onChange={(e) => set('amount')(e.target.value)}
+                            dir="ltr"
+                            className="text-left font-bold"
+                            placeholder="0.00"
+                        />
+                    </Field>
+                    <Field
+                        label="الموظف المسؤول"
+                        error={errors.responsible_user_id}
+                        hint="اختياري للمصروفات العامة."
+                    >
+                        <Select
+                            value={form.responsible_user_id}
+                            onChange={(e) => set('responsible_user_id')(e.target.value)}
+                        >
+                            <option value="">— مصروف عام —</option>
+                            {userPage?.data.map((user) => (
+                                <option key={user.id} value={user.id}>
+                                    {user.name}
+                                    {(user.effective_role_label ?? user.role_label)
+                                        ? ` — ${user.effective_role_label ?? user.role_label}`
+                                        : ''}
+                                </option>
+                            ))}
+                        </Select>
+                    </Field>
+                </div>
+
+                <Field label="البيان أو الملاحظة" error={errors.note}>
+                    <Textarea
+                        value={form.note}
+                        onChange={(e) => set('note')(e.target.value)}
+                        rows={3}
+                        placeholder="أضف تفاصيل المصروف عند الحاجة…"
+                    />
+                </Field>
+
+                <Button
+                    icon={Banknote}
+                    variant="secondary"
+                    className="w-full"
+                    loading={expense.isPending}
+                    disabled={!form.cash_box_id || !form.amount || !form.account_id}
+                    onClick={async () => {
+                        setErrors({})
+                        try {
+                            await expense.mutateAsync({
+                                cash_box_id: Number(form.cash_box_id),
+                                amount: Number(form.amount),
+                                account_id: Number(form.account_id),
+                                responsible_user_id: form.responsible_user_id
+                                    ? Number(form.responsible_user_id)
+                                    : null,
+                                note: form.note || null,
+                            })
+                            toast.success('تم تسجيل المصروف.')
+                            setForm({
+                                cash_box_id: '',
+                                amount: '',
+                                account_id: '',
+                                responsible_user_id: '',
+                                note: '',
+                            })
+                        } catch (caught) {
+                            setErrors(fieldErrors(caught))
+                            toast.error(errorMessage(caught, 'تعذّر التسجيل.'))
+                        }
+                    }}
                 >
-                    <option value="">— مصروف عام —</option>
-                    {userPage?.data.map((user) => (
-                        <option key={user.id} value={user.id}>
-                            {user.name}
-                            {(user.effective_role_label ?? user.role_label)
-                                ? ` — ${user.effective_role_label ?? user.role_label}`
-                                : ''}
-                        </option>
-                    ))}
-                </Select>
-            </Field>
-            <Field label="ملاحظة" error={errors.note}>
-                <Textarea value={form.note} onChange={(e) => set('note')(e.target.value)} rows={2} />
-            </Field>
-
-            <Button
-                icon={Banknote}
-                variant="secondary"
-                className="w-full"
-                loading={expense.isPending}
-                disabled={!form.cash_box_id || !form.amount || !form.account_id}
-                onClick={async () => {
-                    setErrors({})
-                    try {
-                        await expense.mutateAsync({
-                            cash_box_id: Number(form.cash_box_id),
-                            amount: Number(form.amount),
-                            account_id: Number(form.account_id),
-                            category: form.category || null,
-                            responsible_user_id: form.responsible_user_id
-                                ? Number(form.responsible_user_id)
-                                : null,
-                            note: form.note || null,
-                        })
-                        toast.success('تم تسجيل المصروف.')
-                        setForm({
-                            cash_box_id: '',
-                            amount: '',
-                            account_id: '',
-                            category: '',
-                            responsible_user_id: '',
-                            note: '',
-                        })
-                    } catch (caught) {
-                        setErrors(fieldErrors(caught))
-                        toast.error(errorMessage(caught, 'تعذّر التسجيل.'))
-                    }
-                }}
-            >
-                {tr('تسجيل المصروف')}
-            </Button>
+                    {tr('تسجيل المصروف')}
+                </Button>
+            </div>
         </div>
     )
 }

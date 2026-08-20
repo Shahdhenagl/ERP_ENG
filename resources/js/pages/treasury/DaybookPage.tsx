@@ -1,7 +1,7 @@
 import clsx from 'clsx'
-import { CalendarRange, FileText } from 'lucide-react'
+import { CalendarRange, FileText, Printer } from 'lucide-react'
 import { useState } from 'react'
-import { EmptyState, Field, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
+import { Button, EmptyState, Field, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
 import { formatMoney } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
 import { useCashBoxes, useTreasuryStatement } from '@/lib/queries'
@@ -25,10 +25,23 @@ export function DaybookPage() {
         : `حركة الخزينة من ${from} إلى ${to}`
 
     return (
-        <>
-            <PageHeader title="حركة الخزينة اليومية" subtitle="دفتر حركة نقدية مربوط بالقيود اليومية والرصيد الجاري" />
+        <div id="daybook-report" className="daybook-report">
+            <PageHeader
+                title="حركة الخزينة اليومية"
+                subtitle="دفتر حركة نقدية مربوط بالقيود اليومية والرصيد الجاري"
+                actions={
+                    <Button
+                        icon={Printer}
+                        variant="secondary"
+                        className="daybook-print-button"
+                        onClick={() => window.print()}
+                    >
+                        طباعة الكشف
+                    </Button>
+                }
+            />
 
-            <div className="mb-5 grid gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:grid-cols-[2fr_1fr_1fr]">
+            <div className="daybook-filters mb-5 grid gap-3 rounded-xl border border-navy-100 bg-surface p-3 shadow-[var(--shadow-card)] sm:grid-cols-[2fr_1fr_1fr]">
                 <Field label="الخزينة">
                     <Select
                         value={boxId ?? ''}
@@ -59,15 +72,15 @@ export function DaybookPage() {
             ) : isLoading || !data ? (
                 <SkeletonCard />
             ) : (
-                <section className="overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm">
-                    <div className="grid grid-cols-2 border-b border-slate-300 sm:grid-cols-4" dir="rtl">
+                <section className="daybook-sheet overflow-hidden rounded-xl border border-navy-100 bg-surface shadow-[var(--shadow-card)]">
+                    <div className="grid grid-cols-2 border-b border-navy-100 bg-white sm:grid-cols-4" dir="rtl">
                         <LedgerTotal label="رصيد أول المدة" value={formatMoney(data.opening_balance)} />
                         <LedgerTotal label="إجمالي المدين / الوارد" value={formatMoney(data.in_total)} tone="debit" />
                         <LedgerTotal label="إجمالي الدائن / المنصرف" value={formatMoney(data.out_total)} tone="credit" />
                         <LedgerTotal label="رصيد آخر المدة" value={formatMoney(data.closing_balance)} accent />
                     </div>
 
-                    <div className="bg-slate-950 px-4 py-2 text-center text-sm font-extrabold tracking-wide text-white sm:text-base" dir="rtl">
+                    <div className="bg-navy-900 px-4 py-2 text-center text-sm font-extrabold tracking-wide text-white sm:text-base" dir="rtl">
                         {periodTitle}
                     </div>
 
@@ -78,7 +91,7 @@ export function DaybookPage() {
                     ) : (
                         <div className="daybook-table-wrap">
                             <table className="daybook-table w-full table-fixed border-collapse text-[11px]" dir="rtl">
-                                <thead className="bg-slate-700 text-white">
+                                <thead className="bg-navy-800 text-white">
                                     <tr>
                                         <LedgerHead className="w-[8%]">التاريخ</LedgerHead>
                                         <LedgerHead className="w-[10%]">نوع الإيصال</LedgerHead>
@@ -93,25 +106,25 @@ export function DaybookPage() {
                                 </thead>
                                 <tbody>
                                     {data.rows.map((row) => (
-                                        <tr key={row.id} className="border-b border-slate-300 bg-white transition-colors even:bg-slate-50 hover:bg-amber-50/70">
-                                            <LedgerCell dataLabel="التاريخ" className="font-semibold text-slate-700">
+                                        <tr key={row.id} className="border-b border-navy-100 bg-white transition-colors even:bg-navy-50/30 hover:bg-brand-50/60">
+                                            <LedgerCell dataLabel="التاريخ" className="font-semibold text-navy-700">
                                                 {row.date ? formatDate(row.date) : '—'}
                                             </LedgerCell>
-                                            <LedgerCell dataLabel="نوع الإيصال" className="font-bold text-slate-800">{row.voucher_type}</LedgerCell>
-                                            <LedgerCell dataLabel="الرقم" className="font-bold text-blue-700">
+                                            <LedgerCell dataLabel="نوع الإيصال" className="font-bold text-navy-900">{row.voucher_type}</LedgerCell>
+                                            <LedgerCell dataLabel="الرقم" className="font-bold text-brand-700">
                                                 {row.voucher_number}
                                                 {row.journal_code && (
-                                                    <span className="mt-0.5 block text-[10px] font-medium text-slate-500">
+                                                    <span className="mt-0.5 block text-[10px] font-medium text-navy-400">
                                                         {row.journal_code}
                                                     </span>
                                                 )}
                                             </LedgerCell>
-                                            <LedgerCell dataLabel="البيان" className="whitespace-normal break-words text-slate-800">{row.description}</LedgerCell>
-                                            <LedgerCell dataLabel="المستلم / الدافع" className="break-words font-semibold text-slate-700">{row.party ?? '—'}</LedgerCell>
-                                            <LedgerCell dataLabel="فرع / نوع الحساب" className="break-words text-slate-800">
+                                            <LedgerCell dataLabel="البيان" className="whitespace-normal break-words text-navy-800">{row.description}</LedgerCell>
+                                            <LedgerCell dataLabel="المستلم / الدافع" className="break-words font-semibold text-navy-700">{row.party ?? '—'}</LedgerCell>
+                                            <LedgerCell dataLabel="فرع / نوع الحساب" className="break-words text-navy-800">
                                                 {row.account_name ?? 'بانتظار الترحيل'}
                                                 {row.account_type && (
-                                                    <span className="mt-0.5 block text-[10px] font-medium text-slate-500">
+                                                    <span className="mt-0.5 block text-[10px] font-medium text-navy-400">
                                                         {row.account_type}
                                                     </span>
                                                 )}
@@ -127,7 +140,7 @@ export function DaybookPage() {
                                                 align="numeric"
                                                 className={clsx(
                                                     'font-extrabold',
-                                                    row.balance < 0 ? 'text-red-800' : 'text-slate-950',
+                                                    row.balance < 0 ? 'text-red-800' : 'text-navy-950',
                                                 )}
                                             >
                                                 {formatMoney(row.balance)}
@@ -140,7 +153,7 @@ export function DaybookPage() {
                     )}
                 </section>
             )}
-        </>
+        </div>
     )
 }
 
@@ -156,7 +169,7 @@ function LedgerHead({
     return (
         <th
             className={clsx(
-                'border-s border-slate-500 px-3 py-2.5 text-[11px] font-extrabold leading-tight',
+                'border-s border-navy-700 px-3 py-2.5 text-[11px] font-extrabold leading-tight',
                 align === 'numeric' ? 'text-end' : 'text-start',
                 className,
             )}
@@ -184,7 +197,7 @@ function LedgerCell({
         <td
             data-label={dataLabel}
             className={clsx(
-                'border-s border-slate-300 px-3 py-2 align-middle leading-snug',
+                'border-s border-navy-100 px-3 py-2 align-middle leading-snug',
                 align === 'numeric' ? 'tabular text-end' : 'text-start',
                 className,
             )}
@@ -206,8 +219,8 @@ function LedgerTotal({
     accent?: boolean
 }) {
     return (
-        <div className="border-s border-slate-300 px-3 py-2.5 text-center first:border-s-0">
-            <p className="text-[10px] font-extrabold text-slate-500">{label}</p>
+        <div className="border-s border-navy-100 px-3 py-2.5 text-center first:border-s-0">
+            <p className="text-[10px] font-extrabold text-navy-400">{label}</p>
             <p
                 className={clsx(
                     'mt-0.5 tabular text-sm font-black',

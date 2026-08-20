@@ -894,11 +894,11 @@
     }
 
     .daybook-table th {
-        @apply border-s border-slate-500 px-2 py-2 text-[10px] leading-tight;
+        @apply border-s border-navy-700 px-2 py-2 text-[10px] leading-tight;
     }
 
     .daybook-table td {
-        @apply border-s border-slate-200 px-2 py-2 text-[10px] leading-snug;
+        @apply border-s border-navy-100 px-2 py-2 text-[10px] leading-snug;
     }
 
     /* Keep monetary values readable, especially the final running-balance column. */
@@ -947,7 +947,7 @@
     }
 
     .daybook-table tr {
-        @apply mb-2 rounded-lg border border-slate-200 bg-white p-2 shadow-sm;
+        @apply mb-2 rounded-lg border border-navy-100 bg-white p-2 shadow-sm;
     }
 
     .daybook-table tbody tr:last-child {
@@ -962,15 +962,15 @@
 
     .daybook-table td::before {
         content: attr(data-label);
-        @apply shrink-0 font-bold text-slate-400;
+        @apply shrink-0 font-bold text-navy-400;
     }
 
     .daybook-table td:nth-child(4) {
-        @apply border-b border-slate-100 pb-2;
+        @apply border-b border-navy-100 pb-2;
     }
 
     .daybook-table td:nth-child(4)::before {
-        @apply text-slate-600;
+        @apply text-navy-700;
     }
 
     .daybook-table td:nth-child(7),
@@ -981,16 +981,74 @@
 }
 
 @media print {
+    @page {
+        size: A4 landscape;
+        margin: 10mm;
+    }
+
+    body * {
+        visibility: hidden !important;
+    }
+
+    .daybook-report,
+    .daybook-report * {
+        visibility: visible !important;
+    }
+
+    .daybook-report {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        background: #fff !important;
+        color: #0e2d58 !important;
+    }
+
+    .daybook-filters,
+    .daybook-print-button {
+        display: none !important;
+    }
+
+    .daybook-sheet {
+        overflow: visible !important;
+        border: 1px solid #0e2d58 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+    }
+
     .daybook-table-wrap {
         overflow: visible !important;
     }
 
     .daybook-table {
+        width: 100% !important;
         font-size: 9px !important;
     }
 
     .daybook-table th,
     .daybook-table td {
         padding: 4px !important;
+    }
+
+    .daybook-table thead {
+        display: table-header-group !important;
+    }
+
+    .daybook-table tr {
+        break-inside: avoid;
+    }
+
+    .daybook-table th,
+    .daybook-table td {
+        background: #fff !important;
+        color: #0e2d58 !important;
+        border-color: #b9c9dc !important;
+    }
+
+    .daybook-table thead th,
+    .daybook-report > .daybook-sheet > div:nth-child(2) {
+        background: #0e2d58 !important;
+        color: #fff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
 }
