@@ -1029,12 +1029,33 @@
         padding: 4px !important;
     }
 
+    .daybook-table {
+        display: table !important;
+        table-layout: fixed !important;
+    }
+
     .daybook-table thead {
         display: table-header-group !important;
     }
 
+    .daybook-table tbody {
+        display: table-row-group !important;
+    }
+
     .daybook-table tr {
+        display: table-row !important;
         break-inside: avoid;
+    }
+
+    .daybook-table th,
+    .daybook-table td {
+        display: table-cell !important;
+        max-width: none !important;
+    }
+
+    .daybook-table td::before {
+        content: none !important;
+        display: none !important;
     }
 
     .daybook-table th,
