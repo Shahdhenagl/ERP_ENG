@@ -216,6 +216,13 @@ class TaskController extends Controller
      */
     protected function assertBranchVisitWindow(array $data, ?Task $ignoreTask = null): void
     {
+        // Urgent visits are an explicit operational override. They can be
+        // created immediately even when the branch is inside the normal
+        // 22-day recurring-visit window; ordinary visits keep the guard below.
+        if (($data['priority'] ?? null) === TaskPriority::Urgent->value) {
+            return;
+        }
+
         if (empty($data['branch_id'])) {
             return;
         }

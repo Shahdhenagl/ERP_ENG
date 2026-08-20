@@ -346,6 +346,30 @@ it('blocks a new branch task until 22 days after the last completed visit', func
         ->assertJsonValidationErrors('branch_id');
 });
 
+it('allows an urgent branch visit before the normal 22 day availability date', function () {
+    $branch = branchFor($this->customer);
+
+    Task::factory()->create([
+        'customer_id' => $this->customer->id,
+        'branch_id' => $branch->id,
+        'status' => \App\Enums\TaskStatus::Completed,
+        'completed_at' => now()->subDays(10),
+    ]);
+
+    actingAs($this->manager)
+        ->postJson('/api/tasks', [
+            'customer_id' => $this->customer->id,
+            'branch_id' => $branch->id,
+            'title' => 'زيارة عاجلة',
+            'type' => 'maintenance',
+            'priority' => 'urgent',
+            'scheduled_at' => now()->addHour()->toIso8601String(),
+        ])
+        ->assertCreated();
+
+    expect(Task::latest('id')->first()->priority->value)->toBe('urgent');
+});
+
 it('allows a branch task on the 22 day availability date', function () {
     $branch = branchFor($this->customer);
     $completedAt = now()->subDays(10);
