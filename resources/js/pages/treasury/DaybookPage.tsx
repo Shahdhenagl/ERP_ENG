@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import { CalendarRange, FileText, Printer } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Button, EmptyState, Field, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
 import { formatMoney } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
@@ -18,8 +18,44 @@ export function DaybookPage() {
     const [boxId, setBoxId] = useState<number | null>(null)
     const [from, setFrom] = useState(today())
     const [to, setTo] = useState(today())
+    const [dateFilter, setDateFilter] = useState('')
+    const [voucherTypeFilter, setVoucherTypeFilter] = useState('')
+    const [numberFilter, setNumberFilter] = useState('')
+    const [descriptionFilter, setDescriptionFilter] = useState('')
+    const [partyFilter, setPartyFilter] = useState('')
+    const [accountTypeFilter, setAccountTypeFilter] = useState('')
 
     const { data, isLoading } = useTreasuryStatement(boxId ?? undefined, { from, to })
+    const voucherTypes = useMemo(
+        () => [...new Set((data?.rows ?? []).map((row) => row.voucher_type).filter(Boolean))],
+        [data?.rows],
+    )
+    const accountTypes = useMemo(
+        () => [...new Set((data?.rows ?? []).map((row) => row.account_type).filter((type): type is string => Boolean(type)))],
+        [data?.rows],
+    )
+    const visibleRows = useMemo(() => {
+        const normalize = (value: unknown) => String(value ?? '').trim().toLocaleLowerCase()
+        const numberTerm = normalize(numberFilter)
+        const descriptionTerm = normalize(descriptionFilter)
+        const partyTerm = normalize(partyFilter)
+
+        return (data?.rows ?? []).filter((row) => {
+            const rowDate = row.date ? String(row.date).slice(0, 10) : ''
+            const rowNumber = normalize(row.voucher_number)
+            const rowDescription = normalize(row.description)
+            const rowParty = normalize(row.party)
+
+            return (
+                (!dateFilter || rowDate === dateFilter)
+                && (!voucherTypeFilter || row.voucher_type === voucherTypeFilter)
+                && (!numberTerm || rowNumber.includes(numberTerm))
+                && (!descriptionTerm || rowDescription.includes(descriptionTerm))
+                && (!partyTerm || rowParty.includes(partyTerm))
+                && (!accountTypeFilter || row.account_type === accountTypeFilter)
+            )
+        })
+    }, [accountTypeFilter, data?.rows, dateFilter, descriptionFilter, numberFilter, partyFilter, voucherTypeFilter])
     const periodTitle = from.slice(0, 4) === to.slice(0, 4)
         ? `حركة الخزينة لعام ${from.slice(0, 4)}`
         : `حركة الخزينة من ${from} إلى ${to}`
@@ -103,9 +139,36 @@ export function DaybookPage() {
                                         <LedgerHead className="w-[7%]" align="numeric">دائن</LedgerHead>
                                         <LedgerHead className="w-[9%]" align="numeric">الرصيد</LedgerHead>
                                     </tr>
+                                    <tr className="daybook-filter-row">
+                                        <th className="w-[8%]">
+                                            <Input type="date" value={dateFilter} onChange={(event) => setDateFilter(event.target.value)} aria-label="فلترة التاريخ" />
+                                        </th>
+                                        <th className="w-[10%]">
+                                            <Select value={voucherTypeFilter} onChange={(event) => setVoucherTypeFilter(event.target.value)} aria-label="فلترة نوع الإيصال">
+                                                <option value="">الكل</option>
+                                                {voucherTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+                                            </Select>
+                                        </th>
+                                        <th className="w-[10%]">
+                                            <Input value={numberFilter} onChange={(event) => setNumberFilter(event.target.value)} placeholder="بحث" aria-label="فلترة الرقم" />
+                                        </th>
+                                        <th className="w-[21%]">
+                                            <Input value={descriptionFilter} onChange={(event) => setDescriptionFilter(event.target.value)} placeholder="بحث في البيان" aria-label="فلترة البيان" />
+                                        </th>
+                                        <th className="w-[14%]">
+                                            <Input value={partyFilter} onChange={(event) => setPartyFilter(event.target.value)} placeholder="بحث" aria-label="فلترة المستلم أو الدافع" />
+                                        </th>
+                                        <th className="w-[14%]">
+                                            <Select value={accountTypeFilter} onChange={(event) => setAccountTypeFilter(event.target.value)} aria-label="فلترة نوع الحساب">
+                                                <option value="">الكل</option>
+                                                {accountTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+                                            </Select>
+                                        </th>
+                                        <th colSpan={3} className="w-[21%] text-center text-[10px] font-bold text-navy-100">الفلاتر مفتوحة</th>
+                                    </tr>
                                 </thead>
                                 <tbody>
-                                    {data.rows.map((row) => (
+                                    {visibleRows.map((row) => (
                                         <tr key={row.id} className="border-b border-navy-100 bg-white transition-colors even:bg-navy-50/30 hover:bg-brand-50/60">
                                             <LedgerCell dataLabel="التاريخ" className="font-semibold text-navy-700">
                                                 {row.date ? formatDate(row.date) : '—'}
@@ -149,6 +212,11 @@ export function DaybookPage() {
                                     ))}
                                 </tbody>
                             </table>
+                            {!visibleRows.length && (
+                                <div className="border-t border-navy-100 p-6">
+                                    <EmptyState icon={FileText} title="لا توجد نتائج مطابقة للفلاتر" />
+                                </div>
+                            )}
                         </div>
                     )}
                 </section>

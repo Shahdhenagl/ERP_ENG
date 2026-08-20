@@ -1177,3 +1177,42 @@
         display: none;
     }
 }
+
+
+/* ── Always-visible daybook column filters ──────────────────── */
+@layer components {
+    .daybook-filter-row th {
+        @apply border-s border-navy-700 bg-navy-700 px-1 py-1 align-middle;
+    }
+
+    .daybook-filter-row .input,
+    .daybook-filter-row .select {
+        height: 2rem;
+        min-width: 0;
+        width: 100%;
+        border-color: #b9c9dc;
+        border-radius: 0.35rem;
+        background: #fff;
+        color: #0e2d58;
+        font-size: 10px;
+        line-height: 1.1;
+        padding-inline: 0.35rem;
+    }
+
+    .daybook-filter-row .input::placeholder {
+        color: #7890ad;
+        opacity: 1;
+    }
+}
+
+@media (max-width: 767px) {
+    .daybook-filter-row {
+        display: none !important;
+    }
+}
+
+@media print {
+    .daybook-filter-row {
+        display: none !important;
+    }
+}
