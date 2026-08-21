@@ -16,10 +16,10 @@ beforeEach(function () {
     $this->technician = User::factory()->technician()->create();
 
     $this->task = Task::factory()->create([
-        'assigned_to' => $this->technician->id,
         'created_by' => $this->manager->id,
         'status' => TaskStatus::InProgress,
     ]);
+    $this->task->technicians()->attach($this->technician->id);
 });
 
 function fileServiceReport(array $data): \Illuminate\Testing\TestResponse
@@ -78,9 +78,9 @@ it('numbers each visit in sequence', function () {
     fileServiceReport(['type' => 'diagnosis'])->assertCreated();
 
     $second = Task::factory()->create([
-        'assigned_to' => $this->technician->id,
         'status' => TaskStatus::InProgress,
     ]);
+    $second->technicians()->attach($this->technician->id);
 
     actingAs($this->technician)->postJson("/api/tasks/{$second->id}/reports", ['type' => 'diagnosis'])
         ->assertCreated();
@@ -89,6 +89,18 @@ it('numbers each visit in sequence', function () {
     $b = (int) substr($second->fresh()->service_report_no, -5);
 
     expect($b)->toBe($a + 1);
+});
+
+it('does not reuse a report number when earlier numbers are missing', function () {
+    $year = now()->year;
+    Task::factory()->create([
+        'service_report_no' => "SR-{$year}-00002",
+        'status' => TaskStatus::Completed,
+    ]);
+
+    fileServiceReport(['type' => 'diagnosis'])->assertCreated();
+
+    expect($this->task->fresh()->service_report_no)->toBe("SR-{$year}-00003");
 });
 
 it('serves the phases, checklist, number and visit timing back through the task', function () {

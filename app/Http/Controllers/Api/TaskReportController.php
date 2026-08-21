@@ -13,6 +13,8 @@ use App\Services\TaskWorkflow;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\QueryException;
+use Illuminate\Validation\ValidationException;
 
 class TaskReportController extends Controller
 {
@@ -88,7 +90,8 @@ class TaskReportController extends Controller
         // One report number per visit — the paper's "No. 07720". Stamped on the
         // task when its first report is filed, and never reused.
         if (! $task->service_report_no) {
-            $task->forceFill(['service_report_no' => $this->nextReportNo()])->save();
+            $this->stampServiceReportNo($task);
+            $task->refresh();
         }
 
         if ($signature = $data['signature'] ?? null) {
@@ -134,13 +137,54 @@ class TaskReportController extends Controller
         );
     }
 
+    /**
+     * Stamp the first report number on a visit without leaking a raw SQL error.
+     *
+     * The number is generated from the current rows, so two technicians can
+     * occasionally choose the same candidate at the same time. The unique
+     * index remains the final guard; on a collision we generate the next value
+     * and retry instead of showing SQLSTATE to the user.
+     */
+    protected function stampServiceReportNo(Task $task): void
+    {
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            try {
+                $task->forceFill(['service_report_no' => $this->nextReportNo()])->saveOrFail();
+
+                return;
+            } catch (QueryException $exception) {
+                if (! $this->isServiceReportNumberConflict($exception)) {
+                    throw $exception;
+                }
+            }
+        }
+
+        throw ValidationException::withMessages([
+            'service_report_no' => 'تعذر حفظ رقم تقرير الخدمة الآن لأنه مستخدم بالفعل. حاول مرة أخرى.',
+        ]);
+    }
+
+    protected function isServiceReportNumberConflict(QueryException $exception): bool
+    {
+        return (int) ($exception->errorInfo[1] ?? 0) === 1062
+            && str_contains($exception->getMessage(), 'service_report_no');
+    }
+
     /** The next service-report number for this year — SR-2026-00001, in order. */
     protected function nextReportNo(): string
     {
         $year = now()->year;
         $prefix = "SR-{$year}-";
+        $last = Task::withTrashed()
+            ->where('service_report_no', 'like', $prefix.'%')
+            ->orderByDesc('service_report_no')
+            ->value('service_report_no');
 
-        $seq = Task::where('service_report_no', 'like', $prefix.'%')->count() + 1;
+        // Counting rows is unsafe after a deleted record or a failed attempt:
+        // count()+1 can point at a number that is already present. Continue from
+        // the highest assigned sequence instead, including soft-deleted tasks
+        // because the database unique index still reserves their numbers.
+        $seq = $last ? ((int) substr($last, strlen($prefix))) + 1 : 1;
 
         return $prefix.str_pad((string) $seq, 5, '0', STR_PAD_LEFT);
     }
