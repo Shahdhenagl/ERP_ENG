@@ -72,3 +72,38 @@ it('reports what was collected beside what is still owed', function () {
         ->and((float) $summary['outstanding'])->toBe(600.0)
         ->and($summary)->toHaveKey('returned');
 });
+
+it('returns a clear phone field error when a customer phone is already used', function () {
+    Customer::factory()->create(['phone' => '01008021337']);
+
+    $this->postJson('/api/customers', [
+        'name' => 'عميل مكرر',
+        'phone' => '01008021337',
+    ])
+        ->assertUnprocessable()
+        ->assertJsonPath('errors.phone.0', 'رقم الهاتف مستخدم بالفعل لعميل آخر. استخدم رقمًا مختلفًا.');
+});
+
+it('returns a clear phone field error when changing to another customer phone', function () {
+    $target = Customer::factory()->create(['phone' => '01008021338']);
+    $other = Customer::factory()->create(['phone' => '01008021339']);
+
+    $this->putJson("/api/customers/{$target->id}", [
+        'name' => $target->name,
+        'phone' => $other->phone,
+    ])
+        ->assertUnprocessable()
+        ->assertJsonPath('errors.phone.0', 'رقم الهاتف مستخدم بالفعل لعميل آخر. استخدم رقمًا مختلفًا.');
+});
+
+it('does not allow reusing a phone held by a soft deleted customer', function () {
+    $deleted = Customer::factory()->create(['phone' => '01008021340']);
+    $deleted->delete();
+
+    $this->postJson('/api/customers', [
+        'name' => 'عميل بعد الحذف',
+        'phone' => '01008021340',
+    ])
+        ->assertUnprocessable()
+        ->assertJsonPath('errors.phone.0', 'رقم الهاتف مستخدم بالفعل لعميل آخر. استخدم رقمًا مختلفًا.');
+});

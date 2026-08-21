@@ -9,11 +9,13 @@ use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\SalesReturn;
 use App\Support\Terms;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class CustomerController extends Controller
 {
@@ -82,7 +84,12 @@ class CustomerController extends Controller
         $data['created_by'] = $request->user()->id;
 
 
-        $customer = Customer::create($data);
+        try {
+            $customer = Customer::create($data);
+        } catch (QueryException $exception) {
+            $this->throwDuplicatePhoneValidation($exception);
+            throw $exception;
+        }
 
         ActivityLog::record('customer.created', $customer, "تم إضافة العميل {$customer->name}");
 
@@ -253,11 +260,33 @@ class CustomerController extends Controller
 
     public function update(Request $request, Customer $customer): CustomerResource
     {
-        $customer->update($this->validated($request, $customer));
+        try {
+            $customer->update($this->validated($request, $customer));
+        } catch (QueryException $exception) {
+            $this->throwDuplicatePhoneValidation($exception);
+            throw $exception;
+        }
 
         ActivityLog::record('customer.updated', $customer, "تم تعديل العميل {$customer->name}");
 
         return new CustomerResource($customer->fresh());
+    }
+
+    /**
+     * The unique index is the final guard against two customer files sharing a
+     * phone. Turn a last-millisecond collision into the same field error as the
+     * validator instead of exposing a database exception to the user.
+     */
+    protected function throwDuplicatePhoneValidation(QueryException $exception): void
+    {
+        $isDuplicatePhone = ($exception->errorInfo[1] ?? null) === 1062
+            && str_contains($exception->getMessage(), 'customers_phone_unique');
+
+        if ($isDuplicatePhone) {
+            throw ValidationException::withMessages([
+                'phone' => ['رقم الهاتف مستخدم بالفعل لعميل آخر. استخدم رقمًا مختلفًا.'],
+            ]);
+        }
     }
 
     public function destroy(Customer $customer): JsonResponse
@@ -290,7 +319,9 @@ class CustomerController extends Controller
             // customer's own row is excused so re-saving is not blocked.
             'phone' => [
                 'required', 'string', 'max:32',
-                Rule::unique('customers', 'phone')->ignore($customer?->id)->withoutTrashed(),
+                // The database index is not partial: a soft-deleted customer
+                // still occupies its phone, so validation must check it too.
+                Rule::unique('customers', 'phone')->ignore($customer?->id),
             ],
             'whatsapp' => ['nullable', 'string', 'max:32'],
             'email' => ['nullable', 'email', 'max:160'],
@@ -304,6 +335,8 @@ class CustomerController extends Controller
             'map_url' => ['nullable', 'string', 'max:1000'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'is_active' => ['boolean'],
+        ], [
+            'phone.unique' => 'رقم الهاتف مستخدم بالفعل لعميل آخر. استخدم رقمًا مختلفًا.',
         ]);
     }
 
