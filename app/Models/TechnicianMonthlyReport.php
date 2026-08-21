@@ -10,16 +10,16 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 /**
  * A technician's monthly report, and the fact that somebody took it.
  *
- * Deliberately inert: it posts nothing, settles nothing, and changes no
- * balance. The month it covers owes exactly what it owed before this row
- * existed. It is a record of a handover — who handed in, who received, on what
- * day, with whatever paperwork came attached.
+ * A month may contain more than one report from the same technician: each
+ * handover is its own record so it can carry its own customer, branch and scan.
  */
 class TechnicianMonthlyReport extends Model
 {
     protected $fillable = [
         'technician_id',
         'period',
+        'customer_id',
+        'branch_id',
         'received_by_user_id',
         'received_on',
         'notes',
@@ -34,6 +34,16 @@ class TechnicianMonthlyReport extends Model
     public function technician(): BelongsTo
     {
         return $this->belongsTo(User::class, 'technician_id');
+    }
+
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
     }
 
     /** Whoever took the paperwork. */

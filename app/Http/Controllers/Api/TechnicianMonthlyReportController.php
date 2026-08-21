@@ -8,80 +8,105 @@ use App\Models\ActivityLog;
 use App\Models\TechnicianMonthlyReport;
 use App\Models\User;
 use App\Support\Terms;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 /**
- * The start-of-month check: who has handed their report in, and who took it.
+ * The monthly report handover register.
  *
- * The board lists every active technician for the month whether or not they
- * have handed anything in — a list of only those who did answers the wrong
- * question. The one being asked is who has *not*.
+ * Each received report is a separate record. A technician can therefore hand
+ * over several reports in the same month, and every report keeps its own
+ * customer, branch, notes and scanned attachments.
  */
 class TechnicianMonthlyReportController extends Controller
 {
-    /** Every technician for a month, handed in or not. */
+    /** Every report for a month, newest handovers first. */
     public function index(Request $request): JsonResponse
     {
         $period = TechnicianMonthlyReport::periodFor($request->string('period')->toString());
 
         $reports = TechnicianMonthlyReport::query()
             ->forPeriod($period)
-            ->with(['receiver', 'recorder'])
+            ->with(['technician', 'customer', 'branch', 'receiver', 'recorder'])
             ->withCount('attachments')
-            ->get()
-            ->keyBy('technician_id');
+            ->orderByDesc('received_on')
+            ->orderByDesc('id')
+            ->get();
 
-        $rows = User::query()
+        $rows = $reports->map(function (TechnicianMonthlyReport $report) {
+            return [
+                'technician_id' => $report->technician_id,
+                'technician' => $report->technician?->name ?? '—',
+                'report' => $this->present($report),
+            ];
+        })->values();
+
+        $technicians = User::query()
             ->active()
             ->role(UserRole::Technician)
             ->orderBy('name')
-            ->get(['id', 'name'])
-            ->map(function (User $technician) use ($reports) {
-                $report = $reports->get($technician->id);
-
-                return [
-                    'technician_id' => $technician->id,
-                    'technician' => $technician->name,
-                    'report' => $report ? $this->present($report) : null,
-                ];
-            });
+            ->get(['id', 'name']);
 
         return response()->json([
             'data' => $rows,
             'meta' => [
                 'period' => $period,
-                'total' => $rows->count(),
-                'received' => $rows->whereNotNull('report')->count(),
+                'total' => $technicians->count(),
+                'received' => $reports->pluck('technician_id')->unique()->count(),
+                'reports_total' => $reports->count(),
+                'technicians' => $technicians->map(fn (User $technician) => [
+                    'id' => $technician->id,
+                    'name' => $technician->name,
+                ])->values(),
             ],
         ]);
     }
 
-    /**
-     * Record the handover, or correct it.
-     *
-     * One row per technician per month: signing the same month twice fixes
-     * what is written rather than filing a second report for it.
-     */
+    /** Record a new handover, or correct an existing report. */
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'technician_id' => ['required', 'exists:users,id'],
+            'report_id' => ['nullable', 'integer', 'exists:technician_monthly_reports,id'],
+            'technician_id' => [
+                'required',
+                Rule::exists('users', 'id')->where(fn (Builder $query) => $query->where('role', UserRole::Technician->value)),
+            ],
             'period' => ['required', 'regex:/^\d{4}-\d{2}$/'],
+            'customer_id' => ['required', 'exists:customers,id'],
+            'branch_id' => [
+                'nullable',
+                Rule::exists('branches', 'id')->where(
+                    fn (Builder $query) => $query->where('customer_id', $request->input('customer_id')),
+                ),
+            ],
             'received_by_user_id' => ['nullable', 'exists:users,id'],
             'received_on' => ['nullable', 'date'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $report = TechnicianMonthlyReport::updateOrCreate(
-            ['technician_id' => $data['technician_id'], 'period' => $data['period']],
-            [
-                'received_by_user_id' => $data['received_by_user_id'] ?? $request->user()->id,
-                'received_on' => $data['received_on'] ?? now()->toDateString(),
-                'notes' => $data['notes'] ?? null,
-                'created_by' => $request->user()->id,
-            ],
-        );
+        $report = isset($data['report_id'])
+            ? TechnicianMonthlyReport::query()
+                ->forPeriod($data['period'])
+                ->findOrFail($data['report_id'])
+            : new TechnicianMonthlyReport();
+
+        $report->fill([
+            'technician_id' => $data['technician_id'],
+            'period' => $data['period'],
+            'customer_id' => $data['customer_id'],
+            'branch_id' => $data['branch_id'] ?? null,
+            'received_by_user_id' => $data['received_by_user_id'] ?? $request->user()->id,
+            'received_on' => $data['received_on'] ?? now()->toDateString(),
+            'notes' => $data['notes'] ?? null,
+        ]);
+
+        if (! $report->exists) {
+            $report->created_by = $request->user()->id;
+        }
+
+        $report->save();
 
         ActivityLog::record(
             'technician.report',
@@ -90,12 +115,12 @@ class TechnicianMonthlyReportController extends Controller
         );
 
         return response()->json(
-            ['data' => $this->present($report->load(['receiver', 'recorder'])->loadCount('attachments'))],
+            ['data' => $this->present($report->load(['technician', 'customer', 'branch', 'receiver', 'recorder'])->loadCount('attachments'))],
             $report->wasRecentlyCreated ? 201 : 200,
         );
     }
 
-    /** Unsign a month recorded by mistake. The attachments go with it. */
+    /** Delete one handover record and its attached files. */
     public function destroy(TechnicianMonthlyReport $technicianMonthlyReport): JsonResponse
     {
         $technicianMonthlyReport->delete();
@@ -110,6 +135,10 @@ class TechnicianMonthlyReportController extends Controller
             'id' => $report->id,
             'technician_id' => $report->technician_id,
             'period' => $report->period,
+            'customer_id' => $report->customer_id,
+            'customer' => $report->customer?->name,
+            'branch_id' => $report->branch_id,
+            'branch' => $report->branch?->name,
             'received_by' => $report->receiver?->name,
             'received_by_user_id' => $report->received_by_user_id,
             'received_on' => $report->received_on?->toDateString(),

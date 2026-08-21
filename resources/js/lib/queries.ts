@@ -3449,7 +3449,12 @@ export interface TechnicianReportRow {
     technician: string
     report: {
         id: number
+        technician_id: number
         period: string
+        customer_id: number
+        customer: string | null
+        branch_id: number | null
+        branch: string | null
         received_by: string | null
         received_by_user_id: number | null
         received_on: string | null
@@ -3467,7 +3472,13 @@ export function useTechnicianReports(period: string) {
             (
                 await api.get<{
                     data: TechnicianReportRow[]
-                    meta: { period: string; total: number; received: number }
+                    meta: {
+                        period: string
+                        total: number
+                        received: number
+                        reports_total: number
+                        technicians: Array<{ id: number; name: string }>
+                    }
                 }>('/technician-reports', { params: { period } })
             ).data,
     })
