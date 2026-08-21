@@ -202,7 +202,7 @@ export function AppLayout() {
             {/* ══ Content ══════════════════════════════════════ */}
             <main
                 key={location.pathname}
-                className="animate-in mx-auto max-w-6xl px-4 py-6 pb-32 sm:px-6"
+                className="animate-in mx-auto max-w-6xl px-4 py-6 pb-44 sm:px-6 sm:pb-32"
             >
                 <Outlet />
             </main>
@@ -213,14 +213,14 @@ export function AppLayout() {
                 as a stray footer. */}
             <nav
                 className={clsx(
-                    'safe-bottom pointer-events-none fixed inset-x-0 bottom-0 z-30 px-3 pb-3',
+                    'safe-bottom pointer-events-none fixed inset-x-0 bottom-0 z-30 bg-gradient-to-t from-navy-50 via-navy-50/90 to-transparent px-3 pt-4 pb-3',
                     hasSidebar && 'lg:hidden',
                 )}
             >
                 {/* Scrolls rather than squeezes. An admin carries enough
                     destinations to overflow a phone, and a label clipped to
                     "المستخدـ…" is worse than one the thumb has to reach. */}
-                <div className="no-scrollbar pointer-events-auto mx-auto flex max-w-lg items-stretch gap-0.5 overflow-x-auto rounded-3xl border border-navy-100 bg-surface/95 p-1.5 shadow-[0_8px_30px_rgba(11,27,58,0.16)] backdrop-blur">
+                <div className="no-scrollbar pointer-events-auto mx-auto flex max-w-lg items-stretch gap-0.5 overflow-x-auto rounded-3xl border border-navy-100 bg-surface p-1.5 shadow-[0_8px_30px_rgba(11,27,58,0.16)] backdrop-blur">
                     {barStart.map((item) => (
                         <BottomLink key={item.to} item={item} href={path(item.to)} />
                     ))}

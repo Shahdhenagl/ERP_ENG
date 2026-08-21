@@ -461,19 +461,30 @@ export type { TaskStatus }
  */
 function TaskTable({ tasks, href }: { tasks: Task[]; href: (id: number) => string }) {
     return (
-        <div className="card overflow-x-auto">
-            <table className="w-full min-w-[58rem] table-fixed text-start text-xs">
-                <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
+        <div className="card overflow-hidden">
+            <table className="w-full min-w-0 table-fixed text-start text-[11px] leading-tight">
+                <colgroup>
+                    <col className="w-[10%]" />
+                    <col className="w-[15%]" />
+                    <col className="w-[13%]" />
+                    <col className="w-[12%]" />
+                    <col className="w-[12%]" />
+                    <col className="w-[9%]" />
+                    <col className="w-[10%]" />
+                    <col className="w-[14.5%]" />
+                    <col className="w-[14.5%]" />
+                </colgroup>
+                <thead className="bg-navy-50 text-[10px] font-bold text-navy-400">
                     <tr>
-                        <Th className="w-32 px-3 py-2.5">كود المهمة</Th>
-                        <Th className="w-44 px-2.5 py-2">المهمة</Th>
-                        <Th className="w-44 px-2.5 py-2">العميل</Th>
-                        <Th className="w-36 px-2.5 py-2">الفرع</Th>
-                        <Th className="w-36 px-2.5 py-2">الفني</Th>
-                        <Th className="w-28 px-3 py-2.5">الحالة</Th>
-                        <Th className="w-32 px-3 py-2.5">يوم الزيارة</Th>
-                        <Th className="w-40 px-3 py-2.5">بداية التنفيذ</Th>
-                        <Th className="w-40 px-3 py-2.5">انتهاء التنفيذ</Th>
+                        <Th className="px-1.5 py-1.5">كود المهمة</Th>
+                        <Th className="px-1.5 py-1.5">المهمة</Th>
+                        <Th className="px-1.5 py-1.5">العميل</Th>
+                        <Th className="px-1.5 py-1.5">الفرع</Th>
+                        <Th className="px-1.5 py-1.5">الفني</Th>
+                        <Th className="px-1.5 py-1.5">الحالة</Th>
+                        <Th className="px-1.5 py-1.5">يوم الزيارة</Th>
+                        <Th className="px-1.5 py-1.5">بداية التنفيذ</Th>
+                        <Th className="px-1.5 py-1.5">انتهاء التنفيذ</Th>
                     </tr>
                 </thead>
                 <tbody>
@@ -482,46 +493,44 @@ function TaskTable({ tasks, href }: { tasks: Task[]; href: (id: number) => strin
 
                         return (
                             <tr key={task.id} className="border-t border-navy-100 hover:bg-navy-50/60">
-                                {/* The code is what gets quoted on the phone and
-                                    written on the sheet, so it is a column that can
-                                    be scanned down — not a caption over the title. */}
-                                <td className="tabular whitespace-nowrap px-2.5 py-2 font-bold text-brand-600">
-                                    <Link to={href(task.id)}>{task.code}</Link>
+                                <td className="tabular min-w-0 px-1.5 py-1.5 font-bold text-brand-600">
+                                    <Link className="block truncate" to={href(task.id)} title={task.code}>{task.code}</Link>
                                 </td>
-                                <td className="max-w-44 px-2.5 py-2">
+                                <td className="min-w-0 px-1.5 py-1.5">
                                     <Link
                                         to={href(task.id)}
                                         className="block truncate font-semibold text-navy-800"
+                                        title={task.title}
                                     >
                                         {task.title}
                                     </Link>
                                 </td>
-                                <td className="max-w-44 px-2.5 py-2 text-navy-700">
-                                    <span className="block truncate whitespace-nowrap" title={task.customer?.name ?? undefined}>
+                                <td className="min-w-0 px-1.5 py-1.5 text-navy-700">
+                                    <span className="block truncate" title={task.customer?.name ?? undefined}>
                                         {task.customer?.name ?? '—'}
                                     </span>
                                 </td>
-                                <td className="max-w-36 px-2.5 py-2 text-navy-600">
-                                    <span className="block truncate whitespace-nowrap" title={task.branch?.name ?? undefined}>
+                                <td className="min-w-0 px-1.5 py-1.5 text-navy-600">
+                                    <span className="block truncate" title={task.branch?.name ?? undefined}>
                                         {task.branch?.name ?? '—'}
                                     </span>
                                 </td>
-                                <td className="max-w-36 px-2.5 py-2 font-medium text-navy-800">
+                                <td className="min-w-0 px-1.5 py-1.5 font-medium text-navy-800">
                                     {task.technicians && task.technicians.length > 0
-                                        ? <span className="block truncate whitespace-nowrap" title={task.technicians.map((t) => t.name).join('، ')}>{task.technicians.map((t) => t.name).join('، ')}</span>
+                                        ? <span className="block truncate" title={task.technicians.map((t) => t.name).join('، ')}>{task.technicians.map((t) => t.name).join('، ')}</span>
                                         : '—'}
                                 </td>
-                                <td className="px-2.5 py-2">
-                                    <span className={clsx('badge', meta.chip)}>{meta.label}</span>
+                                <td className="min-w-0 px-1.5 py-1.5">
+                                    <span className={clsx('badge max-w-full truncate px-1.5 py-0.5 text-[10px]', meta.chip)}>{meta.label}</span>
                                 </td>
-                                <td className="tabular whitespace-nowrap px-2.5 py-2 text-navy-600 font-semibold">
-                                    {task.scheduled_at ? formatDate(task.scheduled_at) : '—'}
+                                <td className="tabular min-w-0 px-1.5 py-1.5 font-semibold text-navy-600">
+                                    <span className="block truncate" dir="ltr">{task.scheduled_at ? formatDate(task.scheduled_at) : '—'}</span>
                                 </td>
-                                <td className="tabular whitespace-nowrap px-2.5 py-2 text-navy-600">
-                                    {task.started_at ? formatDateTime(task.started_at) : '—'}
+                                <td className="tabular min-w-0 px-1.5 py-1.5 text-[10px] text-navy-600">
+                                    <span className="block truncate" dir="ltr">{task.started_at ? formatDateTime(task.started_at) : '—'}</span>
                                 </td>
-                                <td className="tabular whitespace-nowrap px-2.5 py-2 text-navy-600">
-                                    {task.completed_at ? formatDateTime(task.completed_at) : '—'}
+                                <td className="tabular min-w-0 px-1.5 py-1.5 text-[10px] text-navy-600">
+                                    <span className="block truncate" dir="ltr">{task.completed_at ? formatDateTime(task.completed_at) : '—'}</span>
                                 </td>
                             </tr>
                         )
