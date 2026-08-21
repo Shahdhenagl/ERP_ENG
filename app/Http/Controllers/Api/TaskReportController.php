@@ -160,7 +160,7 @@ class TaskReportController extends Controller
         }
 
         throw ValidationException::withMessages([
-            'service_report_no' => 'تعذر حفظ رقم تقرير الخدمة الآن لأنه مستخدم بالفعل. حاول مرة أخرى.',
+            'service_report_no' => 'رقم التقرير مكرر. اضغط حفظ مرة أخرى لإنشاء رقم جديد تلقائيًا.',
         ]);
     }
 
