@@ -1,6 +1,7 @@
 import clsx from 'clsx'
 import { CalendarRange, FileText, Printer } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { ExportButton } from '@/components/ExportButton'
 import { Button, EmptyState, Field, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
 import { formatMoney } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
@@ -66,14 +67,46 @@ export function DaybookPage() {
                 title="حركة الخزينة اليومية"
                 subtitle="دفتر حركة نقدية مربوط بالقيود اليومية والرصيد الجاري"
                 actions={
-                    <Button
-                        icon={Printer}
-                        variant="secondary"
-                        className="daybook-print-button"
-                        onClick={() => window.print()}
-                    >
-                        طباعة الكشف
-                    </Button>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <ExportButton
+                            filename="treasury-daybook"
+                            headers={[
+                                'التاريخ',
+                                'نوع الإيصال',
+                                'الرقم No',
+                                'كود القيد',
+                                'البيان Description',
+                                'اسم المستلم / الدافع',
+                                'فرع / نوع الحساب',
+                                'مدين',
+                                'دائن',
+                                'الرصيد',
+                            ]}
+                            disabled={!visibleRows.length}
+                            rows={async () =>
+                                visibleRows.map((row) => [
+                                    row.date ? formatDate(row.date) : '',
+                                    row.voucher_type,
+                                    row.voucher_number,
+                                    row.journal_code ?? '',
+                                    row.description,
+                                    row.party ?? '',
+                                    [row.account_name, row.account_type].filter(Boolean).join(' / '),
+                                    row.debit || 0,
+                                    row.credit || 0,
+                                    row.balance,
+                                ])
+                            }
+                        />
+                        <Button
+                            icon={Printer}
+                            variant="secondary"
+                            className="daybook-print-button"
+                            onClick={() => window.print()}
+                        >
+                            طباعة الكشف
+                        </Button>
+                    </div>
                 }
             />
 
