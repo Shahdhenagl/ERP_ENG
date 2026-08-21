@@ -293,7 +293,8 @@ export function CustomerList() {
                 />
             ) : view === 'table' ? (
                 <DataTable
-                    minWidth="64rem"
+                    minWidth="0"
+                    tableClassName="table-fixed compact-table text-xs"
                     lead={
                         <input
                             type="checkbox"
@@ -304,16 +305,16 @@ export function CustomerList() {
                         />
                     }
                     headers={[
-                        { label: tr('الكود'), className: 'w-28' },
-                        'العميل',
-                        'النوع',
-                        { label: tr('طريقة الدفع'), className: 'w-24' },
-                        'الهاتف',
-                        'المحافظة / الحي',
-                        { label: tr('العقود'), className: 'w-20' },
-                        { label: tr('المهام'), className: 'w-20' },
-                        { label: tr('الحالة'), className: 'w-28' },
-                        { label: tr('الإجراءات'), className: 'w-44' },
+                        { label: tr('الكود'), className: 'w-20 whitespace-nowrap' },
+                        { label: 'العميل', className: 'w-32 whitespace-nowrap' },
+                        { label: 'النوع', className: 'w-24 whitespace-nowrap' },
+                        { label: tr('طريقة الدفع'), className: 'w-20 whitespace-nowrap' },
+                        { label: 'الهاتف', className: 'w-28 whitespace-nowrap' },
+                        { label: 'المحافظة / الحي', className: 'w-32 whitespace-nowrap' },
+                        { label: tr('العقود'), className: 'w-14 whitespace-nowrap' },
+                        { label: tr('المهام'), className: 'w-14 whitespace-nowrap' },
+                        { label: tr('الحالة'), className: 'w-24 whitespace-nowrap' },
+                        { label: tr('الإجراءات'), className: 'w-36 whitespace-nowrap' },
                     ]}
                 >
                     {data.data.map((customer) => (
@@ -325,7 +326,7 @@ export function CustomerList() {
                             onClick={() => navigate(path(`/customers/${customer.id}`))}
                             className="cursor-pointer border-t border-navy-100 hover:bg-navy-50/60"
                         >
-                            <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
+                            <td className="w-8 px-2 py-2" onClick={(e) => e.stopPropagation()}>
                                 <input
                                     type="checkbox"
                                     className="size-4"
@@ -340,19 +341,23 @@ export function CustomerList() {
                                     }
                                 />
                             </td>
-                            <td className="tabular px-3 py-2.5 text-[11px] font-bold text-brand-600">
+                            <td className="tabular whitespace-nowrap px-2 py-2 text-[10px] font-bold text-brand-600">
                                 {customer.code}
                             </td>
-                            <td className="px-3 py-2.5">
-                                <span className="block truncate font-semibold text-navy-800">
+                            <td className="min-w-0 px-2 py-2">
+                                <span className="block truncate whitespace-nowrap font-semibold text-navy-800" title={customer.name}>
                                     {customer.name}
                                 </span>
                             </td>
-                            <td className="px-3 py-2.5 text-navy-600">{customer.type_label ?? '—'}</td>
-                            <td className="px-3 py-2.5">
+                            <td className="min-w-0 px-2 py-2 text-navy-600">
+                                <span className="block truncate whitespace-nowrap" title={customer.type_label ?? '—'}>
+                                    {customer.type_label ?? '—'}
+                                </span>
+                            </td>
+                            <td className="px-2 py-2">
                                 <span
                                     className={clsx(
-                                        'badge',
+                                        'badge whitespace-nowrap text-[10px]',
                                         customer.payment_terms === 'credit'
                                             ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
                                             : 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
@@ -361,31 +366,36 @@ export function CustomerList() {
                                     {customer.payment_terms_label ?? 'نقدي'}
                                 </span>
                             </td>
-                            <td className="tabular px-3 py-2.5 text-navy-600" dir="ltr">
-                                <span className="block text-start">{customer.phone ?? '—'}</span>
+                            <td className="tabular whitespace-nowrap px-2 py-2 text-[11px] text-navy-600" dir="ltr">
+                                <span className="block truncate text-start" title={customer.phone ?? '—'}>{customer.phone ?? '—'}</span>
                             </td>
-                            <td className="px-3 py-2.5 text-navy-600">
-                                {[customer.governorate, customer.city].filter(Boolean).join(' — ') || '—'}
+                            <td className="min-w-0 px-2 py-2 text-navy-600">
+                                <span
+                                    className="block truncate whitespace-nowrap"
+                                    title={[customer.governorate, customer.city].filter(Boolean).join(' — ') || '—'}
+                                >
+                                    {[customer.governorate, customer.city].filter(Boolean).join(' — ') || '—'}
+                                </span>
                             </td>
-                            <td className="tabular px-3 py-2.5 text-navy-600">
+                            <td className="tabular whitespace-nowrap px-2 py-2 text-[11px] text-navy-600">
                                 {customer.contracts_count ?? 0}
                             </td>
-                            <td className="tabular px-3 py-2.5 text-navy-600">
+                            <td className="tabular whitespace-nowrap px-2 py-2 text-[11px] text-navy-600">
                                 {customer.tasks_count ?? 0}
                             </td>
-                            <td className="px-3 py-2.5">
+                            <td className="px-2 py-2">
                                 {customer.contract_standing && customer.contract_standing !== 'none' ? (
                                     <span
-                                        className={clsx('badge', STANDING_CHIP[customer.contract_standing])}
+                                        className={clsx('badge whitespace-nowrap text-[10px]', STANDING_CHIP[customer.contract_standing])}
                                     >
                                         {customer.contract_standing_label}
                                     </span>
                                 ) : (
-                                    <span className="badge bg-navy-100 text-navy-500">بلا عقد</span>
+                                    <span className="badge whitespace-nowrap text-[10px] bg-navy-100 text-navy-500">بلا عقد</span>
                                 )}
                             </td>
-                            <td className="px-3 py-2.5" onClick={(event) => event.stopPropagation()}>
-                                <div className="flex items-center gap-0.5">
+                            <td className="px-1.5 py-2" onClick={(event) => event.stopPropagation()}>
+                                <div className="flex items-center justify-center gap-0">
                                     <Link
                                         to={path(`/customers/${customer.id}`)}
                                         className="tap grid size-8 place-items-center rounded-lg text-navy-400 transition hover:bg-brand-50 hover:text-brand-700"

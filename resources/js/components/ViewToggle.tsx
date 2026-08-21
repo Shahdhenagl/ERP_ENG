@@ -88,20 +88,28 @@ export function DataTable({
     tableClassName?: string
 }) {
     const t = useT()
+    const compact = tableClassName?.includes('compact-table')
 
     return (
         <div className={clsx('card overflow-x-auto', className)}>
             <table className={clsx('w-full text-start text-sm', tableClassName)} style={{ minWidth }}>
                 <thead className="bg-navy-50 text-[11px] font-bold text-navy-400">
                     <tr>
-                        {lead !== undefined && <th className="w-10 px-3 py-2.5">{lead}</th>}
+                        {lead !== undefined && (
+                            <th className={clsx('w-10', compact ? 'px-2 py-2' : 'px-3 py-2.5')}>
+                                {lead}
+                            </th>
+                        )}
                         {headers.map((header, index) => {
                             const isText = typeof header === 'string'
 
                             return (
                                 <th
                                     key={isText ? header : (header.label || String(index))}
-                                    className={clsx('px-3 py-2.5', !isText && header.className)}
+                                    className={clsx(
+                                        compact ? 'px-2 py-2' : 'px-3 py-2.5',
+                                        !isText && header.className,
+                                    )}
                                 >
                                     {t(isText ? header : header.label)}
                                 </th>
