@@ -86,13 +86,15 @@ export function RecurringExpensesSection() {
                 />
             ) : view === 'table' ? (
                 <DataTable
-                    minWidth="44rem"
+                    minWidth="0"
+                    className="recurring-expenses-table-wrap"
+                    tableClassName="table-fixed compact-table recurring-expenses-table"
                     headers={[
-                        'بند المصروف',
-                        { label: 'الخزينة', className: 'w-40' },
-                        { label: 'الدورة', className: 'w-24' },
-                        { label: 'الاستحقاق القادم', className: 'w-36' },
-                        { label: 'المبلغ', className: 'w-28 text-end' },
+                        { label: 'بند المصروف', className: 'w-[34%]' },
+                        { label: 'الخزينة', className: 'w-[22%]' },
+                        { label: 'الدورة', className: 'w-[15%]' },
+                        { label: 'الاستحقاق القادم', className: 'w-[18%]' },
+                        { label: 'المبلغ', className: 'w-[11%] text-end' },
                     ]}
                 >
                     {expenses.map((expense) => (
@@ -105,16 +107,19 @@ export function RecurringExpensesSection() {
                                 expense.is_due_soon && 'bg-amber-50/60',
                             )}
                         >
-                            <td className="px-3 py-2.5 font-semibold text-navy-800">
-                                {expense.name}
+                            <td data-label="بند المصروف" className="px-2 py-2 font-semibold text-navy-800" title={expense.name}>
+                                <span className="block truncate">{expense.name}</span>
                             </td>
-                            <td className="px-3 py-2.5 text-navy-600">{expense.cash_box ?? '—'}</td>
-                            <td className="tabular px-3 py-2.5 text-navy-600">
+                            <td data-label="الخزينة" className="px-2 py-2 text-navy-600" title={expense.cash_box ?? undefined}>
+                                <span className="block truncate">{expense.cash_box ?? '—'}</span>
+                            </td>
+                            <td data-label="الدورة" className="tabular whitespace-nowrap px-2 py-2 text-navy-600">
                                 {expense.cycle_days} يوم
                             </td>
                             <td
+                                data-label="الاستحقاق القادم"
                                 className={clsx(
-                                    'tabular px-3 py-2.5',
+                                    'tabular whitespace-nowrap px-2 py-2',
                                     expense.is_due_soon
                                         ? 'font-bold text-amber-700'
                                         : 'text-navy-600',
@@ -122,7 +127,7 @@ export function RecurringExpensesSection() {
                             >
                                 {expense.next_due_on ? formatDate(expense.next_due_on) : '—'}
                             </td>
-                            <td className="tabular px-3 py-2.5 text-end font-bold text-navy-900">
+                            <td data-label="المبلغ" className="tabular whitespace-nowrap px-2 py-2 text-end font-bold text-navy-900">
                                 {formatMoney(expense.amount)}
                             </td>
                         </tr>
@@ -347,7 +352,7 @@ function RecurringExpenseDialog({
                     />
                 </Field>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <Field label="المبلغ" required error={errors.amount}>
                         <Input
                             type="number"
@@ -373,7 +378,7 @@ function RecurringExpenseDialog({
                     </Field>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <Field label="أول استحقاق" required error={errors.start_on}>
                         <Input
                             type="date"

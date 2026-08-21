@@ -750,6 +750,86 @@
     background-position: right 0.75rem center;
 }
 
+/* Compact recurring-expense list: headings and values stay aligned while long
+   labels are clipped inside their own column instead of widening the page. */
+@layer components {
+    .recurring-expenses-table-wrap {
+        @apply w-full overflow-hidden;
+    }
+
+    .recurring-expenses-table {
+        table-layout: fixed;
+    }
+
+    .recurring-expenses-table th,
+    .recurring-expenses-table td {
+        max-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+
+    .recurring-expenses-table th {
+        @apply leading-tight;
+    }
+}
+
+@media (max-width: 767px) {
+    .recurring-expenses-table-wrap {
+        @apply overflow-visible border-0 bg-transparent p-0 shadow-none;
+    }
+
+    .recurring-expenses-table,
+    .recurring-expenses-table tbody,
+    .recurring-expenses-table tr,
+    .recurring-expenses-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .recurring-expenses-table thead {
+        display: none;
+    }
+
+    .recurring-expenses-table tr {
+        @apply mb-2 rounded-xl border border-navy-100 bg-surface p-2 shadow-sm;
+    }
+
+    .recurring-expenses-table tbody tr:last-child {
+        @apply mb-0;
+    }
+
+    .recurring-expenses-table td {
+        @apply flex items-center justify-between gap-3 border-0 px-2 py-1 text-start;
+        max-width: none;
+        min-height: 1.75rem;
+        overflow: visible;
+        white-space: normal;
+    }
+
+    .recurring-expenses-table td::before {
+        content: attr(data-label);
+        @apply shrink-0 font-bold text-navy-400;
+    }
+
+    .recurring-expenses-table td:first-child {
+        @apply border-b border-navy-100 pb-2 font-bold;
+    }
+
+    .recurring-expenses-table td:first-child::before {
+        @apply text-navy-700;
+    }
+
+    .recurring-expenses-table td:last-child {
+        @apply justify-end border-t border-navy-100 pt-2;
+    }
+
+    .recurring-expenses-table td:last-child::before {
+        display: none;
+    }
+}
+
 /* Compact on-screen ledger used by the treasury statement. Keep printed and
    purchasing documents on the roomier document scale. */
 .doc-table.treasury-table th {
