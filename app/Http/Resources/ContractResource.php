@@ -2,8 +2,10 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\ContractBillingFrequency;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Schema;
 
 /** @mixin \App\Models\Contract */
 class ContractResource extends JsonResource
@@ -11,6 +13,12 @@ class ContractResource extends JsonResource
     /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
+        // Keep the contracts list readable while a production database is
+        // waiting for the approved billing/renewal migrations. These defaults
+        // describe legacy contracts and do not write anything to the database.
+        $billingFrequency = $this->billing_frequency ?? ContractBillingFrequency::Upfront;
+        $hasRenewalColumn = Schema::hasColumn('contracts', 'renewed_from_id');
+
         return [
             'id' => $this->id,
             'code' => $this->code,
@@ -39,8 +47,8 @@ class ContractResource extends JsonResource
             'value' => $this->value,
             'currency' => $this->currency,
 
-            'billing_frequency' => $this->billing_frequency->value,
-            'billing_frequency_label' => $this->billing_frequency->label(),
+            'billing_frequency' => $billingFrequency->value,
+            'billing_frequency_label' => $billingFrequency->label(),
             'collection_timing' => $this->collection_timing ?? 'upfront',
             'collection_timing_label' => ($this->collection_timing ?? 'upfront') === 'arrears'
                 ? 'مؤخر بعد الخدمة'
@@ -114,10 +122,10 @@ class ContractResource extends JsonResource
             'sla_response_hours' => $this->sla_response_hours,
             'sla_resolution_hours' => $this->sla_resolution_hours,
 
-            'renewed_from_id' => $this->renewed_from_id,
-            'renewed_from_code' => $this->renewedFrom?->code,
+            'renewed_from_id' => $hasRenewalColumn ? $this->renewed_from_id : null,
+            'renewed_from_code' => $hasRenewalColumn ? $this->renewedFrom?->code : null,
             // Set once a successor exists, which is what stops a second one.
-            'renewal_code' => $this->renewal?->code,
+            'renewal_code' => $hasRenewalColumn ? $this->renewal?->code : null,
             'notes' => $this->notes,
             'terms' => $this->terms,
 

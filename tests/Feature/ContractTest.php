@@ -1,11 +1,14 @@
 <?php
 
 use App\Enums\ContractStatus;
+use App\Http\Resources\ContractResource;
 use App\Models\Asset;
 use App\Models\Contract;
 use App\Models\Customer;
 use App\Models\Task;
 use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 use function Pest\Laravel\actingAs;
 
@@ -185,4 +188,27 @@ it('finds a contract by its customer name', function () {
         ->getJson('/api/contracts?search=الأمل')
         ->assertOk()
         ->assertJsonCount(1, 'data');
+});
+
+it('serializes a legacy contract while billing and renewal migrations are pending', function () {
+    $contract = Contract::factory()->for($this->customer)->make();
+    $contract->offsetUnset('billing_frequency');
+    $contract->offsetUnset('renewed_from_id');
+
+    Schema::shouldReceive('hasColumn')
+        ->once()
+        ->with('contracts', 'renewed_from_id')
+        ->andReturnFalse();
+    Schema::shouldReceive('hasTable')
+        ->once()
+        ->with('contract_payments')
+        ->andReturnFalse();
+
+    $payload = (new ContractResource($contract))->toArray(Request::create('/'));
+
+    expect($payload['billing_frequency'])->toBe('upfront')
+        ->and($payload['billing_frequency_label'])->toContain('مقد')
+        ->and($payload['renewed_from_id'])->toBeNull()
+        ->and($payload['renewal_code'])->toBeNull()
+        ->and($payload['first_payment_collected'])->toBeTrue();
 });

@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Schema;
 
 class Contract extends Model
 {
@@ -166,6 +167,13 @@ class Contract extends Model
 
     public function firstPaymentCollected(): bool
     {
+        // Older production databases may not have received the instalment
+        // migration yet. A list/read must remain available until that update
+        // is approved and run; there is no payment schedule to block on then.
+        if (! Schema::hasTable('contract_payments')) {
+            return true;
+        }
+
         $first = $this->payments()->where('sequence', 1)->first();
 
         // No schedule (a value-less contract) never blocks on payment.
