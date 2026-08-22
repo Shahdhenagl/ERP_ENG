@@ -6,6 +6,7 @@ use App\Enums\TaskStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\TaskResource;
 use App\Http\Resources\ContractResource;
+use App\Models\Branch;
 use App\Models\Contract;
 use App\Models\Customer;
 use App\Models\FollowUp;
@@ -124,6 +125,39 @@ class DashboardController extends Controller
         ];
 
         if ($user->canDispatch()) {
+            $branchesWithoutTasks = Branch::query()
+                ->active()
+                ->with('customer')
+                ->withMax([
+                    'tasks as last_visit_completed_at' => fn ($q) => $q
+                        ->where('status', TaskStatus::Completed->value)
+                        ->whereNotNull('completed_at'),
+                ], 'completed_at')
+                ->whereDoesntHave('tasks', function ($q) use ($monthStart, $monthEnd) {
+                    $q->where(function ($month) use ($monthStart, $monthEnd) {
+                        $month->whereBetween('tasks.scheduled_at', [$monthStart, $monthEnd])
+                            ->orWhereBetween('tasks.completed_at', [$monthStart, $monthEnd])
+                            ->orWhere(function ($unscheduled) use ($monthStart, $monthEnd) {
+                                $unscheduled->whereNull('tasks.scheduled_at')
+                                    ->whereBetween('tasks.created_at', [$monthStart, $monthEnd]);
+                            });
+                    });
+                })
+                ->orderBy('customer_id')
+                ->orderBy('name')
+                ->get()
+                ->map(fn (Branch $branch) => [
+                    'id' => $branch->id,
+                    'name' => $branch->name,
+                    'customer' => $branch->customer?->name,
+                    'location' => $branch->address ?: trim(implode('، ', array_filter([$branch->governorate, $branch->city]))) ?: null,
+                    'last_visit_completed_at' => $branch->last_visit_completed_at
+                        ? date('Y-m-d', strtotime((string) $branch->last_visit_completed_at))
+                        : null,
+                ])
+                ->values();
+
+            $stats['branches_without_tasks'] = $branchesWithoutTasks->count();
             $stats['customers_total'] = Customer::query()->active()->count();
             $stats['technicians_total'] = User::query()->active()->role(\App\Enums\UserRole::Technician)->count();
 
@@ -198,6 +232,7 @@ class DashboardController extends Controller
                 ->get();
 
             $payload['maintenance_due'] = TaskResource::collection($visitsDue)->resolve();
+            $payload['branches_without_tasks'] = $branchesWithoutTasks->all();
             $stats['maintenance_due'] = $visitsDue->count();
             $stats['contracts_active'] = Contract::query()->activeOn(now()->toDateString())->count();
             $stats['contracts_expiring'] = Contract::query()->expiringWithin(60)->count();

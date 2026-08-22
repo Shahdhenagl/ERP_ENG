@@ -75,7 +75,7 @@ export function Dashboard() {
             />
 
             {/* ── Headline numbers ───────────────────────────── */}
-            <div className={clsx('grid grid-cols-2 gap-2.5 sm:gap-3', canDispatch ? 'lg:grid-cols-6' : 'lg:grid-cols-5')}>
+            <div className={clsx('grid grid-cols-2 gap-2.5 sm:gap-3', canDispatch ? 'lg:grid-cols-7' : 'lg:grid-cols-5')}>
                 <StatTile
                     icon={ClipboardList}
                     label={tr('مهام مفتوحة')}
@@ -108,6 +108,16 @@ export function Dashboard() {
                     tone="amber"
                     to={path('/tasks?open_only=1&unassigned=1')}
                 />
+                {canDispatch && (
+                    <StatTile
+                        icon={MapPin}
+                        label={tr('فروع بلا مهام هذا الشهر')}
+                        value={stats?.branches_without_tasks}
+                        loading={isLoading}
+                        tone="red"
+                        to={`${path('/')}#branches-without-tasks`}
+                    />
+                )}
                 {canDispatch && (
                     <StatTile
                         icon={ClipboardList}
@@ -279,7 +289,8 @@ export function Dashboard() {
                         data?.delayed_tasks?.length ||
                         data?.overdue_invoices?.length ||
                         data?.pending_approvals?.length ||
-                        data?.contracts_expiring?.length,
+                        data?.contracts_expiring?.length ||
+                        data?.branches_without_tasks?.length,
                 ) && (
                     <section className="mt-6">
                         <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-navy-700">
@@ -288,6 +299,25 @@ export function Dashboard() {
                         </h2>
 
                         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                            {Boolean(data?.branches_without_tasks?.length) && (
+                                <AlertColumn
+                                    id="branches-without-tasks"
+                                    title={tr('فروع بلا مهام هذا الشهر')}
+                                    count={stats?.branches_without_tasks}
+                                    tone="red"
+                                    to={`${path('/')}#branches-without-tasks`}
+                                    rows={data!.branches_without_tasks!.map((branch) => ({
+                                        key: `branch-${branch.id}`,
+                                        title: branch.name,
+                                        subtitle: `${branch.customer ?? 'بدون عميل'} · آخر زيارة: ${
+                                            branch.last_visit_completed_at
+                                                ? formatDate(branch.last_visit_completed_at)
+                                                : 'لا توجد زيارة مكتملة مسجلة'
+                                        }`,
+                                    }))}
+                                />
+                            )}
+
                             {(can('inventory.view') || can('inventory.manage')) &&
                                 Boolean(data?.low_stock?.length) && (
                                     <AlertColumn
@@ -711,12 +741,14 @@ function StatTile({ icon: Icon, label, value, loading, tone, to }: StatTileProps
 
 /** One column of standing alerts — a heading with a count and a short list. */
 function AlertColumn({
+    id,
     title,
     count,
     tone,
     to,
     rows,
 }: {
+    id?: string
     title: string
     count?: number
     tone: 'amber' | 'red'
@@ -726,7 +758,7 @@ function AlertColumn({
     const chip = tone === 'red' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'
 
     return (
-        <div className="card p-3">
+        <div id={id} className="card scroll-mt-5 p-3">
             <div className="mb-2 flex items-center justify-between gap-2">
                 <Link to={to} className="text-xs font-bold text-navy-800 hover:underline">
                     {title}

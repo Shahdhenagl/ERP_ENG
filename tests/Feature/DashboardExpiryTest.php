@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Asset;
+use App\Models\Branch;
 use App\Models\Contract;
 use App\Enums\TaskStatus;
 use App\Models\Customer;
@@ -87,6 +88,46 @@ it('counts assigned incomplete tasks separately from unassigned and finished wor
 
     expect($response->json('stats.assigned_incomplete'))->toBe(3)
         ->and($response->json('stats.unassigned'))->toBe(1);
+});
+
+it('counts active branches without any task in the selected month and shows the last visit', function () {
+    $withoutTasks = Branch::create([
+        'customer_id' => $this->customer->id,
+        'name' => 'فرع بلا مهام',
+        'is_active' => true,
+    ]);
+    $withTasks = Branch::create([
+        'customer_id' => $this->customer->id,
+        'name' => 'فرع عليه مهمة',
+        'is_active' => true,
+    ]);
+    Branch::create([
+        'customer_id' => $this->customer->id,
+        'name' => 'فرع غير نشط',
+        'is_active' => false,
+    ]);
+
+    Task::factory()->for($this->customer)->create([
+        'branch_id' => $withoutTasks->id,
+        'status' => TaskStatus::Completed,
+        'scheduled_at' => '2026-07-10 09:00:00',
+        'completed_at' => '2026-07-10 12:00:00',
+    ]);
+    Task::factory()->for($this->customer)->create([
+        'branch_id' => $withTasks->id,
+        'status' => TaskStatus::Pending,
+        'scheduled_at' => '2026-08-15 09:00:00',
+    ]);
+
+    $body = actingAs($this->manager)
+        ->getJson('/api/dashboard?year=2026&month=8')
+        ->assertOk()
+        ->json();
+
+    expect($body['stats']['branches_without_tasks'])->toBe(1)
+        ->and($body['branches_without_tasks'])->toHaveCount(1)
+        ->and($body['branches_without_tasks'][0]['name'])->toBe('فرع بلا مهام')
+        ->and($body['branches_without_tasks'][0]['last_visit_completed_at'])->toBe('2026-07-10');
 });
 
 it('does not compute the alerts for a technician', function () {

@@ -1383,6 +1383,7 @@ export interface DashboardData {
         overdue: number
         unassigned: number
         assigned_incomplete: number
+        branches_without_tasks?: number
         customers_total?: number
         technicians_total?: number
         /** Contract visits waiting for a technician within the next month. */
@@ -1444,6 +1445,14 @@ export interface DashboardData {
     }>
     /** Dispatcher-only: the visits that need someone put on them. */
     maintenance_due?: Task[]
+    /** Active branches with no task touching the selected dashboard month. */
+    branches_without_tasks?: Array<{
+        id: number
+        name: string
+        customer: string | null
+        location: string | null
+        last_visit_completed_at: string | null
+    }>
     contracts_expiring?: Contract[]
     /** Cover about to lapse — a renewal or extension waiting to be sold. */
     warranties_expiring?: Array<{
