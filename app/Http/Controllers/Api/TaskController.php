@@ -45,6 +45,13 @@ class TaskController extends Controller
             ->when($request->integer('contract_id'), fn ($q, $id) => $q->where('contract_id', $id))
             ->when($request->boolean('contract_only'), fn ($q) => $q->whereNotNull('contract_id'))
             ->when($request->boolean('unassigned'), fn ($q) => $q->doesntHave('technicians'))
+            ->when($request->boolean('assigned_only'), fn ($q) => $q->has('technicians'))
+            ->when($request->boolean('assigned_incomplete'), fn ($q) => $q
+                ->has('technicians')
+                ->whereNotIn('status', [
+                    TaskStatus::Completed->value,
+                    TaskStatus::Cancelled->value,
+                ]))
             ->when($request->boolean('overdue'), fn ($q) => $q->whereNotNull('scheduled_at')->where('scheduled_at', '<', now()))
             ->when($request->boolean('completed_today'), fn ($q) => $q->whereDate('completed_at', today()))
             ->when($request->boolean('completed_this_month'), fn ($q) => $q->whereBetween('completed_at', [now()->startOfMonth(), now()->endOfMonth()]))

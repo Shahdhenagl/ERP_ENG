@@ -291,3 +291,18 @@ it('finds a task by its branch name', function () {
         ->assertJsonPath('data.0.id', $task->id)
         ->assertJsonPath('data.0.branch.name', 'قطور');
 });
+
+it('filters the task list to assigned incomplete work', function () {
+    $assigned = Task::factory()->assignedTo($this->technician)->create([
+        'status' => TaskStatus::Pending,
+    ]);
+    Task::factory()->create(['status' => TaskStatus::Pending]);
+    Task::factory()->assignedTo($this->technician)->create(['status' => TaskStatus::Completed]);
+    Task::factory()->assignedTo($this->technician)->create(['status' => TaskStatus::Cancelled]);
+
+    actingAs($this->manager)
+        ->getJson('/api/tasks?assigned_incomplete=1')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $assigned->id);
+});

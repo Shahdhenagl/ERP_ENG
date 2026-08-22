@@ -1382,6 +1382,7 @@ export interface DashboardData {
         completed_this_month: number
         overdue: number
         unassigned: number
+        assigned_incomplete: number
         customers_total?: number
         technicians_total?: number
         /** Contract visits waiting for a technician within the next month. */

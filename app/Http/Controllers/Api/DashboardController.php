@@ -108,6 +108,19 @@ class DashboardController extends Controller
                     ->when(!$isCurrentMonth, fn ($q) => $q->whereBetween('tasks.created_at', [$monthStart, $monthEnd]))
                     ->count()
                 : 0,
+            // Assigned work that still needs completion. A postponed job is
+            // still outstanding, so only completed/cancelled work is excluded.
+            'assigned_incomplete' => $scoped()
+                ->whereNotIn('status', [
+                    TaskStatus::Completed->value,
+                    TaskStatus::Cancelled->value,
+                ])
+                ->has('technicians')
+                ->when(!$isCurrentMonth, fn ($q) => $q->where(function ($month) use ($monthStart, $monthEnd) {
+                    $month->whereBetween('tasks.created_at', [$monthStart, $monthEnd])
+                        ->orWhereBetween('tasks.scheduled_at', [$monthStart, $monthEnd]);
+                }))
+                ->count(),
         ];
 
         if ($user->canDispatch()) {

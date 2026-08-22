@@ -68,6 +68,27 @@ it('counts postponed tasks on the dashboard', function () {
         ->toBe(1);
 });
 
+it('counts assigned incomplete tasks separately from unassigned and finished work', function () {
+    Task::factory()->for($this->customer)->assignedTo($this->technician)->count(2)->create([
+        'status' => TaskStatus::Pending,
+    ]);
+    Task::factory()->for($this->customer)->create(['status' => TaskStatus::Pending]);
+    Task::factory()->for($this->customer)->assignedTo($this->technician)->create([
+        'status' => TaskStatus::Completed,
+    ]);
+    Task::factory()->for($this->customer)->assignedTo($this->technician)->create([
+        'status' => TaskStatus::Cancelled,
+    ]);
+    Task::factory()->for($this->customer)->assignedTo($this->technician)->create([
+        'status' => TaskStatus::Postponed,
+    ]);
+
+    $response = actingAs($this->manager)->getJson('/api/dashboard')->assertOk();
+
+    expect($response->json('stats.assigned_incomplete'))->toBe(3)
+        ->and($response->json('stats.unassigned'))->toBe(1);
+});
+
 it('does not compute the alerts for a technician', function () {
     // The dashboard payload is scoped, and a field user is never shown the
     // office's chase lists.

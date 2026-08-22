@@ -75,7 +75,7 @@ export function Dashboard() {
             />
 
             {/* ── Headline numbers ───────────────────────────── */}
-            <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-5">
+            <div className={clsx('grid grid-cols-2 gap-2.5 sm:gap-3', canDispatch ? 'lg:grid-cols-6' : 'lg:grid-cols-5')}>
                 <StatTile
                     icon={ClipboardList}
                     label={tr('مهام مفتوحة')}
@@ -108,6 +108,16 @@ export function Dashboard() {
                     tone="amber"
                     to={path('/tasks?open_only=1&unassigned=1')}
                 />
+                {canDispatch && (
+                    <StatTile
+                        icon={ClipboardList}
+                        label={tr('مسندة غير مكتملة')}
+                        value={stats?.assigned_incomplete}
+                        loading={isLoading}
+                        tone="brand"
+                        to={path('/tasks?assigned_incomplete=1')}
+                    />
+                )}
                 {user?.role === 'technician' ? (
                     <StatTile
                         icon={CalendarCheck}
