@@ -11,8 +11,8 @@ const today = () => new Date().toISOString().slice(0, 10)
 
 /**
  * A cashier's daybook. The presentation deliberately follows the familiar
- * paper-cashbook layout: a bold period band, compact ledger headings, and a
- * balance carried down every line.
+ * paper-cashbook layout: compact ledger headings and a balance carried down
+ * every line.
  */
 export function DaybookPage() {
     const { data: boxes } = useCashBoxes()
@@ -57,10 +57,6 @@ export function DaybookPage() {
             )
         })
     }, [accountTypeFilter, data?.rows, dateFilter, descriptionFilter, numberFilter, partyFilter, voucherTypeFilter])
-    const periodTitle = from.slice(0, 4) === to.slice(0, 4)
-        ? `حركة الخزينة لعام ${from.slice(0, 4)}`
-        : `حركة الخزينة من ${from} إلى ${to}`
-
     return (
         <div id="daybook-report" className="daybook-report">
             <PageHeader
@@ -149,10 +145,6 @@ export function DaybookPage() {
                         <LedgerTotal label="رصيد آخر المدة" value={formatMoney(data.closing_balance)} accent />
                     </div>
 
-                    <div className="bg-navy-900 px-4 py-2 text-center text-sm font-extrabold tracking-wide text-white sm:text-base" dir="rtl">
-                        {periodTitle}
-                    </div>
-
                     {!data.rows.length ? (
                         <div className="p-6">
                             <EmptyState icon={FileText} title="لا توجد حركات في هذه الفترة" />
@@ -160,7 +152,7 @@ export function DaybookPage() {
                     ) : (
                         <div className="daybook-table-wrap">
                             <table className="daybook-table w-full table-fixed border-collapse text-[11px]" dir="rtl">
-                                <thead className="bg-navy-800 text-white">
+                                <thead className="bg-navy-50 text-navy-700">
                                     <tr>
                                         <LedgerHead className="w-[8%]">التاريخ</LedgerHead>
                                         <LedgerHead className="w-[10%]">نوع الإيصال</LedgerHead>

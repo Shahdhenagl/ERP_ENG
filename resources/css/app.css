@@ -957,6 +957,7 @@
 
 
 /* ── Responsive treasury daybook ───────────────────────────── */
+
 @layer components {
     .daybook-table-wrap {
         @apply w-full overflow-hidden;
@@ -974,7 +975,7 @@
     }
 
     .daybook-table th {
-        @apply border-s border-navy-700 px-2 py-2 text-[10px] leading-tight;
+        @apply border-s border-navy-200 px-2 py-2 text-[10px] leading-tight text-navy-700;
     }
 
     .daybook-table td {
@@ -1145,8 +1146,7 @@
         border-color: #b9c9dc !important;
     }
 
-    .daybook-table thead th,
-    .daybook-report > .daybook-sheet > div:nth-child(2) {
+    .daybook-table thead th {
         background: #0e2d58 !important;
         color: #fff !important;
         -webkit-print-color-adjust: exact;
@@ -1262,7 +1262,7 @@
 /* ── Always-visible daybook column filters ──────────────────── */
 @layer components {
     .daybook-filter-row th {
-        @apply border-s border-navy-700 bg-navy-700 px-1 py-1 align-middle;
+        @apply border-s border-navy-100 bg-navy-50 px-1 py-1 align-middle;
     }
 
     .daybook-filter-row .input,
@@ -1270,13 +1270,17 @@
         height: 2rem;
         min-width: 0;
         width: 100%;
-        border-color: #b9c9dc;
+        border-color: #c9d7ee;
         border-radius: 0.35rem;
         background: #fff;
-        color: #0e2d58;
+        color: #16295c;
         font-size: 10px;
         line-height: 1.1;
         padding-inline: 0.35rem;
+    }
+
+    .daybook-filter-row th[colspan] {
+        color: var(--color-navy-400);
     }
 
     .daybook-filter-row .input::placeholder {
