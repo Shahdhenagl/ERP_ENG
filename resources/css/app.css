@@ -1300,3 +1300,108 @@
         display: none !important;
     }
 }
+
+/* ── Periodic maintenance report print layout ─────────────── */
+@media print {
+    @page {
+        size: A4 landscape;
+        margin: 8mm;
+    }
+
+    body {
+        background: #fff !important;
+    }
+
+    .periodic-maintenance-report {
+        width: 100% !important;
+        direction: rtl;
+        color: #0e2d58 !important;
+    }
+
+    .periodic-maintenance-report .print-table-card {
+        overflow: visible !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+    }
+
+    .periodic-maintenance-report .print-table-wrap {
+        overflow: visible !important;
+    }
+
+    .periodic-maintenance-report table {
+        width: 100% !important;
+        min-width: 0 !important;
+        table-layout: fixed !important;
+        font-size: 8px !important;
+    }
+
+    .periodic-maintenance-report th,
+    .periodic-maintenance-report td {
+        padding: 4px 3px !important;
+        line-height: 1.25 !important;
+        overflow-wrap: anywhere;
+    }
+
+    .periodic-maintenance-report th {
+        background: #eaf1f8 !important;
+        color: #0e2d58 !important;
+        border-bottom: 1px solid #9fb4ca !important;
+    }
+
+    .periodic-maintenance-report tr {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .periodic-maintenance-report thead {
+        display: table-header-group;
+    }
+
+    .periodic-maintenance-report .badge {
+        display: inline-block;
+        padding: 2px 4px !important;
+        border: 1px solid currentColor;
+        font-size: 7px !important;
+        line-height: 1.2 !important;
+        white-space: nowrap;
+    }
+
+    .periodic-maintenance-report .min-w-28 {
+        min-width: 0 !important;
+    }
+
+    .periodic-maintenance-report .print-summary {
+        grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+        gap: 4px !important;
+        margin-bottom: 8px !important;
+    }
+
+    .periodic-maintenance-report .print-summary > div {
+        padding: 5px !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 4px !important;
+        box-shadow: none !important;
+    }
+
+    .periodic-maintenance-report .print-summary p {
+        font-size: 8px !important;
+        line-height: 1.2 !important;
+    }
+
+    .periodic-maintenance-report .print-summary p.tabular {
+        font-size: 13px !important;
+    }
+
+    .periodic-maintenance-report .mt-4 {
+        margin-top: 8px !important;
+    }
+
+    .periodic-maintenance-report .mb-4 {
+        margin-bottom: 8px !important;
+    }
+
+    .periodic-maintenance-report h2 {
+        color: #0e2d58 !important;
+    }
+}

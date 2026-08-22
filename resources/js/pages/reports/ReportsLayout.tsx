@@ -75,7 +75,8 @@ export function ReportsLayout() {
 
     return (
         <>
-            <PageHeader
+            <div className={hasOwnControls ? 'print:hidden' : undefined}>
+                <PageHeader
                 title="التقارير"
                 subtitle="كل رقم هنا مقروء من الموديول صاحبه، لا محسوب مرة ثانية"
                 actions={
@@ -103,9 +104,12 @@ export function ReportsLayout() {
                         </Button>
                     )
                 }
-            />
+                />
+            </div>
 
-            <SectionTabs sections={SECTIONS} />
+            <div className={hasOwnControls ? 'print:hidden' : undefined}>
+                <SectionTabs sections={SECTIONS} />
+            </div>
 
             {!isCustom && report.periodic && (
                 <PeriodPicker period={period} presets={['month', 'quarter', 'year', 'all']} />

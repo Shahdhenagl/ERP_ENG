@@ -115,7 +115,7 @@ export function PeriodicMaintenanceReportPage() {
     }
 
     return (
-        <>
+        <div className="periodic-maintenance-report">
             <section className="card print:hidden">
                 <div className="flex flex-wrap items-end justify-between gap-3 border-b border-navy-100 p-4">
                     <div>
@@ -232,7 +232,7 @@ export function PeriodicMaintenanceReportPage() {
                         {isFetching && <span className="text-[10px] font-bold text-brand-600">جاري تحديث التقرير…</span>}
                     </div>
 
-                    <div className="mb-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
+                    <div className="print-summary mb-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
                         <SummaryTile label="فروع مختارة" value={data.selected_branches} tone="text-brand-600" />
                         <SummaryTile label="زيارات الشهر الحالي" value={data.summary.current_tasks} />
                         <SummaryTile label="تمت حاليًا" value={data.summary.current_completed} tone="text-emerald-600" />
@@ -241,8 +241,8 @@ export function PeriodicMaintenanceReportPage() {
                         <SummaryTile label="تمت الشهر السابق" value={data.summary.previous_completed} tone="text-navy-500" />
                     </div>
 
-                    <div className="card overflow-hidden">
-                        <div className="overflow-x-auto">
+                    <div className="card print-table-card overflow-hidden">
+                        <div className="overflow-x-auto print-table-wrap">
                             <table className="w-full min-w-[980px] table-fixed text-right text-xs">
                                 <thead className="bg-navy-50 text-[10px] font-extrabold text-navy-600">
                                     <tr>
@@ -266,7 +266,7 @@ export function PeriodicMaintenanceReportPage() {
                     </div>
                 </section>
             )}
-        </>
+        </div>
     )
 }
 
