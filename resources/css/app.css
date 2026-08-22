@@ -1067,12 +1067,12 @@
         margin: 10mm;
     }
 
-    body * {
+    body:has(.daybook-report) * {
         visibility: hidden !important;
     }
 
-    .daybook-report,
-    .daybook-report * {
+    body:has(.daybook-report) .daybook-report,
+    body:has(.daybook-report) .daybook-report * {
         visibility: visible !important;
     }
 
@@ -1312,9 +1312,22 @@
         background: #fff !important;
     }
 
+    body:has(.periodic-maintenance-report) * {
+        visibility: hidden !important;
+    }
+
+    body:has(.periodic-maintenance-report) .periodic-maintenance-report,
+    body:has(.periodic-maintenance-report) .periodic-maintenance-report * {
+        visibility: visible !important;
+    }
+
     .periodic-maintenance-report {
+        position: absolute !important;
+        inset: 0 !important;
         width: 100% !important;
+        min-height: 0 !important;
         direction: rtl;
+        background: #fff !important;
         color: #0e2d58 !important;
     }
 
