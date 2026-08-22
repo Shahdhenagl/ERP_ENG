@@ -11,7 +11,9 @@ use App\Support\Terms;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 /**
  * The monthly report handover register.
@@ -29,7 +31,7 @@ class TechnicianMonthlyReportController extends Controller
 
         $reports = TechnicianMonthlyReport::query()
             ->forPeriod($period)
-            ->with(['technician', 'customer', 'branch', 'receiver', 'recorder'])
+            ->with($this->reportRelations())
             ->withCount('attachments')
             ->orderByDesc('received_on')
             ->orderByDesc('id')
@@ -67,6 +69,8 @@ class TechnicianMonthlyReportController extends Controller
     /** Record a new handover, or correct an existing report. */
     public function store(Request $request): JsonResponse
     {
+        $this->ensureLocationColumnsAreReady();
+
         $data = $request->validate([
             'report_id' => ['nullable', 'integer', 'exists:technician_monthly_reports,id'],
             'technician_id' => [
@@ -115,7 +119,7 @@ class TechnicianMonthlyReportController extends Controller
         );
 
         return response()->json(
-            ['data' => $this->present($report->load(['technician', 'customer', 'branch', 'receiver', 'recorder'])->loadCount('attachments'))],
+            ['data' => $this->present($report->load($this->reportRelations())->loadCount('attachments'))],
             $report->wasRecentlyCreated ? 201 : 200,
         );
     }
@@ -126,6 +130,31 @@ class TechnicianMonthlyReportController extends Controller
         $technicianMonthlyReport->delete();
 
         return response()->json(['message' => Terms::get('تم حذف تسجيل الاستلام.')]);
+    }
+
+    /**
+     * Keep the listing usable while production is waiting for the feature
+     * migration. Eager-loading the location relations is intentionally skipped
+     * in that state so this endpoint never depends on the missing columns.
+     *
+     * @return array<int, string>
+     */
+    protected function reportRelations(): array
+    {
+        return Schema::hasColumns('technician_monthly_reports', ['customer_id', 'branch_id'])
+            ? ['technician', 'customer', 'branch', 'receiver', 'recorder']
+            : ['technician', 'receiver', 'recorder'];
+    }
+
+    protected function ensureLocationColumnsAreReady(): void
+    {
+        if (Schema::hasColumns('technician_monthly_reports', ['customer_id', 'branch_id'])) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'customer_id' => 'لا يمكن حفظ التقرير حاليًا لأن قاعدة البيانات تحتاج إلى تحديث لتفعيل ربط العميل والفرع. يرجى إبلاغ مدير النظام.',
+        ]);
     }
 
     /** @return array<string, mixed> */

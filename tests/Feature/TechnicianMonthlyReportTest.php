@@ -3,11 +3,40 @@
 use App\Models\Customer;
 use App\Models\TechnicianMonthlyReport;
 use App\Models\User;
+use Illuminate\Support\Facades\Schema;
 
 beforeEach(function () {
     $this->admin = User::factory()->create(['role' => 'admin']);
     $this->customer = Customer::factory()->create();
     $this->actingAs($this->admin);
+});
+
+it('keeps the listing available while the location migration is pending', function () {
+    Schema::shouldReceive('hasColumns')
+        ->once()
+        ->with('technician_monthly_reports', ['customer_id', 'branch_id'])
+        ->andReturnFalse();
+
+    $response = $this->getJson('/api/technician-reports?period=2026-08')->assertOk();
+
+    expect($response->json('data'))->toBeArray()
+        ->and($response->getContent())->not->toContain('SQLSTATE');
+});
+
+it('returns a clear Arabic validation message when the location migration is pending', function () {
+    Schema::shouldReceive('hasColumns')
+        ->once()
+        ->with('technician_monthly_reports', ['customer_id', 'branch_id'])
+        ->andReturnFalse();
+
+    $response = $this->postJson('/api/technician-reports', [
+        'technician_id' => User::factory()->create(['role' => 'technician'])->id,
+        'period' => '2026-08',
+        'customer_id' => $this->customer->id,
+    ])->assertStatus(422)->assertJsonValidationErrors('customer_id');
+
+    expect($response->getContent())->not->toContain('SQLSTATE')
+        ->and($response->json('errors.customer_id.0'))->toContain('تحتاج إلى تحديث');
 });
 
 it('lists every received report for the month, including multiple reports from one technician', function () {
