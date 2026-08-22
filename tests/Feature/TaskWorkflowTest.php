@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\TaskStatus;
+use App\Models\Branch;
 use App\Models\Customer;
 use App\Models\Task;
 use App\Models\User;
@@ -269,4 +270,24 @@ it('has no maps link when nothing locatable was recorded', function () {
     ]);
 
     expect($task->navigationUrl())->toBeNull();
+});
+
+it('finds a task by its branch name', function () {
+    $branch = Branch::create([
+        'customer_id' => $this->customer->id,
+        'name' => 'قطور',
+        'address' => 'شارع المحطة، قطور',
+    ]);
+    $task = Task::factory()->create([
+        'customer_id' => $this->customer->id,
+        'branch_id' => $branch->id,
+        'title' => 'تركيب بطاريات لوحة التحكم',
+    ]);
+
+    actingAs($this->manager)
+        ->getJson('/api/tasks?search=قطور')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $task->id)
+        ->assertJsonPath('data.0.branch.name', 'قطور');
 });

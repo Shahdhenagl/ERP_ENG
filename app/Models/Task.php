@@ -322,11 +322,21 @@ class Task extends Model
             return $query;
         }
 
-        return $query->where(function (Builder $q) use ($term) {
-            $q->where('title', 'like', "%{$term}%")
-                ->orWhere('code', 'like', "%{$term}%")
-                ->orWhereHas('asset', fn (Builder $a) => $a->where('serial', 'like', "%{$term}%"))
-                ->orWhereHas('customer', fn (Builder $c) => $c->where('name', 'like', "%{$term}%"));
+        $like = "%{$term}%";
+
+        return $query->where(function (Builder $q) use ($like) {
+            $q->where('title', 'like', $like)
+                ->orWhere('code', 'like', $like)
+                ->orWhere('site_address', 'like', $like)
+                ->orWhereHas('asset', fn (Builder $a) => $a->where('serial', 'like', $like))
+                ->orWhereHas('customer', fn (Builder $c) => $c
+                    ->where('name', 'like', $like)
+                    ->orWhere('address', 'like', $like))
+                ->orWhereHas('branch', fn (Builder $b) => $b
+                    ->where('name', 'like', $like)
+                    ->orWhere('address', 'like', $like)
+                    ->orWhere('governorate', 'like', $like)
+                    ->orWhere('city', 'like', $like));
         });
     }
 }
