@@ -115,7 +115,11 @@ export function Dashboard() {
                         value={stats?.branches_without_tasks}
                         loading={isLoading}
                         tone="red"
-                        to={`${path('/')}#branches-without-tasks`}
+                        onClick={() =>
+                            document
+                                .getElementById('branches-without-tasks')
+                                ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                        }
                     />
                 )}
                 {canDispatch && (
@@ -715,9 +719,10 @@ interface StatTileProps {
     loading: boolean
     tone: keyof typeof TONES
     to?: string
+    onClick?: () => void
 }
 
-function StatTile({ icon: Icon, label, value, loading, tone, to }: StatTileProps) {
+function StatTile({ icon: Icon, label, value, loading, tone, to, onClick }: StatTileProps) {
     const content = (
         <div className="card flex items-center gap-2.5 p-3 transition-all hover:shadow-[var(--shadow-card-hover)]">
             <span
@@ -742,7 +747,16 @@ function StatTile({ icon: Icon, label, value, loading, tone, to }: StatTileProps
         </div>
     )
 
-    return to ? <Link to={to}>{content}</Link> : content
+    if (to) return <Link to={to}>{content}</Link>
+    if (onClick) {
+        return (
+            <button type="button" onClick={onClick} className="block w-full text-right">
+                {content}
+            </button>
+        )
+    }
+
+    return content
 }
 
 /** One column of standing alerts — a heading with a count and a short list. */
