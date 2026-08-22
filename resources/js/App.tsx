@@ -85,6 +85,7 @@ import { CustodyReportPage } from '@/pages/reports/CustodyReportPage'
 import { CustomExportPage } from '@/pages/reports/CustomExportPage'
 import { HrReportPage } from '@/pages/reports/HrReportPage'
 import { MaintenanceReportPage } from '@/pages/reports/MaintenanceReportPage'
+import { PeriodicMaintenanceReportPage } from '@/pages/reports/PeriodicMaintenanceReportPage'
 import { ProfitReportPage } from '@/pages/reports/ProfitReportPage'
 import { ReportsLayout } from '@/pages/reports/ReportsLayout'
 import { SalesReportPage } from '@/pages/reports/SalesReportPage'
@@ -337,6 +338,7 @@ export function App() {
                                             <Route path="crm" element={<CrmReportPage />} />
                                             <Route path="hr" element={<HrReportPage />} />
                                             <Route path="maintenance" element={<MaintenanceReportPage />} />
+                                            <Route path="periodic-maintenance" element={<PeriodicMaintenanceReportPage />} />
                                             <Route path="task-movements" element={<TaskMovementsReportPage />} />
                                             <Route path="custom" element={<CustomExportPage />} />
                                         </Route>

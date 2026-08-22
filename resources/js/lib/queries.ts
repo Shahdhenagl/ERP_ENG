@@ -73,6 +73,7 @@ import type {
     CrmReport,
     HrReport,
     MaintenanceReport,
+    PeriodicMaintenanceReport,
     OperationsReport,
     DatasetOption,
     ChecklistItem,
@@ -2962,6 +2963,36 @@ export const useHrReport = (range: Record<string, unknown> = {}) =>
 
 export const useMaintenanceReport = (range: Record<string, unknown> = {}) =>
     useReport<MaintenanceReport>('maintenance', range)
+
+export function usePeriodicMaintenanceReport(month: string, branchIds: number[]) {
+    const { canDispatch } = useAuth()
+    const cleanBranchIds = [...branchIds].sort((a, b) => a - b)
+
+    return useQuery({
+        queryKey: ['periodic-maintenance-report', month, cleanBranchIds],
+        queryFn: async () =>
+            (
+                await api.get<{ data: PeriodicMaintenanceReport }>('/reports/periodic-maintenance', {
+                    params: { month, branch_ids: cleanBranchIds },
+                })
+            ).data.data,
+        enabled: canDispatch && Boolean(month) && cleanBranchIds.length > 0,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export async function downloadPeriodicMaintenanceReport(month: string, branchIds: number[]): Promise<void> {
+    const response = await api.get('/reports/periodic-maintenance/export', {
+        params: { month, branch_ids: [...branchIds].sort((a, b) => a - b) },
+        responseType: 'blob',
+    })
+    const url = URL.createObjectURL(response.data as Blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `periodic-maintenance-${month}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+}
 
 /** The operations dashboard — the whole estate at a glance. */
 export function useOperations() {

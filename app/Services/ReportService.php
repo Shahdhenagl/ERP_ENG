@@ -8,6 +8,7 @@ use App\Enums\TaskType;
 use App\Enums\VisitStatus;
 use App\Models\Asset;
 use App\Models\Attendance;
+use App\Models\Branch;
 use App\Models\Contract;
 use App\Models\ContractVisit;
 use App\Models\Employee;
@@ -851,6 +852,146 @@ class ReportService
                 'below_reorder' => $belowReorder,
             ],
         ];
+    }
+
+    /**
+     * A branch-by-branch preventive-maintenance sheet for the month selected by
+     * the manager. Tasks are the source of truth because the planner creates one
+     * work order per branch; a missing task therefore remains visible as pending
+     * rather than disappearing from the report.
+     *
+     * @param array<int, int> $branchIds
+     * @return array<string, mixed>
+     */
+    public function periodicMaintenance(array $branchIds, string $month): array
+    {
+        $currentStart = \Carbon\CarbonImmutable::createFromFormat('Y-m-d', $month.'-01')->startOfMonth();
+        $previousStart = $currentStart->subMonth();
+        $currentEnd = $currentStart->endOfMonth();
+
+        $branches = Branch::query()
+            ->whereIn('id', $branchIds)
+            ->with('customer')
+            ->orderBy('customer_id')
+            ->orderBy('name')
+            ->get();
+
+        $tasks = Task::query()
+            ->whereIn('branch_id', $branches->modelKeys())
+            ->whereNotNull('contract_visit_id')
+            ->with(['customer', 'branch', 'technicians', 'reports'])
+            ->where(function ($query) use ($previousStart, $currentEnd) {
+                $query->whereBetween('scheduled_at', [$previousStart, $currentEnd])
+                    ->orWhereBetween('created_at', [$previousStart, $currentEnd])
+                    ->orWhereBetween('completed_at', [$previousStart, $currentEnd]);
+            })
+            ->get();
+
+        $periods = [
+            'previous' => [$previousStart, $currentStart->subDay()],
+            'current' => [$currentStart, $currentEnd],
+        ];
+
+        $rows = $branches->map(function (Branch $branch) use ($tasks, $periods) {
+            $branchTasks = $tasks->where('branch_id', $branch->id);
+            $periodData = [];
+
+            foreach ($periods as $key => [$from, $to]) {
+                $inWindow = $branchTasks->filter(function (Task $task) use ($from, $to): bool {
+                    $date = $task->scheduled_at ?? $task->created_at;
+
+                    return $date && $date->betweenIncluded($from, $to);
+                })->values();
+
+                $completed = $inWindow->where('status', TaskStatus::Completed->value)->values();
+                $reports = $inWindow->filter(fn (Task $task) => $task->reports->isNotEmpty())->values();
+                $technicians = $inWindow
+                    ->flatMap(fn (Task $task) => $task->technicians)
+                    ->pluck('name')
+                    ->filter()
+                    ->unique()
+                    ->values()
+                    ->all();
+
+                $status = $this->periodicMaintenanceStatus($inWindow);
+                $statusCounts = $inWindow
+                    ->groupBy(fn (Task $task) => $task->status->value)
+                    ->map(fn ($statusTasks) => $statusTasks->count())
+                    ->all();
+                $latestDate = $inWindow
+                    ->map(fn (Task $task) => $task->scheduled_at ?? $task->created_at)
+                    ->filter()
+                    ->sortDesc()
+                    ->first();
+
+                $periodData[$key] = [
+                    'tasks_total' => $inWindow->count(),
+                    'completed' => $completed->count(),
+                    'pending' => $inWindow->count() - $completed->count(),
+                    'reports_received' => $reports->count(),
+                    'status' => $status['value'],
+                    'status_label' => $status['label'],
+                    'status_counts' => $statusCounts,
+                    'visit_date' => $latestDate?->toDateString(),
+                    'technicians' => $technicians,
+                ];
+            }
+
+            return [
+                'branch_id' => $branch->id,
+                'branch' => $branch->name,
+                'customer' => $branch->customer?->name,
+                'location' => $branch->address ?: trim(implode('، ', array_filter([$branch->governorate, $branch->city]))) ?: null,
+                'previous' => $periodData['previous'],
+                'current' => $periodData['current'],
+            ];
+        })->values();
+
+        return [
+            'month' => $month,
+            'previous_month' => $previousStart->format('Y-m'),
+            'selected_branches' => $branches->count(),
+            'summary' => [
+                'previous_tasks' => (int) $rows->sum('previous.tasks_total'),
+                'previous_completed' => (int) $rows->sum('previous.completed'),
+                'current_tasks' => (int) $rows->sum('current.tasks_total'),
+                'current_completed' => (int) $rows->sum('current.completed'),
+                'current_pending' => (int) $rows->sum('current.pending'),
+                'current_reports_received' => (int) $rows->sum('current.reports_received'),
+            ],
+            'rows' => $rows,
+        ];
+    }
+
+    /** @param \Illuminate\Support\Collection<int, Task> $tasks */
+    protected function periodicMaintenanceStatus($tasks): array
+    {
+        if ($tasks->isEmpty()) {
+            return ['value' => 'not_scheduled', 'label' => 'لم تُسجّل زيارة'];
+        }
+
+        $active = $tasks->reject(fn (Task $task) => in_array(
+            $task->status->value,
+            [TaskStatus::Completed->value, TaskStatus::Cancelled->value],
+            true,
+        ));
+
+        if ($active->isEmpty()) {
+            return $tasks->contains(fn (Task $task) => $task->status === TaskStatus::Completed)
+                ? ['value' => TaskStatus::Completed->value, 'label' => TaskStatus::Completed->label()]
+                : ['value' => TaskStatus::Cancelled->value, 'label' => TaskStatus::Cancelled->label()];
+        }
+
+        $priority = [
+            TaskStatus::InProgress->value => 5,
+            TaskStatus::OnTheWay->value => 4,
+            TaskStatus::Accepted->value => 3,
+            TaskStatus::Postponed->value => 2,
+            TaskStatus::Pending->value => 1,
+        ];
+        $task = $active->sortByDesc(fn (Task $row) => $priority[$row->status->value] ?? 0)->first();
+
+        return ['value' => $task->status->value, 'label' => $task->status->label()];
     }
 
     /* ── Internals ───────────────────────────────────────── */

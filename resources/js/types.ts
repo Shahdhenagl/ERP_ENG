@@ -2120,6 +2120,42 @@ export interface MaintenanceReport {
     }
 }
 
+export interface PeriodicMaintenancePeriod {
+    tasks_total: number
+    completed: number
+    pending: number
+    reports_received: number
+    status: string
+    status_label: string
+    status_counts: Record<string, number>
+    visit_date: string | null
+    technicians: string[]
+}
+
+export interface PeriodicMaintenanceRow {
+    branch_id: number
+    branch: string
+    customer: string | null
+    location: string | null
+    previous: PeriodicMaintenancePeriod
+    current: PeriodicMaintenancePeriod
+}
+
+export interface PeriodicMaintenanceReport {
+    month: string
+    previous_month: string
+    selected_branches: number
+    summary: {
+        previous_tasks: number
+        previous_completed: number
+        current_tasks: number
+        current_completed: number
+        current_pending: number
+        current_reports_received: number
+    }
+    rows: PeriodicMaintenanceRow[]
+}
+
 /** A dataset a custom export can pull the raw rows of. */
 export interface DatasetOption {
     key: string

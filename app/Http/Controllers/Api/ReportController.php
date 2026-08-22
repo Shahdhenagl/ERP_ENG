@@ -86,6 +86,15 @@ class ReportController extends Controller
         return response()->json(['data' => $this->reports->maintenance($from, $to)]);
     }
 
+    public function periodicMaintenance(Request $request): JsonResponse
+    {
+        $filters = $this->periodicMaintenanceFilters($request);
+
+        return response()->json([
+            'data' => $this->reports->periodicMaintenance($filters['branch_ids'], $filters['month']),
+        ]);
+    }
+
     /** The standby-power estate at a glance — the operations dashboard. */
     public function operations(): JsonResponse
     {
@@ -110,6 +119,16 @@ class ReportController extends Controller
     public function export(Request $request, string $report): StreamedResponse
     {
         [$from, $to] = $this->window($request);
+
+        if ($report === 'periodic-maintenance') {
+            $filters = $this->periodicMaintenanceFilters($request);
+            [$name, $headings, $rows] = $this->periodicMaintenanceRows(
+                $filters['branch_ids'],
+                $filters['month'],
+            );
+
+            return $this->stream($name, $headings, $rows);
+        }
 
         [$name, $headings, $rows] = match ($report) {
             'sales' => $this->salesRows($from, $to),
@@ -310,6 +329,52 @@ class ReportController extends Controller
             collect($report['tasks']['by_status'])->map(fn ($row) => [
                 $row['label'], $row['count'],
             ]),
+        ];
+    }
+
+    /** @return array{0: string, 1: array<int, string>, 2: iterable<int, array<int, mixed>>} */
+    protected function periodicMaintenanceRows(array $branchIds, string $month): array
+    {
+        $report = $this->reports->periodicMaintenance($branchIds, $month);
+
+        return [
+            'periodic-maintenance-'.$month.'.csv',
+            [
+                'م', 'العميل', 'الفرع', 'المكان', 'الشهر السابق', 'الشهر الحالي',
+                'موقف الصيانة', 'استلام التقرير', 'موعد الزيارة الحالي', 'المهندس',
+            ],
+            collect($report['rows'])->values()->map(function ($row, $index) {
+                $previous = $row['previous'];
+                $current = $row['current'];
+
+                return [
+                    $index + 1,
+                    $row['customer'],
+                    $row['branch'],
+                    $row['location'],
+                    $previous['status_label'].' · '.$previous['completed'].'/'.$previous['tasks_total'],
+                    $current['status_label'].' · '.$current['completed'].'/'.$current['tasks_total'],
+                    $current['status_label'],
+                    $current['reports_received'].'/'.$current['tasks_total'],
+                    $current['visit_date'],
+                    implode('، ', $current['technicians']),
+                ];
+            }),
+        ];
+    }
+
+    /** @return array{branch_ids: array<int, int>, month: string} */
+    protected function periodicMaintenanceFilters(Request $request): array
+    {
+        $filters = $request->validate([
+            'month' => ['required', 'date_format:Y-m'],
+            'branch_ids' => ['required', 'array', 'min:1'],
+            'branch_ids.*' => ['integer', 'distinct', 'exists:branches,id'],
+        ]);
+
+        return [
+            'branch_ids' => array_map('intval', $filters['branch_ids']),
+            'month' => $filters['month'],
         ];
     }
 

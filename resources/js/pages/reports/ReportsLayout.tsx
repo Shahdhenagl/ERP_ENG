@@ -40,6 +40,7 @@ const SECTIONS = [
     ['/reports/crm', 'العملاء المحتملون'],
     ['/reports/hr', 'الموارد البشرية'],
     ['/reports/maintenance', 'الصيانة'],
+    ['/reports/periodic-maintenance', 'الصيانة الدورية'],
     ['/reports/task-movements', 'حركة المهام'],
     ['/reports/custom', 'مخصّص'],
 ] as const
@@ -55,6 +56,7 @@ const REPORT_BY_PATH: Record<string, { name: string; periodic: boolean }> = {
     crm: { name: 'crm', periodic: true },
     hr: { name: 'hr', periodic: true },
     maintenance: { name: 'maintenance', periodic: true },
+    'periodic-maintenance': { name: 'periodic-maintenance', periodic: false },
     'task-movements': { name: 'task-movements', periodic: true },
 }
 
@@ -68,6 +70,7 @@ export function ReportsLayout() {
     // The custom page carries its own dataset picker, window and export button,
     // so the shared header export and period picker do not apply to it.
     const isCustom = section === 'custom'
+    const hasOwnControls = section === 'periodic-maintenance'
     const report = REPORT_BY_PATH[section] ?? REPORT_BY_PATH.sales
 
     return (
@@ -76,7 +79,7 @@ export function ReportsLayout() {
                 title="التقارير"
                 subtitle="كل رقم هنا مقروء من الموديول صاحبه، لا محسوب مرة ثانية"
                 actions={
-                    isCustom ? undefined : (
+                    isCustom || hasOwnControls ? undefined : (
                         <Button
                             variant="secondary"
                             icon={Download}

@@ -337,6 +337,7 @@ export const NAV: NavItem[] = [
             { to: '/reports/crm', permission: 'reports.view', label: tr('تقارير العملاء المحتملين'), icon: Contact },
             { to: '/reports/hr', permission: 'reports.view', label: tr('تقارير الموارد البشرية'), icon: UserCog },
             { to: '/reports/maintenance', permission: 'reports.view', label: tr('تقارير الصيانة و PPM'), icon: Wrench },
+            { to: '/reports/periodic-maintenance', permission: 'reports.view', label: tr('تقرير الصيانة الدورية'), icon: ClipboardList },
             { to: '/reports/custom', permission: 'reports.view', label: tr('التقارير المخصصة'), icon: BadgePercent },
         ],
     },

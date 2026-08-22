@@ -321,6 +321,7 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::get('reports/crm', [ReportController::class, 'crm'])->middleware('can:reports.view');
     Route::get('reports/hr', [ReportController::class, 'hr'])->middleware('can:reports.view');
     Route::get('reports/maintenance', [ReportController::class, 'maintenance'])->middleware('can:reports.view');
+    Route::get('reports/periodic-maintenance', [ReportController::class, 'periodicMaintenance'])->middleware('can:reports.view');
     Route::get('reports/operations', [ReportController::class, 'operations'])->middleware('can:reports.view');
     Route::get('reports/task-movements', [ReportController::class, 'taskMovements'])->middleware('can:reports.view');
 
