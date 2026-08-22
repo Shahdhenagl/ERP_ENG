@@ -878,12 +878,24 @@ class ReportService
 
         $tasks = Task::query()
             ->whereIn('branch_id', $branches->modelKeys())
-            ->whereNotNull('contract_visit_id')
-            ->with(['customer', 'branch', 'technicians', 'reports'])
+            ->with(['customer', 'branch', 'technicians', 'reports', 'contractVisit'])
             ->where(function ($query) use ($previousStart, $currentEnd) {
-                $query->whereBetween('scheduled_at', [$previousStart, $currentEnd])
-                    ->orWhereBetween('created_at', [$previousStart, $currentEnd])
-                    ->orWhereBetween('completed_at', [$previousStart, $currentEnd]);
+                // A contract visit owns the maintenance round and its planned
+                // date. Task timestamps can drift when a visit is rescheduled or
+                // completed later, so they must not decide the report month.
+                $query->whereHas('contractVisit', function ($visitQuery) use ($previousStart, $currentEnd) {
+                    $visitQuery->whereBetween('planned_for', [$previousStart, $currentEnd]);
+                })
+                    // Keep older manually-created maintenance tasks visible until
+                    // they are linked to a contract visit.
+                    ->orWhere(function ($legacyQuery) use ($previousStart, $currentEnd) {
+                        $legacyQuery->whereNull('contract_visit_id')
+                            ->where(function ($dateQuery) use ($previousStart, $currentEnd) {
+                                $dateQuery->whereBetween('scheduled_at', [$previousStart, $currentEnd])
+                                    ->orWhereBetween('created_at', [$previousStart, $currentEnd])
+                                    ->orWhereBetween('completed_at', [$previousStart, $currentEnd]);
+                            });
+                    });
             })
             ->get();
 
@@ -898,7 +910,9 @@ class ReportService
 
             foreach ($periods as $key => [$from, $to]) {
                 $inWindow = $branchTasks->filter(function (Task $task) use ($from, $to): bool {
-                    $date = $task->scheduled_at ?? $task->created_at;
+                    $date = $task->contractVisit?->planned_for
+                        ?? $task->scheduled_at
+                        ?? $task->created_at;
 
                     return $date && $date->betweenIncluded($from, $to);
                 })->values();
@@ -919,7 +933,9 @@ class ReportService
                     ->map(fn ($statusTasks) => $statusTasks->count())
                     ->all();
                 $latestDate = $inWindow
-                    ->map(fn (Task $task) => $task->scheduled_at ?? $task->created_at)
+                    ->map(fn (Task $task) => $task->contractVisit?->planned_for
+                        ?? $task->scheduled_at
+                        ?? $task->created_at)
                     ->filter()
                     ->sortDesc()
                     ->first();

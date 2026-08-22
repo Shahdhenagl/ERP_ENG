@@ -94,6 +94,38 @@ it('combines selected branches and compares the previous and current month', fun
         ->and($rows['فرع طنطا']['current']['status'])->toBe(TaskStatus::OnTheWay->value);
 });
 
+it('uses the contract visit month when task timestamps drift', function () {
+    $branch = Branch::create([
+        'customer_id' => $this->customer->id,
+        'name' => 'فرع الزيارة المنفذة',
+    ]);
+    $visit = ContractVisit::create([
+        'contract_id' => $this->contract->id,
+        'sequence' => 1,
+        'planned_for' => '2026-08-15',
+        'status' => 'done',
+    ]);
+
+    Task::factory()->for($this->customer)->create([
+        'branch_id' => $branch->id,
+        'contract_id' => $this->contract->id,
+        'contract_visit_id' => $visit->id,
+        'scheduled_at' => '2026-09-01 09:00:00',
+        'status' => TaskStatus::Completed,
+        'completed_at' => '2026-09-03 12:00:00',
+    ]);
+
+    $body = actingAs($this->manager)
+        ->getJson('/api/reports/periodic-maintenance?month=2026-08&branch_ids[]='.$branch->id)
+        ->assertOk()
+        ->json('data');
+
+    expect($body['summary']['current_tasks'])->toBe(1)
+        ->and($body['summary']['current_completed'])->toBe(1)
+        ->and($body['rows'][0]['current']['status'])->toBe(TaskStatus::Completed->value)
+        ->and($body['rows'][0]['current']['visit_date'])->toBe('2026-08-15');
+});
+
 it('requires at least one selected branch', function () {
     actingAs($this->manager)
         ->getJson('/api/reports/periodic-maintenance?month=2026-08')
