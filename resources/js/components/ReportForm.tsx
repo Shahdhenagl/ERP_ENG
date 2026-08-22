@@ -15,6 +15,7 @@ import {
     SITE_CHECKS,
     SITE_CHECK_OPTIONS,
 } from '@/lib/domain'
+import { currentPosition } from '@/lib/geo'
 import { useChecklistItems, useMyStock, useSaveReport } from '@/lib/queries'
 import type { ChecklistAnswer, ReportType, Task, TaskReport } from '@/types'
 
@@ -88,6 +89,17 @@ export function ReportForm({ open, onClose, task, type, existing, onSaved }: Rep
     const isCompletion = type === 'completion'
 
     const handleSave = async () => {
+        let position: { lat?: number; lng?: number } = {}
+
+        if (isCompletion && task.status === 'in_progress') {
+            position = await currentPosition()
+
+            if (position.lat == null || position.lng == null) {
+                toast.error('يجب تفعيل الموقع والسماح للمتصفح بإرسال موقعك الحالي قبل حفظ تقرير الإنهاء وإغلاق المهمة.')
+                return
+            }
+        }
+
         // Blank readings must be sent as null, not "" — the API expects numerics.
         const numericReadings = Object.fromEntries(
             Object.entries(readings).map(([key, value]) => [key, value === '' ? null : Number(value)]),
@@ -123,6 +135,7 @@ export function ReportForm({ open, onClose, task, type, existing, onSaved }: Rep
                     })),
                 signed_by_name: signedBy || null,
                 signature,
+                ...position,
             })
 
             // Filing the completion report closes the job server-side, so say so

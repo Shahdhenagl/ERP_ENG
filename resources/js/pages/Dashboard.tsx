@@ -535,8 +535,14 @@ function AttendanceCard() {
     const checkedOut = Boolean(today?.check_out)
 
     const punch = async (direction: 'check-in' | 'check-out') => {
-        const location = await currentPosition()
         try {
+            const location = await currentPosition()
+
+            if (location.lat == null || location.lng == null) {
+                toast.error('يجب تفعيل الموقع والسماح للمتصفح بإرسال موقعك الحالي قبل تسجيل الحضور أو الانصراف.')
+                return
+            }
+
             await (direction === 'check-in' ? checkIn : checkOut).mutateAsync(location)
             toast.success(direction === 'check-in' ? tr('تم تسجيل حضورك.') : tr('تم تسجيل انصرافك.'))
         } catch (caught) {

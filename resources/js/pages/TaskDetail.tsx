@@ -152,18 +152,18 @@ export function TaskDetail() {
             return
         }
 
-        // Stamp where the technician was — the evidence that a job was
-        // accepted from the yard and finished at the site.
-        const position = await currentPosition()
-
+        // A technician's transition is only valid with a current GPS stamp.
+        // The API repeats this check so a direct request cannot bypass it.
         try {
-            await changeStatus.mutateAsync({ status: next, ...position })
+            const position = await currentPosition()
 
-            if (position.lat == null) {
-                toast.info('تم التحديث، لكن تعذّر تحديد الموقع — فعّل خدمة الموقع للمتصفح.')
-            } else {
-                toast.success(`تم تحديث الحالة إلى «${STATUS[next].label}».`)
+            if (position.lat == null || position.lng == null) {
+                toast.error('يجب تفعيل الموقع والسماح للمتصفح بإرسال موقعك الحالي قبل تغيير حالة المهمة.')
+                return
             }
+
+            await changeStatus.mutateAsync({ status: next, ...position })
+            toast.success(`تم تحديث الحالة إلى «${STATUS[next].label}».`)
         } catch (caught) {
             toast.error(errorMessage(caught, 'تعذّر تحديث الحالة.'))
         }

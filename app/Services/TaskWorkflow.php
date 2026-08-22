@@ -46,7 +46,13 @@ class TaskWorkflow
 
         if (! $from->canTransitionTo($to)) {
             throw ValidationException::withMessages([
-                'status' => "لا يمكن الانتقال من «{$from->label()}» إلى «{$to->label()}».",
+                'status' => "لا يمكن الانتقال من «{$from->label()}» إلى «{$to->label()}»."
+            ]);
+        }
+
+        if ($actor->isTechnician() && (($context['lat'] ?? null) === null || ($context['lng'] ?? null) === null)) {
+            throw ValidationException::withMessages([
+                'location' => 'يجب تفعيل الموقع والسماح للمتصفح بإرسال موقعك الحالي قبل تغيير حالة المهمة.',
             ]);
         }
 

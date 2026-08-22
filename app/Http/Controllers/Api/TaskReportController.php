@@ -81,9 +81,22 @@ class TaskReportController extends Controller
             'parts_used.*.item_id' => ['nullable', 'exists:items,id'],
 
             'signed_by_name' => ['nullable', 'string', 'max:160'],
+            'lat' => ['nullable', 'numeric', 'between:-90,90'],
+            'lng' => ['nullable', 'numeric', 'between:-180,180'],
             // Base64 data URL captured from the on-screen signature pad.
             'signature' => ['nullable', 'string'],
         ]);
+
+        $willCloseTask = $data['type'] === 'completion'
+            && $task->status === TaskStatus::InProgress
+            && $user->isTechnician()
+            && $task->technicians()->where('users.id', $user->id)->exists();
+
+        if ($willCloseTask && (($data['lat'] ?? null) === null || ($data['lng'] ?? null) === null)) {
+            throw ValidationException::withMessages([
+                'location' => 'يجب تفعيل الموقع والسماح للمتصفح بإرسال موقعك الحالي قبل حفظ تقرير الإنهاء وإغلاق المهمة.',
+            ]);
+        }
 
         $data['user_id'] = $user->id;
 
@@ -99,7 +112,7 @@ class TaskReportController extends Controller
             $data['signed_at'] = now();
         }
 
-        unset($data['signature']);
+        unset($data['signature'], $data['lat'], $data['lng']);
 
         $report = TaskReport::updateOrCreate(
             ['task_id' => $task->id, 'type' => $data['type']],
@@ -128,7 +141,10 @@ class TaskReportController extends Controller
             && $user->isTechnician()
             && $task->technicians()->where('users.id', $user->id)->exists()
         ) {
-            $this->workflow->transition($task, TaskStatus::Completed, $user);
+            $this->workflow->transition($task, TaskStatus::Completed, $user, [
+                'lat' => $request->input('lat'),
+                'lng' => $request->input('lng'),
+            ]);
         }
 
         return response()->json(

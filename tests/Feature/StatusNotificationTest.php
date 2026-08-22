@@ -15,9 +15,8 @@ beforeEach(function () {
     $this->manager = User::factory()->manager()->create();
     $this->technician = User::factory()->technician()->create();
 
-    $this->task = Task::factory()->create([
+    $this->task = Task::factory()->assignedTo($this->technician)->create([
         'customer_id' => Customer::factory(),
-        'assigned_to' => $this->technician->id,
         'created_by' => $this->manager->id,
         'status' => TaskStatus::InProgress,
     ]);
@@ -25,7 +24,11 @@ beforeEach(function () {
 
 it('tells the manager when the technician closes the job by hand', function () {
     actingAs($this->technician)
-        ->postJson("/api/tasks/{$this->task->id}/reports", ['type' => 'completion'])
+        ->postJson("/api/tasks/{$this->task->id}/reports", [
+            'type' => 'completion',
+            'lat' => 30.0444,
+            'lng' => 31.2357,
+        ])
         ->assertCreated();
 
     actingAs($this->technician)
@@ -38,7 +41,11 @@ it('tells the manager when the technician closes the job by hand', function () {
 it('tells the manager when filing the report closes the job', function () {
     // The path the technician actually takes — and the one that was silent.
     actingAs($this->technician)
-        ->postJson("/api/tasks/{$this->task->id}/reports", ['type' => 'completion'])
+        ->postJson("/api/tasks/{$this->task->id}/reports", [
+            'type' => 'completion',
+            'lat' => 30.0444,
+            'lng' => 31.2357,
+        ])
         ->assertCreated();
 
     expect($this->task->fresh()->status)->toBe(TaskStatus::Completed)
@@ -47,22 +54,29 @@ it('tells the manager when filing the report closes the job', function () {
 
 it('names the job in the notification it sends', function () {
     actingAs($this->technician)
-        ->postJson("/api/tasks/{$this->task->id}/reports", ['type' => 'completion'])
+        ->postJson("/api/tasks/{$this->task->id}/reports", [
+            'type' => 'completion',
+            'lat' => 30.0444,
+            'lng' => 31.2357,
+        ])
         ->assertCreated();
 
     expect($this->manager->notifications()->first()->data['task_id'])->toBe($this->task->id);
 });
 
 it('notifies on an ordinary status change too', function () {
-    $pending = Task::factory()->create([
+    $pending = Task::factory()->assignedTo($this->technician)->create([
         'customer_id' => Customer::factory(),
-        'assigned_to' => $this->technician->id,
         'created_by' => $this->manager->id,
         'status' => TaskStatus::Pending,
     ]);
 
     actingAs($this->technician)
-        ->postJson("/api/tasks/{$pending->id}/status", ['status' => 'accepted'])
+        ->postJson("/api/tasks/{$pending->id}/status", [
+            'status' => 'accepted',
+            'lat' => 30.0444,
+            'lng' => 31.2357,
+        ])
         ->assertOk();
 
     expect($this->manager->notifications()->count())->toBe(1);

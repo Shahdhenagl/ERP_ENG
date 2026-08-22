@@ -95,7 +95,6 @@ class AttendanceController extends Controller
      */
     public function checkIn(Request $request): JsonResponse
     {
-        $data = $this->locationRules($request);
         $employee = Employee::forUser($request->user());
         $today = now()->toDateString();
 
@@ -104,6 +103,8 @@ class AttendanceController extends Controller
         if ($existing && $existing->check_in) {
             throw ValidationException::withMessages(['check_in' => Terms::get('تم تسجيل حضورك اليوم بالفعل.')]);
         }
+
+        $data = $this->locationRules($request);
 
         $attendance = Attendance::updateOrCreate(
             ['employee_id' => $employee->id, 'date' => $today],
@@ -124,7 +125,6 @@ class AttendanceController extends Controller
     /** Punch out, stamping where. Refused until they have punched in. */
     public function checkOut(Request $request): JsonResponse
     {
-        $data = $this->locationRules($request);
         $employee = Employee::forUser($request->user());
 
         $attendance = Attendance::where('employee_id', $employee->id)
@@ -138,6 +138,8 @@ class AttendanceController extends Controller
         if ($attendance->check_out) {
             throw ValidationException::withMessages(['check_out' => Terms::get('تم تسجيل انصرافك اليوم بالفعل.')]);
         }
+
+        $data = $this->locationRules($request);
 
         $attendance->update([
             'check_out' => now()->format('H:i'),
@@ -155,8 +157,11 @@ class AttendanceController extends Controller
     protected function locationRules(Request $request): array
     {
         return $request->validate([
-            'lat' => ['nullable', 'numeric', 'between:-90,90'],
-            'lng' => ['nullable', 'numeric', 'between:-180,180'],
+            'lat' => ['required', 'numeric', 'between:-90,90'],
+            'lng' => ['required', 'numeric', 'between:-180,180'],
+        ], [
+            'lat.required' => 'يجب تفعيل الموقع والسماح للمتصفح بإرسال موقعك الحالي قبل تسجيل الحضور أو الانصراف.',
+            'lng.required' => 'يجب تفعيل الموقع والسماح للمتصفح بإرسال موقعك الحالي قبل تسجيل الحضور أو الانصراف.',
         ]);
     }
 

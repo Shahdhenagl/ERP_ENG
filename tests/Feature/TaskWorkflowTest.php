@@ -103,7 +103,11 @@ it('walks a job through the full lifecycle', function () {
 
     foreach (['accepted', 'on_the_way', 'in_progress', 'completed'] as $status) {
         actingAs($this->technician)
-            ->postJson("/api/tasks/{$task->id}/status", ['status' => $status])
+            ->postJson("/api/tasks/{$task->id}/status", [
+                'status' => $status,
+                'lat' => 30.0444,
+                'lng' => 31.2357,
+            ])
             ->assertOk()
             ->assertJsonPath('data.status', $status);
     }
@@ -177,7 +181,11 @@ it('tells the manager when the job moves', function () {
         ->create(['created_by' => $this->manager->id]);
 
     actingAs($this->technician)
-        ->postJson("/api/tasks/{$task->id}/status", ['status' => 'accepted'])
+        ->postJson("/api/tasks/{$task->id}/status", [
+            'status' => 'accepted',
+            'lat' => 30.0444,
+            'lng' => 31.2357,
+        ])
         ->assertOk();
 
     Notification::assertSentTo($this->manager, TaskStatusChanged::class);
@@ -212,6 +220,8 @@ it('files a completion report with structured readings', function () {
         'batteries_need_replacement' => true,
         'findings' => 'البطاريات ضعيفة',
         'parts_used' => [['name' => 'فيوز 32A', 'qty' => 2]],
+        'lat' => 30.0444,
+        'lng' => 31.2357,
     ])->assertCreated();
 
     $report = $task->completionReport;

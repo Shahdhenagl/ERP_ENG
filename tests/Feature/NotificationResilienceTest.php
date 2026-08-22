@@ -20,9 +20,8 @@ beforeEach(function () {
     $this->technician = User::factory()->technician()->create();
     $this->customer = Customer::factory()->create();
 
-    $this->task = Task::factory()->create([
+    $this->task = Task::factory()->assignedTo($this->technician)->create([
         'customer_id' => $this->customer->id,
-        'assigned_to' => $this->technician->id,
         'created_by' => $this->manager->id,
         'status' => TaskStatus::InProgress,
     ]);
@@ -37,7 +36,11 @@ it('still records the status change when notifying blows up', function () {
         ->andThrow(new RuntimeException('SMTP timed out'));
 
     actingAs($this->technician)
-        ->postJson("/api/tasks/{$this->task->id}/reports", ['type' => 'completion'])
+        ->postJson("/api/tasks/{$this->task->id}/reports", [
+            'type' => 'completion',
+            'lat' => 30.0444,
+            'lng' => 31.2357,
+        ])
         ->assertCreated();
 
     expect($this->task->fresh()->status)->toBe(TaskStatus::Completed);
@@ -67,7 +70,11 @@ it('keeps the status log even when notifying blows up', function () {
         ->andThrow(new RuntimeException('down'));
 
     actingAs($this->technician)
-        ->postJson("/api/tasks/{$this->task->id}/status", ['status' => 'completed'])
+        ->postJson("/api/tasks/{$this->task->id}/status", [
+            'status' => 'completed',
+            'lat' => 30.0444,
+            'lng' => 31.2357,
+        ])
         ->assertOk();
 
     expect($this->task->statusLogs()->where('to_status', 'completed')->exists())->toBeTrue();
@@ -80,8 +87,8 @@ it('still assigns the job when notifying the technician blows up', function () {
         ->andThrow(new RuntimeException('down'));
 
     actingAs($this->manager)
-        ->postJson("/api/tasks/{$this->task->id}/assign", ['assigned_to' => $other->id])
+        ->postJson("/api/tasks/{$this->task->id}/assign", ['assigned_to' => [$other->id]])
         ->assertOk();
 
-    expect($this->task->fresh()->assigned_to)->toBe($other->id);
+    expect($this->task->fresh()->technicians->pluck('id')->all())->toContain($other->id);
 });

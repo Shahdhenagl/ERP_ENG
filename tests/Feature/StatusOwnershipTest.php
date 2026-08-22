@@ -17,9 +17,8 @@ beforeEach(function () {
 
 function job(array $attributes = []): Task
 {
-    return Task::factory()->create([
+    return Task::factory()->assignedTo(test()->technician)->create([
         'customer_id' => test()->customer->id,
-        'assigned_to' => test()->technician->id,
         'created_by' => test()->manager->id,
         ...$attributes,
     ]);
@@ -52,7 +51,11 @@ it('lets the assigned technician move their own job forward', function () {
     $task = job(['status' => TaskStatus::Pending]);
 
     actingAs($this->technician)
-        ->postJson("/api/tasks/{$task->id}/status", ['status' => 'accepted'])
+        ->postJson("/api/tasks/{$task->id}/status", [
+            'status' => 'accepted',
+            'lat' => 30.0444,
+            'lng' => 31.2357,
+        ])
         ->assertOk()
         ->assertJsonPath('data.status', 'accepted');
 });
@@ -100,8 +103,9 @@ it('closes the job when the technician files the completion report', function ()
             'type' => 'completion',
             'findings' => 'تم الفحص',
             'actions_taken' => 'تم استبدال المروحة',
-        ])
-        ->assertCreated();
+            'lat' => 30.0444,
+            'lng' => 31.2357,
+        ])->assertCreated();
 
     $fresh = $task->fresh();
 
@@ -113,7 +117,11 @@ it('records who closed it in the status log', function () {
     $task = job(['status' => TaskStatus::InProgress]);
 
     actingAs($this->technician)
-        ->postJson("/api/tasks/{$task->id}/reports", ['type' => 'completion'])
+        ->postJson("/api/tasks/{$task->id}/reports", [
+            'type' => 'completion',
+            'lat' => 30.0444,
+            'lng' => 31.2357,
+        ])
         ->assertCreated();
 
     $log = $task->statusLogs()->latest('id')->first();
@@ -138,7 +146,11 @@ it('does not close a job that has not started yet', function () {
     $task = job(['status' => TaskStatus::Accepted]);
 
     actingAs($this->technician)
-        ->postJson("/api/tasks/{$task->id}/reports", ['type' => 'completion'])
+        ->postJson("/api/tasks/{$task->id}/reports", [
+            'type' => 'completion',
+            'lat' => 30.0444,
+            'lng' => 31.2357,
+        ])
         ->assertCreated();
 
     expect($task->fresh()->status)->toBe(TaskStatus::Accepted);
@@ -148,7 +160,11 @@ it('does not close the job when a manager files the report', function () {
     $task = job(['status' => TaskStatus::InProgress]);
 
     actingAs($this->manager)
-        ->postJson("/api/tasks/{$task->id}/reports", ['type' => 'completion'])
+        ->postJson("/api/tasks/{$task->id}/reports", [
+            'type' => 'completion',
+            'lat' => 30.0444,
+            'lng' => 31.2357,
+        ])
         ->assertCreated();
 
     expect($task->fresh()->status)->toBe(TaskStatus::InProgress);
@@ -158,7 +174,11 @@ it('is idempotent when the report is refiled on a closed job', function () {
     $task = job(['status' => TaskStatus::InProgress]);
 
     actingAs($this->technician)
-        ->postJson("/api/tasks/{$task->id}/reports", ['type' => 'completion'])
+        ->postJson("/api/tasks/{$task->id}/reports", [
+            'type' => 'completion',
+            'lat' => 30.0444,
+            'lng' => 31.2357,
+        ])
         ->assertCreated();
 
     // Editing the report afterwards must not error on an already-final status.

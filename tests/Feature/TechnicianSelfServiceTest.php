@@ -93,7 +93,7 @@ it('records a self check-in with its location and opens the HR file', function (
 });
 
 it('refuses a second check-in on the same day', function () {
-    actingAs($this->technician)->postJson('/api/attendance/check-in')->assertCreated();
+    actingAs($this->technician)->postJson('/api/attendance/check-in', ['lat' => 30.0444, 'lng' => 31.2357])->assertCreated();
     actingAs($this->technician)->postJson('/api/attendance/check-in')
         ->assertStatus(422)
         ->assertJsonValidationErrors('check_in');
@@ -101,7 +101,7 @@ it('refuses a second check-in on the same day', function () {
 
 it('checks out and works out the hours from the two stamps', function () {
     travelTo('2026-09-06 08:00:00');
-    actingAs($this->technician)->postJson('/api/attendance/check-in')->assertCreated();
+    actingAs($this->technician)->postJson('/api/attendance/check-in', ['lat' => 30.0444, 'lng' => 31.2357])->assertCreated();
 
     travelTo('2026-09-06 16:00:00');
     actingAs($this->technician)->postJson('/api/attendance/check-out', ['lat' => 30.05, 'lng' => 31.24])
@@ -121,7 +121,7 @@ it('serves the technician their own record for today', function () {
         ->assertOk()
         ->assertJsonPath('data', null);
 
-    actingAs($this->technician)->postJson('/api/attendance/check-in')->assertCreated();
+    actingAs($this->technician)->postJson('/api/attendance/check-in', ['lat' => 30.0444, 'lng' => 31.2357])->assertCreated();
 
     actingAs($this->technician)->getJson('/api/attendance/mine/today')
         ->assertOk()
@@ -188,8 +188,7 @@ it('gives a manager the monthly profile of a technician', function () {
     $employee = Employee::forUser($this->technician);
     $employee->update(['basic_salary' => 6000]);
 
-    Task::factory()->create([
-        'assigned_to' => $this->technician->id,
+    Task::factory()->assignedTo($this->technician)->create([
         'status' => TaskStatus::Completed,
         'scheduled_at' => '2026-09-10 09:00',
     ]);

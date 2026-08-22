@@ -13,15 +13,11 @@ export interface Fix {
  * a cold GPS on a phone routinely takes longer than that, and the four presses
  * of a job happen minutes apart, each one cold again.
  *
- * So: ask for longer, accept a recent fix rather than insisting on a new one,
- * and keep the last one we did get. A stamp from two minutes ago at the same
- * gate is worth incomparably more than no stamp at all.
+ * The required actions use a fresh browser fix. If the browser cannot provide
+ * one, the caller must stop rather than silently stamping an old location.
  */
 
 let lastFix: Fix | null = null
-
-/** How stale a remembered fix may be before it stops standing in. */
-const FIX_TTL = 5 * 60_000
 
 function remember(position: GeolocationPosition): Fix {
     lastFix = {
@@ -52,29 +48,18 @@ export function warmPosition(): () => void {
     return () => navigator.geolocation.clearWatch(id)
 }
 
-/** The current position, or the last good one, or nothing. */
+/** The current browser position, or nothing when GPS is unavailable. */
 export async function currentPosition(): Promise<{ lat?: number; lng?: number }> {
-    if (!navigator.geolocation) return fallback()
+    if (!navigator.geolocation) return {}
 
     const fresh = await new Promise<Fix | null>((resolve) => {
         navigator.geolocation.getCurrentPosition(
             (position) => resolve(remember(position)),
             () => resolve(null),
-            // Long enough for a cold fix, and happy with a recent one: the point
-            // is which gate the technician stood at, not which metre of it.
-            { enableHighAccuracy: true, timeout: 12_000, maximumAge: 120_000 },
+            // A fresh fix is required for attendance and field status evidence.
+            { enableHighAccuracy: true, timeout: 20_000, maximumAge: 0 },
         )
     })
 
-    if (fresh) return { lat: fresh.lat, lng: fresh.lng }
-
-    return fallback()
-}
-
-function fallback(): { lat?: number; lng?: number } {
-    if (lastFix && Date.now() - lastFix.at < FIX_TTL) {
-        return { lat: lastFix.lat, lng: lastFix.lng }
-    }
-
-    return {}
+    return fresh ? { lat: fresh.lat, lng: fresh.lng } : {}
 }
