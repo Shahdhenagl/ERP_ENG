@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Branch;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Item;
@@ -84,6 +85,23 @@ it('surfaces shortages, delays and overdue invoices on the dashboard', function 
         ->and($data['stats']['overdue_invoices'])->toBeGreaterThan(0)
         ->and($data['low_stock'][0]['name'])->toBe('فيوز 32A')
         ->and($data['overdue_invoices'][0]['code'])->toBe($invoice->code);
+});
+
+it('shows active branches without monthly tasks on the notifications page', function () {
+    $manager = User::factory()->manager()->create();
+    $customer = Customer::factory()->create(['name' => 'شركة التنبيهات']);
+    $branch = Branch::create([
+        'customer_id' => $customer->id,
+        'name' => 'فرع بلا مهام هذا الشهر',
+        'is_active' => true,
+    ]);
+
+    $groups = actingAs($manager)->getJson('/api/alerts')->assertOk()->json('data.groups');
+    $group = collect($groups)->firstWhere('key', 'branches');
+
+    expect($group['items'][0]['title'])->toBe($branch->name)
+        ->and($group['items'][0]['url'])->toBe('/notifications')
+        ->and($group['items'][0]['body'])->toContain($customer->name);
 });
 
 it('keeps the standing alerts off a technician dashboard', function () {

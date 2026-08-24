@@ -40,29 +40,38 @@ class DashboardController extends Controller
         // on this host, so an overdue invoice would sit on the board for
         // ever and never ring a bell.
         $this->alerts->tick();
-        $year = $request->integer('year') ?: (int) now()->year;
-        $month = $request->integer('month') ?: (int) now()->month;
+        $request->validate([
+            'period' => ['nullable', 'in:day,month'],
+            'date' => ['nullable', 'date'],
+            'year' => ['nullable', 'integer', 'min:2000', 'max:2100'],
+            'month' => ['nullable', 'integer', 'between:1,12'],
+        ]);
 
-        $isCurrentMonth = ($year === (int) now()->year && $month === (int) now()->month);
+        $period = $request->input('period')
+            ?: ($request->filled('year') || $request->filled('month') ? 'month' : 'day');
+        if ($period === 'day') {
+            $selectedDate = $request->date('date')?->toDateString() ?? now()->toDateString();
+            $windowStart = "{$selectedDate} 00:00:00";
+            $windowEnd = "{$selectedDate} 23:59:59";
+        } else {
+            $year = $request->integer('year') ?: (int) now()->year;
+            $month = $request->integer('month') ?: (int) now()->month;
+            $windowStart = sprintf('%04d-%02d-01 00:00:00', $year, $month);
+            $windowEnd = date('Y-m-t 23:59:59', strtotime($windowStart));
+        }
 
-        // Date boundaries as plain strings — avoids any Carbon edge cases.
-        $monthStart = sprintf('%04d-%02d-01 00:00:00', $year, $month);
-        $monthEnd = date('Y-m-t 23:59:59', strtotime($monthStart));
+        // Branch coverage is deliberately a current-month operational alert,
+        // independent of the dashboard's day/month statistics filter.
+        $branchesMonthStart = now()->startOfMonth()->startOfDay()->toDateTimeString();
+        $branchesMonthEnd = now()->endOfMonth()->endOfDay()->toDateTimeString();
 
         $scoped = fn () => Task::query()->when(
             $user->isTechnician(),
             fn ($q) => $q->forTechnician($user->id),
         );
 
-        // ── Month-scoped status counts ─────────────────────────────────
-        $statusQuery = $scoped();
-        if (!$isCurrentMonth) {
-            $statusQuery = $statusQuery->where(function ($q) use ($monthStart, $monthEnd) {
-                $q->whereBetween('tasks.created_at', [$monthStart, $monthEnd])
-                  ->orWhereBetween('tasks.scheduled_at', [$monthStart, $monthEnd])
-                  ->orWhereBetween('tasks.completed_at', [$monthStart, $monthEnd]);
-            });
-        }
+        // ── Day/month-scoped status counts ──────────────────────────────
+        $statusQuery = $this->withinDashboardWindow($scoped(), $windowStart, $windowEnd);
 
         $byStatus = $statusQuery
             ->select('status', DB::raw('count(*) as total'))
@@ -84,30 +93,32 @@ class DashboardController extends Controller
         $stats = [
             'by_status' => $counts,
             'open_total' => array_sum(array_intersect_key($counts, array_flip($openStatuses))),
-            'postponed' => $scoped()
-                ->where('status', TaskStatus::Postponed->value)
-                ->count(),
+            'postponed' => $this->withinDashboardWindow(
+                $scoped()->where('status', TaskStatus::Postponed->value),
+                $windowStart,
+                $windowEnd,
+            )->count(),
             'completed_today' => $scoped()
                 ->where('status', TaskStatus::Completed->value)
-                ->when($isCurrentMonth,
-                    fn ($q) => $q->whereDate('completed_at', today()),
-                    fn ($q) => $q->whereBetween('completed_at', [$monthStart, $monthEnd]),
-                )
+                ->whereBetween('completed_at', [$windowStart, $windowEnd])
                 ->count(),
             'completed_this_month' => $scoped()
                 ->where('status', TaskStatus::Completed->value)
-                ->whereBetween('completed_at', [$monthStart, $monthEnd])
+                ->whereBetween('completed_at', [$windowStart, $windowEnd])
                 ->count(),
-            'overdue' => $scoped()
-                ->open()
-                ->whereNotNull('scheduled_at')
-                ->where('scheduled_at', '<', now())
-                ->when(!$isCurrentMonth, fn ($q) => $q->whereBetween('tasks.scheduled_at', [$monthStart, $monthEnd]))
-                ->count(),
+            'overdue' => $this->withinDashboardWindow(
+                $scoped()->open()->whereNotNull('scheduled_at')->where('scheduled_at', '<', now()),
+                $windowStart,
+                $windowEnd,
+                ['scheduled_at'],
+            )->count(),
             'unassigned' => $user->canDispatch()
-                ? Task::query()->open()->actionable()->doesntHave('technicians')
-                    ->when(!$isCurrentMonth, fn ($q) => $q->whereBetween('tasks.created_at', [$monthStart, $monthEnd]))
-                    ->count()
+                ? $this->withinDashboardWindow(
+                    Task::query()->open()->actionable()->doesntHave('technicians'),
+                    $windowStart,
+                    $windowEnd,
+                    ['created_at', 'scheduled_at'],
+                )->count()
                 : 0,
             // Assigned work that still needs completion. A postponed job is
             // still outstanding, so only completed/cancelled work is excluded.
@@ -117,10 +128,10 @@ class DashboardController extends Controller
                     TaskStatus::Cancelled->value,
                 ])
                 ->has('technicians')
-                ->when(!$isCurrentMonth, fn ($q) => $q->where(function ($month) use ($monthStart, $monthEnd) {
-                    $month->whereBetween('tasks.created_at', [$monthStart, $monthEnd])
-                        ->orWhereBetween('tasks.scheduled_at', [$monthStart, $monthEnd]);
-                }))
+                ->where(function ($month) use ($windowStart, $windowEnd) {
+                    $month->whereBetween('tasks.created_at', [$windowStart, $windowEnd])
+                        ->orWhereBetween('tasks.scheduled_at', [$windowStart, $windowEnd]);
+                })
                 ->count(),
         ];
 
@@ -133,13 +144,13 @@ class DashboardController extends Controller
                         ->where('status', TaskStatus::Completed->value)
                         ->whereNotNull('completed_at'),
                 ], 'completed_at')
-                ->whereDoesntHave('tasks', function ($q) use ($monthStart, $monthEnd) {
-                    $q->where(function ($month) use ($monthStart, $monthEnd) {
-                        $month->whereBetween('tasks.scheduled_at', [$monthStart, $monthEnd])
-                            ->orWhereBetween('tasks.completed_at', [$monthStart, $monthEnd])
-                            ->orWhere(function ($unscheduled) use ($monthStart, $monthEnd) {
+                ->whereDoesntHave('tasks', function ($q) use ($branchesMonthStart, $branchesMonthEnd) {
+                    $q->where(function ($month) use ($branchesMonthStart, $branchesMonthEnd) {
+                        $month->whereBetween('tasks.scheduled_at', [$branchesMonthStart, $branchesMonthEnd])
+                            ->orWhereBetween('tasks.completed_at', [$branchesMonthStart, $branchesMonthEnd])
+                            ->orWhere(function ($unscheduled) use ($branchesMonthStart, $branchesMonthEnd) {
                                 $unscheduled->whereNull('tasks.scheduled_at')
-                                    ->whereBetween('tasks.created_at', [$monthStart, $monthEnd]);
+                                    ->whereBetween('tasks.created_at', [$branchesMonthStart, $branchesMonthEnd]);
                             });
                     });
                 })
@@ -211,6 +222,9 @@ class DashboardController extends Controller
             ->get();
 
         $payload = [
+            'period' => $period,
+            'period_start' => date('Y-m-d', strtotime($windowStart)),
+            'period_end' => date('Y-m-d', strtotime($windowEnd)),
             'stats' => $stats,
             'upcoming' => TaskResource::collection($upcoming)->resolve(),
         ];
@@ -383,5 +397,16 @@ class DashboardController extends Controller
         }
 
         return response()->json($payload);
+    }
+
+    /** Limit a task query to work touched by the selected dashboard window. */
+    protected function withinDashboardWindow($query, string $start, string $end, array $columns = ['created_at', 'scheduled_at', 'completed_at'])
+    {
+        return $query->where(function ($window) use ($start, $end, $columns) {
+            foreach ($columns as $index => $column) {
+                $method = $index === 0 ? 'whereBetween' : 'orWhereBetween';
+                $window->{$method}("tasks.{$column}", [$start, $end]);
+            }
+        });
     }
 }

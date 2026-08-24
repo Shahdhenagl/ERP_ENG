@@ -7,6 +7,7 @@ use App\Enums\ContractStatus;
 use App\Enums\TaskPriority;
 use App\Enums\TaskType;
 use App\Enums\VisitStatus;
+use App\Models\Branch;
 use App\Models\ContractPayment;
 use App\Models\ContractVisit;
 use App\Models\Invoice;
@@ -51,6 +52,7 @@ class OperationsAlertScanner
             ->merge($this->overdueInvoices())
             ->merge($this->recurringExpensesDue())
             ->merge($this->partsLow())
+            ->merge($this->branchesWithoutTasks())
             ->merge($this->approvalsNeeded());
     }
 
@@ -230,6 +232,47 @@ class OperationsAlertScanner
                 'url' => '/inventory', 'tag' => "item-{$item->id}",
             ])
             ->values();
+    }
+
+    /** Active branches with no task touching the current calendar month. */
+    protected function branchesWithoutTasks(): Collection
+    {
+        $monthStart = now()->startOfMonth()->startOfDay()->toDateTimeString();
+        $monthEnd = now()->endOfMonth()->endOfDay()->toDateTimeString();
+
+        return Branch::query()
+            ->active()
+            ->with('customer')
+            ->withMax([
+                'tasks as last_visit_completed_at' => fn ($q) => $q
+                    ->where('status', \App\Enums\TaskStatus::Completed->value)
+                    ->whereNotNull('completed_at'),
+            ], 'completed_at')
+            ->whereDoesntHave('tasks', function ($q) use ($monthStart, $monthEnd) {
+                $q->where(function ($month) use ($monthStart, $monthEnd) {
+                    $month->whereBetween('tasks.scheduled_at', [$monthStart, $monthEnd])
+                        ->orWhereBetween('tasks.completed_at', [$monthStart, $monthEnd])
+                        ->orWhere(function ($unscheduled) use ($monthStart, $monthEnd) {
+                            $unscheduled->whereNull('tasks.scheduled_at')
+                                ->whereBetween('tasks.created_at', [$monthStart, $monthEnd]);
+                        });
+                });
+            })
+            ->orderBy('customer_id')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (Branch $branch) => [
+                'key' => 'branch-without-tasks:'.$branch->id.':'.now()->format('Y-m'),
+                'type' => 'branch.without_tasks',
+                'title' => $branch->name,
+                'body' => ($branch->customer?->name ?? 'بدون عميل').' · آخر زيارة: '.(
+                    $branch->last_visit_completed_at
+                        ? date('Y-m-d', strtotime((string) $branch->last_visit_completed_at))
+                        : 'لا توجد زيارة مكتملة مسجلة'
+                ),
+                'url' => '/notifications',
+                'tag' => 'branch-without-tasks-'.$branch->id.'-'.now()->format('Y-m'),
+            ]);
     }
 
     /** Newly issued invoices — a bill went out and is now owed. */

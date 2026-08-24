@@ -39,12 +39,18 @@ export function Dashboard() {
     const { user, canDispatch, can } = useAuth()
     const { path } = useArea()
     const now = new Date()
-    const [monthStr, setMonthStr] = useState(
-        `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`,
-    )
+    const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+        now.getDate(),
+    ).padStart(2, '0')}`
+    const [period, setPeriod] = useState<'day' | 'month'>('day')
+    const [dateStr, setDateStr] = useState(localDate)
+    const [monthStr, setMonthStr] = useState(localDate.slice(0, 7))
     const [year, month] = monthStr.split('-').map(Number)
 
-    const { data, isLoading, isError, refetch } = useDashboard({ year, month })
+    const dashboardParams = period === 'day'
+        ? { period, date: dateStr }
+        : { period, year, month }
+    const { data, isLoading, isError, refetch } = useDashboard(dashboardParams)
 
     if (isError) {
         return <ErrorState message={tr('تعذّر تحميل لوحة المعلومات.')} onRetry={() => void refetch()} />
@@ -62,14 +68,40 @@ export function Dashboard() {
                         : tr('مهامك الحالية ومواعيدها')
                 }
                 actions={
-                    <div className="flex items-center gap-2 rounded-xl border border-navy-200 bg-white px-3 py-1.5 shadow-sm">
-                        <span className="text-xs font-semibold text-navy-600">{tr('تصفح الشهر')}:</span>
-                        <input
-                            type="month"
-                            value={monthStr}
-                            onChange={(e) => e.target.value && setMonthStr(e.target.value)}
-                            className="text-xs font-bold text-brand-600 bg-transparent border-0 focus:ring-0 p-0 cursor-pointer"
-                        />
+                    <div className="flex flex-wrap items-center justify-end gap-2 rounded-xl border border-navy-200 bg-white px-3 py-1.5 shadow-sm">
+                        <span className="text-xs font-semibold text-navy-600">{tr('إحصائيات')}:</span>
+                        <div className="flex items-center gap-1 rounded-lg bg-navy-100 p-1">
+                            {(['day', 'month'] as const).map((value) => (
+                                <button
+                                    key={value}
+                                    type="button"
+                                    onClick={() => setPeriod(value)}
+                                    className={clsx(
+                                        'rounded-md px-2.5 py-1 text-[11px] font-bold transition',
+                                        period === value
+                                            ? 'bg-white text-brand-700 shadow-sm'
+                                            : 'text-navy-500 hover:text-navy-800',
+                                    )}
+                                >
+                                    {value === 'day' ? tr('باليوم') : tr('بالشهر')}
+                                </button>
+                            ))}
+                        </div>
+                        {period === 'day' ? (
+                            <input
+                                type="date"
+                                value={dateStr}
+                                onChange={(e) => e.target.value && setDateStr(e.target.value)}
+                                className="cursor-pointer border-0 bg-transparent p-0 text-xs font-bold text-brand-600 focus:ring-0"
+                            />
+                        ) : (
+                            <input
+                                type="month"
+                                value={monthStr}
+                                onChange={(e) => e.target.value && setMonthStr(e.target.value)}
+                                className="cursor-pointer border-0 bg-transparent p-0 text-xs font-bold text-brand-600 focus:ring-0"
+                            />
+                        )}
                     </div>
                 }
             />
@@ -115,27 +147,13 @@ export function Dashboard() {
                         value={stats?.branches_without_tasks}
                         loading={isLoading}
                         tone="red"
-                        onClick={() =>
-                            document
-                                .getElementById('branches-without-tasks')
-                                ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                        }
-                    />
-                )}
-                {canDispatch && (
-                    <StatTile
-                        icon={ClipboardList}
-                        label={tr('مسندة غير مكتملة')}
-                        value={stats?.assigned_incomplete}
-                        loading={isLoading}
-                        tone="brand"
-                        to={path('/tasks?assigned_incomplete=1')}
+                        to={path('/notifications')}
                     />
                 )}
                 {user?.role === 'technician' ? (
                     <StatTile
                         icon={CalendarCheck}
-                        label={tr('منتهية اليوم')}
+                        label={period === 'day' ? tr('منتهية في اليوم') : tr('منتهية في الشهر')}
                         value={stats?.completed_today}
                         loading={isLoading}
                         tone="emerald"
@@ -144,7 +162,7 @@ export function Dashboard() {
                 ) : (
                     <StatTile
                         icon={TrendingUp}
-                        label={tr('منتهية هذا الشهر')}
+                        label={period === 'day' ? tr('منتهية في اليوم') : tr('منتهية في الشهر')}
                         value={stats?.completed_this_month}
                         loading={isLoading}
                         tone="navy"
@@ -309,9 +327,10 @@ export function Dashboard() {
                                     title={tr('فروع بلا مهام هذا الشهر')}
                                     count={stats?.branches_without_tasks}
                                     tone="red"
-                                    to={`${path('/')}#branches-without-tasks`}
+                                    to={path('/notifications')}
                                     rows={data!.branches_without_tasks!.map((branch) => ({
                                         key: `branch-${branch.id}`,
+                                        to: path('/notifications'),
                                         title: branch.name,
                                         subtitle: `${branch.customer ?? 'بدون عميل'} · آخر زيارة: ${
                                             branch.last_visit_completed_at

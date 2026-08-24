@@ -130,6 +130,35 @@ it('counts active branches without any task in the selected month and shows the 
         ->and($body['branches_without_tasks'][0]['last_visit_completed_at'])->toBe('2026-07-10');
 });
 
+it('defaults dashboard statistics to today and supports the monthly period', function () {
+    Task::factory()->for($this->customer)->create([
+        'status' => TaskStatus::Completed,
+        'created_at' => now()->subDay(),
+        'scheduled_at' => now()->subDay(),
+        'completed_at' => now()->subDay(),
+    ]);
+    Task::factory()->for($this->customer)->create([
+        'status' => TaskStatus::Completed,
+        'created_at' => now(),
+        'scheduled_at' => now(),
+        'completed_at' => now(),
+    ]);
+
+    $today = actingAs($this->manager)->getJson('/api/dashboard')->assertOk()->json();
+
+    expect($today['period'])->toBe('day')
+        ->and($today['period_start'])->toBe(now()->toDateString())
+        ->and($today['stats']['by_status']['completed'])->toBe(1);
+
+    $month = actingAs($this->manager)
+        ->getJson('/api/dashboard?period=month&year='.now()->year.'&month='.now()->month)
+        ->assertOk()
+        ->json();
+
+    expect($month['period'])->toBe('month')
+        ->and($month['stats']['by_status']['completed'])->toBe(2);
+});
+
 it('does not compute the alerts for a technician', function () {
     // The dashboard payload is scoped, and a field user is never shown the
     // office's chase lists.

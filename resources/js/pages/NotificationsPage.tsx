@@ -3,6 +3,7 @@ import {
     AlertTriangle,
     BadgeCheck,
     CalendarClock,
+    MapPin,
     CheckCircle2,
     Package,
     Receipt,
@@ -19,6 +20,7 @@ import { useOperationsAlerts } from '@/lib/queries'
 const GROUP: Record<string, { icon: LucideIcon; accent: string; chip: string }> = {
     stock: { icon: Package, accent: 'text-amber-600', chip: 'bg-amber-50 text-amber-700' },
     tasks: { icon: Wrench, accent: 'text-red-600', chip: 'bg-red-50 text-red-700' },
+    branches: { icon: MapPin, accent: 'text-red-600', chip: 'bg-red-50 text-red-700' },
     maintenance: { icon: CalendarClock, accent: 'text-brand-600', chip: 'bg-brand-50 text-brand-700' },
     warranties: { icon: ShieldAlert, accent: 'text-violet-600', chip: 'bg-violet-50 text-violet-700' },
     finance: { icon: Receipt, accent: 'text-red-600', chip: 'bg-red-50 text-red-700' },

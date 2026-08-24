@@ -214,7 +214,12 @@ export const keys = {
 
 /* ── Dashboard ───────────────────────────────────────────── */
 
-export function useDashboard(params: { year?: number; month?: number } = {}) {
+export function useDashboard(params: {
+    period?: 'day' | 'month'
+    date?: string
+    year?: number
+    month?: number
+} = {}) {
     return useQuery({
         queryKey: ['dashboard', params],
         queryFn: async () => (await api.get<DashboardData>('/dashboard', { params })).data,

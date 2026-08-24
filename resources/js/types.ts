@@ -1396,6 +1396,9 @@ export interface Task {
 }
 
 export interface DashboardData {
+    period?: 'day' | 'month'
+    period_start?: string
+    period_end?: string
     stats: {
         by_status: Record<TaskStatus, number>
         open_total: number
