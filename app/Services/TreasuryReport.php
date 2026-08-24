@@ -216,9 +216,12 @@ class TreasuryReport
     /** @return array{name: string|null, type: string|null} */
     protected function accountingDetails(CashMovement $movement, ?JournalEntry $entry, CashBox $box): array
     {
-        // A transfer's journal is intentionally posted only on its outgoing
-        // leg. The other box is nevertheless its exact accounting counterpart.
-        $account = $movement->counterpartBox?->account;
+        // A manual expense stores the exact leaf account selected by the user;
+        // prefer it over a broader parent account that may appear first in the
+        // journal lines. Transfers still use their counterpart account.
+        $account = $movement->source === 'expense'
+            ? $movement->account
+            : $movement->counterpartBox?->account;
 
         if (! $account && $entry) {
             $account = $entry->lines

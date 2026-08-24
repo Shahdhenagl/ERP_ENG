@@ -305,7 +305,8 @@ it('records one transport custody expense against multiple active branches', fun
         ->json('data.rows');
     $statementRow = collect($statementRows)->firstWhere('id', $movement->id);
 
-    expect($statementRow['branches'][0]['name'])->toBe('فرع القاهرة')
+    expect($statementRow['account_name'])->toBe($expenseAccount->name)
+        ->and($statementRow['branches'][0]['name'])->toBe('فرع القاهرة')
         ->and($statementRow['branches'][1]['name'])->toBe('فرع الجيزة');
 });
 
