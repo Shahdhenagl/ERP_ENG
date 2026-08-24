@@ -107,7 +107,7 @@ export function Dashboard() {
             />
 
             {/* ── Headline numbers ───────────────────────────── */}
-            <div className={clsx('grid grid-cols-2 gap-2.5 sm:gap-3', canDispatch ? 'lg:grid-cols-7' : 'lg:grid-cols-5')}>
+            <div className={clsx('grid grid-cols-2 gap-2.5 sm:gap-3', canDispatch ? 'lg:grid-cols-6' : 'lg:grid-cols-5')}>
                 <StatTile
                     icon={ClipboardList}
                     label={tr('مهام مفتوحة')}
