@@ -813,7 +813,7 @@ function PaymentWorkflowPanel({
                         </Field>
                         <div className="space-y-2">
                             {newSteps.map((step, index) => (
-                                <div key={`${index}-${step}`} className="flex items-center gap-2">
+                                <div key={`workflow-new-step-${index}`} className="flex items-center gap-2">
                                     <span className="grid size-7 shrink-0 place-items-center rounded-full bg-navy-100 text-[10px] font-bold text-navy-600">{index + 1}</span>
                                     <input className="input min-w-0 flex-1 text-xs" placeholder={`اسم الخطوة ${index + 1}`} value={step} onChange={(event) => setNewSteps((items) => items.map((item, itemIndex) => itemIndex === index ? event.target.value : item))} />
                                     {newSteps.length > 1 && <button type="button" className="btn btn-ghost text-xs" onClick={() => setNewSteps((items) => items.filter((_, itemIndex) => itemIndex !== index))}>حذف</button>}
