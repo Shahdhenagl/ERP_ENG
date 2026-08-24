@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { CalendarRange, FileText, Printer } from 'lucide-react'
+import { CalendarRange, FileText, Filter, Printer, RotateCcw } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { ExportButton } from '@/components/ExportButton'
 import { Button, EmptyState, Field, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
@@ -35,6 +35,24 @@ export function DaybookPage() {
         () => [...new Set((data?.rows ?? []).map((row) => row.account_type).filter((type): type is string => Boolean(type)))],
         [data?.rows],
     )
+    const activeFilterCount = [
+        dateFilter,
+        voucherTypeFilter,
+        numberFilter,
+        descriptionFilter,
+        partyFilter,
+        accountTypeFilter,
+    ].filter(Boolean).length
+
+    const clearTableFilters = () => {
+        setDateFilter('')
+        setVoucherTypeFilter('')
+        setNumberFilter('')
+        setDescriptionFilter('')
+        setPartyFilter('')
+        setAccountTypeFilter('')
+    }
+
     const visibleRows = useMemo(() => {
         const normalize = (value: unknown) => String(value ?? '').trim().toLocaleLowerCase()
         const numberTerm = normalize(numberFilter)
@@ -111,27 +129,77 @@ export function DaybookPage() {
                 }
             />
 
-            <div className="daybook-filters mb-5 grid gap-3 rounded-xl border border-navy-100 bg-surface p-3 shadow-[var(--shadow-card)] sm:grid-cols-[2fr_1fr_1fr]">
-                <Field label="الخزينة">
-                    <Select
-                        value={boxId ?? ''}
-                        onChange={(e) => setBoxId(e.target.value ? Number(e.target.value) : null)}
-                    >
-                        <option value="">اختر الخزينة…</option>
-                        {boxes?.map((box) => (
-                            <option key={box.id} value={box.id}>
-                                {box.name} · {box.type_label}
-                            </option>
-                        ))}
-                    </Select>
-                </Field>
-                <Field label="من">
-                    <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-                </Field>
-                <Field label="إلى">
-                    <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-                </Field>
-            </div>
+            <section className="daybook-filters mb-5 rounded-2xl border border-navy-100 bg-surface p-4 shadow-[var(--shadow-card)]">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-navy-100 pb-3">
+                    <div className="flex items-center gap-2">
+                        <span className="grid size-8 place-items-center rounded-lg bg-brand-50 text-brand-700">
+                            <Filter className="size-4" />
+                        </span>
+                        <div>
+                            <h2 className="text-xs font-extrabold text-navy-800">فلاتر الكشف</h2>
+                            <p className="mt-0.5 text-[10px] text-navy-400">اختاري خزينة وفترة، ثم ضيّقي النتائج حسب بيانات السند.</p>
+                        </div>
+                        {activeFilterCount > 0 && (
+                            <span className="badge bg-brand-50 text-brand-700">{activeFilterCount} فلاتر نشطة</span>
+                        )}
+                    </div>
+                    {activeFilterCount > 0 && (
+                        <button
+                            type="button"
+                            onClick={clearTableFilters}
+                            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-navy-500 transition hover:bg-navy-50 hover:text-navy-800"
+                        >
+                            <RotateCcw className="size-3.5" />
+                            مسح فلاتر البحث
+                        </button>
+                    )}
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <Field label="الخزينة" className="lg:col-span-2">
+                        <Select
+                            value={boxId ?? ''}
+                            onChange={(e) => setBoxId(e.target.value ? Number(e.target.value) : null)}
+                        >
+                            <option value="">اختر الخزينة…</option>
+                            {boxes?.map((box) => (
+                                <option key={box.id} value={box.id}>
+                                    {box.name} · {box.type_label}
+                                </option>
+                            ))}
+                        </Select>
+                    </Field>
+                    <Field label="من">
+                        <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+                    </Field>
+                    <Field label="إلى">
+                        <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+                    </Field>
+                    <Field label="تاريخ السند">
+                        <Input type="date" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} />
+                    </Field>
+                    <Field label="نوع الإيصال">
+                        <Select value={voucherTypeFilter} onChange={(e) => setVoucherTypeFilter(e.target.value)}>
+                            <option value="">كل الأنواع</option>
+                            {voucherTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+                        </Select>
+                    </Field>
+                    <Field label="رقم السند">
+                        <Input value={numberFilter} onChange={(e) => setNumberFilter(e.target.value)} placeholder="اكتب رقم السند" />
+                    </Field>
+                    <Field label="نوع الحساب">
+                        <Select value={accountTypeFilter} onChange={(e) => setAccountTypeFilter(e.target.value)}>
+                            <option value="">كل الحسابات</option>
+                            {accountTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+                        </Select>
+                    </Field>
+                    <Field label="البيان" className="lg:col-span-2">
+                        <Input value={descriptionFilter} onChange={(e) => setDescriptionFilter(e.target.value)} placeholder="ابحث في البيان أو الوصف" />
+                    </Field>
+                    <Field label="المستلم / الدافع" className="lg:col-span-2">
+                        <Input value={partyFilter} onChange={(e) => setPartyFilter(e.target.value)} placeholder="ابحث باسم المستلم أو الدافع" />
+                    </Field>
+                </div>
+            </section>
 
             {!boxId ? (
                 <EmptyState
@@ -168,33 +236,6 @@ export function DaybookPage() {
                                         <LedgerHead className="w-[7%]" align="numeric">مدين</LedgerHead>
                                         <LedgerHead className="w-[7%]" align="numeric">دائن</LedgerHead>
                                         <LedgerHead className="w-[9%]" align="numeric">الرصيد</LedgerHead>
-                                    </tr>
-                                    <tr className="daybook-filter-row">
-                                        <th className="w-[8%]">
-                                            <Input type="date" value={dateFilter} onChange={(event) => setDateFilter(event.target.value)} aria-label="فلترة التاريخ" />
-                                        </th>
-                                        <th className="w-[10%]">
-                                            <Select value={voucherTypeFilter} onChange={(event) => setVoucherTypeFilter(event.target.value)} aria-label="فلترة نوع الإيصال">
-                                                <option value="">الكل</option>
-                                                {voucherTypes.map((type) => <option key={type} value={type}>{type}</option>)}
-                                            </Select>
-                                        </th>
-                                        <th className="w-[10%]">
-                                            <Input value={numberFilter} onChange={(event) => setNumberFilter(event.target.value)} placeholder="بحث" aria-label="فلترة الرقم" />
-                                        </th>
-                                        <th className="w-[21%]">
-                                            <Input value={descriptionFilter} onChange={(event) => setDescriptionFilter(event.target.value)} placeholder="بحث في البيان" aria-label="فلترة البيان" />
-                                        </th>
-                                        <th className="w-[14%]">
-                                            <Input value={partyFilter} onChange={(event) => setPartyFilter(event.target.value)} placeholder="بحث" aria-label="فلترة المستلم أو الدافع" />
-                                        </th>
-                                        <th className="w-[14%]">
-                                            <Select value={accountTypeFilter} onChange={(event) => setAccountTypeFilter(event.target.value)} aria-label="فلترة نوع الحساب">
-                                                <option value="">الكل</option>
-                                                {accountTypes.map((type) => <option key={type} value={type}>{type}</option>)}
-                                            </Select>
-                                        </th>
-                                        <th colSpan={3} className="w-[21%] text-center text-[10px] font-bold text-navy-100">الفلاتر مفتوحة</th>
                                     </tr>
                                 </thead>
                                 <tbody>
