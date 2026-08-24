@@ -242,6 +242,103 @@ it('prints, edits and deletes an expense voucher', function () {
         ->and($box->fresh()->balance())->toBe(round($before + 300, 2));
 });
 
+it('records one transport custody expense against multiple active branches', function () {
+    $box = CashBox::default();
+    actingAs($this->manager)->postJson('/api/treasury/deposit', [
+        'cash_box_id' => $box->id, 'amount' => 2000, 'party' => 'تمويل الاختبار',
+    ])->assertCreated();
+
+    $expenseAccount = Account::query()->where('code', '5204')->firstOrFail();
+    $customer = Customer::factory()->create(['name' => 'شركة الفروع']);
+    $first = $customer->branches()->create(['name' => 'فرع القاهرة']);
+    $second = $customer->branches()->create(['name' => 'فرع الجيزة']);
+    $before = $box->fresh()->balance();
+
+    actingAs($this->manager)->postJson('/api/treasury/expense', [
+        'cash_box_id' => $box->id,
+        'amount' => 350,
+        'account_id' => $expenseAccount->id,
+        'branch_ids' => [$first->id, $second->id],
+        'note' => 'عهدة انتقالات للفروع',
+    ])->assertCreated();
+
+    $movement = CashMovement::where('source', 'expense')->latest('id')->firstOrFail();
+    $journal = JournalEntry::where('sourceable_type', $movement->getMorphClass())
+        ->where('sourceable_id', $movement->id)
+        ->firstOrFail();
+
+    expect($movement->branches()->pluck('branches.id')->all())->toBe([$first->id, $second->id])
+        ->and($movement->account_id)->toBe($expenseAccount->id)
+        ->and($movement->category)->toBe($expenseAccount->name)
+        ->and($journal->total)->toEqual('350.00')
+        ->and($box->fresh()->balance())->toBe(round($before - 350, 2));
+
+    actingAs($this->manager)->getJson('/api/treasury/movements')
+        ->assertOk()
+        ->assertJsonPath('data.0.branches.0.name', 'فرع القاهرة')
+        ->assertJsonPath('data.0.branches.1.name', 'فرع الجيزة');
+
+    actingAs($this->manager)->getJson("/api/treasury/movements/{$movement->id}/voucher")
+        ->assertOk()
+        ->assertJsonPath('data.branches.0.label', 'فرع القاهرة — شركة الفروع')
+        ->assertJsonPath('data.branches.1.label', 'فرع الجيزة — شركة الفروع');
+
+    $statementRows = actingAs($this->manager)
+        ->getJson("/api/treasury/boxes/{$box->id}/statement")
+        ->assertOk()
+        ->json('data.rows');
+    $statementRow = collect($statementRows)->firstWhere('id', $movement->id);
+
+    expect($statementRow['branches'][0]['name'])->toBe('فرع القاهرة')
+        ->and($statementRow['branches'][1]['name'])->toBe('فرع الجيزة');
+});
+
+it('rejects inactive branches for a transport custody expense without creating a movement', function () {
+    $box = CashBox::default();
+    actingAs($this->manager)->postJson('/api/treasury/deposit', [
+        'cash_box_id' => $box->id, 'amount' => 1000, 'party' => 'تمويل الاختبار',
+    ])->assertCreated();
+
+    $expenseAccount = Account::query()->where('code', '5204')->firstOrFail();
+    $customer = Customer::factory()->create();
+    $branch = $customer->branches()->create(['name' => 'فرع موقوف', 'is_active' => false]);
+    $before = CashMovement::where('source', 'expense')->count();
+
+    actingAs($this->manager)->postJson('/api/treasury/expense', [
+        'cash_box_id' => $box->id,
+        'amount' => 100,
+        'account_id' => $expenseAccount->id,
+        'branch_ids' => [$branch->id],
+    ])->assertStatus(422)
+        ->assertJsonPath('errors.branch_ids.0', 'كل الفروع المختارة يجب أن تكون موجودة ونشطة.');
+
+    expect(CashMovement::where('source', 'expense')->count())->toBe($before);
+});
+
+it('keeps ordinary expenses independent from branch links', function () {
+    $box = CashBox::default();
+    actingAs($this->manager)->postJson('/api/treasury/deposit', [
+        'cash_box_id' => $box->id, 'amount' => 1000, 'party' => 'تمويل الاختبار',
+    ])->assertCreated();
+
+    $expenseAccount = Account::query()
+        ->where('type', 'expense')
+        ->where('code', '!=', '5204')
+        ->where('is_group', false)
+        ->where('is_active', true)
+        ->firstOrFail();
+    $customer = Customer::factory()->create();
+    $branch = $customer->branches()->create(['name' => 'فرع غير مرتبط']);
+
+    actingAs($this->manager)->postJson('/api/treasury/expense', [
+        'cash_box_id' => $box->id,
+        'amount' => 100,
+        'account_id' => $expenseAccount->id,
+        'branch_ids' => [$branch->id],
+    ])->assertStatus(422)
+        ->assertJsonPath('errors.branch_ids.0', 'يمكن ربط الفروع ببند عهدة الانتقالات فقط.');
+});
+
 it('deletes an external deposit voucher and takes the money back out', function () {
     $box = CashBox::default();
     actingAs($this->manager)->postJson('/api/treasury/deposit', [

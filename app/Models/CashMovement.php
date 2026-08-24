@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
  * One line of the treasury ledger. Append-only by convention: a mistake is
@@ -78,6 +79,13 @@ class CashMovement extends Model
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
+    }
+
+    /** Branches covered by an informational transport-custody expense. */
+    public function branches(): BelongsToMany
+    {
+        return $this->belongsToMany(Branch::class, 'cash_movement_branches')
+            ->withTimestamps();
     }
 
     public function costCenter(): BelongsTo

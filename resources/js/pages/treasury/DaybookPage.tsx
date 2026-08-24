@@ -73,7 +73,8 @@ export function DaybookPage() {
                                 'كود القيد',
                                 'البيان Description',
                                 'اسم المستلم / الدافع',
-                                'فرع / نوع الحساب',
+                                                                    'الحساب / الفروع',
+
                                 'مدين',
                                 'دائن',
                                 'الرصيد',
@@ -87,7 +88,10 @@ export function DaybookPage() {
                                     row.journal_code ?? '',
                                     row.description,
                                     row.party ?? '',
-                                    [row.account_name, row.account_type].filter(Boolean).join(' / '),
+                                    [
+                                        [row.account_name, row.account_type].filter(Boolean).join(' / '),
+                                        row.branches?.length ? `الفروع: ${row.branches.map((branch) => branch.label).join('، ')}` : '',
+                                    ].filter(Boolean).join(' — '),
                                     row.debit || 0,
                                     row.credit || 0,
                                     row.balance,
@@ -159,7 +163,7 @@ export function DaybookPage() {
                                         <LedgerHead className="w-[10%]">الرقم No</LedgerHead>
                                         <LedgerHead className="w-[21%]">البيان Description</LedgerHead>
                                         <LedgerHead className="w-[14%]">اسم مستلم / دافع المبلغ</LedgerHead>
-                                        <LedgerHead className="w-[14%]">فرع / نوع الحساب</LedgerHead>
+                                        <LedgerHead className="w-[14%]">الحساب / الفروع</LedgerHead>
                                         <LedgerHead className="w-[7%]" align="numeric">مدين</LedgerHead>
                                         <LedgerHead className="w-[7%]" align="numeric">دائن</LedgerHead>
                                         <LedgerHead className="w-[9%]" align="numeric">الرصيد</LedgerHead>
@@ -209,13 +213,21 @@ export function DaybookPage() {
                                             </LedgerCell>
                                             <LedgerCell dataLabel="البيان" className="whitespace-normal break-words text-navy-800">{row.description}</LedgerCell>
                                             <LedgerCell dataLabel="المستلم / الدافع" className="break-words font-semibold text-navy-700">{row.party ?? '—'}</LedgerCell>
-                                            <LedgerCell dataLabel="فرع / نوع الحساب" className="break-words text-navy-800">
+                                            <LedgerCell dataLabel="الحساب / الفروع" className="break-words text-navy-800">
                                                 {row.account_name ?? 'بانتظار الترحيل'}
                                                 {row.account_type && (
                                                     <span className="mt-0.5 block text-[10px] font-medium text-navy-400">
                                                         {row.account_type}
                                                     </span>
                                                 )}
+                                                {row.branches?.length ? (
+                                                    <span
+                                                        className="mt-0.5 block font-semibold text-brand-600"
+                                                        title={row.branches.map((branch) => branch.label).join('، ')}
+                                                    >
+                                                        الفروع: {row.branches.map((branch) => branch.label).join('، ')}
+                                                    </span>
+                                                ) : null}
                                             </LedgerCell>
                                             <LedgerCell dataLabel="مدين" align="numeric" className="font-extrabold text-emerald-700">
                                                 {row.debit ? formatMoney(row.debit) : '—'}

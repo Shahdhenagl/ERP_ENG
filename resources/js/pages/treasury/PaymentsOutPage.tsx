@@ -67,6 +67,7 @@ export function PaymentsOutPage() {
                         const manualVoucher = ['expense', 'external_deposit'].includes(movement.source)
                         const supplierVoucher = movement.source === 'supplier_payment'
                         const statement = movement.customer ?? movement.category ?? movement.note ?? '—'
+                        const branchSummary = movement.branches?.map((branch) => branch.label).join('، ')
 
                         return (
                             <tr key={movement.id} className="border-t border-navy-100 hover:bg-navy-50/60">
@@ -80,6 +81,14 @@ export function PaymentsOutPage() {
                                     </p>
                                     {movement.actor && (
                                         <p className="mt-0.5 truncate text-[11px] text-navy-400">{movement.actor}</p>
+                                    )}
+                                    {branchSummary && (
+                                        <p
+                                            className="mt-0.5 truncate text-[11px] font-semibold text-brand-600"
+                                            title={branchSummary}
+                                        >
+                                            الفروع: {branchSummary}
+                                        </p>
                                     )}
                                 </td>
                                 <td className="px-3 py-2.5 text-navy-600">{movement.box ?? '—'}</td>

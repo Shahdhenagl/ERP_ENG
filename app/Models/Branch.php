@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -71,6 +72,13 @@ class Branch extends Model
     public function assets(): HasMany
     {
         return $this->hasMany(Asset::class);
+    }
+
+    /** Informational treasury movements that covered this branch. */
+    public function cashMovements(): BelongsToMany
+    {
+        return $this->belongsToMany(CashMovement::class, 'cash_movement_branches')
+            ->withTimestamps();
     }
 
     public function tasks(): HasMany

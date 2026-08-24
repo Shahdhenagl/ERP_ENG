@@ -6,7 +6,12 @@ import { Button, Field, Input, Select, Textarea } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { formatMoney } from '@/lib/domain'
 import { useCashBoxes, useTreasuryOperation } from '@/lib/queries'
-import { ExpenseAccountChecklist } from '@/components/ExpenseAccountChecklist'
+import {
+    ExpenseAccountChecklist,
+    isTransportCustodyExpenseAccount,
+} from '@/components/ExpenseAccountChecklist'
+import { TransportBranchPicker } from '@/components/TransportBranchPicker'
+import type { Account } from '@/types'
 
 /** Paying something out, or moving it between two of our own boxes. */
 
@@ -30,9 +35,11 @@ export function TreasuryDialog({
         account_id: '',
         category: '',
         note: '',
+        branch_ids: [] as number[],
     })
+    const [selectedAccount, setSelectedAccount] = useState<Account | null>(null)
 
-    const set = (key: keyof typeof form) => (value: string) =>
+    const set = (key: keyof Omit<typeof form, 'branch_ids'>) => (value: string) =>
         setForm((current) => ({ ...current, [key]: value }))
 
     const handleSave = async () => {
@@ -46,6 +53,7 @@ export function TreasuryDialog({
                       account_id: Number(form.account_id),
                       category: form.category || null,
                       note: form.note || null,
+                      branch_ids: isTransportCustodyExpenseAccount(selectedAccount) ? form.branch_ids : [],
                   }
                 : {
                       from_box_id: Number(form.from_box_id),
@@ -100,8 +108,21 @@ export function TreasuryDialog({
                         <ExpenseAccountChecklist
                             value={form.account_id}
                             onChange={set('account_id')}
+                            onAccountChange={(account) => {
+                                setSelectedAccount(account)
+                                if (!isTransportCustodyExpenseAccount(account)) {
+                                    setForm((current) => ({ ...current, branch_ids: [] }))
+                                }
+                            }}
                             error={errors.account_id || errors.category}
                         />
+                        {isTransportCustodyExpenseAccount(selectedAccount) && (
+                            <TransportBranchPicker
+                                value={form.branch_ids}
+                                onChange={(branch_ids) => setForm((current) => ({ ...current, branch_ids }))}
+                                error={errors.branch_ids}
+                            />
+                        )}
                     </>
                 ) : (
                     <div className="grid gap-4 sm:grid-cols-2">

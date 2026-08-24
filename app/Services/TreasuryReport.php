@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Branch;
 use App\Models\CashBox;
 use App\Models\CashMovement;
 use App\Models\JournalEntry;
@@ -140,6 +141,7 @@ class TreasuryReport
                 'actor',
                 'account',
                 'counterpartBox.account',
+                'branches.customer',
             ])
             ->orderBy('created_at')
             ->orderBy('id')
@@ -175,6 +177,12 @@ class TreasuryReport
                 'party' => $this->party($movement),
                 'customer' => $movement->payment?->customer?->name,
                 'actor' => $movement->actor?->name,
+                'branches' => $movement->branches->map(static fn (Branch $branch): array => [
+                    'id' => $branch->id,
+                    'name' => $branch->name,
+                    'customer' => $branch->customer?->name,
+                    'label' => $branch->label(),
+                ])->values()->all(),
                 'account_name' => $accounting['name'],
                 'account_type' => $accounting['type'],
                 // Debit and credit are from the cash account's point of view:

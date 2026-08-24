@@ -7,7 +7,12 @@ import { errorMessage, fieldErrors } from '@/lib/api'
 import { formatMoney } from '@/lib/domain'
 import { useCashBoxes, useTreasuryOperation, useUsers } from '@/lib/queries'
 import { RecurringExpensesSection } from '@/pages/treasury/RecurringExpensesSection'
-import { ExpenseAccountChecklist } from '@/components/ExpenseAccountChecklist'
+import {
+    ExpenseAccountChecklist,
+    isTransportCustodyExpenseAccount,
+} from '@/components/ExpenseAccountChecklist'
+import type { Account } from '@/types'
+import { TransportBranchPicker } from '@/components/TransportBranchPicker'
 
 /**
  * Cash operations that are not customer or supplier settlements: recording
@@ -48,8 +53,13 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
         account_id: '',
         responsible_user_id: '',
         note: '',
+        branch_ids: [] as number[],
     })
-    const set = (k: keyof typeof form) => (v: string) => setForm((current) => ({ ...current, [k]: v }))
+    const [selectedAccount, setSelectedAccount] = useState<Account | null>(null)
+    const set = (k: keyof Omit<typeof form, 'branch_ids'>) => (v: string) =>
+        setForm((current) => ({ ...current, [k]: v }))
+
+    const isTransportCustody = isTransportCustodyExpenseAccount(selectedAccount)
 
     // Who the money was spent for. Separate from whoever is at the screen.
     const { data: userPage } = useUsers({ active_only: 1, per_page: 200 })
@@ -86,8 +96,22 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
                 <ExpenseAccountChecklist
                     value={form.account_id}
                     onChange={set('account_id')}
+                    onAccountChange={(account) => {
+                        setSelectedAccount(account)
+                        if (!isTransportCustodyExpenseAccount(account)) {
+                            setForm((current) => ({ ...current, branch_ids: [] }))
+                        }
+                    }}
                     error={errors.account_id}
                 />
+
+                {isTransportCustody && (
+                    <TransportBranchPicker
+                        value={form.branch_ids}
+                        onChange={(branch_ids) => setForm((current) => ({ ...current, branch_ids }))}
+                        error={errors.branch_ids}
+                    />
+                )}
 
                 <div className="grid gap-4 sm:grid-cols-2">
                     <Field label="المبلغ" required error={errors.amount}>
@@ -138,7 +162,12 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
                     variant="secondary"
                     className="w-full"
                     loading={expense.isPending}
-                    disabled={!form.cash_box_id || !form.amount || !form.account_id}
+                    disabled={
+                        !form.cash_box_id
+                        || !form.amount
+                        || !form.account_id
+                        || (isTransportCustody && form.branch_ids.length === 0)
+                    }
                     onClick={async () => {
                         setErrors({})
                         try {
@@ -150,6 +179,7 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
                                     ? Number(form.responsible_user_id)
                                     : null,
                                 note: form.note || null,
+                                branch_ids: isTransportCustody ? form.branch_ids : [],
                             })
                             toast.success('تم تسجيل المصروف.')
                             setForm({
@@ -158,7 +188,9 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
                                 account_id: '',
                                 responsible_user_id: '',
                                 note: '',
+                                branch_ids: [],
                             })
+                            setSelectedAccount(null)
                         } catch (caught) {
                             setErrors(fieldErrors(caught))
                             toast.error(errorMessage(caught, 'تعذّر التسجيل.'))

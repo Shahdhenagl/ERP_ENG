@@ -11,10 +11,12 @@ import { Button, Field, Input, Select } from '@/components/ui'
 export function ExpenseAccountChecklist({
     value,
     onChange,
+    onAccountChange,
     error,
 }: {
     value: string
     onChange: (value: string) => void
+    onAccountChange?: (account: Account | null) => void
     error?: string
 }) {
     const toast = useToast()
@@ -51,9 +53,13 @@ export function ExpenseAccountChecklist({
                 is_group: false,
             }) as Account & { data?: Account }
 
-            await refetch()
+            const refreshed = await refetch()
             const createdId = response.data?.id ?? response.id
-            if (createdId) onChange(String(createdId))
+            const createdAccount = refreshed.data?.find((account) => account.id === Number(createdId)) ?? null
+            if (createdId) {
+                onChange(String(createdId))
+                onAccountChange?.(createdAccount)
+            }
             toast.success('تمت إضافة بند المصروف إلى شجرة الحسابات.')
             setDialogOpen(false)
         } catch (caught) {
@@ -73,7 +79,13 @@ export function ExpenseAccountChecklist({
                 <div className="flex items-start gap-2">
                     <Select
                         value={value}
-                        onChange={(event) => onChange(event.target.value)}
+                        onChange={(event) => {
+                            const nextValue = event.target.value
+                            onChange(nextValue)
+                            onAccountChange?.(
+                                expenseAccounts.find((account) => String(account.id) === nextValue) ?? null,
+                            )
+                        }}
                         disabled={isLoading}
                         className="min-w-0 flex-1"
                     >
@@ -157,6 +169,16 @@ export function ExpenseAccountChecklist({
             </Modal>
         </>
     )
+}
+
+export function isTransportCustodyExpenseAccount(account: Account | null | undefined): boolean {
+    if (!account) return false
+
+    const normalizedName = account.name.trim().replace(/\s+/gu, ' ')
+
+    return account.code === '5204'
+        || normalizedName.includes('عهدة انتقالات')
+        || (normalizedName.includes('وقود') && normalizedName.includes('انتقالات'))
 }
 
 export default ExpenseAccountChecklist

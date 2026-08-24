@@ -412,6 +412,14 @@ function StatementDialog({
                                                 {row.account_type && (
                                                     <span className="block text-[10px] text-navy-400">{row.account_type}</span>
                                                 )}
+                                                {row.branches?.length ? (
+                                                    <span
+                                                        className="mt-0.5 block truncate text-[10px] font-semibold text-brand-600"
+                                                        title={row.branches.map((branch) => branch.label).join('، ')}
+                                                    >
+                                                        الفروع: {row.branches.map((branch) => branch.label).join('، ')}
+                                                    </span>
+                                                ) : null}
                                             </td>
                                             <td className="break-words tabular text-left text-emerald-700">
                                                 {row.debit > 0 ? formatMoney(row.debit) : '—'}
@@ -457,6 +465,14 @@ function StatementDialog({
                                                 <span className="font-bold text-navy-500">الحساب المقابل: </span>
                                                 <span className="text-navy-800">{row.account_name ?? 'بانتظار الترحيل'}</span>
                                                 {row.account_type && <span className="text-navy-400"> · {row.account_type}</span>}
+                                                {row.branches?.length ? (
+                                                    <span
+                                                        className="mt-0.5 block break-words text-[10px] font-semibold text-brand-600"
+                                                        title={row.branches.map((branch) => branch.label).join('، ')}
+                                                    >
+                                                        الفروع: {row.branches.map((branch) => branch.label).join('، ')}
+                                                    </span>
+                                                ) : null}
                                             </p>
                                         </div>
 

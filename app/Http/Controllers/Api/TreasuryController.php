@@ -6,6 +6,7 @@ use App\Enums\PaymentMethod;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PaymentResource;
 use App\Models\Account;
+use App\Models\Branch;
 use App\Models\ActivityLog;
 use App\Models\CashBox;
 use App\Models\CashMovement;
@@ -212,6 +213,8 @@ class TreasuryController extends Controller
             'category' => ['nullable', 'string', 'max:64'],
             'responsible_user_id' => ['nullable', 'exists:users,id'],
             'note' => ['nullable', 'string', 'max:1000'],
+            'branch_ids' => ['nullable', 'array'],
+            'branch_ids.*' => ['integer', 'distinct', 'exists:branches,id'],
         ]);
 
         // The account is the source of truth for posting. Keep category as a
@@ -222,16 +225,76 @@ class TreasuryController extends Controller
             ->where('is_group', false)
             ->where('is_active', true)
             ->findOrFail($data['account_id']);
+        $branchIds = collect($data['branch_ids'] ?? [])
+            ->map(static fn ($id): int => (int) $id)
+            ->unique()
+            ->values();
+        $isTransportCustody = $this->isTransportCustodyAccount($expenseAccount);
+
+        if (! $isTransportCustody && $branchIds->isNotEmpty()) {
+            throw ValidationException::withMessages([
+                'branch_ids' => Terms::get('يمكن ربط الفروع ببند عهدة الانتقالات فقط.'),
+            ]);
+        }
+
+        if ($isTransportCustody && $branchIds->isEmpty()) {
+            throw ValidationException::withMessages([
+                'branch_ids' => Terms::get('اختر فرعًا واحدًا على الأقل لمصروف عهدة الانتقالات.'),
+            ]);
+        }
+
+        if ($branchIds->isNotEmpty()) {
+            $activeBranchCount = Branch::query()
+                ->active()
+                ->whereIn('id', $branchIds->all())
+                ->count();
+
+            if ($activeBranchCount !== $branchIds->count()) {
+                throw ValidationException::withMessages([
+                    'branch_ids' => Terms::get('كل الفروع المختارة يجب أن تكون موجودة ونشطة.'),
+                ]);
+            }
+        }
+
         $data['category'] = $expenseAccount->name;
 
-        $movement = $this->billing->recordExpense(
-            CashBox::findOrFail($data['cash_box_id']),
-            (float) $data['amount'],
-            $request->user(),
-            $data,
+        $movement = DB::transaction(function () use ($data, $branchIds, $request) {
+            $movement = $this->billing->recordExpense(
+                CashBox::findOrFail($data['cash_box_id']),
+                (float) $data['amount'],
+                $request->user(),
+                $data,
+            );
+
+            if ($branchIds->isNotEmpty()) {
+                $movement->branches()->sync($branchIds->all());
+            }
+
+            return $movement;
+        });
+
+        ActivityLog::record(
+            'expense.recorded',
+            $movement,
+            "تسجيل سند صرف #{$movement->id} بمبلغ ".number_format((float) $movement->amount, 2),
         );
 
-        return response()->json(['data' => ['id' => $movement->id]], 201);
+        return response()->json([
+            'data' => [
+                'id' => $movement->id,
+                'branch_ids' => $branchIds->all(),
+            ],
+        ], 201);
+    }
+
+    /** The seeded transport heading plus explicitly named transport-custody accounts. */
+    protected function isTransportCustodyAccount(Account $account): bool
+    {
+        $name = preg_replace('/\s+/u', ' ', trim($account->name)) ?: '';
+
+        return $account->code === '5204'
+            || str_contains($name, 'عهدة انتقالات')
+            || (str_contains($name, 'وقود') && str_contains($name, 'انتقالات'));
     }
 
     /**
@@ -296,7 +359,7 @@ class TreasuryController extends Controller
             404,
         );
 
-        $movement->load(['box', 'actor', 'responsible']);
+        $movement->load(['box', 'actor', 'responsible', 'branches.customer']);
         $isReceipt = $movement->direction === 'in';
 
         return response()->json([
@@ -311,6 +374,7 @@ class TreasuryController extends Controller
                 'note' => $movement->note,
                 'actor' => $movement->actor?->name,
                 'responsible' => $movement->responsible?->name,
+                'branches' => $this->branchPayload($movement),
                 'date' => $movement->created_at?->toDateString(),
             ],
         ]);
@@ -396,9 +460,12 @@ class TreasuryController extends Controller
             ->when($request->string('search')->toString(), fn ($q, $term) => $q->where(
                 fn ($sub) => $sub->where('note', 'like', "%{$term}%")
                     ->orWhere('category', 'like', "%{$term}%")
-                    ->orWhereHas('payment.customer', fn ($c) => $c->where('name', 'like', "%{$term}%")),
+                    ->orWhereHas('payment.customer', fn ($c) => $c->where('name', 'like', "%{$term}%"))
+                    ->orWhereHas('branches', fn ($b) => $b
+                        ->where('name', 'like', "%{$term}%")
+                        ->orWhere('code', 'like', "%{$term}%")),
             ))
-            ->with(['box', 'actor', 'payment.customer', 'supplierPayment'])
+            ->with(['box', 'actor', 'payment.customer', 'supplierPayment', 'branches.customer'])
             ->orderByDesc('id')
             ->paginate($request->integer('per_page', 30));
 
@@ -422,10 +489,22 @@ class TreasuryController extends Controller
                     && $m->supplier_payment_id !== null
                     && $m->supplierPayment === null,
                 'actor' => $m->actor?->name,
+                'branches' => $this->branchPayload($m),
                 'created_at' => $m->created_at?->toIso8601String(),
             ])->items(),
             'meta' => ['total' => $movements->total(), 'last_page' => $movements->lastPage()],
         ]);
+    }
+
+    /** @return array<int, array{id: int, name: string, customer: string|null, label: string}> */
+    protected function branchPayload(CashMovement $movement): array
+    {
+        return $movement->branches->map(static fn (Branch $branch): array => [
+            'id' => $branch->id,
+            'name' => $branch->name,
+            'customer' => $branch->customer?->name,
+            'label' => $branch->label(),
+        ])->values()->all();
     }
 
     /* ── Headline numbers ────────────────────────────────── */

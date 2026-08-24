@@ -1068,6 +1068,8 @@ export interface TreasuryStatementRow {
     /** Legacy cash-book aliases retained for existing consumers. */
     in: number
     out: number
+    /** Informational branch links for transport-custody expenses. */
+    branches?: CashMovementBranch[]
     /** Running balance, carried down from the opening figure. */
     balance: number
 }
@@ -1105,7 +1107,15 @@ export interface CashMovementRow {
     /** True when the linked supplier payment was already cancelled by a reverse entry. */
     supplier_payment_is_cancelled?: boolean
     actor: string | null
+    branches?: CashMovementBranch[]
     created_at: string | null
+}
+
+export interface CashMovementBranch {
+    id: number
+    name: string
+    customer: string | null
+    label: string
 }
 
 /** A reusable checklist item that can be assigned to one or more recurring bills. */
@@ -1144,6 +1154,7 @@ export interface CashVoucher {
     cash_box: string | null
     note: string | null
     actor: string | null
+    branches?: CashMovementBranch[]
     date: string | null
 }
 
