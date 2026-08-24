@@ -19,6 +19,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -230,6 +231,12 @@ class TreasuryController extends Controller
             ->unique()
             ->values();
         $isTransportCustody = $this->isTransportCustodyAccount($expenseAccount);
+
+        if ($branchIds->isNotEmpty() && ! Schema::hasTable('cash_movement_branches')) {
+            throw ValidationException::withMessages([
+                'branch_ids' => Terms::get('ميزة ربط المصروف بالفروع تحتاج تحديث قاعدة البيانات أولًا. أبلغ مسؤول النظام قبل تسجيل هذا المصروف.'),
+            ]);
+        }
 
         if (! $isTransportCustody && $branchIds->isNotEmpty()) {
             throw ValidationException::withMessages([
