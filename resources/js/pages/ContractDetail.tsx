@@ -6,11 +6,14 @@ import {
     CalendarClock,
     CalendarPlus,
     ChevronDown,
+    CircleAlert,
     CircleCheck,
     Coins,
     HardDrive,
+    ListChecks,
     Lock,
     Pencil,
+    Plus,
     PlayCircle,
     Printer,
     RefreshCw,
@@ -596,53 +599,78 @@ function PaymentSchedule({ contract }: { contract: Contract }) {
 
             <ul className="space-y-2">
                 {visiblePayments.map((payment) => {
-                    const ready = canCollect(payment)
+                    const workflowReady = contract.collection_timing !== 'arrears' || payment.workflow?.status === 'completed'
+                    const ready = canCollect(payment) && workflowReady
                     const when = payment.service_label || (payment.is_upfront ? 'مع اعتماد العقد' : `بعد الزيارة ${payment.due_visit_sequence}`)
+                    const workflowSteps = payment.workflow?.steps ?? []
+                    const completedSteps = workflowSteps.filter((step) => step.completed).length
+                    const workflowLabel = !payment.workflow
+                        ? 'لم يبدأ'
+                        : payment.workflow.status === 'completed'
+                            ? 'مكتمل'
+                            : 'قيد التنفيذ'
 
                     return (
-                        <li key={payment.id} className="flex items-center gap-3 rounded-xl bg-navy-50 p-3">
-                            <span className="tabular grid size-8 shrink-0 place-items-center rounded-lg bg-surface text-xs font-bold text-navy-500 ring-1 ring-navy-200">
-                                {payment.period_number ?? payment.sequence}
-                            </span>
-                            <div className="min-w-0 flex-1">
-                                <p className="tabular text-sm font-bold text-navy-800">{formatMoney(payment.amount)}</p>
-                                <p className="text-[11px] text-navy-400">
-                                    {when}
-                                    {payment.invoice_code && ` · ${payment.invoice_code}`}
-                                </p>
-                                {payment.service_stats && (
-                                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-semibold text-navy-500">
-                                        <span>{payment.service_stats.visits_completed}/{payment.service_stats.visits_total} زيارة مكتملة</span>
-                                        <span>{payment.service_stats.branch_tasks_completed}/{payment.service_stats.branch_tasks_total} مهمة فروع</span>
-                                        <span>{payment.service_stats.branches.length} فروع</span>
-                                        {Object.entries(payment.service_stats.visits_statuses).map(([status, count]) => (
-                                            <span key={status}>{visitStatusLabel(status)}: {count}</span>
-                                        ))}
+                        <li key={payment.id} className="rounded-2xl border border-navy-100 bg-surface p-3 shadow-sm">
+                            <div className="flex items-start gap-3">
+                                <span className="tabular grid size-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-sm font-extrabold text-brand-700 ring-1 ring-brand-100">
+                                    {payment.period_number ?? payment.sequence}
+                                </span>
+                                <div className="min-w-0 flex-1">
+                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                        <p className="tabular text-base font-extrabold text-navy-900">{formatMoney(payment.amount)}</p>
+                                        <span className="text-[11px] font-semibold text-navy-400">دفعة رقم {payment.sequence}</span>
+                                        {payment.status === 'collected' ? (
+                                            <span className="badge bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">
+                                                <CircleCheck className="size-3" /> محصّلة
+                                            </span>
+                                        ) : (
+                                            <span className="badge bg-amber-50 text-amber-700 ring-1 ring-amber-200">مستحقة</span>
+                                        )}
+                                    </div>
+                                    <p className="mt-1 text-xs font-semibold text-navy-600">{when}</p>
+                                    {payment.invoice_code && <p className="mt-0.5 text-[10px] text-navy-400">الفاتورة: {payment.invoice_code}</p>}
+                                    {payment.service_stats && (
+                                        <div className="mt-2 flex flex-wrap gap-1.5 text-[10px] font-semibold text-navy-500">
+                                            <span className="rounded-md bg-navy-50 px-2 py-1">الزيارات: {payment.service_stats.visits_completed}/{payment.service_stats.visits_total}</span>
+                                            <span className="rounded-md bg-navy-50 px-2 py-1">مهام الفروع: {payment.service_stats.branch_tasks_completed}/{payment.service_stats.branch_tasks_total}</span>
+                                            <span className="rounded-md bg-navy-50 px-2 py-1">الفروع: {payment.service_stats.branches.length}</span>
+                                            {Object.entries(payment.service_stats.visits_statuses).map(([status, count]) => (
+                                                <span key={status} className="rounded-md bg-navy-50 px-2 py-1">{visitStatusLabel(status)}: {count}</span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-navy-100 pt-3">
+                                <button
+                                    type="button"
+                                    className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-bold text-brand-700 transition hover:bg-brand-50"
+                                    onClick={() => setWorkflowPaymentId((current) => current === payment.id ? null : payment.id)}
+                                >
+                                    <ListChecks className="size-4" />
+                                    الإجراءات: {workflowLabel}
+                                    <ChevronDown className={clsx('size-3.5 transition-transform', workflowPaymentId === payment.id && 'rotate-180')} />
+                                </button>
+                                {payment.workflow && (
+                                    <span className="text-[10px] font-semibold text-navy-400">
+                                        {completedSteps} من {workflowSteps.length} خطوات مكتملة
+                                    </span>
+                                )}
+                                {payment.status !== 'collected' && (
+                                    <div className="flex items-center gap-2">
+                                        {!ready && contract.collection_timing === 'arrears' && (
+                                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-700">
+                                                <Lock className="size-3" /> {payment.workflow?.status !== 'completed' ? 'أكمل الإجراءات أولًا' : 'بعد اكتمال الزيارات'}
+                                            </span>
+                                        )}
+                                        <Button icon={Coins} className="text-xs" disabled={!ready} onClick={() => setCollecting(payment)}>
+                                            {tr('تحصيل الدفعة')}
+                                        </Button>
                                     </div>
                                 )}
                             </div>
-                            {payment.status === 'collected' ? (
-                                <span className="badge shrink-0 bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">
-                                    <CircleCheck className="size-3" />
-                                    {tr('محصّلة')}
-                                </span>
-                            ) : (
-                                <div className="flex shrink-0 items-center gap-2">
-                                    {!ready && contract.collection_timing === 'arrears' && (
-                                        <span className="text-[10px] font-semibold text-amber-700">بعد اكتمال الزيارات</span>
-                                    )}
-                                    <Button icon={Coins} className="text-xs" disabled={!ready} onClick={() => setCollecting(payment)}>
-                                        {tr('تحصيل')}
-                                    </Button>
-                                    <button
-                                        type="button"
-                                        className="btn btn-ghost px-2 text-[11px]"
-                                        onClick={() => setWorkflowPaymentId((current) => current === payment.id ? null : payment.id)}
-                                    >
-                                        {payment.workflow ? `إجراءات: ${payment.workflow.status === 'completed' ? 'مكتملة' : 'قيد التنفيذ'}` : 'اختيار الإجراءات'}
-                                    </button>
-                                </div>
-                            )}
                         </li>
                     )
                 })}
@@ -703,14 +731,23 @@ function PaymentWorkflowPanel({
         }
     }
 
+    const workflowSteps = payment.workflow?.steps ?? []
+    const completedSteps = workflowSteps.filter((step) => step.completed).length
+    const progress = workflowSteps.length ? Math.round((completedSteps / workflowSteps.length) * 100) : 0
+
     return (
-        <div className="mt-4 rounded-xl border border-brand-200 bg-brand-50/40 p-4">
-            <div className="mb-3 flex items-center justify-between gap-2">
-                <div>
-                    <h3 className="text-sm font-bold text-navy-900">إجراءات الدفعة</h3>
-                    <p className="text-[11px] text-navy-500">
-                        لا يفتح التحصيل المؤخر إلا بعد اكتمال كل الخطوات المطلوبة.
-                    </p>
+        <div className="mt-4 overflow-hidden rounded-2xl border border-brand-200 bg-brand-50/50 shadow-sm">
+            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-brand-100 bg-white/80 p-4">
+                <div className="flex items-start gap-3">
+                    <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-100 text-brand-700">
+                        <ListChecks className="size-5" />
+                    </span>
+                    <div>
+                        <h3 className="text-sm font-extrabold text-navy-900">خطة إجراءات التحصيل</h3>
+                        <p className="mt-1 text-[11px] text-navy-500">
+                            دفعة رقم {payment.sequence} · {formatMoney(payment.amount)}
+                        </p>
+                    </div>
                 </div>
                 <div className="flex items-center gap-2">
                     <button type="button" className="btn btn-ghost text-xs" onClick={() => printPaymentReport(contract, payment)}>
@@ -720,69 +757,111 @@ function PaymentWorkflowPanel({
                 </div>
             </div>
 
-            <label className="mb-4 block">
-                <span className="mb-1 block text-xs font-bold text-navy-700">قالب الإجراءات</span>
-                <select
-                    className="input w-full"
-                    value={templateId}
-                    disabled={isLoading || assign.isPending || payment.status === 'collected'}
-                    onChange={(event) => void chooseTemplate(event.target.value)}
-                >
-                    <option value="">اختر Workflow لهذه الدفعة</option>
-                    {templates.map((template) => (
-                        <option key={template.id} value={template.id}>{template.name}</option>
-                    ))}
-                </select>
-            </label>
-            <button type="button" className="btn btn-secondary mb-4 text-xs" onClick={() => setCreatingTemplate((value) => !value)}>
-                {creatingTemplate ? 'إلغاء إضافة قالب' : 'إضافة Workflow جديد'}
-            </button>
-            {creatingTemplate && (
-                <form
-                    className="mb-4 space-y-2 rounded-lg bg-white p-3 ring-1 ring-brand-100"
-                    onSubmit={async (event) => {
-                        event.preventDefault()
-                        if (!newTemplateName.trim() || newSteps.some((step) => !step.trim())) return
-                        try {
-                            const created = await createTemplate.mutateAsync({
-                                name: newTemplateName.trim(),
-                                steps: newSteps.map((name, index) => ({ name: name.trim(), sort_order: index, is_required: true })),
-                            })
-                            setNewTemplateName('')
-                            setNewSteps(['مراجعة المستندات'])
-                            setCreatingTemplate(false)
-                            await chooseTemplate(String(created.id))
-                            toast.success('تم إنشاء Workflow وربطه بالدفعة.')
-                        } catch (caught) {
-                            toast.error(errorMessage(caught, 'تعذّر إنشاء Workflow.'))
-                        }
-                    }}
-                >
-                    <input className="input w-full text-xs" placeholder="اسم Workflow، مثل إجراءات كود 1" value={newTemplateName} onChange={(event) => setNewTemplateName(event.target.value)} />
-                    {newSteps.map((step, index) => (
-                        <div key={`${index}-${step}`} className="flex gap-2">
-                            <input className="input min-w-0 flex-1 text-xs" placeholder={`الخطوة ${index + 1}`} value={step} onChange={(event) => setNewSteps((items) => items.map((item, itemIndex) => itemIndex === index ? event.target.value : item))} />
-                            {newSteps.length > 1 && <button type="button" className="btn btn-ghost text-xs" onClick={() => setNewSteps((items) => items.filter((_, itemIndex) => itemIndex !== index))}>حذف</button>}
-                        </div>
-                    ))}
-                    <div className="flex flex-wrap gap-2">
-                        <button type="button" className="btn btn-ghost text-xs" onClick={() => setNewSteps((items) => [...items, ''])}>إضافة خطوة</button>
-                        <button type="submit" className="btn-primary text-xs" disabled={createTemplate.isPending}>حفظ وربط القالب</button>
-                    </div>
-                </form>
-            )}
-
-            {!payment.workflow ? (
-                <p className="rounded-lg bg-white p-3 text-xs text-amber-700 ring-1 ring-amber-200">
-                    لم يتم اختيار Workflow بعد، لذلك سيظل التحصيل محجوبًا.
-                </p>
-            ) : (
-                <div className="space-y-2">
-                    {payment.workflow.steps.map((step) => (
-                        <WorkflowStepRow key={step.id} contractId={contractId} step={step} disabled={payment.status === 'collected'} />
-                    ))}
+            <div className="space-y-4 p-4">
+                <div className="flex items-center gap-2 text-[11px] font-bold text-navy-600">
+                    <span className="grid size-5 place-items-center rounded-full bg-brand-600 text-[10px] text-white">1</span>
+                    <span>اختيار قالب الإجراءات</span>
+                    {payment.workflow && <span className="text-navy-400">✓ تم الاختيار: {payment.workflow.template?.name ?? 'قالب الإجراءات'}</span>}
                 </div>
-            )}
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                    <Field label="قالب الإجراءات" className="min-w-0 flex-1" hint="القالب يحدد الخطوات المطلوبة لهذه الدفعة.">
+                        <select
+                            className="input w-full"
+                            value={templateId}
+                            disabled={isLoading || assign.isPending || payment.status === 'collected'}
+                            onChange={(event) => void chooseTemplate(event.target.value)}
+                        >
+                            <option value="">اختر قالبًا جاهزًا</option>
+                            {templates.map((template) => (
+                                <option key={template.id} value={template.id}>{template.name}</option>
+                            ))}
+                        </select>
+                    </Field>
+                    <button type="button" className="btn btn-secondary shrink-0 text-xs" onClick={() => setCreatingTemplate((value) => !value)}>
+                        <Plus className="size-3.5" />
+                        {creatingTemplate ? 'إلغاء الإضافة' : 'إنشاء قالب جديد'}
+                    </button>
+                </div>
+
+                {creatingTemplate && (
+                    <form
+                        className="space-y-3 rounded-xl border border-brand-100 bg-white p-3"
+                        onSubmit={async (event) => {
+                            event.preventDefault()
+                            if (!newTemplateName.trim() || newSteps.some((step) => !step.trim())) return
+                            try {
+                                const created = await createTemplate.mutateAsync({
+                                    name: newTemplateName.trim(),
+                                    steps: newSteps.map((name, index) => ({ name: name.trim(), sort_order: index, is_required: true })),
+                                })
+                                setNewTemplateName('')
+                                setNewSteps(['مراجعة المستندات'])
+                                setCreatingTemplate(false)
+                                await chooseTemplate(String(created.id))
+                                toast.success('تم إنشاء Workflow وربطه بالدفعة.')
+                            } catch (caught) {
+                                toast.error(errorMessage(caught, 'تعذّر إنشاء Workflow.'))
+                            }
+                        }}
+                    >
+                        <div>
+                            <p className="text-xs font-extrabold text-navy-800">إنشاء قالب جديد</p>
+                            <p className="mt-0.5 text-[10px] text-navy-400">اكتبي اسمًا واضحًا ثم أضيفي خطوات الإجراءات بالترتيب.</p>
+                        </div>
+                        <Field label="اسم القالب" required>
+                            <input className="input w-full text-xs" placeholder="مثال: إجراءات كود 1" value={newTemplateName} onChange={(event) => setNewTemplateName(event.target.value)} />
+                        </Field>
+                        <div className="space-y-2">
+                            {newSteps.map((step, index) => (
+                                <div key={`${index}-${step}`} className="flex items-center gap-2">
+                                    <span className="grid size-7 shrink-0 place-items-center rounded-full bg-navy-100 text-[10px] font-bold text-navy-600">{index + 1}</span>
+                                    <input className="input min-w-0 flex-1 text-xs" placeholder={`اسم الخطوة ${index + 1}`} value={step} onChange={(event) => setNewSteps((items) => items.map((item, itemIndex) => itemIndex === index ? event.target.value : item))} />
+                                    {newSteps.length > 1 && <button type="button" className="btn btn-ghost text-xs" onClick={() => setNewSteps((items) => items.filter((_, itemIndex) => itemIndex !== index))}>حذف</button>}
+                                </div>
+                            ))}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            <button type="button" className="btn btn-ghost text-xs" onClick={() => setNewSteps((items) => [...items, ''])}><Plus className="size-3.5" /> إضافة خطوة</button>
+                            <button type="submit" className="btn-primary text-xs" disabled={createTemplate.isPending}>حفظ وربط القالب</button>
+                        </div>
+                    </form>
+                )}
+
+                {payment.workflow ? (
+                    <>
+                        <div className="rounded-xl border border-navy-100 bg-white p-3">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div>
+                                    <p className="text-xs font-extrabold text-navy-800">2. تنفيذ الخطوات</p>
+                                    <p className="mt-0.5 text-[10px] text-navy-400">علّمي الخطوة كمكتملة بعد تنفيذها، ويمكن إضافة ملاحظة أو ملف.</p>
+                                </div>
+                                <span className={clsx('badge', payment.workflow.status === 'completed' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700')}>
+                                    {payment.workflow.status === 'completed' ? 'كل الخطوات مكتملة' : `${completedSteps} من ${workflowSteps.length} مكتملة`}
+                                </span>
+                            </div>
+                            <div className="mt-3 h-2 overflow-hidden rounded-full bg-navy-100">
+                                <div className="h-full rounded-full bg-emerald-500 transition-all duration-300" style={{ width: `${progress}%` }} />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            {workflowSteps.map((step, index) => (
+                                <WorkflowStepRow key={step.id} contractId={contractId} step={step} index={index} disabled={payment.status === 'collected'} />
+                            ))}
+                        </div>
+                        {payment.status !== 'collected' && payment.workflow.status !== 'completed' && (
+                            <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-[11px] font-semibold text-amber-800">
+                                <CircleAlert className="mt-0.5 size-4 shrink-0" />
+                                <span>التحصيل المؤخر سيظل مغلقًا حتى تعليمي كل الخطوات المطلوبة كمكتملة.</span>
+                            </div>
+                        )}
+                    </>
+                ) : (
+                    <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-[11px] font-semibold text-amber-800">
+                        <CircleAlert className="mt-0.5 size-4 shrink-0" />
+                        <span>اختاري قالب إجراءات أولًا. لن يفتح التحصيل المؤخر قبل ربط القالب وإكمال خطواته.</span>
+                    </div>
+                )}
+            </div>
         </div>
     )
 }
@@ -840,10 +919,12 @@ function printPaymentReport(contract: Contract, payment: ContractPayment) {
 function WorkflowStepRow({
     contractId,
     step,
+    index,
     disabled,
 }: {
     contractId: number
     step: WorkflowStep
+    index: number
     disabled: boolean
 }) {
     const toast = useToast()
@@ -876,42 +957,68 @@ function WorkflowStepRow({
     }
 
     return (
-        <div className="rounded-lg bg-white p-3 ring-1 ring-navy-100">
+        <div className={clsx(
+            'rounded-xl border bg-white p-3 transition',
+            step.completed ? 'border-emerald-200' : 'border-navy-100',
+        )}>
             <div className="flex items-start gap-3">
-                <input
-                    type="checkbox"
-                    className="mt-1 size-4 accent-brand-600"
-                    checked={step.completed}
-                    disabled={disabled || update.isPending}
-                    onChange={(event) => void save(event.target.checked)}
-                />
+                <span className={clsx(
+                    'grid size-8 shrink-0 place-items-center rounded-full text-xs font-extrabold',
+                    step.completed ? 'bg-emerald-100 text-emerald-700' : 'bg-navy-100 text-navy-600',
+                )}>
+                    {step.completed ? <CircleCheck className="size-4" /> : index + 1}
+                </span>
                 <div className="min-w-0 flex-1">
-                    <p className={clsx('text-xs font-bold', step.completed ? 'text-emerald-700 line-through' : 'text-navy-800')}>
-                        {step.name}{step.is_required ? ' *' : ''}
-                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <p className={clsx('text-xs font-extrabold', step.completed ? 'text-emerald-700' : 'text-navy-800')}>
+                            {step.name}
+                        </p>
+                        {step.is_required && <span className="text-[10px] font-bold text-red-600">مطلوبة</span>}
+                        <span className={clsx(
+                            'badge',
+                            step.completed ? 'bg-emerald-50 text-emerald-700' : 'bg-navy-50 text-navy-500',
+                        )}>
+                            {step.completed ? 'مكتملة' : 'لم تكتمل'}
+                        </span>
+                    </div>
                     {step.description && <p className="mt-1 text-[11px] text-navy-400">{step.description}</p>}
-                    <textarea
-                        className="input mt-2 min-h-16 w-full text-xs"
-                        value={notes}
-                        disabled={disabled || update.isPending}
-                        placeholder="ملاحظات الخطوة"
-                        onChange={(event) => setNotes(event.target.value)}
-                        onBlur={() => {
-                            if (notes !== (step.notes ?? '')) void save(step.completed)
-                        }}
-                    />
+                    <label className="mt-3 block">
+                        <span className="mb-1 block text-[10px] font-bold text-navy-500">ملاحظات الخطوة</span>
+                        <textarea
+                            className="input min-h-16 w-full text-xs"
+                            value={notes}
+                            disabled={disabled || update.isPending}
+                            placeholder="أضيفي ملاحظة أو نتيجة الإجراء…"
+                            onChange={(event) => setNotes(event.target.value)}
+                            onBlur={() => {
+                                if (notes !== (step.notes ?? '')) void save(step.completed)
+                            }}
+                        />
+                    </label>
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                         <label className="btn btn-ghost cursor-pointer text-[11px]">
-                            رفع ملف
+                            رفع مستند
                             <input type="file" className="hidden" accept=".jpg,.jpeg,.png,.webp,.heic,.pdf" disabled={disabled || upload.isPending} onChange={(event) => void attach(event)} />
                         </label>
-                        {upload.isPending && <span className="text-[11px] text-navy-400">جارٍ الرفع...</span>}
+                        {upload.isPending && <span className="text-[11px] text-navy-400">جارٍ رفع المستند...</span>}
                         {step.attachments.map((attachment) => (
-                            <a key={attachment.id} href={attachment.url} target="_blank" rel="noreferrer" className="text-[11px] font-semibold text-brand-700 hover:underline">
+                            <a key={attachment.id} href={attachment.url} target="_blank" rel="noreferrer" className="rounded-md bg-brand-50 px-2 py-1 text-[11px] font-semibold text-brand-700 hover:underline">
                                 {attachment.original_name}
                             </a>
                         ))}
                     </div>
+                    {!disabled && (
+                        <label className="mt-3 flex cursor-pointer items-center gap-2 text-[11px] font-bold text-navy-600">
+                            <input
+                                type="checkbox"
+                                className="size-4 accent-brand-600"
+                                checked={step.completed}
+                                disabled={update.isPending}
+                                onChange={(event) => void save(event.target.checked)}
+                            />
+                            أؤكد إتمام هذه الخطوة
+                        </label>
+                    )}
                 </div>
             </div>
         </div>
