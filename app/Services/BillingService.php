@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Models\Warehouse;
 use App\Support\Terms;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -306,7 +307,7 @@ class BillingService
             ]);
         }
 
-        return CashMovement::create([
+        $data = [
             'cash_box_id' => $box->id,
             'task_id' => $context['task_id'] ?? null,
             'direction' => 'out',
@@ -321,7 +322,14 @@ class BillingService
             // to "whose fuel was this".
             'responsible_user_id' => $context['responsible_user_id'] ?? null,
             'user_id' => $actor->id,
-        ]);
+        ];
+
+        if (Schema::hasColumn('cash_movements', 'transaction_date')) {
+            $data['transaction_date'] = $context['transaction_date'] ?? now()->toDateString();
+            $data['payment_method'] = $context['payment_method'] ?? 'cash';
+        }
+
+        return CashMovement::create($data);
     }
 
     /**
@@ -353,7 +361,7 @@ class BillingService
 
         $extra = trim((string) ($context['note'] ?? ''));
 
-        return CashMovement::create([
+        $data = [
             'cash_box_id' => $box->id,
             'direction' => 'in',
             'amount' => $amount,
@@ -362,7 +370,14 @@ class BillingService
             'note' => $extra !== '' ? "{$party} — {$extra}" : $party,
             'receipt_path' => $context['receipt_path'] ?? null,
             'user_id' => $actor->id,
-        ]);
+        ];
+
+        if (Schema::hasColumn('cash_movements', 'transaction_date')) {
+            $data['transaction_date'] = $context['transaction_date'] ?? now()->toDateString();
+            $data['payment_method'] = $context['payment_method'] ?? 'cash';
+        }
+
+        return CashMovement::create($data);
     }
 
     /** Move money between boxes — cash banked, or drawn out. */

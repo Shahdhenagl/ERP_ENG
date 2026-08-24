@@ -81,11 +81,7 @@ class CashBox extends Model
      */
     public function balanceAsOf(?string $date): float
     {
-        $movements = $this->movements();
-
-        if ($date !== null) {
-            $movements->whereDate('created_at', '<=', $date);
-        }
+        $movements = $this->movements()->transactionDateBetween(null, $date);
 
         $rows = $movements->selectRaw('direction, coalesce(sum(amount), 0) as total')
             ->groupBy('direction')

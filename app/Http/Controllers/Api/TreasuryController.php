@@ -201,6 +201,13 @@ class TreasuryController extends Controller
 
     public function expense(Request $request): JsonResponse
     {
+        if (($request->exists('transaction_date') || $request->exists('payment_method'))
+            && ! Schema::hasColumn('cash_movements', 'transaction_date')) {
+            throw ValidationException::withMessages([
+                'transaction_date' => Terms::get('تحديث قاعدة البيانات مطلوب لتسجيل تاريخ وطريقة العملية. أبلغ مسؤول النظام قبل المتابعة.'),
+            ]);
+        }
+
         $data = $request->validate([
             'cash_box_id' => ['required', 'exists:cash_boxes,id'],
             'amount' => ['required', 'numeric', 'gt:0'],
@@ -214,6 +221,8 @@ class TreasuryController extends Controller
             'category' => ['nullable', 'string', 'max:64'],
             'responsible_user_id' => ['nullable', 'exists:users,id'],
             'note' => ['nullable', 'string', 'max:1000'],
+            'transaction_date' => ['nullable', 'date'],
+            'payment_method' => ['nullable', Rule::in(array_keys(CashMovement::PAYMENT_METHOD_LABELS))],
             'branch_ids' => ['nullable', 'array'],
             'branch_ids.*' => ['integer', 'distinct', 'exists:branches,id'],
         ]);
@@ -264,6 +273,8 @@ class TreasuryController extends Controller
         }
 
         $data['category'] = $expenseAccount->name;
+        $data['transaction_date'] ??= now()->toDateString();
+        $data['payment_method'] ??= 'cash';
 
         $movement = DB::transaction(function () use ($data, $branchIds, $request) {
             $movement = $this->billing->recordExpense(
@@ -311,12 +322,24 @@ class TreasuryController extends Controller
      */
     public function deposit(Request $request): JsonResponse
     {
+        if (($request->exists('transaction_date') || $request->exists('payment_method'))
+            && ! Schema::hasColumn('cash_movements', 'transaction_date')) {
+            throw ValidationException::withMessages([
+                'transaction_date' => Terms::get('تحديث قاعدة البيانات مطلوب لتسجيل تاريخ وطريقة العملية. أبلغ مسؤول النظام قبل المتابعة.'),
+            ]);
+        }
+
         $data = $request->validate([
             'cash_box_id' => ['required', 'exists:cash_boxes,id'],
             'amount' => ['required', 'numeric', 'gt:0'],
             'party' => ['required', 'string', 'max:160'],
             'note' => ['nullable', 'string', 'max:1000'],
+            'transaction_date' => ['nullable', 'date'],
+            'payment_method' => ['nullable', Rule::in(array_keys(CashMovement::PAYMENT_METHOD_LABELS))],
         ]);
+
+        $data['transaction_date'] ??= now()->toDateString();
+        $data['payment_method'] ??= 'cash';
 
         $movement = $this->billing->recordExternalDeposit(
             CashBox::findOrFail($data['cash_box_id']),
@@ -382,7 +405,10 @@ class TreasuryController extends Controller
                 'actor' => $movement->actor?->name,
                 'responsible' => $movement->responsible?->name,
                 'branches' => $this->branchPayload($movement),
-                'date' => $movement->created_at?->toDateString(),
+                'transaction_date' => $movement->transaction_date?->toDateString(),
+                'payment_method' => $movement->payment_method,
+                'payment_method_label' => $movement->paymentMethodLabel(),
+                'date' => ($movement->transaction_date ?? $movement->created_at)?->toDateString(),
             ],
         ]);
     }
@@ -462,8 +488,10 @@ class TreasuryController extends Controller
             ->when($request->integer('cash_box_id'), fn ($q, $id) => $q->where('cash_box_id', $id))
             ->when($request->string('direction')->toString(), fn ($q, $d) => $q->where('direction', $d))
             ->when($request->string('source')->toString(), fn ($q, $s) => $q->where('source', $s))
-            ->when($request->date('from'), fn ($q, $from) => $q->whereDate('created_at', '>=', $from))
-            ->when($request->date('to'), fn ($q, $to) => $q->whereDate('created_at', '<=', $to))
+            ->transactionDateBetween(
+                $request->date('from')?->toDateString(),
+                $request->date('to')?->toDateString(),
+            )
             ->when($request->string('search')->toString(), fn ($q, $term) => $q->where(
                 fn ($sub) => $sub->where('note', 'like', "%{$term}%")
                     ->orWhere('category', 'like', "%{$term}%")
@@ -473,7 +501,7 @@ class TreasuryController extends Controller
                         ->orWhere('code', 'like', "%{$term}%")),
             ))
             ->with(['box', 'actor', 'payment.customer', 'supplierPayment', 'branches.customer'])
-            ->orderByDesc('id')
+            ->orderByTransactionDate('desc')
             ->paginate($request->integer('per_page', 30));
 
         return response()->json([
@@ -497,6 +525,9 @@ class TreasuryController extends Controller
                     && $m->supplierPayment === null,
                 'actor' => $m->actor?->name,
                 'branches' => $this->branchPayload($m),
+                'transaction_date' => $m->transaction_date?->toDateString(),
+                'payment_method' => $m->payment_method,
+                'payment_method_label' => $m->paymentMethodLabel(),
                 'created_at' => $m->created_at?->toIso8601String(),
             ])->items(),
             'meta' => ['total' => $movements->total(), 'last_page' => $movements->lastPage()],

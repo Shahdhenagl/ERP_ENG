@@ -43,6 +43,20 @@ export function CashOperationsPage() {
 
 type Box = { id: number; name: string; type_label: string; balance: number }
 
+const PAYMENT_METHOD_OPTIONS = [
+    { value: 'cash', label: 'كاش' },
+    { value: 'bank_transfer', label: 'تحويل بنكي' },
+    { value: 'instapay', label: 'إنستا باي' },
+    { value: 'vodafone_cash', label: 'فودافون كاش' },
+] as const
+
+const defaultTransactionDate = () => {
+    const now = new Date()
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
+
+    return now.toISOString().slice(0, 10)
+}
+
 function ExpenseCard({ boxes }: { boxes: Box[] }) {
     const toast = useToast()
     const expense = useTreasuryOperation('expense')
@@ -50,6 +64,8 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
     const [form, setForm] = useState({
         cash_box_id: '',
         amount: '',
+        transaction_date: defaultTransactionDate(),
+        payment_method: 'cash',
         account_id: '',
         responsible_user_id: '',
         note: '',
@@ -114,6 +130,26 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
                 )}
 
                 <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label="تاريخ الصرف" required error={errors.transaction_date}>
+                        <Input
+                            type="date"
+                            value={form.transaction_date}
+                            onChange={(e) => set('transaction_date')(e.target.value)}
+                        />
+                    </Field>
+                    <Field label="طريقة الصرف" required error={errors.payment_method}>
+                        <Select
+                            value={form.payment_method}
+                            onChange={(e) => set('payment_method')(e.target.value)}
+                        >
+                            {PAYMENT_METHOD_OPTIONS.map((option) => (
+                                <option key={option.value} value={option.value}>{option.label}</option>
+                            ))}
+                        </Select>
+                    </Field>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
                     <Field label="المبلغ" required error={errors.amount}>
                         <Input
                             type="number"
@@ -174,6 +210,8 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
                             await expense.mutateAsync({
                                 cash_box_id: Number(form.cash_box_id),
                                 amount: Number(form.amount),
+                                transaction_date: form.transaction_date,
+                                payment_method: form.payment_method,
                                 account_id: Number(form.account_id),
                                 responsible_user_id: form.responsible_user_id
                                     ? Number(form.responsible_user_id)
@@ -185,6 +223,8 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
                             setForm({
                                 cash_box_id: '',
                                 amount: '',
+                                transaction_date: defaultTransactionDate(),
+                                payment_method: 'cash',
                                 account_id: '',
                                 responsible_user_id: '',
                                 note: '',
@@ -213,7 +253,14 @@ function DepositCard({ boxes }: { boxes: Box[] }) {
     const toast = useToast()
     const deposit = useTreasuryOperation('deposit')
     const [errors, setErrors] = useState<Record<string, string>>({})
-    const [form, setForm] = useState({ cash_box_id: '', amount: '', party: '', note: '' })
+    const [form, setForm] = useState({
+        cash_box_id: '',
+        amount: '',
+        transaction_date: defaultTransactionDate(),
+        payment_method: 'cash',
+        party: '',
+        note: '',
+    })
     const set = (k: keyof typeof form) => (v: string) => setForm((c) => ({ ...c, [k]: v }))
 
     return (
@@ -239,6 +286,25 @@ function DepositCard({ boxes }: { boxes: Box[] }) {
             <Field label="المبلغ" required error={errors.amount}>
                 <Input type="number" min={0} step="any" value={form.amount} onChange={(e) => set('amount')(e.target.value)} dir="ltr" className="text-left" />
             </Field>
+            <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="تاريخ الإيداع" required error={errors.transaction_date}>
+                    <Input
+                        type="date"
+                        value={form.transaction_date}
+                        onChange={(e) => set('transaction_date')(e.target.value)}
+                    />
+                </Field>
+                <Field label="طريقة الإيداع" required error={errors.payment_method}>
+                    <Select
+                        value={form.payment_method}
+                        onChange={(e) => set('payment_method')(e.target.value)}
+                    >
+                        {PAYMENT_METHOD_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                    </Select>
+                </Field>
+            </div>
 
             <Button
                 icon={HandCoins}
@@ -252,11 +318,20 @@ function DepositCard({ boxes }: { boxes: Box[] }) {
                         await deposit.mutateAsync({
                             cash_box_id: Number(form.cash_box_id),
                             amount: Number(form.amount),
+                            transaction_date: form.transaction_date,
+                            payment_method: form.payment_method,
                             party: form.party.trim(),
                             note: form.note || null,
                         })
                         toast.success('تم تسجيل الإيداع.')
-                        setForm({ cash_box_id: '', amount: '', party: '', note: '' })
+                        setForm({
+                            cash_box_id: '',
+                            amount: '',
+                            transaction_date: defaultTransactionDate(),
+                            payment_method: 'cash',
+                            party: '',
+                            note: '',
+                        })
                     } catch (caught) {
                         setErrors(fieldErrors(caught))
                         toast.error(errorMessage(caught, 'تعذّر التسجيل.'))

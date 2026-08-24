@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * One line of the treasury ledger. Append-only by convention: a mistake is
@@ -20,6 +22,8 @@ class CashMovement extends Model
         'task_id',
         'direction',
         'amount',
+        'transaction_date',
+        'payment_method',
         'source',
         'payment_id',
         // Present since purchasing landed but never fillable, so every voucher
@@ -44,6 +48,7 @@ class CashMovement extends Model
     {
         return [
             'amount' => 'decimal:2',
+            'transaction_date' => 'date',
             'reconciled_at' => 'datetime',
         ];
     }
@@ -102,6 +107,61 @@ class CashMovement extends Model
     public function responsible(): BelongsTo
     {
         return $this->belongsTo(User::class, 'responsible_user_id');
+    }
+
+    public const PAYMENT_METHOD_LABELS = [
+        'cash' => 'كاش',
+        'bank_transfer' => 'تحويل بنكي',
+        'instapay' => 'إنستا باي',
+        'vodafone_cash' => 'فودافون كاش',
+    ];
+
+    public function scopeTransactionDateBetween(Builder $query, ?string $from, ?string $to): Builder
+    {
+        if (! Schema::hasColumn('cash_movements', 'transaction_date')) {
+            return $query
+                ->when($from, fn (Builder $q) => $q->whereDate('created_at', '>=', $from))
+                ->when($to, fn (Builder $q) => $q->whereDate('created_at', '<=', $to));
+        }
+
+        if ($from) {
+            $query->where(fn (Builder $q) => $q
+                ->whereDate('transaction_date', '>=', $from)
+                ->orWhere(fn (Builder $legacy) => $legacy
+                    ->whereNull('transaction_date')
+                    ->whereDate('created_at', '>=', $from)));
+        }
+
+        if ($to) {
+            $query->where(fn (Builder $q) => $q
+                ->whereDate('transaction_date', '<=', $to)
+                ->orWhere(fn (Builder $legacy) => $legacy
+                    ->whereNull('transaction_date')
+                    ->whereDate('created_at', '<=', $to)));
+        }
+
+        return $query;
+    }
+
+    public function scopeOrderByTransactionDate(Builder $query, string $direction = 'asc'): Builder
+    {
+        $direction = strtolower($direction) === 'asc' ? 'asc' : 'desc';
+
+        if (! Schema::hasColumn('cash_movements', 'transaction_date')) {
+            return $query->orderBy('created_at', $direction)->orderBy('id', $direction);
+        }
+
+        return $query
+            ->orderByRaw("COALESCE(transaction_date, DATE(created_at)) {$direction}")
+            ->orderBy('created_at', $direction)
+            ->orderBy('id', $direction);
+    }
+
+    public function paymentMethodLabel(): ?string
+    {
+        return $this->payment_method
+            ? (self::PAYMENT_METHOD_LABELS[$this->payment_method] ?? $this->payment_method)
+            : null;
     }
 
     /** Effect on the box's balance. Amounts are always stored positive. */

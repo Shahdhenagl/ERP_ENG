@@ -151,6 +151,8 @@ it('records an external deposit into a box as income', function () {
         'cash_box_id' => $box->id,
         'amount' => 1500,
         'party' => 'شركة النور',
+        'transaction_date' => '2026-08-10',
+        'payment_method' => 'bank_transfer',
         'note' => 'دفعة مقدمة',
     ])->assertCreated();
 
@@ -161,6 +163,8 @@ it('records an external deposit into a box as income', function () {
     expect($movement)->not->toBeNull()
         ->and($movement->direction)->toBe('in')
         ->and($movement->category)->toBe('شركة النور')
+        ->and($movement->transaction_date->toDateString())->toBe('2026-08-10')
+        ->and($movement->payment_method)->toBe('bank_transfer')
         ->and((float) $movement->amount)->toBe(1500.0);
 });
 
@@ -257,6 +261,8 @@ it('records one transport custody expense against multiple active branches', fun
     actingAs($this->manager)->postJson('/api/treasury/expense', [
         'cash_box_id' => $box->id,
         'amount' => 350,
+        'transaction_date' => '2026-08-12',
+        'payment_method' => 'instapay',
         'account_id' => $expenseAccount->id,
         'branch_ids' => [$first->id, $second->id],
         'note' => 'عهدة انتقالات للفروع',
@@ -270,18 +276,28 @@ it('records one transport custody expense against multiple active branches', fun
     expect($movement->branches()->pluck('branches.id')->all())->toBe([$first->id, $second->id])
         ->and($movement->account_id)->toBe($expenseAccount->id)
         ->and($movement->category)->toBe($expenseAccount->name)
+        ->and($movement->transaction_date->toDateString())->toBe('2026-08-12')
+        ->and($movement->payment_method)->toBe('instapay')
+        ->and($journal->entry_date->toDateString())->toBe('2026-08-12')
         ->and($journal->total)->toEqual('350.00')
         ->and($box->fresh()->balance())->toBe(round($before - 350, 2));
 
-    actingAs($this->manager)->getJson('/api/treasury/movements')
+    $movementRows = actingAs($this->manager)
+        ->getJson('/api/treasury/movements')
         ->assertOk()
-        ->assertJsonPath('data.0.branches.0.name', 'فرع القاهرة')
-        ->assertJsonPath('data.0.branches.1.name', 'فرع الجيزة');
+        ->json('data');
+    $movementRow = collect($movementRows)->firstWhere('id', $movement->id);
+
+    expect($movementRow['branches'][0]['name'])->toBe('فرع القاهرة')
+        ->and($movementRow['branches'][1]['name'])->toBe('فرع الجيزة');
 
     actingAs($this->manager)->getJson("/api/treasury/movements/{$movement->id}/voucher")
         ->assertOk()
         ->assertJsonPath('data.branches.0.label', 'فرع القاهرة — شركة الفروع')
-        ->assertJsonPath('data.branches.1.label', 'فرع الجيزة — شركة الفروع');
+        ->assertJsonPath('data.branches.1.label', 'فرع الجيزة — شركة الفروع')
+        ->assertJsonPath('data.date', '2026-08-12')
+        ->assertJsonPath('data.payment_method_label', 'إنستا باي');
+
 
     $statementRows = actingAs($this->manager)
         ->getJson("/api/treasury/boxes/{$box->id}/statement")

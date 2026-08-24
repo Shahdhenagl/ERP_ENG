@@ -40,6 +40,7 @@ export function CashVoucherPrint() {
                         ['رقم السند', voucher.code],
                         ['التاريخ', voucher.date ? formatDate(voucher.date) : null],
                         [isReceipt ? 'إلى خزينة' : 'من خزينة', voucher.cash_box],
+                        ['طريقة العملية', voucher.payment_method_label],
                         ...(!isReceipt && voucher.branches?.length
                             ? ([['الفروع المرتبطة', voucher.branches.map((branch) => branch.label).join('، ')]] as Array<[string, string]>)
                             : []),

@@ -93,8 +93,7 @@ class TreasuryReport
         return CashMovement::query()
             ->where('direction', $direction)
             ->when($boxId, fn (Builder $q) => $q->where('cash_box_id', $boxId))
-            ->when($from, fn (Builder $q) => $q->whereDate('created_at', '>=', $from))
-            ->when($to, fn (Builder $q) => $q->whereDate('created_at', '<=', $to))
+            ->transactionDateBetween($from, $to)
             // A company-wide view nets transfers out entirely: money moving
             // between our own boxes is neither income nor expense.
             ->when(! $boxId, fn (Builder $q) => $q->where('source', '!=', 'transfer'))
@@ -143,8 +142,7 @@ class TreasuryReport
                 'counterpartBox.account',
                 'branches.customer',
             ])
-            ->orderBy('created_at')
-            ->orderBy('id')
+            ->orderByTransactionDate('asc')
             ->get();
 
         $entries = JournalEntry::query()
@@ -164,7 +162,7 @@ class TreasuryReport
 
             return [
                 'id' => $movement->id,
-                'date' => $movement->created_at?->toDateString(),
+                'date' => ($movement->transaction_date ?? $movement->created_at)?->toDateString(),
                 'direction' => $movement->direction,
                 'source' => $movement->source,
                 'label' => self::LABELS[$movement->source] ?? $movement->source,
@@ -177,6 +175,9 @@ class TreasuryReport
                 'party' => $this->party($movement),
                 'customer' => $movement->payment?->customer?->name,
                 'actor' => $movement->actor?->name,
+                'transaction_date' => $movement->transaction_date?->toDateString(),
+                'payment_method' => $movement->payment_method,
+                'payment_method_label' => $movement->paymentMethodLabel(),
                 'branches' => $movement->branches->map(static fn (Branch $branch): array => [
                     'id' => $branch->id,
                     'name' => $branch->name,

@@ -412,6 +412,11 @@ function StatementDialog({
                                                 {row.account_type && (
                                                     <span className="block text-[10px] text-navy-400">{row.account_type}</span>
                                                 )}
+                                                {row.payment_method_label && (
+                                                    <span className="mt-0.5 block text-[10px] font-semibold text-navy-500">
+                                                        الطريقة: {row.payment_method_label}
+                                                    </span>
+                                                )}
                                                 {row.branches?.length ? (
                                                     <span
                                                         className="mt-0.5 block truncate text-[10px] font-semibold text-brand-600"
@@ -465,6 +470,11 @@ function StatementDialog({
                                                 <span className="font-bold text-navy-500">الحساب المقابل: </span>
                                                 <span className="text-navy-800">{row.account_name ?? 'بانتظار الترحيل'}</span>
                                                 {row.account_type && <span className="text-navy-400"> · {row.account_type}</span>}
+                                                {row.payment_method_label && (
+                                                    <span className="mt-0.5 block break-words text-[10px] font-semibold text-navy-500">
+                                                        الطريقة: {row.payment_method_label}
+                                                    </span>
+                                                )}
                                                 {row.branches?.length ? (
                                                     <span
                                                         className="mt-0.5 block break-words text-[10px] font-semibold text-brand-600"

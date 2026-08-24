@@ -353,7 +353,7 @@ class LedgerPoster
                     ['account' => $cash, 'credit' => $amount],
                 ];
         }, [
-            'entry_date' => $movement->created_at?->toDateString() ?? now()->toDateString(),
+            'entry_date' => ($movement->transaction_date ?? $movement->created_at)?->toDateString() ?? now()->toDateString(),
             'source' => $this->sourceFor($movement),
             'memo' => $this->memoFor($movement),
         ], $actor);

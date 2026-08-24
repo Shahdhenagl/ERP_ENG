@@ -90,6 +90,7 @@ export function DaybookPage() {
                                     row.party ?? '',
                                     [
                                         [row.account_name, row.account_type].filter(Boolean).join(' / '),
+                                        row.payment_method_label ? `الطريقة: ${row.payment_method_label}` : '',
                                         row.branches?.length ? `الفروع: ${row.branches.map((branch) => branch.label).join('، ')}` : '',
                                     ].filter(Boolean).join(' — '),
                                     row.debit || 0,
@@ -218,6 +219,11 @@ export function DaybookPage() {
                                                 {row.account_type && (
                                                     <span className="mt-0.5 block text-[10px] font-medium text-navy-400">
                                                         {row.account_type}
+                                                    </span>
+                                                )}
+                                                {row.payment_method_label && (
+                                                    <span className="mt-0.5 block text-[10px] font-semibold text-navy-500">
+                                                        الطريقة: {row.payment_method_label}
                                                     </span>
                                                 )}
                                                 {row.branches?.length ? (

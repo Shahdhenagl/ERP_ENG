@@ -7,7 +7,7 @@ import { useToast } from '@/components/Toast'
 import { Button, EmptyState, Field, Input, PageHeader, SkeletonCard, Textarea } from '@/components/ui'
 import { errorMessage } from '@/lib/api'
 import { formatMoney } from '@/lib/domain'
-import { formatSmart } from '@/lib/format'
+import { formatDate, formatSmart } from '@/lib/format'
 import {
     useCashMovements,
     useDeleteCashMovement,
@@ -79,6 +79,11 @@ export function PaymentsOutPage() {
                                     <p className="truncate font-semibold text-navy-800" title={statement}>
                                         {statement}
                                     </p>
+                                    {movement.payment_method_label && (
+                                        <p className="mt-0.5 truncate text-[11px] font-semibold text-navy-500">
+                                            طريقة الصرف: {movement.payment_method_label}
+                                        </p>
+                                    )}
                                     {movement.actor && (
                                         <p className="mt-0.5 truncate text-[11px] text-navy-400">{movement.actor}</p>
                                     )}
@@ -93,7 +98,11 @@ export function PaymentsOutPage() {
                                 </td>
                                 <td className="px-3 py-2.5 text-navy-600">{movement.box ?? '—'}</td>
                                 <td className="tabular px-3 py-2.5 text-navy-600">
-                                    {movement.created_at ? formatSmart(movement.created_at) : '—'}
+                                    {movement.transaction_date
+                                        ? formatDate(movement.transaction_date)
+                                        : movement.created_at
+                                            ? formatSmart(movement.created_at)
+                                            : '—'}
                                 </td>
                                 <td className="tabular px-3 py-2.5 text-end font-bold text-red-600">
                                     −{formatMoney(movement.amount)}

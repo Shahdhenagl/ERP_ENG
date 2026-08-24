@@ -13,6 +13,20 @@ import {
 import { TransportBranchPicker } from '@/components/TransportBranchPicker'
 import type { Account } from '@/types'
 
+const PAYMENT_METHOD_OPTIONS = [
+    { value: 'cash', label: 'كاش' },
+    { value: 'bank_transfer', label: 'تحويل بنكي' },
+    { value: 'instapay', label: 'إنستا باي' },
+    { value: 'vodafone_cash', label: 'فودافون كاش' },
+] as const
+
+const defaultTransactionDate = () => {
+    const now = new Date()
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
+
+    return now.toISOString().slice(0, 10)
+}
+
 /** Paying something out, or moving it between two of our own boxes. */
 
 export function TreasuryDialog({
@@ -32,6 +46,8 @@ export function TreasuryDialog({
         from_box_id: '',
         to_box_id: '',
         amount: '',
+        transaction_date: defaultTransactionDate(),
+        payment_method: 'cash',
         account_id: '',
         category: '',
         note: '',
@@ -53,6 +69,8 @@ export function TreasuryDialog({
                       account_id: Number(form.account_id),
                       category: form.category || null,
                       note: form.note || null,
+                      transaction_date: form.transaction_date,
+                      payment_method: form.payment_method,
                       branch_ids: isTransportCustodyExpenseAccount(selectedAccount) ? form.branch_ids : [],
                   }
                 : {
@@ -123,6 +141,25 @@ export function TreasuryDialog({
                                 error={errors.branch_ids}
                             />
                         )}
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <Field label="تاريخ الصرف" required error={errors.transaction_date}>
+                                <Input
+                                    type="date"
+                                    value={form.transaction_date}
+                                    onChange={(event) => set('transaction_date')(event.target.value)}
+                                />
+                            </Field>
+                            <Field label="طريقة الصرف" required error={errors.payment_method}>
+                                <Select
+                                    value={form.payment_method}
+                                    onChange={(event) => set('payment_method')(event.target.value)}
+                                >
+                                    {PAYMENT_METHOD_OPTIONS.map((option) => (
+                                        <option key={option.value} value={option.value}>{option.label}</option>
+                                    ))}
+                                </Select>
+                            </Field>
+                        </div>
                     </>
                 ) : (
                     <div className="grid gap-4 sm:grid-cols-2">

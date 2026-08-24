@@ -1042,6 +1042,8 @@ export interface TreasuryAnalysis {
     }>
 }
 
+export type CashPaymentMethod = 'cash' | 'bank_transfer' | 'instapay' | 'vodafone_cash'
+
 export interface TreasuryStatementRow {
     id: number
     date: string | null
@@ -1068,6 +1070,9 @@ export interface TreasuryStatementRow {
     /** Legacy cash-book aliases retained for existing consumers. */
     in: number
     out: number
+    transaction_date?: string | null
+    payment_method?: CashPaymentMethod | null
+    payment_method_label?: string | null
     /** Informational branch links for transport-custody expenses. */
     branches?: CashMovementBranch[]
     /** Running balance, carried down from the opening figure. */
@@ -1107,6 +1112,9 @@ export interface CashMovementRow {
     /** True when the linked supplier payment was already cancelled by a reverse entry. */
     supplier_payment_is_cancelled?: boolean
     actor: string | null
+    transaction_date?: string | null
+    payment_method?: CashPaymentMethod | null
+    payment_method_label?: string | null
     branches?: CashMovementBranch[]
     created_at: string | null
 }
@@ -1154,6 +1162,9 @@ export interface CashVoucher {
     cash_box: string | null
     note: string | null
     actor: string | null
+    transaction_date?: string | null
+    payment_method?: CashPaymentMethod | null
+    payment_method_label?: string | null
     branches?: CashMovementBranch[]
     date: string | null
 }
