@@ -52,15 +52,17 @@ export function PaymentsOutPage() {
                 />
             ) : (
                 <DataTable
-                    minWidth="70rem"
+                    minWidth="0"
+                    className="overflow-x-hidden"
+                    tableClassName="table-fixed text-xs"
                     headers={[
-                        { label: 'الرقم', className: 'w-24' },
-                        { label: 'النوع', className: 'w-32' },
-                        'الجهة / البيان',
-                        { label: 'الخزينة', className: 'w-36' },
-                        { label: 'التاريخ', className: 'w-36' },
-                        { label: 'المبلغ', className: 'w-32 text-end' },
-                        { label: 'الإجراءات', className: 'w-36 text-center' },
+                        { label: 'الرقم', className: 'w-[8%]' },
+                        { label: 'النوع', className: 'w-[11%]' },
+                        { label: 'الجهة / البيان', className: 'w-[29%]' },
+                        { label: 'الخزينة', className: 'w-[15%]' },
+                        { label: 'التاريخ', className: 'w-[13%]' },
+                        { label: 'المبلغ', className: 'w-[10%] text-end' },
+                        { label: 'الإجراءات', className: 'w-[14%] text-center' },
                     ]}
                 >
                     {rows.map((movement) => {
@@ -96,8 +98,10 @@ export function PaymentsOutPage() {
                                         </p>
                                     )}
                                 </td>
-                                <td className="px-3 py-2.5 text-navy-600">{movement.box ?? '—'}</td>
-                                <td className="tabular px-3 py-2.5 text-navy-600">
+                                <td className="truncate px-3 py-2.5 text-navy-600" title={movement.box ?? undefined}>
+                                    {movement.box ?? '—'}
+                                </td>
+                                <td className="whitespace-nowrap tabular px-3 py-2.5 text-navy-600">
                                     {movement.transaction_date
                                         ? formatDate(movement.transaction_date)
                                         : movement.created_at
