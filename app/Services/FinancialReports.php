@@ -22,6 +22,9 @@ class FinancialReports
     /**
      * One account's movements over a window, with the balance carried down.
      *
+     * The running balance is calculated oldest first, then rows are returned
+     * newest first so the latest accounting movement is visible immediately.
+     *
      * @return array<string, mixed>
      */
     public function ledger(Account $account, ?string $from = null, ?string $to = null): array
@@ -60,6 +63,8 @@ class FinancialReports
                 'balance' => $balance,
             ];
         });
+
+        $rows = $rows->reverse()->values();
 
         return [
             'account' => $this->stub($account),

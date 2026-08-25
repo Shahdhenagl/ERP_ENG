@@ -113,8 +113,8 @@ class TreasuryReport
     /**
      * One box's movements over a period, with the balance carried down.
      *
-     * Ordered oldest first so the running balance reads the way a bank
-     * statement does; the opening figure is what came before the window.
+     * The balance is calculated oldest first so every row gets the correct
+     * running value, then the rows are returned newest first for the UI.
      *
      * @return array<string, mixed>
      */
@@ -131,8 +131,7 @@ class TreasuryReport
         $box->loadMissing('account');
 
         $movements = $box->movements()
-            ->when($from, fn ($q) => $q->whereDate('created_at', '>=', $from))
-            ->when($to, fn ($q) => $q->whereDate('created_at', '<=', $to))
+            ->transactionDateBetween($from, $to)
             ->with([
                 'payment.customer',
                 'supplierPayment.supplier',
@@ -196,6 +195,8 @@ class TreasuryReport
                 'balance' => $balance,
             ];
         });
+
+        $rows = $rows->reverse()->values();
 
         return [
             'box' => [

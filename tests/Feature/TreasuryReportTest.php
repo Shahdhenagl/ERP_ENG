@@ -146,11 +146,29 @@ it('carries the balance down a box statement', function () {
     $statement = $this->report->statement($this->till);
 
     expect($statement['rows'])->toHaveCount(2)
-        ->and($statement['rows'][0]['balance'])->toBe(1000.0)
-        ->and($statement['rows'][1]['balance'])->toBe(750.0)
+        ->and($statement['rows'][0]['balance'])->toBe(750.0)
+        ->and($statement['rows'][1]['balance'])->toBe(1000.0)
         ->and($statement['in_total'])->toBe(1000.0)
         ->and($statement['out_total'])->toBe(250.0)
         ->and($statement['closing_balance'])->toBe(750.0);
+});
+
+it('returns the newest movement first while preserving each running balance', function () {
+    collect_(1000, now()->subDays(2)->toDateTimeString());
+    $this->billing->recordExpense($this->till, 250, $this->manager, [
+        'category' => 'وقود',
+        'transaction_date' => now()->subDay()->toDateString(),
+    ]);
+    collect_(500, now()->toDateTimeString());
+
+    $rows = $this->report->statement($this->till)['rows'];
+
+    expect($rows)->toHaveCount(3)
+        ->and($rows[0]['direction'])->toBe('in')
+        ->and($rows[0]['in'])->toBe(500.0)
+        ->and($rows[1]['direction'])->toBe('out')
+        ->and($rows[1]['balance'])->toBe(750.0)
+        ->and($rows[2]['balance'])->toBe(1000.0);
 });
 
 it('enriches the cash book with voucher and accounting details', function () {
@@ -158,8 +176,8 @@ it('enriches the cash book with voucher and accounting details', function () {
     $this->billing->recordExpense($this->till, 250, $this->manager, ['category' => 'وقود']);
 
     $statement = $this->report->statement($this->till);
-    $receipt = $statement['rows'][0];
-    $payment = $statement['rows'][1];
+    $payment = $statement['rows'][0];
+    $receipt = $statement['rows'][1];
 
     expect($receipt['voucher_type'])->toBe('سند قبض')
         ->and($receipt['voucher_number'])->not->toBe('')
