@@ -26,7 +26,16 @@ import { useCustomers, useTasks, useTechnicians } from '@/lib/queries'
 import type { Task, TaskStatus } from '@/types'
 
 
+function localDateParam(): string {
+    const date = new Date()
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+}
+
 const QUICK_FILTERS: Array<{ key: string; label: string; params: Record<string, string> }> = [
+    { key: 'today', label: tr('مهام اليوم'), params: { day: localDateParam() } },
     { key: 'all', label: tr('الكل'), params: {} },
     { key: 'open', label: tr('المفتوحة'), params: { open_only: '1' } },
     ...STATUS_FLOW.filter((s) => s !== 'completed').map((status) => ({
@@ -52,6 +61,7 @@ export function TaskList() {
 
     const filters = useMemo(() => {
         const entries = Object.fromEntries(searchParams.entries())
+        if (searchParams.size === 0) entries.day = localDateParam()
         // `month` (YYYY-MM) and `day` (YYYY-MM-DD) are the UI's own filters; the
         // API knows a scheduled-date range, so translate before sending. A day
         // narrows to itself; otherwise a month spans its whole length.
@@ -130,12 +140,21 @@ export function TaskList() {
         setSearchParams(next)
     }
 
+    useEffect(() => {
+        if (searchParams.size > 0) return
+
+        const next = new URLSearchParams(searchParams)
+        next.set('day', localDateParam())
+        setSearchParams(next, { replace: true })
+    }, [searchParams, setSearchParams])
+
     const activeQuickFilter =
         QUICK_FILTERS.find((filter) => {
             const status = searchParams.get('status')
             const openOnly = searchParams.get('open_only')
 
-            if (filter.key === 'all') return !status && !openOnly
+            if (filter.key === 'today') return searchParams.get('day') === localDateParam() && !status && !openOnly
+            if (filter.key === 'all') return !status && !openOnly && !searchParams.get('day') && !searchParams.get('month') && !searchParams.get('from') && !searchParams.get('to')
             if (filter.key === 'open') return openOnly === '1' && !status
 
             return status === filter.key
@@ -145,6 +164,12 @@ export function TaskList() {
         const next = new URLSearchParams(searchParams)
         next.delete('status')
         next.delete('open_only')
+
+        if (filter.key === 'today') {
+            next.delete('month')
+            next.delete('from')
+            next.delete('to')
+        }
 
         Object.entries(filter.params).forEach(([key, value]) => next.set(key, value))
         next.delete('page')
@@ -317,6 +342,22 @@ export function TaskList() {
                             </option>
                         ))}
                     </Select>
+
+                    <button
+                        type="button"
+                        className="btn-secondary text-xs"
+                        onClick={() => {
+                            const next = new URLSearchParams(searchParams)
+                            next.delete('day')
+                            next.delete('month')
+                            next.delete('from')
+                            next.delete('to')
+                            next.delete('page')
+                            setSearchParams(next)
+                        }}
+                    >
+                        عرض كل الأيام
+                    </button>
 
                     {/* By the task's scheduled date. Most specific wins: a picked
                         span, then a single day, then the month around it. */}
