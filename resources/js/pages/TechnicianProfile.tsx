@@ -106,7 +106,7 @@ export function TechnicianProfile() {
                     <Stat
                         label="صافي راتب الشهر"
                         value={payslip ? formatMoney(payslip.net) : '—'}
-                        hint={payslip?.paid_on ? `صُرف ${formatDate(payslip.paid_on)}` : payslip ? 'غير مصروف' : 'لا مسيّر لهذا الشهر'}
+                        hint={payslip?.paid_on ? `صُرف ${formatDate(payslip.paid_on)}` : payslip ? 'غير مصروف' : 'لا يوجد كشف راتب لهذا الشهر'}
                     />
                     <Stat
                         label="رصيد الإجازة السنوية"
@@ -281,7 +281,7 @@ export function TechnicianProfile() {
 
             {/* ── Payslip ────────────────────────────────── */}
             {payslip && (
-                <Section title="مسيّر الرواتب" icon={Wallet} count={undefined}>
+                <Section title="الرواتب" icon={Wallet} count={undefined}>
                     <div className="grid grid-cols-3 gap-2 text-center">
                         <MiniStat label="الإجمالي" value={payslip.gross} money />
                         <MiniStat label="الاستقطاعات" value={payslip.total_deductions} money tone="down" />

@@ -59,10 +59,12 @@ it('adds a payslip up to its net', function () {
         ->toBe(round((float) $slip->net + (float) $slip->total_deductions, 2));
 });
 
-it('docks unpaid leave at the daily rate of the basic', function () {
-    $employee = Employee::factory()->create(['basic_salary' => 6000, 'allowances' => null]);
+it('docks unpaid leave using the employee salary-day basis', function () {
+    $employee = Employee::factory()->create([
+        'basic_salary' => 6000, 'salary_basis_days' => 30, 'allowances' => null,
+    ]);
 
-    // Three unpaid days in August (31 days) → 6000/31 × 3.
+    // Three unpaid days from an agreed 30-day salary → 600 per month-day.
     $leave = $this->leave->request([
         'employee_id' => $employee->id,
         'type' => 'unpaid',
@@ -75,8 +77,43 @@ it('docks unpaid leave at the daily rate of the basic', function () {
     $slip = $run->payslips->first();
 
     expect($slip->unpaid_days)->toBe(3)
-        ->and((float) $slip->unpaid_deduction)->toBe(round(6000 / 31 * 3, 2))
-        ->and((float) $slip->net)->toBe(round(6000 - (6000 / 31 * 3), 2));
+        ->and((float) $slip->worked_days)->toBe(27.0)
+        ->and((float) $slip->unpaid_deduction)->toBe(600.0)
+        ->and((float) $slip->net)->toBe(5400.0);
+});
+
+it('recalculates a draft salary automatically from manually entered work days', function () {
+    $employee = Employee::factory()->create([
+        'basic_salary' => 6000,
+        'salary_basis_days' => 30,
+        'allowances' => null,
+        'insurance_rate' => 0,
+        'tax_rate' => 0,
+    ]);
+    $run = $this->payroll->open(2026, 8, $this->manager);
+    $slip = $run->payslips->first();
+
+    actingAs($this->manager)
+        ->putJson("/api/payslips/{$slip->id}", ['worked_days' => 15])
+        ->assertOk()
+        ->assertJsonPath('data.worked_days', 15)
+        ->assertJsonPath('data.net', 3000);
+
+    expect((float) $slip->fresh()->unpaid_deduction)->toBe(3000.0)
+        ->and((float) $slip->fresh()->net)->toBe(3000.0);
+});
+
+it('freezes work days after payroll approval', function () {
+    $employee = Employee::factory()->create(['basic_salary' => 6000, 'salary_basis_days' => 30]);
+    $run = $this->payroll->open(2026, 8, $this->manager);
+    $slip = $run->payslips->first();
+    $this->payroll->approve($run, $this->manager);
+
+    actingAs($this->manager)
+        ->putJson("/api/payslips/{$slip->id}", ['worked_days' => 15])
+        ->assertUnprocessable();
+
+    expect((float) $slip->fresh()->worked_days)->toBe(30.0);
 });
 
 it('recovers an advance but never more than is owed', function () {
@@ -117,6 +154,72 @@ it('takes an advance out of the treasury the day it is given', function () {
     expect(CashBox::default()->fresh()->balance())->toBe(round($before - 2000, 2))
         // And lands as an asset — money owed back, not spent.
         ->and(acct('staff_advances'))->toBe(2000.0);
+});
+
+it('requires an existing box and keeps the advance date on its treasury movement', function () {
+    $employee = Employee::factory()->create();
+    $box = CashBox::default();
+
+    actingAs($this->manager)
+        ->postJson('/api/advances', [
+            'employee_id' => $employee->id,
+            'advance_date' => '2026-08-15',
+            'amount' => 750,
+            'installment' => 250,
+            'cash_box_id' => $box->id,
+        ])
+        ->assertCreated();
+
+    $advance = \App\Models\SalaryAdvance::latest('id')->firstOrFail();
+
+    expect($advance->advance_date->toDateString())->toBe('2026-08-15')
+        ->and($advance->cashMovement?->transaction_date?->toDateString())->toBe('2026-08-15');
+
+    actingAs($this->manager)
+        ->postJson('/api/advances', [
+            'employee_id' => $employee->id,
+            'advance_date' => '2026-08-16',
+            'amount' => 100,
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('cash_box_id');
+});
+
+it('updates only an advance repayment terms without changing the treasury movement', function () {
+    $employee = Employee::factory()->create();
+    $advance = $this->payroll->advance([
+        'employee_id' => $employee->id,
+        'amount' => 1200,
+        'installment' => 300,
+    ], $this->manager);
+    $movement = $advance->cash_movement_id;
+    $before = CashBox::default()->balance();
+
+    actingAs($this->manager)
+        ->putJson("/api/advances/{$advance->id}", [
+            'installment' => 200,
+            'notes' => 'تعديل خطة السداد',
+        ])
+        ->assertOk()
+        ->assertJsonPath('data.installment', 200);
+
+    expect((float) $advance->fresh()->installment)->toBe(200.0)
+        ->and($advance->fresh()->notes)->toBe('تعديل خطة السداد')
+        ->and($advance->fresh()->cash_movement_id)->toBe($movement)
+        ->and(CashBox::default()->balance())->toBe($before);
+});
+
+it('refuses an installment greater than the original advance', function () {
+    $employee = Employee::factory()->create();
+    $advance = $this->payroll->advance([
+        'employee_id' => $employee->id,
+        'amount' => 500,
+    ], $this->manager);
+
+    actingAs($this->manager)
+        ->putJson("/api/advances/{$advance->id}", ['installment' => 600])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('installment');
 });
 
 it('refuses an advance the box cannot cover', function () {
@@ -166,7 +269,7 @@ it('debits the expense with earned pay, not gross', function () {
     $run = $this->payroll->open(2026, 8, $this->manager);
     $this->payroll->approve($run, $this->manager);
 
-    expect(acct('salaries'))->toBe(round(6000 - (6000 / 31 * 3), 2));
+    expect(acct('salaries'))->toBe(5400.0);
 });
 
 it('recovers the advance in the ledger when the run posts', function () {

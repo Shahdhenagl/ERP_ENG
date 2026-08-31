@@ -1,4 +1,4 @@
-import { HandCoins, Plus } from 'lucide-react'
+import { Eye, HandCoins, Pencil, Plus } from 'lucide-react'
 import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
@@ -8,10 +8,13 @@ import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { formatMoney } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
-import { useAdvances, useCashBoxes, useEmployees, useSaveAdvance } from '@/lib/queries'
+import { useAdvances, useCashBoxes, useEmployees, useSaveAdvance, useUpdateAdvance } from '@/lib/queries'
+import type { SalaryAdvance } from '@/types'
 
 export function AdvancesTab() {
     const [creating, setCreating] = useState(false)
+    const [viewing, setViewing] = useState<SalaryAdvance | null>(null)
+    const [editing, setEditing] = useState<SalaryAdvance | null>(null)
     const [view, setView] = useViewMode('hr-advances')
     const { data, isLoading } = useAdvances({ per_page: 60 })
 
@@ -46,6 +49,7 @@ export function AdvancesTab() {
                         { label: 'القسط الشهري', className: 'w-28 text-end' },
                         { label: 'المبلغ', className: 'w-28 text-end' },
                         { label: 'المتبقي', className: 'w-28 text-end' },
+                        { label: 'الإجراءات', className: 'w-28 text-center' },
                     ]}
                 >
                     {data.data.map((advance) => (
@@ -75,6 +79,28 @@ export function AdvancesTab() {
                                     <span className="text-emerald-600">مسددة</span>
                                 )}
                             </td>
+                            <td className="px-3 py-2.5">
+                                <div className="flex items-center justify-center gap-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setViewing(advance)}
+                                        className="tap grid size-8 place-items-center rounded-lg text-navy-500 transition hover:bg-navy-100 hover:text-navy-800"
+                                        aria-label={`عرض السلفة ${advance.code}`}
+                                        title="عرض التفاصيل"
+                                    >
+                                        <Eye className="size-4" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setEditing(advance)}
+                                        className="tap grid size-8 place-items-center rounded-lg text-brand-600 transition hover:bg-brand-50"
+                                        aria-label={`تعديل السلفة ${advance.code}`}
+                                        title="تعديل القسط والملاحظات"
+                                    >
+                                        <Pencil className="size-4" />
+                                    </button>
+                                </div>
+                            </td>
                         </tr>
                     ))}
                 </DataTable>
@@ -103,6 +129,24 @@ export function AdvancesTab() {
                                 ) : (
                                     <p className="text-[11px] text-emerald-600">مسددة</p>
                                 )}
+                                <div className="mt-2 flex items-center justify-end gap-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setViewing(advance)}
+                                        className="tap grid size-8 place-items-center rounded-lg bg-navy-50 text-navy-500"
+                                        aria-label={`عرض السلفة ${advance.code}`}
+                                    >
+                                        <Eye className="size-4" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setEditing(advance)}
+                                        className="tap grid size-8 place-items-center rounded-lg bg-brand-50 text-brand-600"
+                                        aria-label={`تعديل السلفة ${advance.code}`}
+                                    >
+                                        <Pencil className="size-4" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     ))}
@@ -110,7 +154,105 @@ export function AdvancesTab() {
             )}
 
             {creating && <AdvanceForm onClose={() => setCreating(false)} />}
+            {viewing && <AdvanceDetails advance={viewing} onClose={() => setViewing(null)} />}
+            {editing && <EditAdvanceForm advance={editing} onClose={() => setEditing(null)} />}
         </>
+    )
+}
+
+function AdvanceDetails({ advance, onClose }: { advance: SalaryAdvance; onClose: () => void }) {
+    const rows = [
+        ['الكود', advance.code],
+        ['الموظف', advance.employee ?? '—'],
+        ['تاريخ الصرف', formatDate(advance.advance_date)],
+        ['الخزينة', advance.box ?? '—'],
+        ['قيمة السلفة', formatMoney(advance.amount)],
+        ['القسط الشهري', formatMoney(advance.installment)],
+        ['المتبقي', advance.outstanding > 0 ? formatMoney(advance.outstanding) : 'مسددة'],
+        ['أنشأها', advance.created_by ?? '—'],
+    ]
+
+    return (
+        <Modal open onClose={onClose} title={`تفاصيل السلفة ${advance.code}`} size="sm">
+            <dl className="divide-y divide-navy-100 overflow-hidden rounded-xl border border-navy-100">
+                {rows.map(([label, value]) => (
+                    <div key={label} className="flex items-center justify-between gap-4 px-3 py-2.5">
+                        <dt className="text-xs font-semibold text-navy-400">{label}</dt>
+                        <dd className="text-end text-sm font-bold text-navy-800">{value}</dd>
+                    </div>
+                ))}
+            </dl>
+            {advance.notes && (
+                <div className="mt-4 rounded-xl bg-navy-50 p-3">
+                    <p className="mb-1 text-xs font-bold text-navy-500">ملاحظات</p>
+                    <p className="whitespace-pre-wrap text-sm text-navy-700">{advance.notes}</p>
+                </div>
+            )}
+        </Modal>
+    )
+}
+
+function EditAdvanceForm({ advance, onClose }: { advance: SalaryAdvance; onClose: () => void }) {
+    const toast = useToast()
+    const update = useUpdateAdvance()
+    const [installment, setInstallment] = useState(String(advance.installment))
+    const [notes, setNotes] = useState(advance.notes ?? '')
+    const [errors, setErrors] = useState<Record<string, string>>({})
+
+    return (
+        <Modal
+            open
+            onClose={onClose}
+            title={`تعديل السلفة ${advance.code}`}
+            description="يمكن تعديل خطة الاسترداد والملاحظات فقط؛ مبلغ الصرف والخزينة مثبتان ماليًا."
+            size="sm"
+            footer={
+                <>
+                    <Button variant="secondary" onClick={onClose} disabled={update.isPending}>إلغاء</Button>
+                    <Button
+                        loading={update.isPending}
+                        onClick={async () => {
+                            setErrors({})
+                            try {
+                                await update.mutateAsync({
+                                    id: advance.id,
+                                    installment: Number(installment),
+                                    notes: notes.trim() || null,
+                                })
+                                toast.success('تم تعديل السلفة.')
+                                onClose()
+                            } catch (caught) {
+                                setErrors(fieldErrors(caught))
+                                toast.error(errorMessage(caught, 'تعذّر تعديل السلفة.'))
+                            }
+                        }}
+                    >
+                        حفظ
+                    </Button>
+                </>
+            }
+        >
+            <div className="space-y-4">
+                <div className="rounded-xl bg-navy-50 px-3 py-2 text-xs text-navy-600">
+                    {advance.employee} · إجمالي {formatMoney(advance.amount)}
+                </div>
+                <Field label="القسط الشهري" required error={errors.installment}>
+                    <Input
+                        type="number"
+                        min="0.01"
+                        max={advance.amount}
+                        step="0.01"
+                        value={installment}
+                        onChange={(event) => setInstallment(event.target.value)}
+                        dir="ltr"
+                        className="text-left"
+                    />
+                </Field>
+                <Field label="ملاحظات" error={errors.notes}>
+                    <Textarea value={notes} onChange={(event) => setNotes(event.target.value)} />
+                </Field>
+            </div>
+        </Modal>
     )
 }
 
@@ -119,10 +261,12 @@ function AdvanceForm({ onClose }: { onClose: () => void }) {
     const save = useSaveAdvance()
     const { data: employees } = useEmployees({ active: 1, per_page: 200 })
     const { data: boxes } = useCashBoxes()
+    const activeBoxes = boxes?.filter((box) => box.is_active) ?? []
     const [errors, setErrors] = useState<Record<string, string>>({})
 
     const [form, setForm] = useState({
         employee_id: '',
+        advance_date: new Date().toISOString().slice(0, 10),
         amount: '',
         installment: '',
         cash_box_id: '',
@@ -146,11 +290,13 @@ function AdvanceForm({ onClose }: { onClose: () => void }) {
                     </Button>
                     <Button
                         loading={save.isPending}
+                        disabled={!activeBoxes.length}
                         onClick={async () => {
                             setErrors({})
                             try {
                                 await save.mutateAsync({
                                     employee_id: Number(form.employee_id),
+                                    advance_date: form.advance_date,
                                     amount: Number(form.amount),
                                     installment: form.installment ? Number(form.installment) : null,
                                     cash_box_id: form.cash_box_id ? Number(form.cash_box_id) : null,
@@ -184,6 +330,14 @@ function AdvanceForm({ onClose }: { onClose: () => void }) {
                     </Select>
                 </Field>
 
+                <Field label="تاريخ السلفة" required error={errors.advance_date}>
+                    <Input
+                        type="date"
+                        value={form.advance_date}
+                        onChange={(e) => set('advance_date')(e.target.value)}
+                    />
+                </Field>
+
                 <div className="grid gap-4 sm:grid-cols-2">
                     <Field label="المبلغ" required error={errors.amount}>
                         <Input
@@ -209,19 +363,26 @@ function AdvanceForm({ onClose }: { onClose: () => void }) {
                     </Field>
                 </div>
 
-                <Field label="من خزينة" error={errors.cash_box_id}>
+                <Field label="من خزينة" required error={errors.cash_box_id}>
                     <Select
                         value={form.cash_box_id}
                         onChange={(e) => set('cash_box_id')(e.target.value)}
+                        disabled={!activeBoxes.length}
                     >
-                        <option value="">الخزينة الرئيسية</option>
-                        {boxes?.map((box) => (
+                        <option value="">{activeBoxes.length ? '— اختر خزينة —' : 'لا توجد خزائن نشطة'}</option>
+                        {activeBoxes.map((box) => (
                             <option key={box.id} value={box.id}>
                                 {box.name} ({formatMoney(box.balance)})
                             </option>
                         ))}
                     </Select>
                 </Field>
+
+                {!activeBoxes.length && (
+                    <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                        أنشئ خزينة أولًا من قسم الخزينة قبل صرف السلفة.
+                    </p>
+                )}
 
                 <Field label="ملاحظات" error={errors.notes}>
                     <Textarea value={form.notes} onChange={(e) => set('notes')(e.target.value)} />

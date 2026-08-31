@@ -65,6 +65,8 @@ export interface NavItem {
     permission?: string
     /** Any one of these opens it — for a module split across two permissions. */
     anyPermission?: string[]
+    /** Independent permission controlling whether this exact screen is visible. */
+    screenPermission?: string
     /** Used in the bottom bar, where a long label truncates on a phone. */
     short?: string
     /** Sub-sections. Shown indented under the parent in the sidebar. */
@@ -283,7 +285,7 @@ export const NAV: NavItem[] = [
             { to: '/hr/leave', permission: 'hr.manage', label: tr('الإجازات'), icon: CalendarDays },
             { to: '/hr/advances', permission: 'payroll.manage', label: tr('السلف'), icon: HandCoins },
             { to: '/hr/adjustments', permission: 'payroll.manage', label: tr('الخصومات والمكافآت'), icon: Percent },
-            { to: '/hr/payroll', permission: 'payroll.manage', label: tr('مسير الرواتب'), icon: Banknote },
+            { to: '/hr/payroll', permission: 'payroll.manage', label: tr('كشوف الرواتب'), icon: Banknote },
         ],
     },
 
@@ -350,6 +352,112 @@ export const NAV: NavItem[] = [
     { to: '/leave', label: tr('الإجازات'), icon: CalendarDays, roles: ['technician'] },
 ]
 
+/**
+ * Individual screen permissions. Business permissions above still protect the
+ * operation; this layer lets an administrator hide one submodule without
+ * having to remove access to every other screen sharing the same API area.
+ */
+const SCREEN_PERMISSION_BY_PATH: Record<string, string> = {
+    '/': 'screen.dashboard',
+    '/notifications': 'screen.notifications',
+    '/tasks': 'screen.service.tasks',
+    '/customers': 'screen.customers',
+    '/contacts': 'screen.contacts',
+    '/crm': 'screen.crm',
+    '/customer-followups': 'screen.followups',
+    '/customer-ledger': 'screen.customer-ledger',
+    '/site-surveys': 'screen.site-surveys',
+    '/sales/quotations': 'screen.sales.quotations',
+    '/sales/approvals': 'screen.sales.approvals',
+    '/sales/orders': 'screen.sales.orders',
+    '/sales/deliveries': 'screen.sales.deliveries',
+    '/invoices': 'screen.sales.invoices',
+    '/sales/returns': 'screen.sales.returns',
+    '/collections': 'screen.sales.collections',
+    '/customer-statement': 'screen.sales.statement',
+    '/tenders': 'screen.sales.tenders',
+    '/inventory/items': 'screen.inventory.items',
+    '/inventory/groups': 'screen.inventory.groups',
+    '/inventory/warehouses': 'screen.inventory.warehouses',
+    '/inventory/movements': 'screen.inventory.receiving',
+    '/inventory/issue': 'screen.inventory.issue',
+    '/inventory/transfers': 'screen.inventory.transfers',
+    '/inventory/stocktake': 'screen.inventory.stocktake',
+    '/purchasing/suppliers': 'screen.purchasing.suppliers',
+    '/purchasing/requests': 'screen.purchasing.requests',
+    '/supplier-quotes': 'screen.purchasing.quotes',
+    '/purchasing/orders': 'screen.purchasing.orders',
+    '/purchasing/receiving': 'screen.purchasing.receiving',
+    '/purchasing/invoices': 'screen.purchasing.invoices',
+    '/purchasing/returns': 'screen.purchasing.returns',
+    '/supplier-statement': 'screen.purchasing.statement',
+    '/contracts': 'screen.contracts',
+    '/contracts/renewals': 'screen.contracts.renewals',
+    '/contracts/history': 'screen.contracts.history',
+    '/warranties/register': 'screen.warranties.register',
+    '/warranties/certificate': 'screen.warranties.certificate',
+    '/warranties/claims': 'screen.warranties.claims',
+    '/warranties/repair-orders': 'screen.warranties.repairs',
+    '/warranties/lifecycle': 'screen.warranties.lifecycle',
+    '/assets': 'screen.assets',
+    '/technicians': 'screen.service.technicians',
+    '/technician-reports': 'screen.service.monthly-reports',
+    '/parts-used': 'screen.service.parts',
+    '/ppm': 'screen.service.ppm',
+    '/batteries': 'screen.service.batteries',
+    '/satisfaction': 'screen.service.satisfaction',
+    '/treasury': 'screen.treasury.boxes',
+    '/treasury/payments-out': 'screen.treasury.payments',
+    '/treasury/operations': 'screen.treasury.operations',
+    '/treasury/daybook': 'screen.treasury.daybook',
+    '/banks/accounts': 'screen.banks.accounts',
+    '/cheques/incoming': 'screen.banks.incoming-cheques',
+    '/cheques/outgoing': 'screen.banks.outgoing-cheques',
+    '/banks/reconcile': 'screen.banks.reconcile',
+    '/banks/transfers': 'screen.banks.transfers',
+    '/custody': 'screen.custody.create',
+    '/custody/settle': 'screen.custody.settle',
+    '/custody/statement': 'screen.custody.statement',
+    '/hr/employees': 'screen.hr.employees',
+    '/hr/attendance': 'screen.hr.attendance',
+    '/hr/leave': 'screen.hr.leave',
+    '/hr/advances': 'screen.hr.advances',
+    '/hr/adjustments': 'screen.hr.adjustments',
+    '/hr/payroll': 'screen.hr.payroll',
+    '/accounting/accounts': 'screen.accounting.accounts',
+    '/accounting/journal': 'screen.accounting.journal',
+    '/accounting/ledger': 'screen.accounting.ledger',
+    '/accounting/trial-balance': 'screen.accounting.trial-balance',
+    '/accounting/income-statement': 'screen.accounting.income-statement',
+    '/accounting/balance-sheet': 'screen.accounting.balance-sheet',
+    '/accounting/cost-centers': 'screen.accounting.cost-centers',
+    '/users': 'screen.admin.users',
+    '/roles': 'screen.admin.roles',
+    '/audit': 'screen.admin.audit',
+    '/settings': 'screen.admin.settings',
+    '/reports/sales': 'screen.reports.sales',
+    '/reports/profit': 'screen.reports.profit',
+    '/reports/stock': 'screen.reports.stock',
+    '/reports/custody': 'screen.reports.custody',
+    '/reports/contracts': 'screen.reports.contracts',
+    '/reports/warranties': 'screen.reports.warranties',
+    '/reports/crm': 'screen.reports.crm',
+    '/reports/hr': 'screen.reports.hr',
+    '/reports/maintenance': 'screen.reports.maintenance',
+    '/reports/periodic-maintenance': 'screen.reports.periodic',
+    '/reports/task-movements': 'screen.reports.task-movements',
+    '/reports/custom': 'screen.reports.custom',
+}
+
+// Attach the screen requirement once, keeping the navigation declaration above
+// readable and making the same value available to both sidebar and route guard.
+for (const item of NAV) {
+    if (SCREEN_PERMISSION_BY_PATH[item.to]) item.screenPermission = SCREEN_PERMISSION_BY_PATH[item.to]
+    for (const child of item.children ?? []) {
+        child.screenPermission = SCREEN_PERMISSION_BY_PATH[child.to]
+    }
+}
+
 /** Star icons the "new" screens keep for their own labels, unused elsewhere. */
 export const STAR = Star
 
@@ -402,4 +510,11 @@ export function menuPermissionForPath(within: string): string | string[] | undef
         .sort((a, b) => b.prefix.length - a.prefix.length)[0]
 
     return alias?.permission ?? alias?.anyPermission
+}
+
+/** The most specific screen permission for a list, detail, edit or print path. */
+export function screenPermissionForPath(within: string): string | undefined {
+    return Object.entries(SCREEN_PERMISSION_BY_PATH)
+        .filter(([path]) => within === path || (path !== '/' && within.startsWith(`${path}/`)))
+        .sort(([a], [b]) => b.length - a.length)[0]?.[1]
 }

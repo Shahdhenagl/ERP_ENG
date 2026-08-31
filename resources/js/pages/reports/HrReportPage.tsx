@@ -10,7 +10,7 @@ import { useReports } from '@/pages/reports/ReportsLayout'
  *
  * The payroll figures are summed off the slips each run froze, not recomputed
  * from salaries — the run is the record, this only totals it, so the report and
- * the مسير can never put a different number on the same month.
+ * the payroll statement can never put a different number on the same month.
  */
 export function HrReportPage() {
     const { period } = useReports()
@@ -29,9 +29,9 @@ export function HrReportPage() {
                 />
                 <Figure label="الرواتب الشهرية" value={formatMoney(data.monthly_gross)} />
                 <Figure
-                    label="صافي مسير الفترة"
+                    label="صافي الرواتب للفترة"
                     value={formatMoney(data.payroll.net)}
-                    hint={`${data.payroll.runs} مسير`}
+                    hint={`${data.payroll.runs} كشف`}
                 />
                 <Figure
                     label="سلف قائمة"
@@ -56,7 +56,7 @@ export function HrReportPage() {
                 )}
             </Section>
 
-            <Section title="مسير الفترة">
+            <Section title="كشوف رواتب الفترة">
                 <div className="grid grid-cols-3 gap-3 text-center">
                     <Tile label="الإجمالي" value={formatMoney(data.payroll.gross)} />
                     <Tile label="الاستقطاعات" value={formatMoney(data.payroll.deductions)} />

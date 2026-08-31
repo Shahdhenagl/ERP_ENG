@@ -33,7 +33,7 @@ enum JournalSource: string
             self::Custody => Terms::get('عهدة موظف'),
             self::Stock => Terms::get('حركة مخزون'),
             self::Opening => Terms::get('رصيد افتتاحي'),
-            self::Payroll => Terms::get('مسير رواتب'),
+            self::Payroll => Terms::get('كشف رواتب'),
         };
     }
 

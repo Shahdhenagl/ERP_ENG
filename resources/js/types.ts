@@ -1525,6 +1525,8 @@ export interface AppNotification {
         title?: string
         body?: string
         actor?: string
+        customer?: string
+        branch?: string
         url?: string
         [key: string]: unknown
     }
@@ -2560,6 +2562,8 @@ export interface Employee {
     employment_type: 'full_time' | 'part_time' | 'contract'
 
     basic_salary: number
+    salary_basis_days: number
+    daily_salary: number
     allowances: Allowance[]
     allowances_total: number
     gross_salary: number
@@ -2613,6 +2617,20 @@ export interface Employee {
         net: number
         paid_on: string | null
     }>
+    contracts?: EmployeeContract[]
+}
+
+export interface EmployeeContract {
+    id: number
+    code: string
+    title: string
+    type: 'permanent' | 'fixed_term' | 'temporary' | 'probation'
+    starts_on: string
+    ends_on: string | null
+    agreed_salary: number
+    salary_basis_days: number
+    status: 'active' | 'expired' | 'terminated'
+    notes: string | null
 }
 
 export type LeaveType = 'annual' | 'sick' | 'unpaid'
@@ -3002,6 +3020,9 @@ export interface SalaryAdvance {
     installment: number
     outstanding: number
     box: string | null
+    notes: string | null
+    created_by: string | null
+    created_at: string | null
 }
 
 export type PayrollAdjustmentType = 'deduction' | 'bonus'
@@ -3032,6 +3053,11 @@ export interface Payslip {
     job_title: string | null
 
     basic_salary: number
+    salary_basis_days: number
+    worked_days: number
+    daily_salary: number
+    insurance_rate: number
+    tax_rate: number
     allowances: Allowance[]
     allowances_total: number
     additions_total: number

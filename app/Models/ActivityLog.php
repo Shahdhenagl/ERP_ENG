@@ -63,6 +63,8 @@ class ActivityLog extends Model
         'treasury' => 'الخزينة',
         'account' => 'دليل الحسابات',
         'journal' => 'القيود',
+        'payroll' => 'الرواتب',
+        'employee_contract' => 'عقود الموظفين',
         'settings' => 'الإعدادات',
     ];
 

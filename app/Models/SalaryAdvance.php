@@ -58,6 +58,11 @@ class SalaryAdvance extends Model
         return $this->belongsTo(CashBox::class, 'cash_box_id');
     }
 
+    public function cashMovement(): BelongsTo
+    {
+        return $this->belongsTo(CashMovement::class, 'cash_movement_id');
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

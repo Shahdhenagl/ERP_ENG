@@ -226,7 +226,7 @@ class LedgerPoster
         }, [
             'entry_date' => $run->approved_at?->toDateString() ?? now()->toDateString(),
             'source' => 'payroll',
-            'memo' => "مسير رواتب {$run->monthLabel()}",
+            'memo' => "كشف رواتب {$run->monthLabel()}",
         ], $actor);
     }
 

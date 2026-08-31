@@ -107,6 +107,26 @@ it('groups the catalogue for a screen', function () {
         ->toBe(count(PermissionRegistry::keys()));
 });
 
+it('publishes every module screen as an independently assignable permission', function () {
+    $groups = collect(PermissionRegistry::grouped());
+
+    expect(PermissionRegistry::exists('screen.sales.quotations'))->toBeTrue()
+        ->and(PermissionRegistry::exists('screen.sales.returns'))->toBeTrue()
+        ->and(PermissionRegistry::exists('screen.inventory.stocktake'))->toBeTrue()
+        ->and(PermissionRegistry::exists('screen.hr.attendance'))->toBeTrue()
+        ->and(PermissionRegistry::exists('screen.reports.maintenance'))->toBeTrue()
+        ->and($groups->pluck('group')->all())
+        ->toContain('المبيعات', 'إدارة المخزون', 'الموارد البشرية', 'التقارير');
+});
+
+it('allows one submodule screen to be removed without removing its business permission', function () {
+    override($this->manager, 'screen.sales.returns', false);
+
+    expect($this->manager->fresh()->hasPermission('sales.manage'))->toBeTrue()
+        ->and($this->manager->fresh()->hasPermission('screen.sales.quotations'))->toBeTrue()
+        ->and($this->manager->fresh()->hasPermission('screen.sales.returns'))->toBeFalse();
+});
+
 /* ── Routes actually enforce it ──────────────────────────── */
 
 it('lets a manager reach the treasury by default', function () {

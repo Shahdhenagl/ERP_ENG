@@ -71,6 +71,7 @@ class PayrollService
                 'cash_box_id' => $box->id,
                 'direction' => 'out',
                 'amount' => $amount,
+                'transaction_date' => $advance->advance_date,
                 'source' => 'advance',
                 'note' => "سلفة {$advance->code} — {$employee->name}",
                 'user_id' => $actor->id,
@@ -100,7 +101,7 @@ class PayrollService
 
         if (PayrollRun::where('year', $year)->where('month', $month)->exists()) {
             throw ValidationException::withMessages([
-                'month' => Terms::get('يوجد مسير رواتب لهذا الشهر بالفعل.'),
+                'month' => Terms::get('يوجد كشف رواتب لهذا الشهر بالفعل.'),
             ]);
         }
 
@@ -134,16 +135,19 @@ class PayrollService
         $basic = (float) $employee->basic_salary;
         $allowances = $employee->allowancesTotal();
         $gross = round($basic + $allowances, 2);
+        $basisDays = max(1, (int) ($employee->salary_basis_days ?: 30));
 
-        // Days not worked come off at the daily rate of the basic pay.
-        $unpaidDays = $leave->unpaidDaysIn($employee, $run->year, $run->month);
-        $dailyRate = $run->days_in_month > 0 ? $basic / $run->days_in_month : 0;
-        $unpaidDeduction = round($dailyRate * $unpaidDays, 2);
+        // The employee's agreed salary period, not the calendar's length, is
+        // the denominator. It can then be corrected on the draft slip.
+        $unpaidDays = min($basisDays, $leave->unpaidDaysIn($employee, $run->year, $run->month));
+        $workedDays = max(0, $basisDays - $unpaidDays);
+        $earnedGross = round($gross * $workedDays / $basisDays, 2);
+        $unpaidDeduction = round($gross - $earnedGross, 2);
 
         // Statutory: insurance on the gross, tax on what is left after it —
         // the order the law applies them in.
-        $insurance = round($gross * ((float) $employee->insurance_rate / 100), 2);
-        $tax = round(($gross - $insurance) * ((float) $employee->tax_rate / 100), 2);
+        $insurance = round($earnedGross * ((float) $employee->insurance_rate / 100), 2);
+        $tax = round(($earnedGross - $insurance) * ((float) $employee->tax_rate / 100), 2);
 
         // Recover what is owed, but never more than is outstanding, and never
         // more than the month's earned pay could bear.
@@ -166,6 +170,10 @@ class PayrollService
             ['payroll_run_id' => $run->id, 'employee_id' => $employee->id],
             [
                 'basic_salary' => $basic,
+                'salary_basis_days' => $basisDays,
+                'worked_days' => $workedDays,
+                'insurance_rate' => (float) $employee->insurance_rate,
+                'tax_rate' => (float) $employee->tax_rate,
                 'allowances_total' => $allowances,
                 'additions_total' => $bonuses,
                 'allowances' => $employee->allowances,
@@ -220,25 +228,44 @@ class PayrollService
     {
         if (! $slip->run->isDraft()) {
             throw ValidationException::withMessages([
-                'status' => Terms::get('لا يمكن تعديل قسيمة بعد اعتماد المسير.'),
+                'status' => Terms::get('لا يمكن تعديل قسيمة بعد اعتماد كشف الرواتب.'),
             ]);
         }
 
         $other = round((float) ($data['other_deductions'] ?? $slip->other_deductions), 2);
         $advance = round((float) ($data['advance_recovery'] ?? $slip->advance_recovery), 2);
+        $basisDays = max(1, (int) $slip->salary_basis_days);
+        $workedDays = array_key_exists('worked_days', $data)
+            ? max(0, min($basisDays, (int) $data['worked_days']))
+            : (int) $slip->worked_days;
+        $earnedGross = round((float) $slip->gross * $workedDays / $basisDays, 2);
+        $unpaidDeduction = round((float) $slip->gross - $earnedGross, 2);
+        $insurance = round($earnedGross * ((float) $slip->insurance_rate / 100), 2);
+        $tax = round(($earnedGross - $insurance) * ((float) $slip->tax_rate / 100), 2);
 
         $deductions = round(
-            (float) $slip->unpaid_deduction + $advance
-            + (float) $slip->insurance + (float) $slip->tax + $other,
+            $unpaidDeduction + $advance + $insurance + $tax + $other,
             2,
         );
+        $net = round((float) $slip->gross + (float) $slip->additions_total - $deductions, 2);
+
+        if ($net < 0) {
+            throw ValidationException::withMessages([
+                'other_deductions' => Terms::get('إجمالي الخصومات أكبر من الراتب المستحق.'),
+            ]);
+        }
 
         $slip->forceFill([
+            'worked_days' => $workedDays,
+            'unpaid_days' => $basisDays - $workedDays,
+            'unpaid_deduction' => $unpaidDeduction,
+            'insurance' => $insurance,
+            'tax' => $tax,
             'advance_recovery' => $advance,
             'other_deductions' => $other,
             'other_note' => $data['other_note'] ?? $slip->other_note,
             'total_deductions' => $deductions,
-            'net' => round((float) $slip->gross + (float) $slip->additions_total - $deductions, 2),
+            'net' => $net,
         ])->save();
 
         return $slip->fresh();
@@ -253,13 +280,13 @@ class PayrollService
     {
         if (! $run->isDraft()) {
             throw ValidationException::withMessages([
-                'status' => Terms::get('تم اعتماد هذا المسير بالفعل.'),
+                'status' => Terms::get('تم اعتماد كشف الرواتب بالفعل.'),
             ]);
         }
 
         if ($run->payslips()->count() === 0) {
             throw ValidationException::withMessages([
-                'payslips' => Terms::get('لا يمكن اعتماد مسير بلا قسائم.'),
+                'payslips' => Terms::get('لا يمكن اعتماد كشف رواتب بلا قسائم.'),
             ]);
         }
 
@@ -280,7 +307,7 @@ class PayrollService
     {
         if ($slip->run->status === 'draft') {
             throw ValidationException::withMessages([
-                'status' => Terms::get('لا يمكن صرف قسيمة قبل اعتماد المسير.'),
+                'status' => Terms::get('لا يمكن صرف قسيمة قبل اعتماد كشف الرواتب.'),
             ]);
         }
 
@@ -329,7 +356,7 @@ class PayrollService
     {
         if ($run->status !== 'approved') {
             throw ValidationException::withMessages([
-                'status' => Terms::get('لا يمكن الصرف إلا من مسير معتمد.'),
+                'status' => Terms::get('لا يمكن الصرف إلا من كشف رواتب معتمد.'),
             ]);
         }
 

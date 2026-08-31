@@ -76,7 +76,7 @@ export function AdjustmentsTab() {
                 <EmptyState
                     icon={Gift}
                     title="لا توجد خصومات أو مكافآت لهذا الشهر"
-                    description="أضف خصمًا أو مكافأة ليظهر في قسيمة راتب الموظف عند تشغيل مسير هذا الشهر."
+                    description="أضف خصمًا أو مكافأة ليظهر في قسيمة راتب الموظف عند إعداد كشف هذا الشهر."
                 />
             ) : view === 'table' ? (
                 <DataTable
@@ -216,7 +216,7 @@ function AdjustmentForm({
             open
             onClose={onClose}
             title="خصم / مكافأة"
-            description="يظهر في قسيمة راتب الموظف عند تشغيل مسير الشهر المحدد."
+            description="يظهر في قسيمة راتب الموظف عند إعداد كشف الشهر المحدد."
             size="sm"
             footer={
                 <>
