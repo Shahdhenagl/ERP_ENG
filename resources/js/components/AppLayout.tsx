@@ -202,7 +202,7 @@ export function AppLayout() {
             {/* ══ Content ══════════════════════════════════════ */}
             <main
                 key={location.pathname}
-                className="animate-in mx-auto max-w-6xl px-4 py-6 pb-44 sm:px-6 sm:pb-32"
+                className="animate-in mx-auto max-w-7xl px-4 py-6 pb-44 sm:px-6 sm:pb-32"
             >
                 <Outlet />
             </main>
