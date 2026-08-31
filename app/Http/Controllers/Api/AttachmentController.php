@@ -9,7 +9,8 @@ use App\Models\Contract;
 use App\Models\SiteSurvey;
 use App\Models\TechnicianMonthlyReport;
 use App\Models\WorkflowStepCompletion;
-use App\Models\Tender;
+use App\Models\Employee;
+use App\Models\EmployeeContract;
 use App\Support\Terms;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
@@ -38,6 +39,7 @@ class AttachmentController extends Controller
         'contracts' => [Contract::class, 'contracts.manage'],
         // The paperwork handed in with a technician's monthly report.
         'technician-reports' => [TechnicianMonthlyReport::class, 'hr.manage'],
+        'employee-contracts' => [EmployeeContract::class, 'hr.manage'],
         'workflow-steps' => [WorkflowStepCompletion::class, 'contracts.manage'],
     ];
 

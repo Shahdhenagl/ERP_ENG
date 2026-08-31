@@ -110,6 +110,11 @@ class Employee extends Model
         return $this->hasMany(PayrollAdjustment::class);
     }
 
+    public function contracts(): HasMany
+    {
+        return $this->hasMany(EmployeeContract::class)->latest('starts_on');
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

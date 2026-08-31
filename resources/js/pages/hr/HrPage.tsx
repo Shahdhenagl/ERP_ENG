@@ -7,6 +7,7 @@ import { AdjustmentsTab } from '@/pages/hr/AdjustmentsTab'
 import { AdvancesTab } from '@/pages/hr/AdvancesTab'
 import { AttendanceTab } from '@/pages/hr/AttendanceTab'
 import { EmployeesTab } from '@/pages/hr/EmployeesTab'
+import { EmployeeContractsTab } from '@/pages/hr/EmployeeContractsTab'
 import { LeaveTab } from '@/pages/hr/LeaveTab'
 import { PayrollTab } from '@/pages/hr/PayrollTab'
 
@@ -20,10 +21,11 @@ import { PayrollTab } from '@/pages/hr/PayrollTab'
  * two and lands on them. The section strip stays only where there is no sidebar
  * to carry it — a manager on a phone — and hides for the admin who has one.
  */
-type Key = 'employees' | 'attendance' | 'leave' | 'advances' | 'adjustments' | 'payroll'
+type Key = 'employees' | 'employee-contracts' | 'attendance' | 'leave' | 'advances' | 'adjustments' | 'payroll'
 
 const TABS: Array<{ key: Key; label: string; permission: string; to: string }> = [
     { key: 'employees', label: tr('الموظفون'), permission: 'hr.manage', to: '/hr/employees' },
+    { key: 'employee-contracts', label: tr('عقود الموظفين'), permission: 'hr.manage', to: '/hr/employee-contracts' },
     { key: 'attendance', label: tr('الحضور والغياب'), permission: 'hr.manage', to: '/hr/attendance' },
     { key: 'leave', label: tr('الإجازات'), permission: 'hr.manage', to: '/hr/leave' },
     { key: 'advances', label: tr('السلف'), permission: 'payroll.manage', to: '/hr/advances' },
@@ -49,6 +51,7 @@ export function HrPage() {
             <SectionTabs sections={allowed.map((entry) => [entry.to, entry.label] as const)} />
 
             {active.key === 'employees' && <EmployeesTab />}
+            {active.key === 'employee-contracts' && <EmployeeContractsTab />}
             {active.key === 'attendance' && <AttendanceTab />}
             {active.key === 'leave' && <LeaveTab />}
             {active.key === 'advances' && <AdvancesTab />}

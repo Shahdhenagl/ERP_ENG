@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Employee;
+use App\Models\EmployeeContract;
 use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -199,6 +200,19 @@ class EmployeeController extends Controller
                 'month' => $p->run?->monthLabel(),
                 'net' => (float) $p->net,
                 'paid_on' => $p->paid_on?->toDateString(),
+            ]),
+            'contracts' => $employee->contracts()->withCount('attachments')->limit(20)->get()->map(fn (EmployeeContract $contract) => [
+                'id' => $contract->id,
+                'code' => $contract->code,
+                'title' => $contract->title,
+                'contract_type' => $contract->contract_type,
+                'contract_type_label' => $contract->typeLabel(),
+                'starts_on' => $contract->starts_on?->toDateString(),
+                'ends_on' => $contract->ends_on?->toDateString(),
+                'salary' => (float) $contract->salary,
+                'status' => $contract->status,
+                'status_label' => $contract->statusLabel(),
+                'attachments_count' => $contract->attachments_count,
             ]),
         ];
     }

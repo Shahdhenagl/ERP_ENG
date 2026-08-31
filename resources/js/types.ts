@@ -2545,6 +2545,23 @@ export interface Allowance {
     amount: number
 }
 
+export interface EmployeeContract {
+    id: number
+    code: string
+    employee_id: number
+    title: string
+    contract_type: 'full_time' | 'part_time' | 'fixed_term' | 'indefinite' | 'consultant'
+    contract_type_label: string
+    starts_on: string | null
+    ends_on: string | null
+    salary: number
+    notes: string | null
+    status: 'draft' | 'active' | 'expired' | 'terminated'
+    status_label: string
+    attachments_count: number | null
+    employee?: Pick<Employee, 'id' | 'name' | 'code'> | null
+}
+
 export interface Employee {
     id: number
     code: string
@@ -2613,6 +2630,7 @@ export interface Employee {
         net: number
         paid_on: string | null
     }>
+    contracts?: EmployeeContract[]
 }
 
 export type LeaveType = 'annual' | 'sick' | 'unpaid'

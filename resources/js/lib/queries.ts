@@ -8,6 +8,7 @@ import type {
     ActivityEntry,
     ActivityFilters,
     Employee,
+    EmployeeContract,
     LeaveRequest,
     SalaryAdvance,
     PayrollAdjustment,
@@ -131,6 +132,8 @@ export const keys = {
     technicians: ['technicians'] as const,
     employees: (f?: Record<string, unknown>) => ['employees', f ?? {}] as const,
     employee: (id: number | string) => ['employee', Number(id)] as const,
+    employeeContracts: (f?: Record<string, unknown>) => ['employee-contracts', f ?? {}] as const,
+    employeeContract: (id: number | string) => ['employee-contract', Number(id)] as const,
     contacts: (f?: Record<string, unknown>) => ['contacts', f ?? {}] as const,
     siteSurveys: (f?: Record<string, unknown>) => ['site-surveys', f ?? {}] as const,
     tenders: (f?: Record<string, unknown>) => ['tenders', f ?? {}] as const,
@@ -3655,6 +3658,41 @@ export function useEmployee(id: number | string | undefined) {
     })
 }
 
+export function useEmployeeContracts(filters: Record<string, unknown> = {}) {
+    const { canDispatch } = useAuth()
+
+    return useQuery({
+        queryKey: keys.employeeContracts(filters),
+        queryFn: async () =>
+            (await api.get<Paginated<EmployeeContract>>('/employee-contracts', { params: filters })).data,
+        enabled: canDispatch,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useSaveEmployeeContract(id?: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (
+                await (id
+                    ? api.put<{ data: EmployeeContract }>(`/employee-contracts/${id}`, payload)
+                    : api.post<{ data: EmployeeContract }>('/employee-contracts', payload))
+            ).data.data,
+        onSuccess: () => invalidateHr(client),
+    })
+}
+
+export function useDeleteEmployeeContract() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id: number) => (await api.delete(`/employee-contracts/${id}`)).data,
+        onSuccess: () => invalidateHr(client),
+    })
+}
+
 export function useSaveEmployee(id?: number) {
     const client = useQueryClient()
 
@@ -3901,6 +3939,8 @@ function invalidateHr(client: ReturnType<typeof useQueryClient>): void {
     for (const key of [
         'employees',
         'employee',
+        'employee-contracts',
+        'employee-contract',
         'leave',
         'advances',
         'payroll-runs',
