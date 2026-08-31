@@ -58,6 +58,7 @@ const seed = await page.evaluate(async () => {
     }
     const post = async (url, body) =>
         (await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) })).json()
+    const get = async (url) => (await fetch(url, { headers })).json()
 
     const stamp = Date.now()
     const name = `عامر التجريبي ${stamp}`
@@ -83,18 +84,22 @@ const seed = await page.evaluate(async () => {
         reason: 'ظرف عائلي',
     })
 
-    const advance = await post('/api/advances', {
+    const boxes = await get('/api/treasury/boxes')
+    const cashBox = boxes.data?.find((box) => box.is_active)
+    const advance = cashBox ? await post('/api/advances', {
         employee_id: id,
+        advance_date: '2026-08-01',
         amount: 2000,
         installment: 500,
-    })
+        cash_box_id: cashBox.id,
+    }) : null
 
     return {
         id,
         name,
         employeeCode: employee.data?.code ?? null,
         leaveCode: leave.data?.code ?? null,
-        advanceCode: advance.data?.code ?? null,
+        advanceCode: advance?.data?.code ?? null,
     }
 })
 

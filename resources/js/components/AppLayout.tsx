@@ -38,7 +38,8 @@ export function AppLayout() {
     const allowed = (item: NavItem) =>
         (! item.roles || (user && item.roles.includes(user.role))) &&
         (! item.permission || can(item.permission)) &&
-        (! item.anyPermission || item.anyPermission.some((p) => can(p)))
+        (! item.anyPermission || item.anyPermission.some((p) => can(p))) &&
+        (! item.screenPermission || can(item.screenPermission))
 
     const visibleNav = NAV.flatMap((item) => {
         if (!allowed(item)) return []

@@ -94,11 +94,6 @@ class TreasuryController extends Controller
 
     public function boxes(): JsonResponse
     {
-        // A fresh install has no boxes, which leaves the collection screen with
-        // nothing to pay into. Opening the main one on first look is the same
-        // approach the stock module takes with the main warehouse.
-        CashBox::default();
-
         $boxes = CashBox::query()
             ->whereNull('user_id')
             ->orderBy('type')

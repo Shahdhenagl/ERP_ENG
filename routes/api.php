@@ -275,9 +275,15 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     // Employees and leave under one permission; the money — advances and
     // payroll — under another, because paying salaries is a treasury act.
     Route::apiResource('employees', EmployeeController::class)->middleware('can:hr.manage');
+<<<<<<< HEAD
     Route::apiResource('employee-contracts', EmployeeContractController::class)
         ->parameters(['employee-contracts' => 'employeeContract'])
         ->middleware('can:hr.manage');
+=======
+    Route::post('employees/{employee}/contracts', [EmployeeController::class, 'storeContract'])->middleware('can:hr.manage');
+    Route::put('employees/{employee}/contracts/{employeeContract}', [EmployeeController::class, 'updateContract'])->middleware('can:hr.manage');
+    Route::delete('employees/{employee}/contracts/{employeeContract}', [EmployeeController::class, 'destroyContract'])->middleware('can:hr.manage');
+>>>>>>> d65d303 (feat: improve permissions payroll and employee workflows)
 
     // Readable by whoever manages leave OR only approves it — an approver has
     // to load the queue to act on it.
@@ -297,6 +303,7 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
 
     Route::get('advances', [PayrollController::class, 'advances'])->middleware('can:payroll.manage');
     Route::post('advances', [PayrollController::class, 'storeAdvance'])->middleware('can:payroll.manage');
+    Route::put('advances/{salaryAdvance}', [PayrollController::class, 'updateAdvance'])->middleware('can:payroll.manage');
 
     Route::get('payroll-adjustments', [PayrollController::class, 'adjustments'])->middleware('can:payroll.manage');
     Route::post('payroll-adjustments', [PayrollController::class, 'storeAdjustment'])->middleware('can:payroll.manage');

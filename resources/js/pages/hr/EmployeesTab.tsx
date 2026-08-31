@@ -10,8 +10,8 @@ import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { formatMoney } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
-import { useDeleteEmployee, useEmployee, useEmployees, useSaveEmployee } from '@/lib/queries'
-import type { Allowance, AttendanceStatus, Employee } from '@/types'
+import { useDeleteEmployee, useDeleteEmployeeContract, useEmployee, useEmployees, useSaveEmployee, useSaveEmployeeContract } from '@/lib/queries'
+import type { Allowance, AttendanceStatus, Employee, EmployeeContract } from '@/types'
 
 const ATT_CHIP: Record<AttendanceStatus, string> = {
     present: 'bg-emerald-50 text-emerald-700',
@@ -234,8 +234,11 @@ function EmployeeProfile({
     const { data, isLoading } = useEmployee(employee.id)
     const e = data ?? employee
     const att = data?.attendance
+    const removeContract = useDeleteEmployeeContract(employee.id)
+    const [editingContract, setEditingContract] = useState<EmployeeContract | null | undefined>(undefined)
 
     return (
+        <>
         <Modal
             open
             onClose={onClose}
@@ -274,12 +277,78 @@ function EmployeeProfile({
                             <Figure label="الأساسي" value={formatMoney(e.basic_salary)} />
                             <Figure label="البدلات" value={formatMoney(e.allowances_total)} />
                             <Figure label="الإجمالي" value={formatMoney(e.gross_salary)} accent />
+                            <Figure label="أيام الراتب" value={`${e.salary_basis_days} يوم`} />
+                            <Figure label="أجر اليوم" value={formatMoney(e.daily_salary)} />
                             <Figure
                                 label="سلف قائمة"
                                 value={formatMoney(e.outstanding_advances)}
                                 tone={e.outstanding_advances > 0 ? 'warn' : undefined}
                             />
                         </div>
+                    </section>
+
+                    {/* Employment contracts are historical records, separate
+                        from customer maintenance contracts and from the live
+                        salary settings used by future payroll statements. */}
+                    <section>
+                        <div className="mb-2 flex items-center justify-between gap-2">
+                            <h3 className="text-sm font-bold text-navy-800">عقود الموظف</h3>
+                            <button
+                                type="button"
+                                onClick={() => setEditingContract(null)}
+                                className="tap inline-flex items-center gap-1 rounded-lg bg-brand-50 px-2.5 py-1.5 text-xs font-bold text-brand-700"
+                            >
+                                <Plus className="size-3.5" /> عقد جديد
+                            </button>
+                        </div>
+                        {e.contracts?.length ? (
+                            <div className="space-y-2">
+                                {e.contracts.map((contract) => (
+                                    <div key={contract.id} className="rounded-xl border border-navy-100 p-3">
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="min-w-0">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <FileText className="size-4 text-brand-600" />
+                                                    <p className="text-sm font-bold text-navy-800">{contract.title}</p>
+                                                    <span className={clsx('badge', CONTRACT_STATUS[contract.status].className)}>
+                                                        {CONTRACT_STATUS[contract.status].label}
+                                                    </span>
+                                                </div>
+                                                <p className="tabular mt-1 text-[11px] text-navy-400">
+                                                    {contract.code} · {CONTRACT_TYPE[contract.type]} · {formatDate(contract.starts_on)}
+                                                    {contract.ends_on && ` ← ${formatDate(contract.ends_on)}`}
+                                                </p>
+                                                <p className="mt-1 text-xs font-semibold text-navy-600">
+                                                    راتب متفق {formatMoney(contract.agreed_salary)} · {contract.salary_basis_days} يوم
+                                                </p>
+                                            </div>
+                                            <div className="flex shrink-0 gap-1">
+                                                <button type="button" onClick={() => setEditingContract(contract)} className="tap grid size-8 place-items-center rounded-lg bg-navy-50 text-navy-500" aria-label="تعديل العقد"><Pencil className="size-3.5" /></button>
+                                                <button
+                                                    type="button"
+                                                    onClick={async () => {
+                                                        if (!window.confirm(`حذف العقد ${contract.code} من السجل؟`)) return
+                                                        try {
+                                                            await removeContract.mutateAsync(contract.id)
+                                                        } catch (caught) {
+                                                            // The profile remains open, so surface the server's reason.
+                                                            window.alert(errorMessage(caught, 'تعذّر حذف العقد.'))
+                                                        }
+                                                    }}
+                                                    className="tap grid size-8 place-items-center rounded-lg bg-red-50 text-red-600"
+                                                    aria-label="حذف العقد"
+                                                ><Trash2 className="size-3.5" /></button>
+                                            </div>
+                                        </div>
+                                        {contract.notes && <p className="mt-2 text-xs text-navy-500">{contract.notes}</p>}
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="rounded-xl border border-dashed border-navy-200 px-3 py-5 text-center text-xs text-navy-400">
+                                لا توجد عقود مسجلة لهذا الموظف.
+                            </div>
+                        )}
                     </section>
 
                     {/* Attendance this month + recent */}
@@ -412,6 +481,78 @@ function EmployeeProfile({
                 </div>
             )}
         </Modal>
+        {editingContract !== undefined && (
+            <EmployeeContractForm
+                employee={e}
+                contract={editingContract}
+                onClose={() => setEditingContract(undefined)}
+            />
+        )}
+        </>
+    )
+}
+
+const CONTRACT_TYPE = {
+    permanent: 'دائم',
+    fixed_term: 'محدد المدة',
+    temporary: 'مؤقت',
+    probation: 'فترة اختبار',
+} as const
+
+const CONTRACT_STATUS = {
+    active: { label: 'ساري', className: 'bg-emerald-50 text-emerald-700' },
+    expired: { label: 'منتهي', className: 'bg-slate-100 text-slate-600' },
+    terminated: { label: 'منهى', className: 'bg-red-50 text-red-700' },
+} as const
+
+function EmployeeContractForm({ employee, contract, onClose }: { employee: Employee; contract: EmployeeContract | null; onClose: () => void }) {
+    const toast = useToast()
+    const save = useSaveEmployeeContract(employee.id, contract?.id)
+    const [errors, setErrors] = useState<Record<string, string>>({})
+    const [form, setForm] = useState({
+        title: contract?.title ?? 'عقد عمل',
+        type: String(contract?.type ?? 'fixed_term'),
+        starts_on: contract?.starts_on ?? employee.hired_on ?? new Date().toISOString().slice(0, 10),
+        ends_on: contract?.ends_on ?? '',
+        agreed_salary: String(contract?.agreed_salary ?? employee.gross_salary),
+        salary_basis_days: String(contract?.salary_basis_days ?? employee.salary_basis_days),
+        status: String(contract?.status ?? 'active'),
+        notes: contract?.notes ?? '',
+    })
+    const set = (key: keyof typeof form) => (value: string) => setForm((current) => ({ ...current, [key]: value }))
+
+    return (
+        <Modal
+            open
+            onClose={onClose}
+            title={contract ? `تعديل العقد ${contract.code}` : `عقد جديد — ${employee.name}`}
+            size="sm"
+            footer={<><Button variant="secondary" onClick={onClose} disabled={save.isPending}>إلغاء</Button><Button loading={save.isPending} onClick={async () => {
+                setErrors({})
+                try {
+                    await save.mutateAsync({ ...form, ends_on: form.ends_on || null, agreed_salary: Number(form.agreed_salary), salary_basis_days: Number(form.salary_basis_days), notes: form.notes.trim() || null })
+                    toast.success('تم حفظ عقد الموظف.')
+                    onClose()
+                } catch (caught) {
+                    setErrors(fieldErrors(caught))
+                    toast.error(errorMessage(caught, 'تعذّر حفظ العقد.'))
+                }
+            }}>حفظ العقد</Button></>}
+        >
+            <div className="space-y-4">
+                <Field label="اسم العقد" required error={errors.title}><Input value={form.title} onChange={(e) => set('title')(e.target.value)} /></Field>
+                <div className="grid grid-cols-2 gap-3">
+                    <Field label="نوع العقد" required error={errors.type}><Select value={form.type} onChange={(e) => set('type')(e.target.value)}>{Object.entries(CONTRACT_TYPE).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</Select></Field>
+                    <Field label="الحالة" required error={errors.status}><Select value={form.status} onChange={(e) => set('status')(e.target.value)}>{Object.entries(CONTRACT_STATUS).map(([key, value]) => <option key={key} value={key}>{value.label}</option>)}</Select></Field>
+                    <Field label="تاريخ البداية" required error={errors.starts_on}><Input type="date" value={form.starts_on} onChange={(e) => set('starts_on')(e.target.value)} /></Field>
+                    <Field label="تاريخ النهاية" error={errors.ends_on}><Input type="date" value={form.ends_on} onChange={(e) => set('ends_on')(e.target.value)} /></Field>
+                    <Field label="الراتب المتفق" required error={errors.agreed_salary}><Input type="number" min={0} step="0.01" value={form.agreed_salary} onChange={(e) => set('agreed_salary')(e.target.value)} dir="ltr" className="text-left" /></Field>
+                    <Field label="أيام الراتب" required error={errors.salary_basis_days}><Input type="number" min={1} max={31} value={form.salary_basis_days} onChange={(e) => set('salary_basis_days')(e.target.value)} dir="ltr" className="text-left" /></Field>
+                </div>
+                <Field label="ملاحظات العقد" error={errors.notes}><Textarea value={form.notes} onChange={(e) => set('notes')(e.target.value)} /></Field>
+                <p className="rounded-xl bg-amber-50 px-3 py-2 text-[11px] text-amber-800">بيانات العقد سجل تاريخي؛ تعديل راتب العقد لا يغيّر إعداد الراتب الحالي تلقائيًا.</p>
+            </div>
+        </Modal>
     )
 }
 
@@ -505,6 +646,7 @@ function EmployeeForm({ employee, onClose }: { employee: Employee | null; onClos
         hired_on: employee?.hired_on ?? new Date().toISOString().slice(0, 10),
         employment_type: employee?.employment_type ?? 'full_time',
         basic_salary: String(employee?.basic_salary ?? ''),
+        salary_basis_days: String(employee?.salary_basis_days ?? '30'),
         insurance_rate: String(employee?.insurance_rate ?? '0'),
         tax_rate: String(employee?.tax_rate ?? '0'),
         annual_leave_days: String(employee?.annual_leave_days ?? '21'),
@@ -537,6 +679,7 @@ function EmployeeForm({ employee, onClose }: { employee: Employee | null; onClos
                                 await save.mutateAsync({
                                     ...form,
                                     basic_salary: Number(form.basic_salary),
+                                    salary_basis_days: Number(form.salary_basis_days),
                                     insurance_rate: Number(form.insurance_rate),
                                     tax_rate: Number(form.tax_rate),
                                     annual_leave_days: Number(form.annual_leave_days),
@@ -597,7 +740,12 @@ function EmployeeForm({ employee, onClose }: { employee: Employee | null; onClos
                     </Field>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-3">
+                <div className="rounded-2xl border border-navy-100 p-4">
+                    <div className="mb-3">
+                        <h3 className="text-sm font-extrabold text-navy-800">إعدادات الراتب</h3>
+                        <p className="text-[11px] text-navy-400">تُستخدم في كشوف الرواتب الجديدة فقط ولا تغيّر أي قسيمة قديمة.</p>
+                    </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <Field label="الراتب الأساسي" required error={errors.basic_salary}>
                         <Input
                             type="number"
@@ -605,6 +753,18 @@ function EmployeeForm({ employee, onClose }: { employee: Employee | null; onClos
                             step="0.01"
                             value={form.basic_salary}
                             onChange={(e) => set('basic_salary')(e.target.value)}
+                            dir="ltr"
+                            className="text-left"
+                        />
+                    </Field>
+                    <Field label="أيام الراتب الشهرية" required error={errors.salary_basis_days} hint="غالبًا 30 يومًا">
+                        <Input
+                            type="number"
+                            min={1}
+                            max={31}
+                            step="1"
+                            value={form.salary_basis_days}
+                            onChange={(e) => set('salary_basis_days')(e.target.value)}
                             dir="ltr"
                             className="text-left"
                         />
@@ -633,6 +793,15 @@ function EmployeeForm({ employee, onClose }: { employee: Employee | null; onClos
                             className="text-left"
                         />
                     </Field>
+                </div>
+                    {Number(form.basic_salary) > 0 && Number(form.salary_basis_days) > 0 && (
+                        <p className="mt-3 rounded-xl bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-700">
+                            أجر اليوم الإجمالي: {formatMoney(
+                                (Number(form.basic_salary) + allowances.reduce((sum, item) => sum + Number(item.amount || 0), 0))
+                                / Number(form.salary_basis_days),
+                            )}
+                        </p>
+                    )}
                 </div>
 
                 {/* Allowances build the rest of the gross, and each is named so a

@@ -22,24 +22,34 @@ class PostponementReviewed extends Notification
 
     public function toArray($notifiable): array
     {
+        $task = $this->task->loadMissing(['customer', 'branch']);
         $statusAr = $this->postponement->status === 'approved' ? 'بالموافقة على' : 'برفض';
         return [
             'type' => 'postponement_reviewed',
-            'task_id' => $this->task->id,
-            'task_code' => $this->task->code,
-            'title' => 'الرد على طلب التأجيل',
-            'body' => "تم الرد {$statusAr} طلب تأجيل المهمة {$this->task->code}",
-            'url' => "/tasks/{$this->task->id}",
+            'task_id' => $task->id,
+            'task_code' => $task->code,
+            'code' => $task->code,
+            'title' => $task->title,
+            'customer' => $task->customer?->name,
+            'branch' => $task->branch?->name ?? 'بدون فرع محدد',
+            'body' => "تم الرد {$statusAr} طلب التأجيل",
+            'url' => "/tasks/{$task->id}",
         ];
     }
 
     public function toWebPush($notifiable, $notification): WebPushMessage
     {
+        $task = $this->task->loadMissing(['customer', 'branch']);
         $statusAr = $this->postponement->status === 'approved' ? 'تمت الموافقة على' : 'تم رفض';
         return (new WebPushMessage)
             ->title('تحديث حالة طلب التأجيل')
             ->icon('/icon.png')
-            ->body("{$statusAr} طلب تأجيل المهمة {$this->task->code}")
-            ->action('عرض التفاصيل', "/tasks/{$this->task->id}");
+            ->body($this->context($task)." · {$statusAr} طلب التأجيل")
+            ->action('عرض التفاصيل', "/tasks/{$task->id}");
+    }
+
+    private function context(Task $task): string
+    {
+        return implode(' — ', [$task->title, $task->customer?->name ?? 'بدون عميل', $task->branch?->name ?? 'بدون فرع محدد']);
     }
 }

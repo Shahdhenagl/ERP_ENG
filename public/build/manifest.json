@@ -9,7 +9,11 @@
     ]
   },
   "resources/js/main.tsx": {
+<<<<<<< HEAD
     "file": "assets/main-V3h_Ld3X.js",
+=======
+    "file": "assets/main-J6eoaUtJ.js",
+>>>>>>> d65d303 (feat: improve permissions payroll and employee workflows)
     "name": "main",
     "src": "resources/js/main.tsx",
     "isEntry": true,

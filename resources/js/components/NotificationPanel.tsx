@@ -167,6 +167,16 @@ export function NotificationPanel({ open, onClose }: { open: boolean; onClose: (
                                                 </span>
                                             )}
                                             {notification.data.title ?? 'إشعار'}
+                                            {notification.data.customer && (
+                                                <span className="font-semibold text-navy-600">
+                                                    {' — '}{notification.data.customer}
+                                                </span>
+                                            )}
+                                            {notification.data.branch && (
+                                                <span className="font-semibold text-navy-500">
+                                                    {' — '}{notification.data.branch}
+                                                </span>
+                                            )}
                                         </p>
                                         {notification.data.actor && (
                                             <p className="mt-0.5 text-xs text-navy-500">

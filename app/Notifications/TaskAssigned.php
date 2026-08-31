@@ -20,7 +20,7 @@ class TaskAssigned extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $task = $this->task->loadMissing('customer');
+        $task = $this->task->loadMissing(['customer', 'branch']);
 
         $mail = (new MailMessage)
             ->subject("مهمة جديدة {$task->code} — {$task->title}")
@@ -30,6 +30,7 @@ class TaskAssigned extends Notification
             ->line("**النوع:** {$task->type->label()}")
             ->line("**الأولوية:** {$task->priority->label()}")
             ->line("**العميل:** {$task->customer->name}")
+            ->line('**الفرع:** '.($task->branch?->name ?? 'بدون فرع محدد'))
             ->line("**الهاتف:** {$task->customer->phone}");
 
         if ($address = $task->effectiveAddress()) {
@@ -51,11 +52,12 @@ class TaskAssigned extends Notification
 
     public function toWebPush(object $notifiable, $notification): WebPushMessage
     {
-        $task = $this->task->loadMissing('customer');
+        $task = $this->task->loadMissing(['customer', 'branch']);
+        $context = $this->context($task);
 
         return (new WebPushMessage)
             ->title("مهمة جديدة — {$task->priority->label()}")
-            ->body("{$task->title} · {$task->customer->name}")
+            ->body($context)
             ->icon('/brand/icon-192.png')
             ->badge('/brand/badge.png')
             ->tag("task-{$task->id}")
@@ -66,14 +68,35 @@ class TaskAssigned extends Notification
     /** @return array<string, mixed> */
     public function toArray(object $notifiable): array
     {
+        $task = $this->task->loadMissing(['customer', 'branch']);
+
         return [
             'type' => 'task.assigned',
-            'task_id' => $this->task->id,
-            'code' => $this->task->code,
-            'title' => $this->task->title,
-            'priority' => $this->task->priority->value,
-            'customer' => $this->task->customer?->name,
-            'url' => "/tasks/{$this->task->id}",
+            'task_id' => $task->id,
+            'code' => $task->code,
+            'title' => $task->title,
+            'body' => $this->customerAndBranch($task),
+            'priority' => $task->priority->value,
+            'customer' => $task->customer?->name,
+            'branch' => $task->branch?->name ?? 'بدون فرع محدد',
+            'url' => "/tasks/{$task->id}",
         ];
+    }
+
+    private function context(Task $task): string
+    {
+        return implode(' — ', array_filter([
+            $task->title,
+            $task->customer?->name,
+            $task->branch?->name ?? 'بدون فرع محدد',
+        ]));
+    }
+
+    private function customerAndBranch(Task $task): string
+    {
+        return implode(' — ', array_filter([
+            $task->customer?->name,
+            $task->branch?->name ?? 'بدون فرع محدد',
+        ]));
     }
 }

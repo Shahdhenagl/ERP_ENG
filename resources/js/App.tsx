@@ -16,7 +16,7 @@ import { AuthProvider, useAuth } from '@/lib/auth'
 import { I18nProvider } from '@/lib/i18n'
 import { ThemeProvider } from '@/lib/theme'
 import { areaFor } from '@/lib/nav'
-import { menuPermissionForPath } from '@/lib/menu'
+import { menuPermissionForPath, screenPermissionForPath } from '@/lib/menu'
 import { AccountingLayout } from '@/pages/accounting/AccountingLayout'
 import { AccountsPage } from '@/pages/accounting/AccountsPage'
 import { BalanceSheetPage } from '@/pages/accounting/BalanceSheetPage'
@@ -406,12 +406,16 @@ function RequireAreaPermission() {
 
     const within = pathname.replace(/^\/manager/, '') || '/'
     const required = menuPermissionForPath(within)
+    const requiredScreen = screenPermissionForPath(within)
     const permissions = user.permissions ?? []
-    const allowed = !required || (Array.isArray(required)
+    const businessAllowed = !required || (Array.isArray(required)
         ? required.some((permission) => permissions.includes(permission))
         : permissions.includes(required))
+    const screenAllowed = !requiredScreen || permissions.includes(requiredScreen)
 
-    return allowed ? <Outlet /> : <AreaRedirect to="/" />
+    // Profile is deliberately ungated and therefore a safe landing page even
+    // for an office role whose administrator hid every operational screen.
+    return businessAllowed && screenAllowed ? <Outlet /> : <AreaRedirect to="/profile" />
 }
 
 /**

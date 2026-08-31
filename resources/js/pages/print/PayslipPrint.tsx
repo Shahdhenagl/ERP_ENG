@@ -45,10 +45,10 @@ export function PayslipPrint() {
                     ]}
                 />
                 <DocumentParty
-                    heading="المسير"
+                    heading="كشف الراتب"
                     rows={[
                         ['الشهر', slip.month],
-                        ['رقم المسير', slip.run_code],
+                        ['رقم كشف الرواتب', slip.run_code],
                         ['حالة الصرف', slip.is_paid ? `صُرف ${slip.paid_on ? formatDate(slip.paid_on) : ''}` : 'غير مصروف'],
                         ['من خزينة', slip.box],
                     ]}
@@ -59,6 +59,10 @@ export function PayslipPrint() {
                 <p className="mb-1.5 text-[11px] font-bold text-navy-400">المستحقات</p>
                 <div className="space-y-1 rounded-lg bg-navy-50 p-3 text-[13px]">
                     <Line label="الراتب الأساسي" value={slip.basic_salary} />
+                    <div className="flex justify-between text-navy-600">
+                        <span>أيام العمل المستحقة</span>
+                        <span className="tabular">{slip.worked_days} / {slip.salary_basis_days} يوم</span>
+                    </div>
                     {slip.allowances.map((allowance, index) => (
                         <Line key={index} label={allowance.name} value={allowance.amount} />
                     ))}

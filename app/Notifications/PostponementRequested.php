@@ -23,22 +23,34 @@ class PostponementRequested extends Notification
 
     public function toArray($notifiable): array
     {
+        $task = $this->task->loadMissing(['customer', 'branch']);
+
         return [
             'type' => 'postponement_requested',
-            'task_id' => $this->task->id,
-            'task_code' => $this->task->code,
-            'title' => 'طلب تأجيل مهمة',
-            'body' => "طلب {$this->postponement->requester->name} تأجيل المهمة {$this->task->code} إلى {$this->postponement->postponed_to->format('Y-m-d')}",
-            'url' => "/tasks/{$this->task->id}",
+            'task_id' => $task->id,
+            'task_code' => $task->code,
+            'code' => $task->code,
+            'title' => $task->title,
+            'customer' => $task->customer?->name,
+            'branch' => $task->branch?->name ?? 'بدون فرع محدد',
+            'body' => "طلب {$this->postponement->requester->name} التأجيل إلى {$this->postponement->postponed_to->format('Y-m-d')}",
+            'url' => "/tasks/{$task->id}",
         ];
     }
 
     public function toWebPush($notifiable, $notification): WebPushMessage
     {
+        $task = $this->task->loadMissing(['customer', 'branch']);
+
         return (new WebPushMessage)
-            ->title('طلب تأجيل مهمة: ' . $this->task->code)
+            ->title('طلب تأجيل مهمة: ' . $task->code)
             ->icon('/icon.png')
-            ->body("طلب {$this->postponement->requester->name} التأجيل إلى {$this->postponement->postponed_to->format('Y-m-d')}")
-            ->action('عرض التفاصيل', "/tasks/{$this->task->id}");
+            ->body($this->context($task)." · طلب {$this->postponement->requester->name} التأجيل")
+            ->action('عرض التفاصيل', "/tasks/{$task->id}");
+    }
+
+    private function context(Task $task): string
+    {
+        return implode(' — ', [$task->title, $task->customer?->name ?? 'بدون عميل', $task->branch?->name ?? 'بدون فرع محدد']);
     }
 }

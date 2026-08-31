@@ -3716,6 +3716,30 @@ export function useDeleteEmployee() {
     })
 }
 
+export function useSaveEmployeeContract(employeeId: number, contractId?: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            (
+                await (contractId
+                    ? api.put<{ data: EmployeeContract }>(`/employees/${employeeId}/contracts/${contractId}`, payload)
+                    : api.post<{ data: EmployeeContract }>(`/employees/${employeeId}/contracts`, payload))
+            ).data.data,
+        onSuccess: () => invalidateHr(client),
+    })
+}
+
+export function useDeleteEmployeeContract(employeeId: number) {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (contractId: number) =>
+            (await api.delete(`/employees/${employeeId}/contracts/${contractId}`)).data,
+        onSuccess: () => invalidateHr(client),
+    })
+}
+
 export function useLeave(filters: Record<string, unknown> = {}) {
     const { canDispatch } = useAuth()
 
@@ -3828,6 +3852,16 @@ export function useSaveAdvance() {
     return useMutation({
         mutationFn: async (payload: Record<string, unknown>) =>
             (await api.post('/advances', payload)).data,
+        onSuccess: () => invalidateHr(client),
+    })
+}
+
+export function useUpdateAdvance() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ id, ...payload }: { id: number; installment: number; notes: string | null }) =>
+            (await api.put(`/advances/${id}`, payload)).data,
         onSuccess: () => invalidateHr(client),
     })
 }

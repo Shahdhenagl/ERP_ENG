@@ -79,6 +79,70 @@ class EmployeeController extends Controller
         return response()->json(['message' => Terms::get('تم حذف الموظف.')]);
     }
 
+    public function storeContract(Request $request, Employee $employee): JsonResponse
+    {
+        $contract = $employee->contracts()->create([
+            ...$this->validatedContract($request),
+            'created_by' => $request->user()->id,
+        ]);
+
+        ActivityLog::record('employee_contract.created', $contract, "إضافة عقد {$contract->code} للموظف {$employee->name}");
+
+        return response()->json(['data' => $this->presentContract($contract)], 201);
+    }
+
+    public function updateContract(Request $request, Employee $employee, EmployeeContract $employeeContract): JsonResponse
+    {
+        abort_unless($employeeContract->employee_id === $employee->id, 404);
+        $employeeContract->update($this->validatedContract($request));
+
+        ActivityLog::record('employee_contract.updated', $employeeContract, "تعديل عقد {$employeeContract->code} للموظف {$employee->name}");
+
+        return response()->json(['data' => $this->presentContract($employeeContract->fresh())]);
+    }
+
+    public function destroyContract(Employee $employee, EmployeeContract $employeeContract): JsonResponse
+    {
+        abort_unless($employeeContract->employee_id === $employee->id, 404);
+        $employeeContract->delete();
+
+        ActivityLog::record('employee_contract.deleted', $employeeContract, "حذف عقد {$employeeContract->code} للموظف {$employee->name}");
+
+        return response()->json(['message' => Terms::get('تم حذف عقد الموظف.')]);
+    }
+
+    /** @return array<string, mixed> */
+    protected function validatedContract(Request $request): array
+    {
+        return $request->validate([
+            'title' => ['required', 'string', 'max:160'],
+            'type' => ['required', 'in:permanent,fixed_term,temporary,probation'],
+            'starts_on' => ['required', 'date'],
+            'ends_on' => ['nullable', 'date', 'after_or_equal:starts_on'],
+            'agreed_salary' => ['required', 'numeric', 'min:0'],
+            'salary_basis_days' => ['required', 'integer', 'min:1', 'max:31'],
+            'status' => ['required', 'in:active,expired,terminated'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+    }
+
+    /** @return array<string, mixed> */
+    protected function presentContract(EmployeeContract $contract): array
+    {
+        return [
+            'id' => $contract->id,
+            'code' => $contract->code,
+            'title' => $contract->title,
+            'type' => $contract->type,
+            'starts_on' => $contract->starts_on?->toDateString(),
+            'ends_on' => $contract->ends_on?->toDateString(),
+            'agreed_salary' => (float) $contract->agreed_salary,
+            'salary_basis_days' => (int) $contract->salary_basis_days,
+            'status' => $contract->status,
+            'notes' => $contract->notes,
+        ];
+    }
+
     /** @return array<string, mixed> */
     protected function validated(Request $request, ?Employee $employee = null): array
     {
@@ -96,6 +160,7 @@ class EmployeeController extends Controller
             'left_on' => ['nullable', 'date'],
             'employment_type' => ['nullable', 'in:full_time,part_time,contract'],
             'basic_salary' => ['required', 'numeric', 'min:0'],
+            'salary_basis_days' => ['nullable', 'integer', 'min:1', 'max:31'],
             'allowances' => ['nullable', 'array'],
             'allowances.*.name' => ['required_with:allowances', 'string', 'max:80'],
             'allowances.*.amount' => ['required_with:allowances', 'numeric', 'min:0'],
@@ -127,6 +192,8 @@ class EmployeeController extends Controller
             'employment_type' => $employee->employment_type,
 
             'basic_salary' => (float) $employee->basic_salary,
+            'salary_basis_days' => (int) ($employee->salary_basis_days ?: 30),
+            'daily_salary' => round($employee->grossSalary() / max(1, (int) ($employee->salary_basis_days ?: 30)), 2),
             'allowances' => $employee->allowances ?? [],
             'allowances_total' => $employee->allowancesTotal(),
             'gross_salary' => $employee->grossSalary(),
@@ -201,6 +268,7 @@ class EmployeeController extends Controller
                 'net' => (float) $p->net,
                 'paid_on' => $p->paid_on?->toDateString(),
             ]),
+<<<<<<< HEAD
             'contracts' => $employee->contracts()->withCount('attachments')->limit(20)->get()->map(fn (EmployeeContract $contract) => [
                 'id' => $contract->id,
                 'code' => $contract->code,
@@ -214,6 +282,9 @@ class EmployeeController extends Controller
                 'status_label' => $contract->statusLabel(),
                 'attachments_count' => $contract->attachments_count,
             ]),
+=======
+            'contracts' => $employee->contracts()->get()->map(fn (EmployeeContract $contract) => $this->presentContract($contract)),
+>>>>>>> d65d303 (feat: improve permissions payroll and employee workflows)
         ];
     }
 }

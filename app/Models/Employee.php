@@ -21,10 +21,14 @@ class Employee extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $attributes = [
+        'salary_basis_days' => 30,
+    ];
+
     protected $fillable = [
         'code', 'user_id', 'name', 'national_id', 'phone', 'job_title', 'department',
         'hired_on', 'left_on', 'employment_type',
-        'basic_salary', 'allowances', 'insurance_rate', 'tax_rate', 'annual_leave_days',
+        'basic_salary', 'salary_basis_days', 'allowances', 'insurance_rate', 'tax_rate', 'annual_leave_days',
         'bank_name', 'bank_account', 'status', 'notes', 'created_by',
     ];
 
@@ -34,6 +38,7 @@ class Employee extends Model
             'hired_on' => 'date',
             'left_on' => 'date',
             'basic_salary' => 'decimal:2',
+            'salary_basis_days' => 'integer',
             'allowances' => 'array',
             'insurance_rate' => 'decimal:2',
             'tax_rate' => 'decimal:2',

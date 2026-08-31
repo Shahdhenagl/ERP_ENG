@@ -348,8 +348,10 @@
 
 /* On screen a document is a sheet of paper on a grey desk. */
 .doc-sheet {
-    width: 100%;
+    width: min(210mm, calc(100vw - 2rem));
     max-width: 210mm;
+    min-height: 297mm;
+    box-sizing: border-box;
     margin-inline: auto;
     background: white;
     padding: 14mm 12mm;
@@ -472,7 +474,9 @@
     }
 
     .doc-sheet {
+        width: auto;
         max-width: none;
+        min-height: 0;
         padding: 0;
         margin: 0;
     }

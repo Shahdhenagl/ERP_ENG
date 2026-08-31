@@ -24,7 +24,7 @@ class PayrollController extends Controller
     {
         $advances = SalaryAdvance::query()
             ->when($request->integer('employee_id'), fn ($q, $id) => $q->where('employee_id', $id))
-            ->with(['employee', 'box'])
+            ->with(['employee', 'box', 'creator'])
             ->orderByDesc('id')
             ->paginate($request->integer('per_page', 40));
 
@@ -39,6 +39,9 @@ class PayrollController extends Controller
                 'installment' => (float) $a->installment,
                 'outstanding' => $a->employee ? max(0.0, $a->employee->outstandingAdvances()) : 0.0,
                 'box' => $a->box?->name,
+                'notes' => $a->notes,
+                'created_by' => $a->creator?->name,
+                'created_at' => $a->created_at?->toIso8601String(),
             ])->items(),
             'meta' => ['total' => $advances->total(), 'last_page' => $advances->lastPage()],
         ]);
@@ -50,8 +53,8 @@ class PayrollController extends Controller
             'employee_id' => ['required', 'exists:employees,id'],
             'amount' => ['required', 'numeric', 'gt:0'],
             'installment' => ['nullable', 'numeric', 'min:0'],
-            'cash_box_id' => ['nullable', 'exists:cash_boxes,id'],
-            'advance_date' => ['nullable', 'date'],
+            'cash_box_id' => ['required', 'exists:cash_boxes,id'],
+            'advance_date' => ['required', 'date'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
@@ -68,6 +71,38 @@ class PayrollController extends Controller
             'code' => $advance->code,
             'amount' => (float) $advance->amount,
         ]], 201);
+    }
+
+    /**
+     * Only repayment terms may change after cash has left the box. Altering the
+     * employee, amount, date or box would make the advance disagree with its
+     * immutable treasury movement and accounting entry.
+     */
+    public function updateAdvance(Request $request, SalaryAdvance $salaryAdvance): JsonResponse
+    {
+        $data = $request->validate([
+            'installment' => ['required', 'numeric', 'gt:0', 'lte:'.$salaryAdvance->amount],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $salaryAdvance->update([
+            'installment' => round((float) $data['installment'], 2),
+            'notes' => $data['notes'] ?? null,
+        ]);
+
+        ActivityLog::record(
+            'advance.updated',
+            $salaryAdvance,
+            "تعديل شروط السلفة {$salaryAdvance->code}",
+            ['installment' => (float) $salaryAdvance->installment],
+        );
+
+        return response()->json(['data' => [
+            'id' => $salaryAdvance->id,
+            'code' => $salaryAdvance->code,
+            'installment' => (float) $salaryAdvance->installment,
+            'notes' => $salaryAdvance->notes,
+        ]]);
     }
 
     /* ── Deductions & bonuses ────────────────────────────── */
@@ -172,7 +207,7 @@ class PayrollController extends Controller
 
         $run = $this->payroll->open($data['year'], $data['month'], $request->user());
 
-        ActivityLog::record('payroll.created', $run, "فتح مسير رواتب {$run->monthLabel()}");
+        ActivityLog::record('payroll.created', $run, "فتح كشف رواتب {$run->monthLabel()}");
 
         return response()->json(['data' => $this->presentRun($run)], 201);
     }
@@ -189,7 +224,7 @@ class PayrollController extends Controller
         ActivityLog::record(
             'payroll.approved',
             $run,
-            "اعتماد مسير رواتب {$run->monthLabel()}",
+            "اعتماد كشف رواتب {$run->monthLabel()}",
         );
 
         return response()->json(['data' => $this->presentRun($run->load('payslips.employee'))]);
@@ -205,7 +240,7 @@ class PayrollController extends Controller
         ActivityLog::record(
             'payroll.paid',
             $payrollRun,
-            "صرف {$count} راتبًا من مسير {$payrollRun->monthLabel()}",
+            "صرف {$count} راتبًا من كشف رواتب {$payrollRun->monthLabel()}",
         );
 
         return response()->json([
@@ -219,12 +254,24 @@ class PayrollController extends Controller
     public function adjustSlip(Request $request, Payslip $payslip): JsonResponse
     {
         $data = $request->validate([
+            'worked_days' => ['nullable', 'integer', 'min:0', 'max:31', 'lte:'.$payslip->salary_basis_days],
             'advance_recovery' => ['nullable', 'numeric', 'min:0'],
             'other_deductions' => ['nullable', 'numeric', 'min:0'],
             'other_note' => ['nullable', 'string', 'max:255'],
         ]);
 
         $slip = $this->payroll->adjustSlip($payslip, $data);
+
+        ActivityLog::record(
+            'payroll.updated',
+            $slip,
+            "تجهيز راتب {$slip->employee?->name}",
+            [
+                'worked_days' => (float) $slip->worked_days,
+                'salary_basis_days' => (int) $slip->salary_basis_days,
+                'net' => (float) $slip->net,
+            ],
+        );
 
         return response()->json(['data' => $this->presentSlip($slip->load('employee'))]);
     }
@@ -287,6 +334,11 @@ class PayrollController extends Controller
             'job_title' => $slip->employee?->job_title,
 
             'basic_salary' => (float) $slip->basic_salary,
+            'salary_basis_days' => (int) ($slip->salary_basis_days ?: 30),
+            'worked_days' => (float) $slip->worked_days,
+            'daily_salary' => round((float) $slip->gross / max(1, (int) ($slip->salary_basis_days ?: 30)), 2),
+            'insurance_rate' => (float) $slip->insurance_rate,
+            'tax_rate' => (float) $slip->tax_rate,
             'allowances' => $slip->allowances ?? [],
             'allowances_total' => (float) $slip->allowances_total,
             'additions_total' => (float) $slip->additions_total,

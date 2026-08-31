@@ -5,6 +5,7 @@ import {
     BadgeCheck,
     CheckCircle2,
     ClipboardCheck,
+    Eye,
     FileText,
     Pencil,
     Plus,
@@ -559,8 +560,8 @@ function QuotationDetail({
                             to={path(`/print/quotations/${quotation.id}`)}
                             className="btn-secondary text-xs"
                         >
-                            <Printer className="size-4" />
-                            {tr('طباعة')}
+                            <Eye className="size-4" />
+                            معاينة قبل الطباعة
                         </Link>
 
                         {quotation.status === 'draft' && (
