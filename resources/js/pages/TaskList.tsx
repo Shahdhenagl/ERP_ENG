@@ -58,10 +58,13 @@ export function TaskList() {
     const { path } = useArea()
     const [searchParams, setSearchParams] = useSearchParams()
     const [showFilters, setShowFilters] = useState(false)
+    // The first visit defaults to today, but an intentional clear must remain
+    // truly empty instead of being repopulated by the default-date effect.
+    const [defaultDayEnabled, setDefaultDayEnabled] = useState(() => searchParams.size === 0)
 
     const filters = useMemo(() => {
         const entries = Object.fromEntries(searchParams.entries())
-        if (searchParams.size === 0) entries.day = localDateParam()
+        if (searchParams.size === 0 && defaultDayEnabled) entries.day = localDateParam()
         // `month` (YYYY-MM) and `day` (YYYY-MM-DD) are the UI's own filters; the
         // API knows a scheduled-date range, so translate before sending. A day
         // narrows to itself; otherwise a month spans its whole length.
@@ -81,7 +84,7 @@ export function TaskList() {
         }
 
         return { ...rest, ...range, per_page: '30' }
-    }, [searchParams])
+    }, [defaultDayEnabled, searchParams])
 
     const { data, isLoading, isError, refetch, isFetching } = useTasks(filters)
     const { data: technicians } = useTechnicians()
@@ -132,6 +135,9 @@ export function TaskList() {
             next.set(key, value)
         } else {
             next.delete(key)
+            if (['day', 'month', 'from', 'to'].includes(key)) {
+                setDefaultDayEnabled(false)
+            }
         }
 
         if (key !== 'page') {
@@ -140,13 +146,16 @@ export function TaskList() {
         setSearchParams(next)
     }
 
+    const defaultDayApplied = useRef(false)
     useEffect(() => {
-        if (searchParams.size > 0) return
+        if (defaultDayApplied.current) return
+        defaultDayApplied.current = true
+        if (searchParams.size > 0 || !defaultDayEnabled) return
 
         const next = new URLSearchParams(searchParams)
         next.set('day', localDateParam())
         setSearchParams(next, { replace: true })
-    }, [searchParams, setSearchParams])
+    }, [defaultDayEnabled, searchParams, setSearchParams])
 
     const activeQuickFilter =
         QUICK_FILTERS.find((filter) => {
@@ -169,6 +178,14 @@ export function TaskList() {
             next.delete('month')
             next.delete('from')
             next.delete('to')
+        }
+
+        if (filter.key === 'all') {
+            next.delete('day')
+            next.delete('month')
+            next.delete('from')
+            next.delete('to')
+            setDefaultDayEnabled(false)
         }
 
         Object.entries(filter.params).forEach(([key, value]) => next.set(key, value))
@@ -353,6 +370,7 @@ export function TaskList() {
                             next.delete('from')
                             next.delete('to')
                             next.delete('page')
+                            setDefaultDayEnabled(false)
                             setSearchParams(next)
                         }}
                     >
@@ -399,7 +417,10 @@ export function TaskList() {
 
                     {hasAdvancedFilters && (
                         <button
-                            onClick={() => setSearchParams(new URLSearchParams())}
+                            onClick={() => {
+                                setDefaultDayEnabled(false)
+                                setSearchParams(new URLSearchParams())
+                            }}
                             className="btn-ghost justify-start text-xs sm:col-span-3"
                         >
                             <X className="size-3.5" />
