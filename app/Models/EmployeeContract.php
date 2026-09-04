@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasAttachments;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class EmployeeContract extends Model
 {
-    use SoftDeletes;
+    use HasAttachments, SoftDeletes;
 
     protected $fillable = [
         'code', 'employee_id', 'title', 'type', 'starts_on', 'ends_on',

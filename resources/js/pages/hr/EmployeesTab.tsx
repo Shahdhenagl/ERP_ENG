@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { Attachments } from '@/components/Attachments'
 import { tr } from '@/lib/i18n'
 import { FileText, Pencil, Plus, Search, Trash2, UserRound } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
@@ -340,6 +341,13 @@ function EmployeeProfile({
                                             </div>
                                         </div>
                                         {contract.notes && <p className="mt-2 text-xs text-navy-500">{contract.notes}</p>}
+                                        <div className="mt-3 border-t border-navy-100 pt-3">
+                                            <Attachments
+                                                type="employee-contracts"
+                                                id={contract.id}
+                                                label="صورة أو ملف العقد"
+                                            />
+                                        </div>
                                     </div>
                                 ))}
                             </div>

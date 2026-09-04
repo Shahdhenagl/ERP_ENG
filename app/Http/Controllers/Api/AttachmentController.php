@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Attachment;
 use App\Models\Battery;
 use App\Models\Contract;
+use App\Models\EmployeeContract;
 use App\Models\SiteSurvey;
 use App\Models\TechnicianMonthlyReport;
 use App\Models\WorkflowStepCompletion;
@@ -36,6 +37,7 @@ class AttachmentController extends Controller
         'batteries' => [Battery::class, 'assets.manage'],
         'tenders' => [Tender::class, 'sales.manage'],
         'contracts' => [Contract::class, 'contracts.manage'],
+        'employee-contracts' => [EmployeeContract::class, 'hr.manage'],
         // The paperwork handed in with a technician's monthly report.
         'technician-reports' => [TechnicianMonthlyReport::class, 'hr.manage'],
         'workflow-steps' => [WorkflowStepCompletion::class, 'contracts.manage'],
