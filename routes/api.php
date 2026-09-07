@@ -274,6 +274,10 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     // Employees and leave under one permission; the money — advances and
     // payroll — under another, because paying salaries is a treasury act.
     Route::apiResource('employees', EmployeeController::class)->middleware('can:hr.manage');
+        Route::get('employee-contracts', [EmployeeController::class, 'contracts'])->middleware('can:hr.manage');
+        Route::post('employee-contracts', [EmployeeController::class, 'storeContractStandalone'])->middleware('can:hr.manage');
+        Route::put('employee-contracts/{employeeContract}', [EmployeeController::class, 'updateContractStandalone'])->middleware('can:hr.manage');
+        Route::delete('employee-contracts/{employeeContract}', [EmployeeController::class, 'destroyContractStandalone'])->middleware('can:hr.manage');
     Route::post('employees/{employee}/contracts', [EmployeeController::class, 'storeContract'])->middleware('can:hr.manage');
     Route::put('employees/{employee}/contracts/{employeeContract}', [EmployeeController::class, 'updateContract'])->middleware('can:hr.manage');
     Route::delete('employees/{employee}/contracts/{employeeContract}', [EmployeeController::class, 'destroyContract'])->middleware('can:hr.manage');
@@ -300,6 +304,7 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
 
     Route::get('payroll-adjustments', [PayrollController::class, 'adjustments'])->middleware('can:payroll.manage');
     Route::post('payroll-adjustments', [PayrollController::class, 'storeAdjustment'])->middleware('can:payroll.manage');
+    Route::put('payroll-adjustments/{payrollAdjustment}', [PayrollController::class, 'updateAdjustment'])->middleware('can:payroll.manage');
     Route::delete('payroll-adjustments/{payrollAdjustment}', [PayrollController::class, 'deleteAdjustment'])->middleware('can:payroll.manage');
 
     Route::get('payroll', [PayrollController::class, 'index'])->middleware('can:payroll.manage,payroll.approve');

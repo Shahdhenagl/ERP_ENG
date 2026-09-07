@@ -2630,6 +2630,12 @@ export interface EmployeeContract {
     agreed_salary: number
     salary_basis_days: number
     status: 'active' | 'expired' | 'terminated'
+    status_label?: string
+    type_label?: string
+    employee_id?: number
+    employee?: string | null
+    employee_code?: string | null
+    attachments_count?: number
     notes: string | null
 }
 

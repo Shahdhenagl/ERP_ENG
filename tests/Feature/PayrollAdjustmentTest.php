@@ -5,6 +5,7 @@ use App\Models\CashBox;
 use App\Models\CashMovement;
 use App\Models\Employee;
 use App\Models\PayrollAdjustment;
+use App\Models\PayrollRun;
 use App\Models\User;
 use App\Services\ChartOfAccounts;
 use App\Services\PayrollService;
@@ -145,6 +146,48 @@ it('deletes an adjustment through the API', function () {
     actingAs($this->manager)->deleteJson('/api/payroll-adjustments/'.$adjustment->id)->assertOk();
 
     expect(PayrollAdjustment::find($adjustment->id))->toBeNull();
+});
+
+it('updates an adjustment while its payroll month is still a draft', function () {
+    $employee = Employee::factory()->create();
+    $adjustment = PayrollAdjustment::create([
+        'employee_id' => $employee->id, 'type' => 'deduction', 'amount' => 100,
+        'year' => 2026, 'month' => 8,
+    ]);
+
+    actingAs($this->manager)
+        ->putJson("/api/payroll-adjustments/{$adjustment->id}", [
+            'employee_id' => $employee->id,
+            'type' => 'bonus',
+            'amount' => 250,
+            'reason' => 'تعديل',
+            'year' => 2026,
+            'month' => 8,
+        ])
+        ->assertOk()
+        ->assertJsonPath('data.amount', 250)
+        ->assertJsonPath('data.type', 'bonus');
+});
+
+it('locks adjustment changes after the payroll month is approved', function () {
+    $employee = Employee::factory()->create();
+    $adjustment = PayrollAdjustment::create([
+        'employee_id' => $employee->id, 'type' => 'deduction', 'amount' => 100,
+        'year' => 2026, 'month' => 8,
+    ]);
+    $this->payroll->open(2026, 8, $this->manager);
+    $run = PayrollRun::where(['year' => 2026, 'month' => 8])->firstOrFail();
+    $this->payroll->approve($run, $this->manager);
+
+    actingAs($this->manager)
+        ->putJson("/api/payroll-adjustments/{$adjustment->id}", [
+            'employee_id' => $employee->id,
+            'type' => 'bonus',
+            'amount' => 250,
+            'year' => 2026,
+            'month' => 8,
+        ])
+        ->assertUnprocessable();
 });
 
 it('keeps someone without the payroll permission out of adjustments', function () {

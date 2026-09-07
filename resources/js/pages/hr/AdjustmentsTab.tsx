@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { Gift, MinusCircle, Plus, Trash2 } from 'lucide-react'
+import { Gift, MinusCircle, Pencil, Plus, Trash2 } from 'lucide-react'
 import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
@@ -13,6 +13,7 @@ import {
     useEmployees,
     usePayrollAdjustments,
     useSavePayrollAdjustment,
+    useUpdatePayrollAdjustment,
 } from '@/lib/queries'
 import type { PayrollAdjustment } from '@/types'
 
@@ -30,9 +31,12 @@ const now = new Date()
  * that month folds it into the net.
  */
 export function AdjustmentsTab() {
+    const toast = useToast()
     const [year, setYear] = useState(now.getFullYear())
     const [month, setMonth] = useState(now.getMonth() + 1)
     const [creating, setCreating] = useState(false)
+    const [editing, setEditing] = useState<PayrollAdjustment | null>(null)
+    const remove = useDeletePayrollAdjustment()
 
     const [view, setView] = useViewMode('hr-adjustments')
     const { data, isLoading } = usePayrollAdjustments({ year, month, per_page: 100 })
@@ -86,6 +90,7 @@ export function AdjustmentsTab() {
                         { label: 'النوع', className: 'w-24' },
                         'البيان',
                         { label: 'المبلغ', className: 'w-28 text-end' },
+                        { label: 'الإجراءات', className: 'w-24 text-center' },
                     ]}
                 >
                     {data.data.map((row) => (
@@ -114,13 +119,43 @@ export function AdjustmentsTab() {
                             >
                                 {row.type === 'bonus' ? '+' : '−'} {formatMoney(row.amount)}
                             </td>
+                            <td className="px-3 py-2.5 text-center">
+                                <div className="flex justify-center gap-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setEditing(row)}
+                                        className="tap grid size-8 place-items-center rounded-lg bg-brand-50 text-brand-600"
+                                        aria-label="تعديل"
+                                        title="تعديل"
+                                    >
+                                        <Pencil className="size-4" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={async () => {
+                                            if (!confirm('حذف هذا البند؟')) return
+                                            try {
+                                                await remove.mutateAsync(row.id)
+                                                toast.success('تم الحذف.')
+                                            } catch (caught) {
+                                                toast.error(errorMessage(caught, 'تعذّر الحذف.'))
+                                            }
+                                        }}
+                                        className="tap grid size-8 place-items-center rounded-lg bg-red-50 text-red-600"
+                                        aria-label="حذف"
+                                        title="حذف"
+                                    >
+                                        <Trash2 className="size-4" />
+                                    </button>
+                                </div>
+                            </td>
                         </tr>
                     ))}
                 </DataTable>
             ) : (
                 <div className="space-y-2">
                     {data.data.map((row) => (
-                        <AdjustmentRow key={row.id} row={row} />
+                        <AdjustmentRow key={row.id} row={row} onEdit={() => setEditing(row)} />
                     ))}
                 </div>
             )}
@@ -128,11 +163,12 @@ export function AdjustmentsTab() {
             {creating && (
                 <AdjustmentForm defaultYear={year} defaultMonth={month} onClose={() => setCreating(false)} />
             )}
+            {editing && <AdjustmentForm adjustment={editing} defaultYear={year} defaultMonth={month} onClose={() => setEditing(null)} />}
         </>
     )
 }
 
-function AdjustmentRow({ row }: { row: PayrollAdjustment }) {
+function AdjustmentRow({ row, onEdit }: { row: PayrollAdjustment; onEdit: () => void }) {
     const toast = useToast()
     const remove = useDeletePayrollAdjustment()
     const isBonus = row.type === 'bonus'
@@ -165,6 +201,15 @@ function AdjustmentRow({ row }: { row: PayrollAdjustment }) {
                 </p>
                 <button
                     type="button"
+                    className="text-brand-500 transition hover:text-brand-700"
+                    onClick={onEdit}
+                    aria-label="تعديل"
+                    title="تعديل"
+                >
+                    <Pencil className="size-4" />
+                </button>
+                <button
+                    type="button"
                     className="text-navy-300 transition hover:text-red-600"
                     disabled={remove.isPending}
                     onClick={async () => {
@@ -186,26 +231,29 @@ function AdjustmentRow({ row }: { row: PayrollAdjustment }) {
 }
 
 function AdjustmentForm({
+    adjustment,
     defaultYear,
     defaultMonth,
     onClose,
 }: {
+    adjustment?: PayrollAdjustment
     defaultYear: number
     defaultMonth: number
     onClose: () => void
 }) {
     const toast = useToast()
     const save = useSavePayrollAdjustment()
+    const update = useUpdatePayrollAdjustment()
     const { data: employees } = useEmployees({ active: 1, per_page: 200 })
     const [errors, setErrors] = useState<Record<string, string>>({})
 
     const [form, setForm] = useState({
-        employee_id: '',
-        type: 'deduction',
-        amount: '',
-        reason: '',
-        year: String(defaultYear),
-        month: String(defaultMonth),
+        employee_id: adjustment ? String(adjustment.employee_id) : '',
+        type: adjustment?.type ?? 'deduction',
+        amount: adjustment ? String(adjustment.amount) : '',
+        reason: adjustment?.reason ?? '',
+        year: String(adjustment?.year ?? defaultYear),
+        month: String(adjustment?.month ?? defaultMonth),
     })
 
     const set = (key: keyof typeof form) => (value: string) =>
@@ -215,7 +263,7 @@ function AdjustmentForm({
         <Modal
             open
             onClose={onClose}
-            title="خصم / مكافأة"
+            title={adjustment ? 'تعديل خصم / مكافأة' : 'خصم / مكافأة'}
             description="يظهر في قسيمة راتب الموظف عند إعداد كشف الشهر المحدد."
             size="sm"
             footer={
@@ -224,19 +272,24 @@ function AdjustmentForm({
                         {tr('إلغاء')}
                     </Button>
                     <Button
-                        loading={save.isPending}
+                        loading={save.isPending || update.isPending}
                         onClick={async () => {
                             setErrors({})
                             try {
-                                await save.mutateAsync({
+                                const payload = {
                                     employee_id: Number(form.employee_id),
                                     type: form.type,
                                     amount: Number(form.amount),
                                     reason: form.reason || null,
                                     year: Number(form.year),
                                     month: Number(form.month),
-                                })
-                                toast.success('تم الحفظ.')
+                                }
+                                if (adjustment) {
+                                    await update.mutateAsync({ id: adjustment.id, ...payload })
+                                } else {
+                                    await save.mutateAsync(payload)
+                                }
+                                toast.success(adjustment ? 'تم تعديل البند.' : 'تم الحفظ.')
                                 onClose()
                             } catch (caught) {
                                 setErrors(fieldErrors(caught))
@@ -244,7 +297,7 @@ function AdjustmentForm({
                             }
                         }}
                     >
-                        {tr('حفظ')}
+                        {adjustment ? 'حفظ التعديل' : tr('حفظ')}
                     </Button>
                 </>
             }

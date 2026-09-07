@@ -16,7 +16,6 @@ import {
 import type { EmployeeContract } from '@/types'
 
 const STATUS_CHIP: Record<EmployeeContract['status'], string> = {
-    draft: 'bg-slate-100 text-slate-600',
     active: 'bg-emerald-50 text-emerald-700',
     expired: 'bg-amber-50 text-amber-700',
     terminated: 'bg-red-50 text-red-700',
@@ -64,11 +63,11 @@ export function EmployeeContractsTab() {
                                     <p className="tabular text-[11px] font-bold text-brand-600">{contract.code}</p>
                                     <h3 className="mt-1 truncate font-bold text-navy-900">{contract.title}</h3>
                                     <p className="mt-0.5 text-xs text-navy-500">
-                                        {contract.employee?.name ?? '—'} · {contract.contract_type_label}
+                                        {contract.employee ?? '—'} · {contract.type_label ?? contract.type}
                                     </p>
                                 </div>
                                 <span className={clsx('badge shrink-0', STATUS_CHIP[contract.status])}>
-                                    {contract.status_label}
+                                    {contract.status_label ?? contract.status}
                                 </span>
                             </div>
 
@@ -87,7 +86,7 @@ export function EmployeeContractsTab() {
                                 </div>
                                 <div>
                                     <p className="text-[10px] text-navy-400">الأجر الشهري</p>
-                                    <p className="tabular mt-0.5 font-extrabold text-navy-900">{formatMoney(contract.salary)}</p>
+                                    <p className="tabular mt-0.5 font-extrabold text-navy-900">{formatMoney(contract.agreed_salary)}</p>
                                 </div>
                                 <div>
                                     <p className="text-[10px] text-navy-400">الملفات</p>
@@ -131,16 +130,17 @@ export function EmployeeContractsTab() {
 function EmployeeContractForm({ contract, onClose }: { contract: EmployeeContract | null; onClose: () => void }) {
     const toast = useToast()
     const isEdit = Boolean(contract)
-    const save = useSaveEmployeeContract(contract?.id)
+    const save = useSaveEmployeeContract(undefined, contract?.id)
     const { data: employees } = useEmployees({ active: 1, per_page: 200 })
     const [form, setForm] = useState({
         employee_id: contract?.employee_id ? String(contract.employee_id) : '',
         title: contract?.title ?? 'عقد عمل',
-        contract_type: contract?.contract_type ?? 'full_time',
+        type: contract?.type ?? 'fixed_term',
         starts_on: contract?.starts_on ?? new Date().toISOString().slice(0, 10),
         ends_on: contract?.ends_on ?? '',
-        salary: contract?.salary ? String(contract.salary) : '0',
-        status: contract?.status ?? 'draft',
+        agreed_salary: contract?.agreed_salary ? String(contract.agreed_salary) : '0',
+        salary_basis_days: contract?.salary_basis_days ? String(contract.salary_basis_days) : '30',
+        status: contract?.status ?? 'active',
         notes: contract?.notes ?? '',
     })
 
@@ -162,10 +162,11 @@ function EmployeeContractForm({ contract, onClose }: { contract: EmployeeContrac
                                 await save.mutateAsync({
                                     employee_id: Number(form.employee_id),
                                     title: form.title,
-                                    contract_type: form.contract_type,
+                                    type: form.type,
                                     starts_on: form.starts_on,
                                     ends_on: form.ends_on || null,
-                                    salary: Number(form.salary || 0),
+                                    agreed_salary: Number(form.agreed_salary || 0),
+                                    salary_basis_days: Number(form.salary_basis_days || 30),
                                     status: form.status,
                                     notes: form.notes || null,
                                 })
@@ -194,12 +195,11 @@ function EmployeeContractForm({ contract, onClose }: { contract: EmployeeContrac
                     <Input value={form.title} onChange={(event) => set('title', event.target.value)} />
                 </Field>
                 <Field label="نوع العقد" required>
-                    <Select value={form.contract_type} onChange={(event) => set('contract_type', event.target.value)}>
-                        <option value="full_time">دوام كامل</option>
-                        <option value="part_time">دوام جزئي</option>
+                    <Select value={form.type} onChange={(event) => set('type', event.target.value)}>
+                        <option value="permanent">دائم</option>
                         <option value="fixed_term">محدد المدة</option>
-                        <option value="indefinite">غير محدد المدة</option>
-                        <option value="consultant">استشاري</option>
+                        <option value="temporary">مؤقت</option>
+                        <option value="probation">فترة اختبار</option>
                     </Select>
                 </Field>
                 <Field label="الحالة" required>
@@ -217,7 +217,10 @@ function EmployeeContractForm({ contract, onClose }: { contract: EmployeeContrac
                     <Input type="date" value={form.ends_on} onChange={(event) => set('ends_on', event.target.value)} />
                 </Field>
                 <Field label="الأجر الشهري">
-                    <Input type="number" min="0" step="0.01" value={form.salary} onChange={(event) => set('salary', event.target.value)} />
+                    <Input type="number" min="0" step="0.01" value={form.agreed_salary} onChange={(event) => set('agreed_salary', event.target.value)} />
+                </Field>
+                <Field label="أيام الراتب" required>
+                    <Input type="number" min="1" max="31" value={form.salary_basis_days} onChange={(event) => set('salary_basis_days', event.target.value)} />
                 </Field>
                 <Field label="ملاحظات">
                     <Textarea value={form.notes} onChange={(event) => set('notes', event.target.value)} rows={3} />

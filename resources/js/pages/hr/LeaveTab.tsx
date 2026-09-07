@@ -9,7 +9,7 @@ import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import { formatDate } from '@/lib/format'
-import { useEmployees, useLeave, useLeaveAction, useSaveLeave } from '@/lib/queries'
+import { useCancelLeave, useEmployees, useLeave, useLeaveAction, useSaveLeave } from '@/lib/queries'
 import type { LeaveStatus } from '@/types'
 
 const STATUS: Record<LeaveStatus, string> = {
@@ -24,6 +24,7 @@ export function LeaveTab() {
     const [view, setView] = useViewMode('hr-leave')
     const { can } = useAuth()
     const decide = useLeaveAction()
+    const cancel = useCancelLeave()
     const [creating, setCreating] = useState(false)
     const [pendingOnly, setPendingOnly] = useState(false)
 
@@ -164,6 +165,24 @@ export function LeaveTab() {
                                         {tr('رفض')}
                                     </button>
                                 </div>
+                            )}
+                            {leave.status === 'pending' && can('hr.manage') && (
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        if (!window.confirm('إلغاء طلب الإجازة؟')) return
+                                        try {
+                                            await cancel.mutateAsync(leave.id)
+                                            toast.success('تم إلغاء الطلب.')
+                                        } catch (caught) {
+                                            toast.error(errorMessage(caught, 'تعذّر إلغاء الطلب.'))
+                                        }
+                                    }}
+                                    className="mt-2 text-xs font-bold text-navy-500 hover:text-red-600"
+                                    disabled={cancel.isPending}
+                                >
+                                    إلغاء الطلب
+                                </button>
                             )}
                         </div>
                     ))}

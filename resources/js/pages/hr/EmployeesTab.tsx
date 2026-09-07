@@ -97,6 +97,7 @@ export function EmployeesTab() {
                         { label: 'التعيين', className: 'w-32' },
                         { label: 'الحالة', className: 'w-24' },
                         { label: 'إجمالي الراتب', className: 'w-32 text-end' },
+                            { label: 'الإجراءات', className: 'w-24 text-center' },
                     ]}
                 >
                     {data.data.map((employee) => (
@@ -134,6 +135,20 @@ export function EmployeesTab() {
                             </td>
                             <td className="tabular px-3 py-2.5 text-end font-bold text-navy-900">
                                 {formatMoney(employee.gross_salary)}
+                            </td>
+                            <td className="px-3 py-2.5 text-center">
+                                <button
+                                    type="button"
+                                    onClick={(event) => {
+                                        event.stopPropagation()
+                                        setEditing(employee)
+                                    }}
+                                    className="tap inline-grid size-8 place-items-center rounded-lg bg-brand-50 text-brand-600"
+                                    aria-label={`تعديل ${employee.name}`}
+                                    title="تعديل بيانات الموظف"
+                                >
+                                    <Pencil className="size-4" />
+                                </button>
                             </td>
                         </tr>
                     ))}
@@ -179,8 +194,16 @@ export function EmployeesTab() {
 
                             <div className="mt-2 flex items-center justify-between border-t border-navy-100 pt-2 text-[11px] text-navy-500">
                                 <span>رصيد الإجازات: {employee.annual_leave_remaining} يوم</span>
-                                <button
-                                    onClick={async () => {
+                                <div className="flex items-center gap-1">
+                                    <button
+                                        onClick={() => setEditing(employee)}
+                                        className="tap grid size-7 place-items-center rounded-lg bg-brand-50 text-brand-600"
+                                        aria-label={`تعديل ${employee.name}`}
+                                    >
+                                        <Pencil className="size-3.5" />
+                                    </button>
+                                    <button
+                                        onClick={async () => {
                                         if (!window.confirm(`حذف/إنهاء خدمة «${employee.name}»؟`)) return
                                         try {
                                             await remove.mutateAsync(employee.id)
@@ -189,11 +212,12 @@ export function EmployeesTab() {
                                             toast.error(errorMessage(caught))
                                         }
                                     }}
-                                    className="tap grid size-7 place-items-center rounded-lg text-navy-400 hover:bg-red-50 hover:text-red-600"
-                                    aria-label="حذف"
-                                >
-                                    <Trash2 className="size-3.5" />
-                                </button>
+                                        className="tap grid size-7 place-items-center rounded-lg text-navy-400 hover:bg-red-50 hover:text-red-600"
+                                        aria-label="حذف"
+                                    >
+                                        <Trash2 className="size-3.5" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     ))}

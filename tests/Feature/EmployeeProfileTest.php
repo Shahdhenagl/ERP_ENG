@@ -98,3 +98,42 @@ it('keeps the profile behind the HR permission', function () {
         ->getJson("/api/employees/{$this->employee->id}")
         ->assertForbidden();
 });
+
+it('manages employee contracts from the standalone HR screen', function () {
+    $contract = actingAs($this->manager)
+        ->postJson('/api/employee-contracts', [
+            'employee_id' => $this->employee->id,
+            'title' => 'عقد مستقل',
+            'type' => 'permanent',
+            'starts_on' => '2026-01-01',
+            'agreed_salary' => 7000,
+            'salary_basis_days' => 30,
+            'status' => 'active',
+        ])
+        ->assertCreated()
+        ->json('data');
+
+    actingAs($this->manager)
+        ->getJson('/api/employee-contracts?search=عقد مستقل')
+        ->assertOk()
+        ->assertJsonPath('data.0.employee_id', $this->employee->id)
+        ->assertJsonPath('data.0.agreed_salary', 7000);
+
+    actingAs($this->manager)
+        ->putJson("/api/employee-contracts/{$contract['id']}", [
+            'title' => 'عقد معدل',
+            'type' => 'permanent',
+            'starts_on' => '2026-01-01',
+            'agreed_salary' => 7500,
+            'salary_basis_days' => 30,
+            'status' => 'active',
+        ])
+        ->assertOk()
+        ->assertJsonPath('data.agreed_salary', 7500);
+
+    actingAs($this->manager)
+        ->deleteJson("/api/employee-contracts/{$contract['id']}")
+        ->assertOk();
+
+    expect(EmployeeContract::withTrashed()->find($contract['id'])->deleted_at)->not->toBeNull();
+});

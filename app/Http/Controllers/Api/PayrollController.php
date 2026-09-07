@@ -13,6 +13,7 @@ use App\Models\SalaryAdvance;
 use App\Services\PayrollService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class PayrollController extends Controller
 {
@@ -162,11 +163,72 @@ class PayrollController extends Controller
         return response()->json(['data' => ['id' => $adjustment->id]], 201);
     }
 
+    public function updateAdjustment(Request $request, PayrollAdjustment $payrollAdjustment): JsonResponse
+    {
+        $this->assertAdjustmentEditable($payrollAdjustment);
+        $data = $this->validatedAdjustment($request);
+        $payrollAdjustment->update($data);
+
+        ActivityLog::record(
+            'payroll.adjustment.updated',
+            $payrollAdjustment,
+            "تعديل بند رواتب {$payrollAdjustment->employee?->name}",
+        );
+
+        return response()->json(['data' => $this->presentAdjustment($payrollAdjustment->fresh('employee'))]);
+    }
+
     public function deleteAdjustment(PayrollAdjustment $payrollAdjustment): JsonResponse
     {
+        $this->assertAdjustmentEditable($payrollAdjustment);
+        $code = $payrollAdjustment->id;
         $payrollAdjustment->delete();
 
+        ActivityLog::record('payroll.adjustment.deleted', $payrollAdjustment, "حذف بند رواتب {$code}");
+
         return response()->json(['deleted' => true]);
+    }
+
+    /** @return array<string, mixed> */
+    protected function validatedAdjustment(Request $request): array
+    {
+        return $request->validate([
+            'employee_id' => ['required', 'exists:employees,id'],
+            'type' => ['required', 'in:deduction,bonus'],
+            'amount' => ['required', 'numeric', 'gt:0'],
+            'reason' => ['nullable', 'string', 'max:300'],
+            'year' => ['required', 'integer', 'min:2020', 'max:2100'],
+            'month' => ['required', 'integer', 'min:1', 'max:12'],
+        ]);
+    }
+
+    protected function assertAdjustmentEditable(PayrollAdjustment $adjustment): void
+    {
+        if (PayrollRun::where('year', $adjustment->year)
+            ->where('month', $adjustment->month)
+            ->whereIn('status', ['approved', 'paid'])
+            ->exists()) {
+            throw ValidationException::withMessages([
+                'adjustment' => 'لا يمكن تعديل بند بعد اعتماد أو صرف كشف الرواتب الخاص بالشهر.',
+            ]);
+        }
+    }
+
+    /** @return array<string, mixed> */
+    protected function presentAdjustment(PayrollAdjustment $adjustment): array
+    {
+        return [
+            'id' => $adjustment->id,
+            'employee_id' => $adjustment->employee_id,
+            'employee' => $adjustment->employee?->name,
+            'employee_code' => $adjustment->employee?->code,
+            'type' => $adjustment->type,
+            'type_label' => $adjustment->type === 'bonus' ? 'مكافأة' : 'خصم',
+            'amount' => (float) $adjustment->amount,
+            'reason' => $adjustment->reason,
+            'year' => $adjustment->year,
+            'month' => $adjustment->month,
+        ];
     }
 
     /* ── Runs ────────────────────────────────────────────── */

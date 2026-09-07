@@ -3672,7 +3672,7 @@ export function useEmployeeContracts(filters: Record<string, unknown> = {}) {
 
 export function useSaveEmployeeContract(employeeId?: number, contractId?: number) {
     const client = useQueryClient()
-    const nested = arguments.length > 1
+    const nested = employeeId !== undefined
 
     return useMutation({
         mutationFn: async (payload: Record<string, unknown>) =>
@@ -3684,9 +3684,9 @@ export function useSaveEmployeeContract(employeeId?: number, contractId?: number
                           payload,
                       )
                     : api.post<{ data: EmployeeContract }>(`/employees/${employeeId}/contracts`, payload)
-                    : employeeId !== undefined
-                      ? api.put<{ data: EmployeeContract }>(`/employee-contracts/${employeeId}`, payload)
-                      : api.post<{ data: EmployeeContract }>('/employee-contracts', payload))
+                                        : contractId !== undefined
+                                            ? api.put<{ data: EmployeeContract }>(`/employee-contracts/${contractId}`, payload)
+                                            : api.post<{ data: EmployeeContract }>('/employee-contracts', payload))
             ).data.data,
         onSuccess: () => invalidateHr(client),
     })
@@ -3826,6 +3826,15 @@ export function useLeaveAction() {
     })
 }
 
+export function useCancelLeave() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id: number) => (await api.post(`/leave/${id}/cancel`)).data,
+        onSuccess: () => invalidateHr(client),
+    })
+}
+
 export function useAdvances(filters: Record<string, unknown> = {}) {
     return useQuery({
         queryKey: keys.advances(filters),
@@ -3874,6 +3883,16 @@ export function useSavePayrollAdjustment() {
     return useMutation({
         mutationFn: async (payload: Record<string, unknown>) =>
             (await api.post('/payroll-adjustments', payload)).data,
+        onSuccess: () => invalidateHr(client),
+    })
+}
+
+export function useUpdatePayrollAdjustment() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ id, ...payload }: { id: number } & Record<string, unknown>) =>
+            (await api.put(`/payroll-adjustments/${id}`, payload)).data,
         onSuccess: () => invalidateHr(client),
     })
 }

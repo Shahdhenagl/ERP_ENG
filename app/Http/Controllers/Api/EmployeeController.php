@@ -79,6 +79,63 @@ class EmployeeController extends Controller
         return response()->json(['message' => Terms::get('تم حذف الموظف.')]);
     }
 
+    public function contracts(Request $request): JsonResponse
+    {
+        $contracts = EmployeeContract::query()
+            ->with('employee:id,name,code')
+            ->when($request->string('search')->toString(), function ($query, string $search) {
+                $query->where(function ($nested) use ($search) {
+                    $nested->where('code', 'like', "%{$search}%")
+                        ->orWhere('title', 'like', "%{$search}%")
+                        ->orWhereHas('employee', fn ($employee) => $employee
+                            ->where('name', 'like', "%{$search}%")
+                            ->orWhere('code', 'like', "%{$search}%"));
+                });
+            })
+            ->latest('starts_on')
+            ->paginate($request->integer('per_page', 40));
+
+        return response()->json([
+            'data' => $contracts->through(fn (EmployeeContract $contract) => $this->presentContract($contract))->items(),
+            'meta' => ['total' => $contracts->total(), 'last_page' => $contracts->lastPage()],
+        ]);
+    }
+
+    public function storeContractStandalone(Request $request): JsonResponse
+    {
+        $data = $request->validate(['employee_id' => ['required', 'exists:employees,id']])
+            + $this->validatedContract($request);
+        $employee = Employee::findOrFail($data['employee_id']);
+
+        $contract = $employee->contracts()->create([
+            ...collect($data)->except('employee_id')->all(),
+            'created_by' => $request->user()->id,
+        ]);
+
+        ActivityLog::record('employee_contract.created', $contract, "إضافة عقد {$contract->code} للموظف {$employee->name}");
+
+        return response()->json(['data' => $this->presentContract($contract->load('employee'))], 201);
+    }
+
+    public function updateContractStandalone(Request $request, EmployeeContract $employeeContract): JsonResponse
+    {
+        $employeeContract->update($this->validatedContract($request));
+
+        ActivityLog::record('employee_contract.updated', $employeeContract, "تعديل عقد {$employeeContract->code}");
+
+        return response()->json(['data' => $this->presentContract($employeeContract->fresh('employee'))]);
+    }
+
+    public function destroyContractStandalone(EmployeeContract $employeeContract): JsonResponse
+    {
+        $code = $employeeContract->code;
+        $employeeContract->delete();
+
+        ActivityLog::record('employee_contract.deleted', $employeeContract, "حذف عقد {$code}");
+
+        return response()->json(['message' => Terms::get('تم حذف عقد الموظف.')]);
+    }
+
     public function storeContract(Request $request, Employee $employee): JsonResponse
     {
         $contract = $employee->contracts()->create([
@@ -139,6 +196,23 @@ class EmployeeController extends Controller
             'agreed_salary' => (float) $contract->agreed_salary,
             'salary_basis_days' => (int) $contract->salary_basis_days,
             'status' => $contract->status,
+            'status_label' => match ($contract->status) {
+                'active' => 'ساري',
+                'expired' => 'منتهي',
+                'terminated' => 'منهى',
+                default => $contract->status,
+            },
+            'type_label' => match ($contract->type) {
+                'permanent' => 'دائم',
+                'fixed_term' => 'محدد المدة',
+                'temporary' => 'مؤقت',
+                'probation' => 'فترة اختبار',
+                default => $contract->type,
+            },
+            'employee_id' => $contract->employee_id,
+            'employee' => $contract->employee?->name,
+            'employee_code' => $contract->employee?->code,
+            'attachments_count' => $contract->attachments()->count(),
             'notes' => $contract->notes,
         ];
     }
