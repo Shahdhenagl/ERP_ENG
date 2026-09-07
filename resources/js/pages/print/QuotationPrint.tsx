@@ -43,6 +43,7 @@ export function QuotationPrint() {
         <DocumentShell
             title="عرض سعر"
             number={quotation.code}
+            className="doc-sheet--quotation"
             stamp={
                 // Any offer that has been agreed: signed off inside the company,
                 // or accepted by the customer. Never a draft — a seal on one is

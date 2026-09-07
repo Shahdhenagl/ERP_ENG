@@ -21,6 +21,7 @@ export function DocumentShell({
     children,
     footer,
     stamp,
+    className,
 }: {
     title: string
     /**
@@ -35,6 +36,7 @@ export function DocumentShell({
     footer?: ReactNode
     /** The company seal, shown only when the document has been approved. */
     stamp?: ReactNode
+    className?: string
 }) {
     const navigate = useNavigate()
     const { data: settings, isLoading } = useSettings()
@@ -66,7 +68,7 @@ export function DocumentShell({
                 </button>
             </div>
 
-            <article className="doc-sheet shadow-[var(--shadow-panel)] print:shadow-none">
+            <article className={`doc-sheet shadow-[var(--shadow-panel)] print:shadow-none ${className ?? ''}`}>
                 {/* ── Letterhead ─────────────────────────────── */}
                 <header className="doc-keep flex items-start justify-between gap-6 border-b-2 border-navy-900 pb-4">
                     <div className="flex items-center gap-3">
