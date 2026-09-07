@@ -333,7 +333,7 @@ function QuotationEditButton({
             onClick={async (event) => {
                 event.stopPropagation()
                 const quotation = data ?? (await refetch()).data
-                if (quotation?.status === 'draft') onEdit(quotation)
+                if (quotation && ['draft', 'sent'].includes(quotation.status)) onEdit(quotation)
             }}
         >
             <Pencil className="size-4" />
