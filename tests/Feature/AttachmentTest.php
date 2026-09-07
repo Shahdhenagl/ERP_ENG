@@ -3,6 +3,8 @@
 use App\Models\Attachment;
 use App\Models\Contract;
 use App\Models\Customer;
+use App\Models\Employee;
+use App\Models\EmployeeContract;
 use App\Models\SiteSurvey;
 use App\Models\Tender;
 use App\Models\User;
@@ -45,6 +47,33 @@ it('attaches the signed contract document to a contract', function () {
 
     expect($contract->attachments()->count())->toBe(1)
         ->and($contract->attachments()->first()->caption)->toBe('العقد الموقّع');
+});
+
+it('uploads employee contract photos and documents', function () {
+    $employee = Employee::factory()->create();
+    $contract = EmployeeContract::create([
+        'employee_id' => $employee->id,
+        'title' => 'عقد الموظف',
+        'type' => 'fixed_term',
+        'starts_on' => now()->toDateString(),
+        'agreed_salary' => 7000,
+        'salary_basis_days' => 30,
+        'status' => 'active',
+    ]);
+
+    actingAs($this->manager)
+        ->postJson("/api/attachments/employee-contracts/{$contract->id}", [
+            'files' => [
+                UploadedFile::fake()->image('signed-contract.jpg'),
+                UploadedFile::fake()->create('signed-contract.pdf', 200, 'application/pdf'),
+            ],
+            'caption' => 'العقد الموقّع',
+        ])
+        ->assertCreated();
+
+    expect($contract->attachments()->count())->toBe(2)
+        ->and($contract->attachments()->where('mime', 'image/jpeg')->exists())->toBeTrue()
+        ->and($contract->attachments()->where('mime', 'application/pdf')->exists())->toBeTrue();
 });
 
 it('lists the files on a record', function () {

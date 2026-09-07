@@ -268,23 +268,7 @@ class EmployeeController extends Controller
                 'net' => (float) $p->net,
                 'paid_on' => $p->paid_on?->toDateString(),
             ]),
-<<<<<<< HEAD
-            'contracts' => $employee->contracts()->withCount('attachments')->limit(20)->get()->map(fn (EmployeeContract $contract) => [
-                'id' => $contract->id,
-                'code' => $contract->code,
-                'title' => $contract->title,
-                'contract_type' => $contract->contract_type,
-                'contract_type_label' => $contract->typeLabel(),
-                'starts_on' => $contract->starts_on?->toDateString(),
-                'ends_on' => $contract->ends_on?->toDateString(),
-                'salary' => (float) $contract->salary,
-                'status' => $contract->status,
-                'status_label' => $contract->statusLabel(),
-                'attachments_count' => $contract->attachments_count,
-            ]),
-=======
             'contracts' => $employee->contracts()->get()->map(fn (EmployeeContract $contract) => $this->presentContract($contract)),
->>>>>>> d65d303 (feat: improve permissions payroll and employee workflows)
         ];
     }
 }

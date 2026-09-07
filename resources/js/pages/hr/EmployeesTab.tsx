@@ -1,9 +1,9 @@
 import clsx from 'clsx'
+import { Attachments } from '@/components/Attachments'
 import { tr } from '@/lib/i18n'
 import { FileText, Pencil, Plus, Search, Trash2, UserRound } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Modal } from '@/components/Modal'
-import { Attachments } from '@/components/Attachments'
 import { useToast } from '@/components/Toast'
 import { Button, EmptyState, Field, Input, Select, SkeletonCard, Textarea } from '@/components/ui'
 import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
@@ -341,6 +341,13 @@ function EmployeeProfile({
                                             </div>
                                         </div>
                                         {contract.notes && <p className="mt-2 text-xs text-navy-500">{contract.notes}</p>}
+                                        <div className="mt-3 border-t border-navy-100 pt-3">
+                                            <Attachments
+                                                type="employee-contracts"
+                                                id={contract.id}
+                                                label="صورة أو ملف العقد"
+                                            />
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -412,45 +419,6 @@ function EmployeeProfile({
                             </div>
                         ) : (
                             <p className="text-xs text-navy-400">لا توجد إجازات.</p>
-                        )}
-                    </section>
-
-                    {/* Employee contracts */}
-                    <section>
-                        <div className="mb-2 flex items-center justify-between">
-                            <h3 className="flex items-center gap-1.5 text-sm font-bold text-navy-800">
-                                <FileText className="size-4 text-brand-600" />
-                                عقود الموظف
-                            </h3>
-                            <span className="text-[11px] text-navy-400">إدارة العقود من تبويب عقود الموظفين</span>
-                        </div>
-                        {e.contracts?.length ? (
-                            <div className="space-y-3">
-                                {e.contracts.map((contract) => (
-                                    <div key={contract.id} className="rounded-xl border border-navy-100 p-3">
-                                        <div className="flex flex-wrap items-start justify-between gap-2">
-                                            <div>
-                                                <p className="tabular text-[10px] font-bold text-brand-600">{contract.code}</p>
-                                                <p className="font-bold text-navy-800">{contract.title}</p>
-                                                <p className="text-[11px] text-navy-500">{contract.contract_type_label}</p>
-                                            </div>
-                                            <span className={clsx('badge', STATUS_CONTRACT[contract.status])}>
-                                                {contract.status_label}
-                                            </span>
-                                        </div>
-                                        <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-navy-500 sm:grid-cols-3">
-                                            <span>يبدأ: {contract.starts_on ? formatDate(contract.starts_on) : '—'}</span>
-                                            <span>ينتهي: {contract.ends_on ? formatDate(contract.ends_on) : 'غير محدد'}</span>
-                                            <span className="tabular font-bold text-navy-700">{formatMoney(contract.salary)}</span>
-                                        </div>
-                                        <div className="mt-3 border-t border-navy-100 pt-3">
-                                            <Attachments type="employee-contracts" id={contract.id} label="ملف العقد والمستندات" />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-xs text-navy-400">لا يوجد عقد مسجل. أنشئي العقد من تبويب عقود الموظفين أولًا.</p>
                         )}
                     </section>
 
@@ -554,13 +522,6 @@ function EmployeeContractForm({ employee, contract, onClose }: { employee: Emplo
             </div>
         </Modal>
     )
-}
-
-const STATUS_CONTRACT: Record<string, string> = {
-    draft: 'bg-slate-100 text-slate-600',
-    active: 'bg-emerald-50 text-emerald-700',
-    expired: 'bg-amber-50 text-amber-700',
-    terminated: 'bg-red-50 text-red-700',
 }
 
 const EMPLOYMENT: Record<string, string> = {

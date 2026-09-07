@@ -16,7 +16,6 @@ use App\Http\Controllers\Api\PpmController;
 use App\Http\Controllers\Api\CustodyController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\EmployeeController;
-use App\Http\Controllers\Api\EmployeeContractController;
 use App\Http\Controllers\Api\FollowUpController;
 use App\Http\Controllers\Api\LeadController;
 use App\Http\Controllers\Api\SiteSurveyController;
@@ -275,15 +274,9 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     // Employees and leave under one permission; the money — advances and
     // payroll — under another, because paying salaries is a treasury act.
     Route::apiResource('employees', EmployeeController::class)->middleware('can:hr.manage');
-<<<<<<< HEAD
-    Route::apiResource('employee-contracts', EmployeeContractController::class)
-        ->parameters(['employee-contracts' => 'employeeContract'])
-        ->middleware('can:hr.manage');
-=======
     Route::post('employees/{employee}/contracts', [EmployeeController::class, 'storeContract'])->middleware('can:hr.manage');
     Route::put('employees/{employee}/contracts/{employeeContract}', [EmployeeController::class, 'updateContract'])->middleware('can:hr.manage');
     Route::delete('employees/{employee}/contracts/{employeeContract}', [EmployeeController::class, 'destroyContract'])->middleware('can:hr.manage');
->>>>>>> d65d303 (feat: improve permissions payroll and employee workflows)
 
     // Readable by whoever manages leave OR only approves it — an approver has
     // to load the queue to act on it.
