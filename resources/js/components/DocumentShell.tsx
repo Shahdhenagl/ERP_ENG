@@ -34,7 +34,7 @@ export function DocumentShell({
     subtitle?: string
     children: ReactNode
     footer?: ReactNode
-    /** The company seal, shown only when the document has been approved. */
+    /** Optional content rendered after the document body. */
     stamp?: ReactNode
     className?: string
 }) {
@@ -195,13 +195,22 @@ export function DocumentTotals({
 }
 
 /** Signature strip — printed documents get signed. */
-export function DocumentSignatures({ labels }: { labels: string[] }) {
+export function DocumentSignatures({
+    labels,
+    stamp,
+    showLines = true,
+}: {
+    labels: string[]
+    stamp?: ReactNode
+    showLines?: boolean
+}) {
     return (
         <div className="doc-keep mt-10 flex justify-between gap-8">
-            {labels.map((label) => (
+            {labels.map((label, index) => (
                 <div key={label} className="flex-1 text-center">
-                    <div className="mb-1 border-b border-navy-300 pb-10" />
                     <p className="text-[11px] text-navy-500">{label}</p>
+                    {index === 0 && stamp}
+                    {showLines && <div className="mb-1 border-b border-navy-300 pb-10" />}
                 </div>
             ))}
         </div>

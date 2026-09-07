@@ -36,32 +36,11 @@ export function QuotationPrint() {
             ? quotation.conditions
             : parseConditions(settings?.quotation_conditions)
 
-    // Approved either way: the company signed it off, or the customer took it.
-    const approved = quotation.is_approved || quotation.status === 'accepted'
-
     return (
         <DocumentShell
             title="عرض سعر"
             number={quotation.code}
             className="doc-sheet--quotation"
-            stamp={
-                // Any offer that has been agreed: signed off inside the company,
-                // or accepted by the customer. Never a draft — a seal on one is
-                // a signature on a document nobody approved.
-                approved && settings?.company_stamp_url ? (
-                    <div className="doc-keep -mt-24 flex justify-start ps-10">
-                        <img
-                            src={settings.company_stamp_url}
-                            alt="ختم الشركة"
-                            // Multiply drops the paper behind a stamp that was
-                            // photographed rather than cut out, so an ordinary
-                            // phone picture of the seal sits on the signature
-                            // line instead of covering it with a white square.
-                            className="h-28 w-auto object-contain mix-blend-multiply"
-                        />
-                    </div>
-                ) : undefined
-            }
         >
             <div className="grid grid-cols-2 gap-4">
                 <DocumentParty
@@ -201,7 +180,19 @@ export function QuotationPrint() {
                 </div>
             )}
 
-            <DocumentSignatures labels={['عن الشركة', 'موافقة العميل']} />
+            <DocumentSignatures
+                labels={['عن الشركة', 'موافقة العميل']}
+                showLines={false}
+                stamp={
+                    settings?.company_stamp_url ? (
+                        <img
+                            src={settings.company_stamp_url}
+                            alt="ختم الشركة"
+                            className="mx-auto mt-2 h-36 w-auto object-contain mix-blend-multiply"
+                        />
+                    ) : undefined
+                }
+            />
         </DocumentShell>
     )
 }
