@@ -62,9 +62,12 @@ export function DocumentShell({
                     {tr('رجوع')}
                 </button>
 
-                <button onClick={() => window.print()} className="btn-primary">
+                <button onClick={async () => {
+                    await document.fonts.ready
+                    window.print()
+                }} className="btn-primary">
                     <Printer className="size-4" />
-                    {tr('طباعة')}
+                    {tr('معاينة قبل الطباعة')}
                 </button>
             </div>
 
