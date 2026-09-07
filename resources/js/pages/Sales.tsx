@@ -158,6 +158,7 @@ function QuotationsTab() {
                         { label: tr('صالح حتى'), className: 'w-28' },
                         { label: tr('الإجمالي'), className: 'w-28' },
                         { label: tr('الحالة'), className: 'w-28' },
+                        { label: tr('الإجراءات'), className: 'w-24 text-center' },
                     ]}
                 >
                     {quotations.map((quotation) => (
@@ -195,6 +196,17 @@ function QuotationsTab() {
                                 >
                                     {quotation.effective_status_label}
                                 </span>
+                            </td>
+                            <td className="px-3 py-2.5 text-center">
+                                {quotation.status === 'draft' && (
+                                    <QuotationEditButton
+                                        id={quotation.id}
+                                        onEdit={(fullQuotation) => {
+                                            setEditing(fullQuotation)
+                                            setFormOpen(true)
+                                        }}
+                                    />
+                                )}
                             </td>
                         </tr>
                     ))}
@@ -280,6 +292,33 @@ function QuotationsTab() {
                 />
             )}
         </>
+    )
+}
+
+function QuotationEditButton({
+    id,
+    onEdit,
+}: {
+    id: number
+    onEdit: (quotation: Quotation) => void
+}) {
+    const { data, isFetching, refetch } = useQuotation(id)
+
+    return (
+        <button
+            type="button"
+            className="tap inline-grid size-8 place-items-center rounded-lg bg-brand-50 text-brand-600 hover:bg-brand-100"
+            aria-label="تعديل عرض السعر"
+            title="تعديل عرض السعر"
+            disabled={isFetching}
+            onClick={async (event) => {
+                event.stopPropagation()
+                const quotation = data ?? (await refetch()).data
+                if (quotation?.status === 'draft') onEdit(quotation)
+            }}
+        >
+            <Pencil className="size-4" />
+        </button>
     )
 }
 

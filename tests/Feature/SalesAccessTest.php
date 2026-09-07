@@ -115,6 +115,25 @@ it('refuses to edit a quotation after it has been sent', function () {
     expect((float) $sent->fresh()->total)->toBe(5000.0);
 });
 
+it('allows a draft quotation to be edited and recalculates its total', function () {
+    $draft = quotationFor($this->customer);
+
+    actingAs($this->manager)
+        ->putJson("/api/quotations/{$draft->id}", [
+            'customer_id' => $this->customer->id,
+            'title' => 'عرض معدل',
+            'valid_until' => now()->addDays(14)->toDateString(),
+            'tax_rate' => 0,
+            'discount' => 0,
+            'discount_percent' => null,
+            'lines' => [['description' => 'بند معدل', 'qty' => 2, 'unit_price' => 750]],
+        ])
+        ->assertOk()
+        ->assertJsonPath('data.title', 'عرض معدل')
+        ->assertJsonPath('data.total', 1500)
+        ->assertJsonPath('data.lines.0.description', 'بند معدل');
+});
+
 it('walks a quotation through to an invoice', function () {
     $sent = $this->sales->send(quotationFor($this->customer));
 
