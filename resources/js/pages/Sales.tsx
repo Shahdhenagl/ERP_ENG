@@ -198,7 +198,7 @@ function QuotationsTab() {
                                 </span>
                             </td>
                             <td className="px-3 py-2.5 text-center">
-                                {quotation.status === 'draft' && (
+                                {['draft', 'sent'].includes(quotation.status) && (
                                     <QuotationEditButton
                                         id={quotation.id}
                                         onEdit={(fullQuotation) => {
@@ -224,7 +224,7 @@ function QuotationsTab() {
                             tabIndex={0}
                             className="card-interactive relative block w-full p-4 text-start"
                         >
-                            {quotation.status === 'draft' && (
+                            {['draft', 'sent'].includes(quotation.status) && (
                                 <span
                                     className="absolute top-4 left-4"
                                     onClick={(event) => event.stopPropagation()}
@@ -587,7 +587,7 @@ function QuotationDetail({
                             noticed. Opening the full editor to add one item is
                             the reason it gets left off. Drafts only — a sent
                             quote is a document the customer is holding. */}
-                        {quotation.status === 'draft' && (
+                        {['draft', 'sent'].includes(quotation.status) && (
                             <QuickLine quotation={quotation} />
                         )}
                     </div>

@@ -102,7 +102,7 @@ it('ignores a total posted by the client', function () {
     expect((float) $response->json('data.total'))->toBe(200.0);
 });
 
-it('refuses to edit a quotation after it has been sent', function () {
+it('allows a sent quotation to be corrected while preserving its sent status', function () {
     $sent = $this->sales->send(quotationFor($this->customer));
 
     actingAs($this->manager)
@@ -110,9 +110,11 @@ it('refuses to edit a quotation after it has been sent', function () {
             'customer_id' => $this->customer->id,
             'lines' => [['description' => 'أرخص', 'qty' => 1, 'unit_price' => 1]],
         ])
-        ->assertStatus(422);
+        ->assertOk()
+        ->assertJsonPath('data.total', 1)
+        ->assertJsonPath('data.status', 'sent');
 
-    expect((float) $sent->fresh()->total)->toBe(5000.0);
+    expect((float) $sent->fresh()->total)->toBe(1.0);
 });
 
 it('allows a draft quotation to be edited and recalculates its total', function () {

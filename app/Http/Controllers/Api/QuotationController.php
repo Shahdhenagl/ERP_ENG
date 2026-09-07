@@ -61,11 +61,11 @@ class QuotationController extends Controller
 
     public function update(Request $request, Quotation $quotation): JsonResponse
     {
-        // Once sent, the customer is holding this document. Correcting it means
-        // a new quote, not a quiet rewrite of the one they were given.
-        if ($quotation->status !== QuotationStatus::Draft) {
+        // Drafts and sent offers may be corrected. Final customer decisions
+        // remain immutable because they may already have created an order.
+        if (! in_array($quotation->status, [QuotationStatus::Draft, QuotationStatus::Sent], true)) {
             return response()->json([
-                'message' => Terms::get('لا يمكن تعديل عرض سعر بعد إرساله. أنشئ عرضًا جديدًا بدلًا منه.'),
+                'message' => Terms::get('لا يمكن تعديل عرض سعر بعد قبول العميل أو رفضه أو إلغائه.'),
             ], 422);
         }
 
