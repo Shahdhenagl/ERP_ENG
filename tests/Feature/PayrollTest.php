@@ -209,6 +209,50 @@ it('updates only an advance repayment terms without changing the treasury moveme
         ->and(CashBox::default()->balance())->toBe($before);
 });
 
+it('reverses an incorrectly issued advance through the treasury and ledger', function () {
+    $employee = Employee::factory()->create();
+    $before = CashBox::default()->balance();
+    $advance = $this->payroll->advance([
+        'employee_id' => $employee->id,
+        'amount' => 1200,
+        'installment' => 300,
+    ], $this->manager);
+
+    expect(CashBox::default()->balance())->toBe(round($before - 1200, 2))
+        ->and(acct('staff_advances'))->toBe(1200.0);
+
+    actingAs($this->manager)
+        ->postJson("/api/advances/{$advance->id}/reverse")
+        ->assertOk()
+        ->assertJsonPath('data.is_reversed', true);
+
+    expect(CashBox::default()->fresh()->balance())->toBe($before)
+        ->and(acct('staff_advances'))->toBe(0.0)
+        ->and($advance->fresh()->isReversed())->toBeTrue();
+
+    actingAs($this->manager)
+        ->postJson("/api/advances/{$advance->id}/reverse")
+        ->assertUnprocessable();
+});
+
+it('refuses to reverse an advance after payroll recovery has started', function () {
+    $employee = Employee::factory()->create(['basic_salary' => 6000]);
+    $advance = $this->payroll->advance([
+        'employee_id' => $employee->id,
+        'amount' => 900,
+        'installment' => 300,
+    ], $this->manager);
+
+    $run = $this->payroll->open(2026, 8, $this->manager);
+    expect((float) $run->payslips->first()->advance_recovery)->toBe(300.0);
+
+    actingAs($this->manager)
+        ->postJson("/api/advances/{$advance->id}/reverse")
+        ->assertUnprocessable();
+
+    expect($advance->fresh()->isReversed())->toBeFalse();
+});
+
 it('refuses an installment greater than the original advance', function () {
     $employee = Employee::factory()->create();
     $advance = $this->payroll->advance([

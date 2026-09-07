@@ -21,6 +21,7 @@ class SalaryAdvance extends Model
     protected $fillable = [
         'code', 'employee_id', 'advance_date', 'amount', 'installment',
         'cash_box_id', 'cash_movement_id', 'notes', 'created_by',
+        'reversed_at', 'reversed_by', 'reversal_cash_movement_id',
     ];
 
     protected function casts(): array
@@ -29,6 +30,7 @@ class SalaryAdvance extends Model
             'advance_date' => 'date',
             'amount' => 'decimal:2',
             'installment' => 'decimal:2',
+            'reversed_at' => 'datetime',
         ];
     }
 
@@ -66,5 +68,20 @@ class SalaryAdvance extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function reverser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reversed_by');
+    }
+
+    public function reversalCashMovement(): BelongsTo
+    {
+        return $this->belongsTo(CashMovement::class, 'reversal_cash_movement_id');
+    }
+
+    public function isReversed(): bool
+    {
+        return $this->reversed_at !== null;
     }
 }

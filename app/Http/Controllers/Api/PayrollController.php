@@ -39,6 +39,8 @@ class PayrollController extends Controller
                 'amount' => (float) $a->amount,
                 'installment' => (float) $a->installment,
                 'outstanding' => $a->employee ? max(0.0, $a->employee->outstandingAdvances()) : 0.0,
+                'is_reversed' => $a->isReversed(),
+                'reversed_at' => $a->reversed_at?->toIso8601String(),
                 'box' => $a->box?->name,
                 'notes' => $a->notes,
                 'created_by' => $a->creator?->name,
@@ -81,6 +83,7 @@ class PayrollController extends Controller
      */
     public function updateAdvance(Request $request, SalaryAdvance $salaryAdvance): JsonResponse
     {
+        abort_if($salaryAdvance->isReversed(), 422, 'لا يمكن تعديل سلفة تم التراجع عنها.');
         $data = $request->validate([
             'installment' => ['required', 'numeric', 'gt:0', 'lte:'.$salaryAdvance->amount],
             'notes' => ['nullable', 'string', 'max:1000'],
@@ -103,6 +106,24 @@ class PayrollController extends Controller
             'code' => $salaryAdvance->code,
             'installment' => (float) $salaryAdvance->installment,
             'notes' => $salaryAdvance->notes,
+        ]]);
+    }
+
+    public function reverseAdvance(Request $request, SalaryAdvance $salaryAdvance): JsonResponse
+    {
+        $reversed = $this->payroll->reverseAdvance($salaryAdvance->load('employee', 'cashMovement'), $request->user());
+
+        ActivityLog::record(
+            'advance.reversed',
+            $reversed,
+            "التراجع عن السلفة {$reversed->code}",
+        );
+
+        return response()->json(['data' => [
+            'id' => $reversed->id,
+            'code' => $reversed->code,
+            'is_reversed' => true,
+            'reversed_at' => $reversed->reversed_at?->toIso8601String(),
         ]]);
     }
 

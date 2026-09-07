@@ -166,7 +166,7 @@ class Employee extends Model
      */
     public function outstandingAdvances(): float
     {
-        $advanced = (float) $this->advances()->sum('amount');
+        $advanced = (float) $this->advances()->whereNull('reversed_at')->sum('amount');
         $recovered = (float) $this->payslips()->sum('advance_recovery');
 
         return round($advanced - $recovered, 2);

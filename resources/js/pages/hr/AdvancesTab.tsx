@@ -1,4 +1,4 @@
-import { Eye, HandCoins, Pencil, Plus } from 'lucide-react'
+import { Eye, HandCoins, Pencil, Plus, Undo2 } from 'lucide-react'
 import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
@@ -8,13 +8,15 @@ import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { formatMoney } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
-import { useAdvances, useCashBoxes, useEmployees, useSaveAdvance, useUpdateAdvance } from '@/lib/queries'
+import { useAdvances, useCashBoxes, useEmployees, useReverseAdvance, useSaveAdvance, useUpdateAdvance } from '@/lib/queries'
 import type { SalaryAdvance } from '@/types'
 
 export function AdvancesTab() {
+    const toast = useToast()
     const [creating, setCreating] = useState(false)
     const [viewing, setViewing] = useState<SalaryAdvance | null>(null)
     const [editing, setEditing] = useState<SalaryAdvance | null>(null)
+    const reverse = useReverseAdvance()
     const [view, setView] = useViewMode('hr-advances')
     const { data, isLoading } = useAdvances({ per_page: 60 })
 
@@ -71,7 +73,9 @@ export function AdvancesTab() {
                                 {formatMoney(advance.amount)}
                             </td>
                             <td className="tabular px-3 py-2.5 text-end">
-                                {advance.outstanding > 0 ? (
+                                {advance.is_reversed ? (
+                                    <span className="font-bold text-red-600">متراجع عنها</span>
+                                ) : advance.outstanding > 0 ? (
                                     <span className="font-bold text-amber-600">
                                         {formatMoney(advance.outstanding)}
                                     </span>
@@ -90,15 +94,30 @@ export function AdvancesTab() {
                                     >
                                         <Eye className="size-4" />
                                     </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setEditing(advance)}
-                                        className="tap grid size-8 place-items-center rounded-lg text-brand-600 transition hover:bg-brand-50"
-                                        aria-label={`تعديل السلفة ${advance.code}`}
-                                        title="تعديل القسط والملاحظات"
-                                    >
-                                        <Pencil className="size-4" />
-                                    </button>
+                                    {!advance.is_reversed && (
+                                        <>
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditing(advance)}
+                                                className="tap grid size-8 place-items-center rounded-lg text-brand-600 transition hover:bg-brand-50"
+                                                aria-label={`تعديل السلفة ${advance.code}`}
+                                                title="تعديل القسط والملاحظات"
+                                            >
+                                                <Pencil className="size-4" />
+                                            </button>
+                                        </>
+                                    )}
+                                    {!advance.is_reversed && (
+                                        <button
+                                            type="button"
+                                            onClick={() => reverseAdvance(advance)}
+                                            className="tap grid size-8 place-items-center rounded-lg text-red-600 transition hover:bg-red-50"
+                                            aria-label={`التراجع عن السلفة ${advance.code}`}
+                                            title="التراجع عن السلفة وإرجاع المبلغ للخزينة"
+                                        >
+                                            <Undo2 className="size-4" />
+                                        </button>
+                                    )}
                                 </div>
                             </td>
                         </tr>
@@ -122,7 +141,9 @@ export function AdvancesTab() {
                                 <p className="tabular font-extrabold text-navy-900">
                                     {formatMoney(advance.amount)}
                                 </p>
-                                {advance.outstanding > 0 ? (
+                                {advance.is_reversed ? (
+                                    <p className="text-[11px] font-bold text-red-600">متراجع عنها</p>
+                                ) : advance.outstanding > 0 ? (
                                     <p className="tabular text-[11px] text-amber-600">
                                         متبقٍ {formatMoney(advance.outstanding)}
                                     </p>
@@ -138,14 +159,28 @@ export function AdvancesTab() {
                                     >
                                         <Eye className="size-4" />
                                     </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setEditing(advance)}
-                                        className="tap grid size-8 place-items-center rounded-lg bg-brand-50 text-brand-600"
-                                        aria-label={`تعديل السلفة ${advance.code}`}
-                                    >
-                                        <Pencil className="size-4" />
-                                    </button>
+                                    {!advance.is_reversed && (
+                                        <>
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditing(advance)}
+                                                className="tap grid size-8 place-items-center rounded-lg bg-brand-50 text-brand-600"
+                                                aria-label={`تعديل السلفة ${advance.code}`}
+                                            >
+                                                <Pencil className="size-4" />
+                                            </button>
+                                        </>
+                                    )}
+                                    {!advance.is_reversed && (
+                                        <button
+                                            type="button"
+                                            onClick={() => reverseAdvance(advance)}
+                                            className="tap grid size-8 place-items-center rounded-lg bg-red-50 text-red-600"
+                                            aria-label={`التراجع عن السلفة ${advance.code}`}
+                                        >
+                                            <Undo2 className="size-4" />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -158,6 +193,16 @@ export function AdvancesTab() {
             {editing && <EditAdvanceForm advance={editing} onClose={() => setEditing(null)} />}
         </>
     )
+
+    async function reverseAdvance(advance: SalaryAdvance) {
+        if (!window.confirm(`التراجع عن السلفة ${advance.code} وإرجاع مبلغ ${formatMoney(advance.amount)} للخزينة؟`)) return
+        try {
+            await reverse.mutateAsync(advance.id)
+            toast.success('تم التراجع عن السلفة وإرجاع المبلغ للخزينة.')
+        } catch (caught) {
+            toast.error(errorMessage(caught, 'تعذّر التراجع عن السلفة.'))
+        }
+    }
 }
 
 function AdvanceDetails({ advance, onClose }: { advance: SalaryAdvance; onClose: () => void }) {
@@ -182,6 +227,11 @@ function AdvanceDetails({ advance, onClose }: { advance: SalaryAdvance; onClose:
                     </div>
                 ))}
             </dl>
+            {advance.is_reversed && (
+                <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">
+                    تم التراجع عن هذه السلفة وإرجاع مبلغها للخزينة.
+                </p>
+            )}
             {advance.notes && (
                 <div className="mt-4 rounded-xl bg-navy-50 p-3">
                     <p className="mb-1 text-xs font-bold text-navy-500">ملاحظات</p>

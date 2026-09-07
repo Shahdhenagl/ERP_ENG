@@ -3029,6 +3029,8 @@ export interface SalaryAdvance {
     notes: string | null
     created_by: string | null
     created_at: string | null
+    is_reversed: boolean
+    reversed_at: string | null
 }
 
 export type PayrollAdjustmentType = 'deduction' | 'bonus'

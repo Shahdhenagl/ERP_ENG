@@ -83,6 +83,54 @@ class PayrollService
         });
     }
 
+    /**
+     * Reverse an incorrectly issued advance with an opposite cash movement.
+     * The current schema does not identify which advance a payslip recovered,
+     * so a prior recovery for the employee makes a specific reversal unsafe.
+     */
+    public function reverseAdvance(SalaryAdvance $advance, User $actor): SalaryAdvance
+    {
+        if ($advance->isReversed()) {
+            throw ValidationException::withMessages([
+                'advance' => Terms::get('تم التراجع عن هذه السلفة بالفعل.'),
+            ]);
+        }
+
+        if ((float) $advance->employee->payslips()->sum('advance_recovery') > 0) {
+            throw ValidationException::withMessages([
+                'advance' => Terms::get('لا يمكن التراجع عن سلفة بعد بدء استرداد سلف الموظف من الرواتب.'),
+            ]);
+        }
+
+        $movement = $advance->cashMovement;
+
+        if (! $movement) {
+            throw ValidationException::withMessages([
+                'advance' => Terms::get('لا يمكن التحقق من حركة خزينة السلفة.'),
+            ]);
+        }
+
+        return DB::transaction(function () use ($advance, $actor, $movement) {
+            $reversal = CashMovement::create([
+                'cash_box_id' => $movement->cash_box_id,
+                'direction' => 'in',
+                'amount' => $advance->amount,
+                'transaction_date' => now()->toDateString(),
+                'source' => 'advance',
+                'note' => "عكس سلفة {$advance->code} — {$advance->employee?->name}",
+                'user_id' => $actor->id,
+            ]);
+
+            $advance->forceFill([
+                'reversed_at' => now(),
+                'reversed_by' => $actor->id,
+                'reversal_cash_movement_id' => $reversal->id,
+            ])->save();
+
+            return $advance->fresh(['employee', 'box', 'reversalCashMovement']);
+        });
+    }
+
     /* ── The monthly run ─────────────────────────────────── */
 
     /**
@@ -152,7 +200,7 @@ class PayrollService
         // Recover what is owed, but never more than is outstanding, and never
         // more than the month's earned pay could bear.
         $outstanding = max(0.0, $employee->outstandingAdvances());
-        $installment = round((float) $employee->advances()->sum('installment'), 2);
+        $installment = round((float) $employee->advances()->whereNull('reversed_at')->sum('installment'), 2);
         $earnedBeforeAdvance = $gross - $unpaidDeduction - $insurance - $tax;
         $advanceRecovery = round(min($installment, $outstanding, max(0.0, $earnedBeforeAdvance)), 2);
 

@@ -3866,6 +3866,15 @@ export function useUpdateAdvance() {
     })
 }
 
+export function useReverseAdvance() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id: number) => (await api.post(`/advances/${id}/reverse`)).data,
+        onSuccess: () => invalidateHr(client),
+    })
+}
+
 export function usePayrollAdjustments(filters: Record<string, unknown> = {}) {
     return useQuery({
         queryKey: keys.payrollAdjustments(filters),
