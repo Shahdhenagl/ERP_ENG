@@ -451,6 +451,11 @@
 }
 
 @media print {
+    @page quotation {
+        size: A4 portrait;
+        margin: 8mm;
+    }
+
     @page {
         size: A4;
         margin: 8mm;
@@ -479,6 +484,12 @@
         min-height: 0;
         padding: 0;
         margin: 0;
+    }
+
+    .doc-sheet--quotation {
+        page: quotation;
+        width: 210mm;
+        min-height: 297mm;
     }
 
     /* Quotations commonly include both sets of terms and signatures. Keep
