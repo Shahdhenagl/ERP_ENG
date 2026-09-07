@@ -3670,25 +3670,40 @@ export function useEmployeeContracts(filters: Record<string, unknown> = {}) {
     })
 }
 
-export function useSaveEmployeeContract(id?: number) {
+export function useSaveEmployeeContract(employeeId?: number, contractId?: number) {
     const client = useQueryClient()
+    const nested = arguments.length > 1
 
     return useMutation({
         mutationFn: async (payload: Record<string, unknown>) =>
             (
-                await (id
-                    ? api.put<{ data: EmployeeContract }>(`/employee-contracts/${id}`, payload)
-                    : api.post<{ data: EmployeeContract }>('/employee-contracts', payload))
+                await (nested
+                    ? contractId !== undefined
+                    ? api.put<{ data: EmployeeContract }>(
+                          `/employees/${employeeId}/contracts/${contractId}`,
+                          payload,
+                      )
+                    : api.post<{ data: EmployeeContract }>(`/employees/${employeeId}/contracts`, payload)
+                    : employeeId !== undefined
+                      ? api.put<{ data: EmployeeContract }>(`/employee-contracts/${employeeId}`, payload)
+                      : api.post<{ data: EmployeeContract }>('/employee-contracts', payload))
             ).data.data,
         onSuccess: () => invalidateHr(client),
     })
 }
 
-export function useDeleteEmployeeContract() {
+export function useDeleteEmployeeContract(employeeId?: number) {
     const client = useQueryClient()
 
     return useMutation({
-        mutationFn: async (id: number) => (await api.delete(`/employee-contracts/${id}`)).data,
+        mutationFn: async (contractId: number) =>
+            (
+                await api.delete(
+                    employeeId !== undefined
+                        ? `/employees/${employeeId}/contracts/${contractId}`
+                        : `/employee-contracts/${contractId}`,
+                )
+            ).data,
         onSuccess: () => invalidateHr(client),
     })
 }
@@ -3712,30 +3727,6 @@ export function useDeleteEmployee() {
 
     return useMutation({
         mutationFn: async (id: number) => (await api.delete(`/employees/${id}`)).data,
-        onSuccess: () => invalidateHr(client),
-    })
-}
-
-export function useSaveEmployeeContract(employeeId: number, contractId?: number) {
-    const client = useQueryClient()
-
-    return useMutation({
-        mutationFn: async (payload: Record<string, unknown>) =>
-            (
-                await (contractId
-                    ? api.put<{ data: EmployeeContract }>(`/employees/${employeeId}/contracts/${contractId}`, payload)
-                    : api.post<{ data: EmployeeContract }>(`/employees/${employeeId}/contracts`, payload))
-            ).data.data,
-        onSuccess: () => invalidateHr(client),
-    })
-}
-
-export function useDeleteEmployeeContract(employeeId: number) {
-    const client = useQueryClient()
-
-    return useMutation({
-        mutationFn: async (contractId: number) =>
-            (await api.delete(`/employees/${employeeId}/contracts/${contractId}`)).data,
         onSuccess: () => invalidateHr(client),
     })
 }
