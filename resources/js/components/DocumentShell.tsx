@@ -20,7 +20,6 @@ export function DocumentShell({
     subtitle,
     children,
     footer,
-    stamp,
     className,
 }: {
     title: string
@@ -34,8 +33,6 @@ export function DocumentShell({
     subtitle?: string
     children: ReactNode
     footer?: ReactNode
-    /** Optional content rendered after the document body. */
-    stamp?: ReactNode
     className?: string
 }) {
     const navigate = useNavigate()
@@ -75,7 +72,7 @@ export function DocumentShell({
                 {/* ── Letterhead ─────────────────────────────── */}
                 <header className="doc-keep flex items-start justify-between gap-6 border-b-2 border-navy-900 pb-4">
                     <div className="flex items-center gap-3">
-                        <img src="/brand/logo-mark.png" alt="" className="size-14 object-contain" />
+                        <img src="/brand/logo-mark.png" alt="" className="size-20 object-contain" />
                         <div>
                             <p className="text-lg leading-tight font-extrabold text-navy-900">
                                 {settings.company_name}
@@ -115,8 +112,6 @@ export function DocumentShell({
                 </div>
 
                 {children}
-
-                {stamp}
 
                 <footer className="mt-8 border-t border-navy-200 pt-3 text-center text-[10px] text-navy-400">
                     {footer}
