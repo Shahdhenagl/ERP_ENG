@@ -1,6 +1,6 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-BurKVeif.css",
+    "file": "assets/app-jRow2Wk-.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -9,12 +9,12 @@
     ]
   },
   "resources/js/main.tsx": {
-    "file": "assets/main-BMxEnDAn.js",
+    "file": "assets/main-BrwMNwNJ.js",
     "name": "main",
     "src": "resources/js/main.tsx",
     "isEntry": true,
     "css": [
-      "assets/app-BurKVeif.css"
+      "assets/app-jRow2Wk-.css"
     ]
   }
 }

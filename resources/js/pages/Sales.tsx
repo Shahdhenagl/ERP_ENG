@@ -214,11 +214,30 @@ function QuotationsTab() {
             ) : (
                 <div className="space-y-3">
                     {quotations.map((quotation) => (
-                        <button
+                        <div
                             key={quotation.id}
                             onClick={() => setDetailId(quotation.id)}
-                            className="card-interactive block w-full p-4 text-start"
+                            onKeyDown={(event) => {
+                                if (event.key === 'Enter' || event.key === ' ') setDetailId(quotation.id)
+                            }}
+                            role="button"
+                            tabIndex={0}
+                            className="card-interactive relative block w-full p-4 text-start"
                         >
+                            {quotation.status === 'draft' && (
+                                <span
+                                    className="absolute top-4 left-4"
+                                    onClick={(event) => event.stopPropagation()}
+                                >
+                                    <QuotationEditButton
+                                        id={quotation.id}
+                                        onEdit={(fullQuotation) => {
+                                            setEditing(fullQuotation)
+                                            setFormOpen(true)
+                                        }}
+                                    />
+                                </span>
+                            )}
                             <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0 flex-1">
                                     <div className="flex flex-wrap items-center gap-2">
@@ -266,7 +285,7 @@ function QuotationsTab() {
                                     {formatMoney(quotation.total)}
                                 </p>
                             </div>
-                        </button>
+                        </div>
                     ))}
                 </div>
             )}
