@@ -151,3 +151,29 @@ it('records a dispatch key so the condition is not re-raised', function () {
 
     expect(AlertDispatch::where('key', "ppm-due:{$visit->id}")->exists())->toBeTrue();
 });
+
+it('includes the task code customer and optional branch in urgent alerts', function () {
+    $branch = \App\Models\Branch::create([
+        'customer_id' => $this->customer->id,
+        'name' => 'فرع مدينة نصر',
+    ]);
+    $task = \App\Models\Task::factory()->create([
+        'customer_id' => $this->customer->id,
+        'branch_id' => $branch->id,
+        'priority' => \App\Enums\TaskPriority::Urgent,
+        'status' => \App\Enums\TaskStatus::Pending,
+    ]);
+    $scanner = new class extends \App\Services\OperationsAlertScanner {
+        public function urgent(): \Illuminate\Support\Collection
+        {
+            return $this->urgentTasks();
+        }
+    };
+
+    $alert = $scanner->urgent()->firstWhere('key', "urgent-task:{$task->id}");
+    expect($alert['body'])->toBe("{$task->code} — {$this->customer->name} — {$branch->name}");
+
+    $task->update(['branch_id' => null]);
+    $alert = $scanner->urgent()->firstWhere('key', "urgent-task:{$task->id}");
+    expect($alert['body'])->toBe("{$task->code} — {$this->customer->name}");
+});

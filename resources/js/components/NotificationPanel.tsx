@@ -178,6 +178,11 @@ export function NotificationPanel({ open, onClose }: { open: boolean; onClose: (
                                                 </span>
                                             )}
                                         </p>
+                                        {notification.data.body && (
+                                            <p className="mt-0.5 text-xs text-navy-600 whitespace-pre-line break-words">
+                                                {notification.data.body}
+                                            </p>
+                                        )}
                                         {notification.data.actor && (
                                             <p className="mt-0.5 text-xs text-navy-500">
                                                 بواسطة {notification.data.actor}

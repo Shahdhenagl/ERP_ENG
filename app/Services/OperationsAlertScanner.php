@@ -87,11 +87,12 @@ class OperationsAlertScanner
     protected function urgentTasks(): Collection
     {
         return Task::query()->open()->where('priority', TaskPriority::Urgent->value)
-            ->with('customer')->get()
+            ->with(['customer', 'branch'])->get()
             ->map(fn (Task $t) => [
                 'key' => "urgent-task:{$t->id}", 'type' => 'task.urgent',
                 'title' => Terms::get('صيانة عاجلة'),
-                'body' => "{$t->code} — ".($t->customer?->name ?? $t->title),
+                'body' => collect([$t->code, $t->customer?->name ?? $t->title, $t->branch?->name])
+                    ->filter(fn ($value) => filled($value))->implode(' — '),
                 'url' => "/tasks/{$t->id}", 'tag' => "task-{$t->id}",
             ]);
     }
