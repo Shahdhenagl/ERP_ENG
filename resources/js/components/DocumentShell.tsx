@@ -98,16 +98,15 @@ export function DocumentShell({
                 <div className="doc-keep mt-5 mb-5 text-center">
                     <h1 className="text-xl font-extrabold text-navy-900">
                         {title}
-                        {number && (
-                            <>
-                                {' '}
-                                <span className="font-bold">رقم</span>{' '}
-                                <span className="tabular" dir="ltr">
-                                    {number}
-                                </span>
-                            </>
-                        )}
                     </h1>
+                    {number && (
+                        <p className="mt-1 text-sm font-bold text-navy-500">
+                            <span>رقم </span>
+                            <span className="tabular text-navy-700" dir="ltr">
+                                {number}
+                            </span>
+                        </p>
+                    )}
                     {subtitle && <p className="mt-0.5 text-sm text-navy-500">{subtitle}</p>}
                 </div>
 
@@ -154,17 +153,24 @@ export function DocumentTotals({
     total,
     totalLabel = 'الإجمالي',
     inWords,
+    align = 'start',
+    boxed = false,
 }: {
     rows: Array<[string, string]>
     total: string
     totalLabel?: string
     /** The total written out, when the document is one somebody signs. */
     inWords?: number | null
+    /** In RTL, end places the totals on the left side of the paper. */
+    align?: 'start' | 'end'
+    boxed?: boolean
 }) {
     return (
         <div className="doc-keep mt-4 space-y-3">
-            <div className="flex justify-start">
-                <div className="w-64 space-y-1 text-[13px]">
+            <div className={align === 'end' ? 'flex justify-end' : 'flex justify-start'}>
+                <div
+                    className={`w-64 space-y-1 text-[13px] ${boxed ? 'rounded-lg border border-navy-200 bg-white p-3' : ''}`}
+                >
                     {rows.map(([label, value]) => (
                         <div key={label} className="flex justify-between text-navy-600">
                             <span>{label}</span>
@@ -181,7 +187,7 @@ export function DocumentTotals({
             {/* The figure is what the document is checked against; the words are
                 what stop it being altered after it is signed. */}
             {inWords != null && (
-                <p className="rounded-lg bg-navy-50 px-3 py-2 text-[12px] font-bold text-navy-700">
+                <p className={`rounded-lg bg-navy-50 px-3 py-2 text-[12px] font-bold text-navy-700 ${align === 'end' ? 'text-left' : ''}`}>
                     {amountInWords(inWords)}
                 </p>
             )}

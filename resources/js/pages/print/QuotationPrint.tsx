@@ -135,6 +135,8 @@ export function QuotationPrint() {
                 ]}
                 total={formatMoney(quotation.total)}
                 inWords={quotation.total}
+                align="end"
+                boxed
             />
 
             {/* The conditions the offer closes on, in a box beside the
