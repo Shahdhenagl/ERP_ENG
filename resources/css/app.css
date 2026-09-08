@@ -473,6 +473,24 @@
 
 .doc-sheet--quotation .doc-table {
     margin-top: 3mm;
+    table-layout: fixed;
+}
+
+.doc-sheet--quotation .quotation-col-index {
+    width: 6%;
+}
+
+.doc-sheet--quotation .quotation-col-description {
+    width: 46%;
+}
+
+.doc-sheet--quotation .quotation-col-quantity {
+    width: 12%;
+}
+
+.doc-sheet--quotation .quotation-col-unit-price,
+.doc-sheet--quotation .quotation-col-total {
+    width: 18%;
 }
 
 .doc-sheet--quotation .doc-table th {
@@ -484,6 +502,25 @@
     padding: 5px 6px;
     font-size: 11px;
     line-height: 1.35;
+}
+
+.doc-sheet--quotation .quotation-cell-index,
+.doc-sheet--quotation .quotation-cell-quantity,
+.doc-sheet--quotation .quotation-cell-unit-price {
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.doc-sheet--quotation .quotation-cell-description {
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+.doc-sheet--quotation .quotation-cell-total {
+    text-align: left;
+    vertical-align: middle;
+    white-space: nowrap;
 }
 
 .doc-sheet--quotation .doc-specs {

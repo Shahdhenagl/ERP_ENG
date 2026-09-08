@@ -72,14 +72,21 @@ export function QuotationPrint() {
                 </p>
             )}
 
-            <table className="doc-table mt-4">
+            <table className="doc-table quotation-lines-table mt-4">
+                <colgroup>
+                    <col className="quotation-col-index" />
+                    <col className="quotation-col-description" />
+                    <col className="quotation-col-quantity" />
+                    <col className="quotation-col-unit-price" />
+                    <col className="quotation-col-total" />
+                </colgroup>
                 <thead>
                     <tr>
-                        <th className="w-8">#</th>
-                        <th>البيان</th>
-                        <th className="w-20 text-center">الكمية</th>
-                        <th className="w-28 text-center">سعر الوحدة</th>
-                        <th className="w-28 text-left">الإجمالي</th>
+                        <th className="quotation-cell-index">#</th>
+                        <th className="quotation-cell-description">البيان</th>
+                        <th className="quotation-cell-quantity">الكمية</th>
+                        <th className="quotation-cell-unit-price">سعر الوحدة</th>
+                        <th className="quotation-cell-total">الإجمالي</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -88,8 +95,8 @@ export function QuotationPrint() {
 
                         return (
                             <tr key={line.id}>
-                                <td className="text-navy-400">{index + 1}</td>
-                                <td className="text-navy-900">
+                                <td className="quotation-cell-index text-navy-400">{index + 1}</td>
+                                <td className="quotation-cell-description text-navy-900">
                                     <span className="font-semibold">{line.description}</span>
                                     {line.item_category_label && (
                                         <span className="mr-1.5 text-[11px] text-navy-400">
@@ -101,11 +108,11 @@ export function QuotationPrint() {
                                         writing is not a rating on a screen. */}
                                     {specs.length > 0 && <SpecRowList rows={specs} />}
                                 </td>
-                                <td className="tabular text-center">
+                                <td className="quotation-cell-quantity tabular">
                                     {formatQty(line.qty)}
                                 </td>
-                                <td className="tabular text-center">{formatMoney(line.unit_price)}</td>
-                                <td className="tabular text-left font-bold">{formatMoney(line.line_total)}</td>
+                                <td className="quotation-cell-unit-price tabular">{formatMoney(line.unit_price)}</td>
+                                <td className="quotation-cell-total tabular font-bold">{formatMoney(line.line_total)}</td>
                             </tr>
                         )
                     })}
