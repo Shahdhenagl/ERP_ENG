@@ -707,6 +707,14 @@ function QuotationDetail({
                         {quotation.status === 'sent' && (
                             <>
                                 <Button
+                                    variant="secondary"
+                                    icon={Pencil}
+                                    className="text-xs"
+                                    onClick={() => onEdit(quotation)}
+                                >
+                                    تعديل السعر
+                                </Button>
+                                <Button
                                     icon={CheckCircle2}
                                     className="text-xs"
                                     loading={action.isPending}
