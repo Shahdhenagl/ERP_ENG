@@ -41,6 +41,7 @@ export function QuotationPrint() {
             title="عرض سعر"
             number={quotation.code}
             className="doc-sheet--quotation"
+            exportFormats
         >
             <div className="grid grid-cols-2 gap-4">
                 <DocumentParty

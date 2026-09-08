@@ -1,10 +1,11 @@
 import { amountInWords } from '@/lib/tafqit'
 import { tr } from '@/lib/i18n'
-import { ArrowRight, Printer } from 'lucide-react'
-import { useEffect, type ReactNode } from 'react'
+import { ArrowRight, FileText, Image, Printer } from 'lucide-react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageLoader } from '@/components/ui'
 import { useSettings } from '@/lib/queries'
+import { downloadDocumentJpg, downloadDocumentWord } from '@/lib/documentExport'
 
 /**
  * The paper every printed document sits on: letterhead, body, footer.
@@ -21,6 +22,7 @@ export function DocumentShell({
     children,
     footer,
     className,
+    exportFormats = false,
 }: {
     title: string
     /**
@@ -34,9 +36,12 @@ export function DocumentShell({
     children: ReactNode
     footer?: ReactNode
     className?: string
+    exportFormats?: boolean
 }) {
     const navigate = useNavigate()
     const { data: settings, isLoading } = useSettings()
+    const sheetRef = useRef<HTMLElement>(null)
+    const [exporting, setExporting] = useState<'jpg' | 'word' | null>(null)
 
     // The tab name becomes the suggested filename when saving as PDF, so it is
     // worth being the document's own name rather than the app's.
@@ -53,22 +58,57 @@ export function DocumentShell({
 
     return (
         <div className="min-h-dvh bg-navy-100 py-6 print:bg-white print:py-0" dir="rtl">
-            <div className="no-print mx-auto mb-4 flex max-w-[210mm] items-center justify-between gap-3 px-4">
+            <div className="no-print mx-auto mb-4 flex max-w-[210mm] flex-wrap items-center justify-between gap-3 px-4">
                 <button onClick={() => navigate(-1)} className="btn-ghost text-sm">
                     <ArrowRight className="size-4" />
                     {tr('رجوع')}
                 </button>
 
-                <button onClick={async () => {
-                    await document.fonts.ready
-                    window.print()
-                }} className="btn-primary">
-                    <Printer className="size-4" />
-                    {tr('معاينة قبل الطباعة')}
-                </button>
+                <div className="flex flex-wrap justify-end gap-2">
+                    {exportFormats && (
+                        <>
+                            <button
+                                onClick={async () => {
+                                    if (!sheetRef.current) return
+                                    setExporting('jpg')
+                                    try {
+                                        await downloadDocumentJpg(sheetRef.current, number ?? title)
+                                    } finally {
+                                        setExporting(null)
+                                    }
+                                }}
+                                className="btn-secondary text-xs"
+                                disabled={exporting !== null}
+                            >
+                                <Image className="size-4" />
+                                {exporting === 'jpg' ? 'جاري التجهيز...' : 'JPG'}
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (sheetRef.current) downloadDocumentWord(sheetRef.current, number ?? title)
+                                }}
+                                className="btn-secondary text-xs"
+                                disabled={exporting !== null}
+                            >
+                                <FileText className="size-4" />
+                                Word
+                            </button>
+                        </>
+                    )}
+                    <button
+                        onClick={async () => {
+                            await document.fonts.ready
+                            window.print()
+                        }}
+                        className="btn-primary text-xs"
+                    >
+                        <Printer className="size-4" />
+                        {exportFormats ? 'PDF' : tr('معاينة قبل الطباعة')}
+                    </button>
+                </div>
             </div>
 
-            <article className={`doc-sheet shadow-[var(--shadow-panel)] print:shadow-none ${className ?? ''}`}>
+            <article ref={sheetRef} className={`doc-sheet shadow-[var(--shadow-panel)] print:shadow-none ${className ?? ''}`}>
                 {/* ── Letterhead ─────────────────────────────── */}
                 <header className="doc-keep flex items-start justify-between gap-6 border-b-2 border-navy-900 pb-4">
                     <div className="flex items-center gap-3">
