@@ -23,6 +23,7 @@ export function DocumentShell({
     footer,
     className,
     exportFormats = false,
+    bilingualFooter = false,
 }: {
     title: string
     /**
@@ -37,6 +38,7 @@ export function DocumentShell({
     footer?: ReactNode
     className?: string
     exportFormats?: boolean
+    bilingualFooter?: boolean
 }) {
     const navigate = useNavigate()
     const { data: settings, isLoading } = useSettings()
@@ -152,7 +154,20 @@ export function DocumentShell({
 
                 {children}
 
-                <footer className="mt-8 border-t border-navy-200 pt-3 text-center text-[10px] text-navy-400">
+                <footer className={`mt-8 border-t border-navy-200 pt-3 text-center text-[10px] text-navy-400 ${bilingualFooter ? 'doc-bilingual-footer' : ''}`}>
+                        {bilingualFooter && (
+                            <div className="mb-2 grid grid-cols-2 gap-5 text-[10px] leading-relaxed text-navy-500">
+                                <div className="text-right" dir="rtl">
+                                    {settings.company_address && <p>{settings.company_address}</p>}
+                                    {settings.company_phone && <p dir="ltr">هاتف: {settings.company_phone}</p>}
+                                </div>
+                                <div className="text-left" dir="ltr">
+                                    {settings.company_address_en && <p>{settings.company_address_en}</p>}
+                                    {settings.company_fax && <p>Fax: {settings.company_fax}</p>}
+                                    {settings.company_email && <p>{settings.company_email}</p>}
+                                </div>
+                            </div>
+                        )}
                     {footer}
                     <p className="mt-1">
                         {settings.company_name}

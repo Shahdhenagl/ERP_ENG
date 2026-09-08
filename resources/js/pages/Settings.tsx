@@ -111,6 +111,16 @@ export function Settings() {
                             />
                         </Field>
 
+                        <Field label="العنوان بالإنجليزية" error={errors.company_address_en}>
+                            <Textarea
+                                value={form.company_address_en ?? ''}
+                                onChange={(e) => set('company_address_en')(e.target.value)}
+                                rows={2}
+                                dir="ltr"
+                                className="text-left"
+                            />
+                        </Field>
+
                         <div className="grid gap-4 sm:grid-cols-2">
                             <Field label="الهاتف" error={errors.company_phone}>
                                 <Input
@@ -126,6 +136,14 @@ export function Settings() {
                                     type="email"
                                     value={form.company_email ?? ''}
                                     onChange={(e) => set('company_email')(e.target.value)}
+                                    dir="ltr"
+                                    className="text-left"
+                                />
+                            </Field>
+                            <Field label="الفاكس" error={errors.company_fax}>
+                                <Input
+                                    value={form.company_fax ?? ''}
+                                    onChange={(e) => set('company_fax')(e.target.value)}
                                     dir="ltr"
                                     className="text-left"
                                 />

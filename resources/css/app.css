@@ -571,6 +571,15 @@
     padding-top: 2mm;
 }
 
+.doc-sheet--quotation .doc-bilingual-footer {
+    text-align: center;
+}
+
+.doc-sheet--quotation .doc-bilingual-footer > div {
+    border-bottom: 1px solid var(--color-navy-200);
+    padding-bottom: 2mm;
+}
+
 @media print {
     @page quotation {
         size: A4 portrait;

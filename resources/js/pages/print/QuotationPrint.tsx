@@ -42,6 +42,7 @@ export function QuotationPrint() {
             number={quotation.code}
             className="doc-sheet--quotation"
             exportFormats
+            bilingualFooter
         >
             <div className="grid grid-cols-2 gap-4">
                 <DocumentParty
