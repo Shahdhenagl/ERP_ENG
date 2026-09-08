@@ -179,6 +179,7 @@ export interface Item {
 
     total_qty: number
     stock_value: number
+    movements_count?: number
     below_reorder_level: boolean
 
     levels?: Array<{

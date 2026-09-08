@@ -43,6 +43,7 @@ class ItemResource extends JsonResource
             'total_qty' => $this->totalQty(),
             'stock_value' => $this->stockValue(),
             'below_reorder_level' => $this->isBelowReorderLevel(),
+            'movements_count' => $this->movements()->count(),
 
             // Where it is sitting right now — the store and every van holding any.
             'levels' => $this->whenLoaded('levels', fn () => $this->levels

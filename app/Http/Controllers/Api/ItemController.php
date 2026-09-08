@@ -12,6 +12,7 @@ use App\Services\StockLedger;
 use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Validation\Rule;
 
@@ -113,20 +114,44 @@ class ItemController extends Controller
         return new ItemResource($item->fresh()->load('levels.warehouse'));
     }
 
-    public function destroy(Item $item): JsonResponse
+    public function destroy(Request $request, Item $item): JsonResponse
     {
-        if ($item->movements()->exists()) {
+        $hasMovements = $item->movements()->exists();
+
+        if ($hasMovements && ! $request->boolean('with_movements')) {
             return response()->json([
-                'message' => Terms::get('لا يمكن حذف صنف له حركة مخزنية. أوقفه بدلًا من ذلك.'),
+                'message' => Terms::get('هذا الصنف له حركة مخزنية. أرسل تأكيد حذف الصنف مع حركاته إذا كان هذا مقصودًا.'),
+                'movements_count' => $item->movements()->count(),
             ], 422);
         }
 
         $name = $item->name;
-        $item->delete();
 
-        ActivityLog::record('item.deleted', $item, "تم حذف الصنف {$name}");
+        DB::transaction(function () use ($item, $hasMovements) {
+            if ($hasMovements) {
+                // Keep purchase/sales documents readable, but remove their
+                // optional catalogue link before the item is soft-deleted.
+                DB::table('purchase_order_lines')->where('item_id', $item->id)->update(['item_id' => null]);
+                DB::table('purchase_return_lines')->where('item_id', $item->id)->update(['item_id' => null]);
+                DB::table('item_serials')->where('item_id', $item->id)->delete();
+                DB::table('stock_levels')->where('item_id', $item->id)->delete();
+                DB::table('stock_movements')->where('item_id', $item->id)->delete();
+            }
 
-        return response()->json(['message' => Terms::get('تم حذف الصنف.')]);
+            $item->delete();
+        });
+
+        ActivityLog::record(
+            $hasMovements ? 'item.deleted_with_movements' : 'item.deleted',
+            $item,
+            $hasMovements ? "تم حذف الصنف {$name} مع حركاته المخزنية" : "تم حذف الصنف {$name}",
+        );
+
+        return response()->json([
+            'message' => $hasMovements
+                ? Terms::get('تم حذف الصنف وحركاته المخزنية بعد التأكيد.')
+                : Terms::get('تم حذف الصنف.'),
+        ]);
     }
 
     /**

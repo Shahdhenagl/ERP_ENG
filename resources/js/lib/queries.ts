@@ -1215,7 +1215,8 @@ export function useDeleteItem() {
     const client = useQueryClient()
 
     return useMutation({
-        mutationFn: async (id: number) => (await api.delete(`/items/${id}`)).data,
+        mutationFn: async ({ id, withMovements = false }: { id: number; withMovements?: boolean }) =>
+            (await api.delete(`/items/${id}`, { params: { with_movements: withMovements ? 1 : 0 } })).data,
         onSuccess: () => invalidateStock(client),
     })
 }

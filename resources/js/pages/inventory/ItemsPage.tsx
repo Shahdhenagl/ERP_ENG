@@ -52,6 +52,7 @@ export function ItemsPage() {
     const [lowOnly, setLowOnly] = useState(false)
     const [view, setViewMode] = useViewMode('items')
     const [deleting, setDeleting] = useState<Item | undefined>()
+    const [deletingWithMovements, setDeletingWithMovements] = useState(false)
     // The UPS/battery being installed at a customer — drawn off the shelf on save.
     const [installing, setInstalling] = useState<Item | undefined>()
 
@@ -74,13 +75,19 @@ export function ItemsPage() {
 
     useEffect(() => () => window.clearTimeout(timer.current), [])
 
-    const handleDelete = async () => {
+    const handleDelete = async (withMovements = false) => {
         if (!deleting) return
 
+        if (!withMovements && (deleting.movements_count ?? 0) > 0) {
+            setDeletingWithMovements(true)
+            return
+        }
+
         try {
-            await remove.mutateAsync(deleting.id)
+            await remove.mutateAsync({ id: deleting.id, withMovements })
             toast.success('تم حذف الصنف.')
             setDeleting(undefined)
+            setDeletingWithMovements(false)
         } catch (caught) {
             toast.error(errorMessage(caught, 'تعذّر حذف الصنف.'))
         }
@@ -328,8 +335,18 @@ export function ItemsPage() {
                 onClose={() => setDeleting(undefined)}
                 onConfirm={handleDelete}
                 title="حذف الصنف"
-                message={`سيتم حذف ${deleting?.name ?? ''}. الأصناف التي لها حركة مخزنية لا يمكن حذفها.`}
+                message={`سيتم حذف ${deleting?.name ?? ''}. سيتم الاحتفاظ بالمستندات المرتبطة، لكن لا يمكن التراجع عن حذف الصنف.`}
                 confirmLabel="حذف"
+                loading={remove.isPending}
+                danger
+            />
+            <ConfirmDialog
+                open={deletingWithMovements}
+                onClose={() => setDeletingWithMovements(false)}
+                onConfirm={() => void handleDelete(true)}
+                title="حذف الصنف مع حركاته"
+                message={`تحذير نهائي: سيتم حذف ${deleting?.movements_count ?? 0} حركة مخزنية ومستويات المخزون والسيريالات للصنف «${deleting?.name ?? ''}». ستبقى أوامر الشراء والفواتير محفوظة بدون ربط بهذا الصنف. هل تريد المتابعة؟`}
+                confirmLabel="حذف الصنف وحركاته"
                 loading={remove.isPending}
                 danger
             />

@@ -2,6 +2,8 @@
 
 use App\Models\Item;
 use App\Models\ItemCategory as ItemGroup;
+use App\Models\StockMovement;
+use App\Models\StockLevel;
 use App\Models\User;
 
 use function Pest\Laravel\actingAs;
@@ -163,4 +165,30 @@ it('filters the list down to one category', function () {
 
     expect($response->json('data'))->toHaveCount(1)
         ->and($response->json('data.0.name'))->toBe('وحدة UPS');
+});
+
+it('requires explicit confirmation before deleting an item with stock movements', function () {
+    $item = Item::factory()->create(['name' => 'صنف للحذف']);
+    StockLevel::create(['item_id' => $item->id, 'warehouse_id' => \App\Models\Warehouse::main()->id, 'qty' => 3]);
+    StockMovement::create([
+        'item_id' => $item->id,
+        'type' => 'receipt',
+        'qty' => 3,
+        'unit_cost' => 100,
+        'to_warehouse_id' => \App\Models\Warehouse::main()->id,
+    ]);
+
+    actingAs($this->manager)
+        ->deleteJson("/api/items/{$item->id}")
+        ->assertUnprocessable()
+        ->assertJsonPath('movements_count', 1);
+
+    actingAs($this->manager)
+        ->deleteJson("/api/items/{$item->id}?with_movements=1")
+        ->assertOk();
+
+    expect(Item::find($item->id))->toBeNull()
+        ->and(Item::withTrashed()->find($item->id))->not->toBeNull()
+        ->and(StockMovement::where('item_id', $item->id)->count())->toBe(0)
+        ->and(StockLevel::where('item_id', $item->id)->count())->toBe(0);
 });
