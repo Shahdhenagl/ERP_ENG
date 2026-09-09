@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { parseConditions } from '@/lib/conditions'
 import {
     DocumentParty,
@@ -15,11 +15,25 @@ import { useQuotation, useSettings } from '@/lib/queries'
 
 export function QuotationPrint() {
     const { id } = useParams<{ id: string }>()
+    const [searchParams] = useSearchParams()
+    const english = searchParams.get('lang') === 'en'
     const { data: quotation, isError, refetch } = useQuotation(id)
     const { data: settings } = useSettings()
 
     if (isError) return <ErrorState message="تعذّر تحميل العرض." onRetry={() => void refetch()} />
     if (!quotation) return null
+
+    // English print must never leak Arabic labels or free-text values. Values
+    // that have no English counterpart are omitted rather than mixed into the
+    // English document.
+    const en = (value: string | null | undefined): string | null => {
+        if (!value) return null
+        const clean = value.replace(/[\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff\ufb50-\ufdff\ufe70-\ufeff]/g, '').trim()
+        return clean || null
+    }
+    const money = (value: number) => english
+        ? `${value.toLocaleString('en-EG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP`
+        : formatMoney(value)
 
     // The company-wide terms are the fallback; a quote that states its own
     // wins, because it was written for this customer.
@@ -38,41 +52,43 @@ export function QuotationPrint() {
 
     return (
         <DocumentShell
-            title="عرض سعر"
+            title={english ? 'Quotation' : 'عرض سعر'}
             number={quotation.code}
+            subtitle={english ? undefined : undefined}
+            language={english ? 'en' : 'ar'}
             className="doc-sheet--quotation"
             exportFormats
-            bilingualFooter
+            bilingualFooter={!english}
             hideHeaderContact
             plainFooter
         >
             <div className="grid grid-cols-2 gap-4">
                 <DocumentParty
-                    heading="مقدَّم إلى"
+                    heading={english ? 'Bill To' : 'مقدَّم إلى'}
                     rows={[
-                        ['العميل', quotation.customer],
-                        ['عناية إلى', quotation.attention_to],
-                        ['الفرع', quotation.branch],
-                        ['الجهاز', quotation.asset],
+                        [english ? 'Customer' : 'العميل', english ? en(quotation.customer) : quotation.customer],
+                        [english ? 'Attention To' : 'عناية إلى', english ? en(quotation.attention_to) : quotation.attention_to],
+                        [english ? 'Branch' : 'الفرع', english ? en(quotation.branch) : quotation.branch],
+                        [english ? 'Asset' : 'الجهاز', english ? en(quotation.asset) : quotation.asset],
                     ]}
                 />
 
                 <DocumentParty
-                    heading="بيانات العرض"
+                    heading={english ? 'Quotation Details' : 'بيانات العرض'}
                     rows={[
-                        ['رقم العرض', quotation.code],
-                        ['التاريخ', quotation.issue_date ? formatDate(quotation.issue_date) : null],
+                        [english ? 'Quotation No.' : 'رقم العرض', quotation.code],
+                        [english ? 'Date' : 'التاريخ', quotation.issue_date ? formatDate(quotation.issue_date) : null],
                         [
-                            'صالح حتى',
-                            quotation.valid_until ? formatDate(quotation.valid_until) : 'غير محدد',
+                            english ? 'Valid Until' : 'صالح حتى',
+                            quotation.valid_until ? formatDate(quotation.valid_until) : english ? 'Open' : 'غير محدد',
                         ],
                     ]}
                 />
             </div>
 
-            {quotation.title && (
+            {(english ? en(quotation.title) : quotation.title) && (
                 <p className="doc-keep mt-4 text-center text-[15px] font-bold text-navy-800">
-                    {quotation.title}
+                    {english ? en(quotation.title) : quotation.title}
                 </p>
             )}
 
@@ -87,10 +103,10 @@ export function QuotationPrint() {
                 <thead>
                     <tr>
                         <th className="quotation-cell-index">#</th>
-                        <th className="quotation-cell-description">البيان</th>
-                        <th className="quotation-cell-quantity">الكمية</th>
-                        <th className="quotation-cell-unit-price">سعر الوحدة</th>
-                        <th className="quotation-cell-total">الإجمالي</th>
+                                <th className="quotation-cell-description">{english ? 'Description' : 'البيان'}</th>
+                        <th className="quotation-cell-quantity">{english ? 'Qty' : 'الكمية'}</th>
+                        <th className="quotation-cell-unit-price">{english ? 'Unit Price' : 'سعر الوحدة'}</th>
+                        <th className="quotation-cell-total">{english ? 'Total' : 'الإجمالي'}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -101,8 +117,8 @@ export function QuotationPrint() {
                             <tr key={line.id}>
                                 <td className="quotation-cell-index text-navy-400">{index + 1}</td>
                                 <td className="quotation-cell-description text-navy-900">
-                                    <span className="font-semibold">{line.description}</span>
-                                    {line.item_category_label && (
+                                    <span className="font-semibold">{english ? en(line.description) : line.description}</span>
+                                    {!english && line.item_category_label && (
                                         <span className="mr-1.5 text-[11px] text-navy-400">
                                             ({line.item_category_label})
                                         </span>
@@ -110,13 +126,13 @@ export function QuotationPrint() {
                                     {/* The whole nameplate on the document the
                                         customer keeps — a rating agreed in
                                         writing is not a rating on a screen. */}
-                                    {specs.length > 0 && <SpecRowList rows={specs} />}
+                                    {!english && specs.length > 0 && <SpecRowList rows={specs} />}
                                 </td>
                                 <td className="quotation-cell-quantity tabular">
                                     {formatQty(line.qty)}
                                 </td>
-                                <td className="quotation-cell-unit-price tabular">{formatMoney(line.unit_price)}</td>
-                                <td className="quotation-cell-total tabular font-bold">{formatMoney(line.line_total)}</td>
+                                <td className="quotation-cell-unit-price tabular">{money(line.unit_price)}</td>
+                                <td className="quotation-cell-total tabular font-bold">{money(line.line_total)}</td>
                             </tr>
                         )
                     })}
@@ -125,28 +141,31 @@ export function QuotationPrint() {
 
             <DocumentTotals
                 rows={[
-                    ['الإجمالي قبل الخصم', formatMoney(quotation.subtotal)],
+                    [english ? 'Subtotal' : 'الإجمالي قبل الخصم', money(quotation.subtotal)],
                     ...(quotation.discount > 0
                         ? ([
                               [
-                                  quotation.discount_percent != null
-                                      ? `الخصم (${quotation.discount_percent}%)`
-                                      : 'الخصم',
-                                  `− ${formatMoney(quotation.discount)}`,
+                                      english
+                                          ? `Discount (${quotation.discount_percent ?? 0}%)`
+                                          : quotation.discount_percent != null
+                                              ? `الخصم (${quotation.discount_percent}%)`
+                                              : 'الخصم',
+                                  `− ${money(quotation.discount)}`,
                               ],
                           ] as Array<[string, string]>)
                         : []),
                     ...(quotation.tax_rate > 0
                         ? ([
                               [
-                                  `ضريبة القيمة المضافة ${quotation.tax_rate}%`,
-                                  formatMoney(quotation.tax_amount),
+                                  english ? `VAT ${quotation.tax_rate}%` : `ضريبة القيمة المضافة ${quotation.tax_rate}%`,
+                                  money(quotation.tax_amount),
                               ],
                           ] as Array<[string, string]>)
                         : []),
                 ]}
-                total={formatMoney(quotation.total)}
-                inWords={quotation.total}
+                total={money(quotation.total)}
+                totalLabel={english ? 'Grand Total' : 'الإجمالي'}
+                inWords={english ? undefined : quotation.total}
                 align="end"
                 boxed
             />
@@ -155,17 +174,17 @@ export function QuotationPrint() {
                 signature. A condition with a value states it; one without is a
                 dotted rule, because a quote is often agreed at a desk and the
                 terms written on the sheet by whoever agreed them. */}
-            {conditions.length > 0 && (
+            {!english && conditions.length > 0 && (
                 <div className="doc-keep mt-6 rounded-xl border border-navy-200 bg-navy-50/50 p-4">
-                    <p className="mb-2.5 text-[13px] font-extrabold text-navy-800">الشروط والأحكام</p>
+                    <p className="mb-2.5 text-[13px] font-extrabold text-navy-800">{english ? 'Terms and Conditions' : 'الشروط والأحكام'}</p>
 
                     <dl className="space-y-2">
                         {conditions.map((condition) => (
                             <div key={condition.label} className="flex items-baseline gap-2 text-[12.5px]">
-                                <dt className="shrink-0 font-bold text-navy-700">{condition.label}:</dt>
+                                <dt className="shrink-0 font-bold text-navy-700">{english ? en(condition.label) : condition.label}:</dt>
                                 <dd className="min-w-0 flex-1">
                                     {condition.value ? (
-                                        <span className="text-navy-700">{condition.value}</span>
+                                        <span className="text-navy-700">{english ? en(condition.value) : condition.value}</span>
                                     ) : (
                                         <span
                                             className="block border-b border-dotted border-navy-300"
@@ -182,20 +201,20 @@ export function QuotationPrint() {
             )}
 
             <p className="doc-keep mt-5 text-center text-[13px] font-bold text-navy-800">
-                وتفضلوا بقبول فائق الاحترام،،،
+                {english ? 'Kind regards,' : 'وتفضلوا بقبول فائق الاحترام،،،'}
             </p>
 
-            {terms && (
+            {(english ? en(terms) : terms) && (
                 <div className="doc-keep mt-6 rounded-lg border border-navy-200 p-3">
-                    <p className="mb-1.5 text-[11px] font-bold text-navy-400">الشروط والأحكام</p>
+                    <p className="mb-1.5 text-[11px] font-bold text-navy-400">{english ? 'Terms and Conditions' : 'الشروط والأحكام'}</p>
                     <p className="text-[12px] leading-relaxed whitespace-pre-line text-navy-700">
-                        {terms}
+                        {english ? en(terms) : terms}
                     </p>
                 </div>
             )}
 
             <DocumentSignatures
-                labels={['عن الشركة', 'موافقة العميل']}
+                labels={english ? ['For the Company', 'Customer Approval'] : ['عن الشركة', 'موافقة العميل']}
                 showLines={false}
                 stamp={
                     settings?.company_stamp_url ? (

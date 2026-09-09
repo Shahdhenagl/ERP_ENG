@@ -26,6 +26,7 @@ export function DocumentShell({
     bilingualFooter = false,
     hideHeaderContact = false,
     plainFooter = false,
+    language = 'ar',
 }: {
     title: string
     /**
@@ -43,6 +44,7 @@ export function DocumentShell({
     bilingualFooter?: boolean
     hideHeaderContact?: boolean
     plainFooter?: boolean
+    language?: 'ar' | 'en'
 }) {
     const navigate = useNavigate()
     const { data: settings, isLoading } = useSettings()
@@ -62,8 +64,10 @@ export function DocumentShell({
 
     if (isLoading || !settings) return <PageLoader />
 
+    const english = language === 'en'
+
     return (
-        <div className="min-h-dvh bg-navy-100 py-6 print:bg-white print:py-0" dir="rtl">
+        <div className="min-h-dvh bg-navy-100 py-6 print:bg-white print:py-0" dir={english ? 'ltr' : 'rtl'}>
             <div className="no-print mx-auto mb-4 flex max-w-[210mm] flex-wrap items-center justify-between gap-3 px-4">
                 <button onClick={() => navigate(-1)} className="btn-ghost text-sm">
                     <ArrowRight className="size-4" />
@@ -123,7 +127,7 @@ export function DocumentShell({
                             <p className="text-lg leading-tight font-extrabold text-navy-900">
                                 {settings.company_name}
                             </p>
-                            {settings.company_tagline && (
+                            {!english && settings.company_tagline && (
                                 <p className="text-[11px] text-navy-500">{settings.company_tagline}</p>
                             )}
                         </div>
@@ -147,7 +151,7 @@ export function DocumentShell({
                     </h1>
                     {number && (
                         <p className="mt-1 text-sm font-bold text-navy-500">
-                            <span>رقم </span>
+                            <span>{english ? 'No. ' : 'رقم '}</span>
                             <span className="tabular text-navy-700" dir="ltr">
                                 {number}
                             </span>

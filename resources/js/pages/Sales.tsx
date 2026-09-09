@@ -513,7 +513,6 @@ function QuotationDetail({
                     : success,
             )
 
-            if (act === 'accept') onClose()
         } catch (caught) {
             toast.error(errorMessage(caught, 'تعذّر تنفيذ العملية.'))
         }
@@ -551,6 +550,31 @@ function QuotationDetail({
             popup?.close()
             toast.error(errorMessage(caught, 'تعذّر إرسال العرض.'))
         }
+    }
+
+    const sendAcceptanceToWhatsApp = () => {
+        if (!quotation.customer_whatsapp_number) {
+            toast.error('لا يوجد رقم واتساب مسجل لهذا العميل.')
+            return
+        }
+
+        const printUrl = `${window.location.origin}${path(`/print/quotations/${quotation.id}?lang=en`)}`
+        const message = [
+            `Dear ${quotation.customer ?? 'Customer'},`,
+            '',
+            `Your quotation ${quotation.code} has been approved and accepted.`,
+            quotation.title ? `Subject: ${quotation.title}` : '',
+            `Total: ${quotation.total.toLocaleString('en-EG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP`,
+            '',
+            'Please find the approved quotation here:',
+            printUrl,
+            '',
+            'Thank you for your business.',
+        ].filter(Boolean).join('\n')
+        window.open(
+            `https://wa.me/${quotation.customer_whatsapp_number}?text=${encodeURIComponent(message)}`,
+            '_blank',
+        )
     }
 
     return (
@@ -764,6 +788,33 @@ function QuotationDetail({
                                     onClick={() => setReasonFor('reject')}
                                 >
                                     {tr('العميل رفض')}
+                                </Button>
+                            </>
+                        )}
+
+                        {quotation.status === 'accepted' && (
+                            <>
+                                <Link
+                                    to={path(`/print/quotations/${quotation.id}?lang=ar`)}
+                                    className="btn-secondary text-xs"
+                                >
+                                    <Printer className="size-4" />
+                                    طباعة عربي
+                                </Link>
+                                <Link
+                                    to={path(`/print/quotations/${quotation.id}?lang=en`)}
+                                    className="btn-secondary text-xs"
+                                    dir="ltr"
+                                >
+                                    <Printer className="size-4" />
+                                    Print English
+                                </Link>
+                                <Button
+                                    icon={MessageCircle}
+                                    className="text-xs"
+                                    onClick={sendAcceptanceToWhatsApp}
+                                >
+                                    إرسال تأكيد القبول للعميل
                                 </Button>
                             </>
                         )}
