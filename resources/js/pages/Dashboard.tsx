@@ -52,6 +52,16 @@ export function Dashboard() {
         : { period, year, month }
     const { data, isLoading, isError, refetch } = useDashboard(dashboardParams)
 
+    const tasksPath = (extra: Record<string, string> = {}, completed = false) => {
+        const params = new URLSearchParams(
+            completed
+                ? (period === 'day' ? { completed_day: dateStr } : { completed_month: monthStr })
+                : (period === 'day' ? { day: dateStr } : { month: monthStr }),
+        )
+        Object.entries(extra).forEach(([key, value]) => params.set(key, value))
+        return path(`/tasks?${params.toString()}`)
+    }
+
     if (isError) {
         return <ErrorState message={tr('تعذّر تحميل لوحة المعلومات.')} onRetry={() => void refetch()} />
     }
@@ -114,7 +124,7 @@ export function Dashboard() {
                     value={stats?.open_total}
                     loading={isLoading}
                     tone="navy"
-                    to={path('/tasks?open_only=1')}
+                    to={tasksPath({ open_only: '1' })}
                 />
                 <StatTile
                     icon={PauseCircle}
@@ -122,7 +132,7 @@ export function Dashboard() {
                     value={stats?.postponed}
                     loading={isLoading}
                     tone="amber"
-                    to={path('/tasks?status=postponed')}
+                    to={tasksPath({ status: 'postponed' })}
                 />
                 <StatTile
                     icon={AlertTriangle}
@@ -130,7 +140,7 @@ export function Dashboard() {
                     value={stats?.overdue}
                     loading={isLoading}
                     tone="red"
-                    to={path('/tasks?open_only=1&overdue=1')}
+                    to={tasksPath({ open_only: '1', overdue: '1' })}
                 />
                 <StatTile
                     icon={CalendarClock}
@@ -138,7 +148,7 @@ export function Dashboard() {
                     value={stats?.unassigned}
                     loading={isLoading}
                     tone="amber"
-                    to={path('/tasks?open_only=1&unassigned=1')}
+                    to={tasksPath({ open_only: '1', unassigned: '1' })}
                 />
                 {canDispatch && (
                     <StatTile
@@ -157,7 +167,7 @@ export function Dashboard() {
                         value={stats?.completed_today}
                         loading={isLoading}
                         tone="emerald"
-                        to={path('/tasks?status=completed&completed_today=1')}
+                        to={tasksPath({ status: 'completed' }, true)}
                     />
                 ) : (
                     <StatTile
@@ -166,7 +176,7 @@ export function Dashboard() {
                         value={stats?.completed_this_month}
                         loading={isLoading}
                         tone="navy"
-                        to={path('/tasks?status=completed&completed_this_month=1')}
+                        to={tasksPath({ status: 'completed' }, true)}
                     />
                 )}
             </div>

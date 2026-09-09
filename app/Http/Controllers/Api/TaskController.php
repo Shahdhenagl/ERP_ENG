@@ -55,6 +55,16 @@ class TaskController extends Controller
             ->when($request->boolean('overdue'), fn ($q) => $q->whereNotNull('scheduled_at')->where('scheduled_at', '<', now()))
             ->when($request->boolean('completed_today'), fn ($q) => $q->whereDate('completed_at', today()))
             ->when($request->boolean('completed_this_month'), fn ($q) => $q->whereBetween('completed_at', [now()->startOfMonth(), now()->endOfMonth()]))
+            ->when($request->string('completed_day')->toString(), fn ($q, $d) => $q->whereDate('completed_at', $d))
+            ->when($request->string('completed_month')->toString(), function ($q, $month) {
+                try {
+                    $start = CarbonImmutable::createFromFormat('!Y-m', $month)->startOfMonth();
+                    $end = $start->endOfMonth();
+                    $q->whereBetween('completed_at', [$start, $end]);
+                } catch (\Throwable) {
+                    // Ignore an invalid optional filter; the normal request filters remain usable.
+                }
+            })
             ->when($request->string('scheduled_after')->toString(), fn ($q, $d) => $q->whereDate('scheduled_at', '>=', $d))
             ->when($request->string('scheduled_before')->toString(), fn ($q, $d) => $q->whereDate('scheduled_at', '<=', $d))
             ->search($request->string('search')->toString())

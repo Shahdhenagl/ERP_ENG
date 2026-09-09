@@ -204,6 +204,20 @@ export function TaskList() {
             searchParams.get('to'),
     )
 
+    const periodFilter = searchParams.get('month') || searchParams.get('completed_month') ? 'month' : 'day'
+    const setPeriodFilter = (period: 'day' | 'month') => {
+        const next = new URLSearchParams(searchParams)
+        next.delete('from')
+        next.delete('to')
+        next.delete('day')
+        next.delete('month')
+        next.delete('page')
+        if (period === 'day') next.set('day', localDateParam())
+        else next.set('month', localDateParam().slice(0, 7))
+        setDefaultDayEnabled(false)
+        setSearchParams(next)
+    }
+
     // Wait for a pause in typing before hitting the API.
     const searchTimer = useRef<number>(0)
     const debouncedSearch = (value: string) => {
@@ -280,6 +294,27 @@ export function TaskList() {
                 >
                     <SlidersHorizontal className="size-4" />
                 </button>
+            </div>
+
+            <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-navy-100 bg-white px-3 py-2 shadow-sm">
+                <span className="text-xs font-bold text-navy-600">{tr('فترة المهام')}</span>
+                <div className="flex items-center gap-1 rounded-lg bg-navy-100 p-1">
+                    {(['day', 'month'] as const).map((period) => (
+                        <button
+                            key={period}
+                            type="button"
+                            onClick={() => setPeriodFilter(period)}
+                            className={clsx(
+                                'rounded-md px-3 py-1 text-[11px] font-bold transition',
+                                periodFilter === period
+                                    ? 'bg-white text-brand-700 shadow-sm'
+                                    : 'text-navy-500 hover:text-navy-800',
+                            )}
+                        >
+                            {period === 'day' ? tr('اليوم') : tr('الشهر')}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* Table to scan many at once, cards for the detail on each. */}
