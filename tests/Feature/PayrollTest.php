@@ -366,6 +366,34 @@ it('marks the run paid once its last slip is', function () {
     expect($run->fresh()->status)->toBe('paid');
 });
 
+it('reopens paid payroll, reverses the old accounting and cash entries, and allows correcting worked days', function () {
+    $employee = Employee::factory()->create([
+        'basic_salary' => 6000, 'allowances' => null, 'insurance_rate' => 0, 'tax_rate' => 0,
+    ]);
+
+    $run = $this->payroll->open(2026, 8, $this->manager);
+    $this->payroll->approve($run, $this->manager);
+    $this->payroll->payRun($run->fresh(), $this->manager);
+
+    expect((float) $run->fresh()->payslips->first()->net)->toBe(6000.0)
+        ->and(acct('accrued_salaries'))->toBe(0.0);
+
+    $this->payroll->reopen($run->fresh(), $this->manager);
+    $slip = $run->fresh()->payslips->first();
+
+    expect($run->fresh()->status)->toBe('draft')
+        ->and($slip->isPaid())->toBeFalse()
+        ->and($slip->cashMovement)->not->toBeNull()
+        ->and(acct('accrued_salaries'))->toBe(0.0);
+
+    $this->payroll->adjustSlip($slip, ['worked_days' => 15]);
+    $this->payroll->approve($run->fresh(), $this->manager);
+
+    expect((float) $run->fresh()->payslips->first()->net)->toBe(3000.0)
+        ->and(acct('salaries'))->toBe(3000.0)
+        ->and(acct('accrued_salaries'))->toBe(3000.0);
+});
+
 it('refuses to pay a slip before the run is approved', function () {
     Employee::factory()->create();
     $run = $this->payroll->open(2026, 8, $this->manager);

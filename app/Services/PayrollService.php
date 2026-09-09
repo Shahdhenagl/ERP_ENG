@@ -192,7 +192,7 @@ class PayrollService
         if ($run->isDraft()) return $run;
 
         return DB::transaction(function () use ($run, $actor) {
-            $run->load('payslips.cashMovement');
+            $run->load('payslips.cashMovement', 'payslips.employee');
             foreach ($run->payslips as $slip) {
                 if (! $slip->isPaid()) continue;
                 if (! $slip->cashMovement) {

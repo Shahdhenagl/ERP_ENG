@@ -62,6 +62,12 @@ class Payslip extends Model
         return $this->belongsTo(CashBox::class, 'cash_box_id');
     }
 
+    /** The treasury movement created when this payslip was paid. */
+    public function cashMovement(): BelongsTo
+    {
+        return $this->belongsTo(CashMovement::class, 'cash_movement_id');
+    }
+
     public function isPaid(): bool
     {
         return $this->paid_on !== null;
