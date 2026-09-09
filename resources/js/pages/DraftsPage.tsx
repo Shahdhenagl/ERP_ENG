@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { FileText, FolderPlus, Pencil, Plus, Printer, Save, Trash2 } from 'lucide-react'
+import { Eye, FileText, FolderPlus, MessageCircle, Pencil, Plus, Printer, Save, Trash2, Upload } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useArea } from '@/lib/nav'
 import { useToast } from '@/components/Toast'
@@ -27,8 +27,68 @@ export function DraftsPage() {
     const [editing, setEditing] = useState<Draft | null>(null)
     const [creating, setCreating] = useState(false)
     const [categoryForm, setCategoryForm] = useState(false)
+    const [preview, setPreview] = useState<Draft | null>(null)
+    const [importTargetCategory, setImportTargetCategory] = useState<number | undefined>()
+    const importRef = useRef<HTMLInputElement>(null)
+    const saveDraft = useSaveDraft()
+    const saveCategory = useSaveDraftCategory()
     const del = useDeleteDraft()
     const delCategory = useDeleteDraftCategory()
+
+    const importDrafts = async (file: File) => {
+        try {
+            const parsed = JSON.parse(await file.text()) as { drafts?: Record<string, unknown>[]; category?: { name?: string; name_en?: string } } | Record<string, unknown>[]
+            const rows = Array.isArray(parsed) ? parsed : parsed.drafts ?? []
+            if (!rows.length) throw new Error('ملف الاستيراد لا يحتوي على مسودات.')
+            let imported = 0
+            const fileCategory = Array.isArray(parsed) ? undefined : parsed.category
+            const resolvedCategories = new Map<string, number>()
+            for (const row of rows) {
+                let targetId = importTargetCategory
+                const category = typeof row.category === 'object' && row.category
+                    ? row.category as { name?: string; name_en?: string }
+                    : typeof row.category === 'string' ? { name: row.category } : !targetId ? fileCategory : undefined
+                if (!targetId && category?.name) {
+                    const categoryKey = category.name.trim()
+                    targetId = resolvedCategories.get(categoryKey)
+                    if (!targetId) {
+                        const existing = categories?.find((item) => item.name.trim() === categoryKey)
+                        targetId = existing?.id ?? (await saveCategory.mutateAsync({ name: category.name, name_en: category.name_en || null })).id
+                        resolvedCategories.set(categoryKey, targetId)
+                    }
+                }
+                if (!targetId) throw new Error('حدد تصنيفًا أو أضف اسم التصنيف داخل ملف الاستيراد.')
+                await saveDraft.mutateAsync({
+                    draft_category_id: targetId,
+                    title: String(row.title ?? 'مسودة مستوردة'),
+                    title_en: row.title_en ?? null,
+                    content: row.content ?? '',
+                    content_en: row.content_en ?? null,
+                    font_size: row.font_size ?? 14,
+                    font_family: row.font_family ?? 'Cairo',
+                    text_color: row.text_color ?? '#0b1b3a',
+                    accent_color: row.accent_color ?? '#0f766e',
+                    direction: row.direction === 'ltr' ? 'ltr' : 'rtl',
+                })
+                imported++
+            }
+            toast.success(`تم استيراد ${imported} مسودة.`)
+        } catch (e) {
+            toast.error(errorMessage(e, 'تعذر استيراد المسودات. استخدم ملف JSON صحيحًا.'))
+        } finally {
+            if (importRef.current) importRef.current.value = ''
+        }
+    }
+
+    const openImport = (target?: number) => {
+        setImportTargetCategory(target)
+        importRef.current?.click()
+    }
+
+    const sendWhatsApp = (draft: Draft) => {
+        const plain = (draft.content ?? '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+        window.open(`https://wa.me/?text=${encodeURIComponent(`${draft.title}\n\n${plain}`)}`, '_blank', 'noopener,noreferrer')
+    }
 
     const remove = async (draft: Draft) => {
         if (!window.confirm(`حذف المسودة «${draft.title}»؟`)) return
@@ -42,15 +102,24 @@ export function DraftsPage() {
     }
 
     return <>
-        <PageHeader title="المسودات" subtitle="نماذج وخطابات قابلة للتعديل والطباعة على مقاس A4" actions={<div className="flex gap-2"><Button variant="secondary" icon={FolderPlus} onClick={() => setCategoryForm(true)}>تصنيف جديد</Button><Button icon={Plus} onClick={() => setCreating(true)}>مسودة جديدة</Button></div>} />
+        <PageHeader title="المسودات" subtitle="نماذج وخطابات قابلة للتعديل والطباعة على مقاس A4" actions={<div className="flex flex-wrap gap-2"><input ref={importRef} type="file" accept=".json,application/json" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) void importDrafts(file) }} /><Button variant="secondary" icon={Upload} onClick={() => openImport(categoryId)}>استيراد مسودات</Button><Button variant="secondary" icon={FolderPlus} onClick={() => setCategoryForm(true)}>تصنيف جديد</Button><Button icon={Plus} onClick={() => setCreating(true)}>مسودة جديدة</Button></div>} />
         <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
             <button className={`rounded-xl px-4 py-2 text-sm font-bold ${!categoryId ? 'bg-brand-600 text-white' : 'bg-navy-100 text-navy-600'}`} onClick={() => setCategoryId(undefined)}>كل التصنيفات</button>
-            {categories?.map((c) => <div key={c.id} className="flex items-center gap-1 rounded-xl bg-navy-100 ps-4 text-sm font-bold text-navy-700"><button onClick={() => setCategoryId(c.id)} className="py-2">{c.name} <span className="text-xs text-navy-400">({c.drafts_count ?? 0})</span></button><button aria-label="حذف التصنيف" className="p-2 text-navy-400 hover:text-red-600" onClick={() => void removeCategory(c)}><Trash2 className="size-3.5" /></button></div>)}
+            {categories?.map((c) => <div key={c.id} className="flex items-center gap-1 rounded-xl bg-navy-100 ps-4 text-sm font-bold text-navy-700"><button onClick={() => setCategoryId(c.id)} className="py-2">{c.name} <span className="text-xs text-navy-400">({c.drafts_count ?? 0})</span></button><button aria-label="استيراد إلى التصنيف" title="استيراد إلى هذا التصنيف" className="p-2 text-brand-600 hover:bg-brand-50" onClick={() => openImport(c.id)}><Upload className="size-3.5" /></button><button aria-label="حذف التصنيف" className="p-2 text-navy-400 hover:text-red-600" onClick={() => void removeCategory(c)}><Trash2 className="size-3.5" /></button></div>)}
         </div>
-        {isLoading ? <SkeletonCard /> : !data?.data.length ? <EmptyState icon={FileText} title="لا توجد مسودات" description="أنشئ أول خطاب أو نموذج من الزر أعلاه." /> : <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{data.data.map((draft) => <article key={draft.id} className="card p-4"><div className="flex items-start justify-between gap-3"><div><span className="text-[11px] font-bold text-brand-600">{draft.category?.name}</span><h2 className="mt-1 font-extrabold text-navy-900">{draft.title}</h2><p className="mt-1 line-clamp-2 text-xs text-navy-500" dangerouslySetInnerHTML={{ __html: draft.content ?? '' }} /></div><FileText className="size-6 shrink-0 text-brand-500" /></div><div className="mt-4 flex gap-2 border-t border-navy-100 pt-3"><Button variant="secondary" className="flex-1" icon={Pencil} onClick={() => setEditing(draft)}>تعديل</Button><Button variant="secondary" icon={Printer} onClick={() => navigate(path(`/print/drafts/${draft.id}`))}>طباعة</Button><button className="rounded-lg p-2 text-red-500 hover:bg-red-50" onClick={() => void remove(draft)}><Trash2 className="size-4" /></button></div></article>)}</div>}
+        {isLoading ? <SkeletonCard /> : !data?.data.length ? <EmptyState icon={FileText} title="لا توجد مسودات" description="أنشئ أول خطاب أو نموذج من الزر أعلاه." /> : <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{data.data.map((draft) => <article key={draft.id} className="card p-4"><div className="flex items-start justify-between gap-3"><button className="text-start" onClick={() => setPreview(draft)}><span className="text-[11px] font-bold text-brand-600">{draft.category?.name}</span><h2 className="mt-1 font-extrabold text-navy-900">{draft.title}</h2><p className="mt-1 line-clamp-2 text-xs text-navy-500" dangerouslySetInnerHTML={{ __html: draft.content ?? '' }} /></button><FileText className="size-6 shrink-0 text-brand-500" /></div><div className="mt-4 flex flex-wrap gap-2 border-t border-navy-100 pt-3"><Button variant="secondary" icon={Eye} onClick={() => setPreview(draft)}>عرض</Button><Button variant="secondary" icon={Pencil} onClick={() => setEditing(draft)}>تعديل</Button><Button variant="secondary" icon={Printer} onClick={() => navigate(path(`/print/drafts/${draft.id}`))}>طباعة</Button><Button variant="whatsapp" icon={MessageCircle} onClick={() => sendWhatsApp(draft)}>واتساب</Button><button aria-label="حذف المسودة" className="rounded-lg p-2 text-red-500 hover:bg-red-50" onClick={() => void remove(draft)}><Trash2 className="size-4" /></button></div></article>)}</div>}
         {(creating || editing) && <DraftEditor draft={editing ?? undefined} categories={categories ?? []} defaultCategoryId={categoryId} onClose={() => { setCreating(false); setEditing(null) }} />}
         {categoryForm && <CategoryEditor onClose={() => setCategoryForm(false)} />}
+        {preview && <DraftPreview draft={preview} onClose={() => setPreview(null)} onPrint={() => navigate(path(`/print/drafts/${preview.id}`))} onWhatsApp={() => sendWhatsApp(preview)} />}
     </>
+}
+
+function DraftPreview({ draft, onClose, onPrint, onWhatsApp }: { draft: Draft; onClose: () => void; onPrint: () => void; onWhatsApp: () => void }) {
+    return <div className="fixed inset-0 z-50 overflow-y-auto bg-navy-950/50 p-4"><div className="mx-auto max-w-4xl rounded-2xl bg-surface p-5 shadow-2xl" dir={draft.direction}>
+        <div className="mb-5 flex items-center justify-between gap-3"><div><p className="text-xs font-bold text-brand-600">{draft.category?.name}</p><h2 className="text-xl font-extrabold text-navy-900">{draft.title}</h2></div><button onClick={onClose} className="text-navy-400">✕</button></div>
+        <div className="min-h-[320px] rounded-xl border border-navy-100 bg-white p-6 leading-loose" style={{ fontFamily: draft.font_family, fontSize: `${draft.font_size}px`, color: draft.text_color }} dangerouslySetInnerHTML={{ __html: draft.content ?? '' }} />
+        <div className="mt-5 flex flex-wrap justify-end gap-2"><Button variant="secondary" icon={Pencil} onClick={onClose}>إغلاق</Button><Button variant="secondary" icon={Printer} onClick={onPrint}>طباعة</Button><Button variant="whatsapp" icon={MessageCircle} onClick={onWhatsApp}>إرسال واتساب</Button></div>
+    </div></div>
 }
 
 function DraftEditor({ draft, categories, defaultCategoryId, onClose }: { draft?: Draft; categories: DraftCategory[]; defaultCategoryId?: number; onClose: () => void }) {
