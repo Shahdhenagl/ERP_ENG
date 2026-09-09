@@ -198,13 +198,19 @@ class QuotationController extends Controller
 
     protected function present(Quotation $quotation, bool $withLines = false): array
     {
+        $attentionTo = trim((string) $quotation->attention_to);
+        if ($attentionTo === '' || $attentionTo === ':') {
+            $attentionTo = trim((string) ($quotation->branch?->contact_name
+                ?: $quotation->customer?->contacts()->where('is_primary', true)->value('name')));
+        }
+
         $payload = [
             'id' => $quotation->id,
             'code' => $quotation->code,
             'title' => $quotation->title,
 
             'customer_id' => $quotation->customer_id,
-            'attention_to' => $quotation->attention_to,
+            'attention_to' => $attentionTo !== '' ? $attentionTo : null,
             'customer' => $quotation->customer?->name,
             'customer_whatsapp_number' => app(WhatsAppLinkBuilder::class)->normalizeNumber($quotation->customer?->whatsappNumber()),
             'customer_code' => $quotation->customer?->code,

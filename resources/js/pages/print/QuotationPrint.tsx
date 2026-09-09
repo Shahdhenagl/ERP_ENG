@@ -200,10 +200,6 @@ export function QuotationPrint() {
                 </div>
             )}
 
-            <p className="doc-keep mt-5 text-center text-[13px] font-bold text-navy-800">
-                {english ? 'Kind regards,' : 'وتفضلوا بقبول فائق الاحترام،،،'}
-            </p>
-
             {(english ? en(terms) : terms) && (
                 <div className="doc-keep mt-6 rounded-lg border border-navy-200 p-3">
                     <p className="mb-1.5 text-[11px] font-bold text-navy-400">{english ? 'Terms and Conditions' : 'الشروط والأحكام'}</p>
