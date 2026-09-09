@@ -295,6 +295,15 @@ class PayrollController extends Controller
         return response()->json(['data' => $this->presentRun($run)], 201);
     }
 
+    public function destroy(PayrollRun $payrollRun): JsonResponse
+    {
+        $code = $payrollRun->code;
+        $this->payroll->deleteDraft($payrollRun);
+        ActivityLog::record('payroll.deleted', $payrollRun, "حذف كشف رواتب {$code}");
+
+        return response()->json(['deleted' => true]);
+    }
+
     public function show(PayrollRun $payrollRun): JsonResponse
     {
         return response()->json(['data' => $this->presentRun($payrollRun->load('payslips.employee'))]);
@@ -309,6 +318,14 @@ class PayrollController extends Controller
             $run,
             "اعتماد كشف رواتب {$run->monthLabel()}",
         );
+
+        return response()->json(['data' => $this->presentRun($run->load('payslips.employee'))]);
+    }
+
+    public function reopen(Request $request, PayrollRun $payrollRun): JsonResponse
+    {
+        $run = $this->payroll->reopen($payrollRun, $request->user());
+        ActivityLog::record('payroll.reopened', $run, "إعادة فتح كشف رواتب {$run->monthLabel()} للتصحيح");
 
         return response()->json(['data' => $this->presentRun($run->load('payslips.employee'))]);
     }

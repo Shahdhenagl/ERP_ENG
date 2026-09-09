@@ -3950,12 +3950,20 @@ export function useOpenPayroll() {
     })
 }
 
+export function useDeletePayroll() {
+    const client = useQueryClient()
+    return useMutation({
+        mutationFn: async (id: number) => (await api.delete(`/payroll/${id}`)).data,
+        onSuccess: () => invalidateHr(client),
+    })
+}
+
 /** Approve or pay a whole run — one document moving. */
 export function usePayrollAction(runId: number) {
     const client = useQueryClient()
 
     return useMutation({
-        mutationFn: async ({ action, ...payload }: { action: 'approve' | 'pay' } & Record<string, unknown>) =>
+        mutationFn: async ({ action, ...payload }: { action: 'approve' | 'pay' | 'reopen' } & Record<string, unknown>) =>
             (await api.post<{ data: PayrollRun }>(`/payroll/${runId}/${action}`, payload)).data.data,
         onSuccess: () => invalidateHr(client),
     })

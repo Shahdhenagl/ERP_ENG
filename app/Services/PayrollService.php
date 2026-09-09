@@ -171,6 +171,60 @@ class PayrollService
         });
     }
 
+    /** Delete a mistaken draft without touching the treasury or ledger. */
+    public function deleteDraft(PayrollRun $run): void
+    {
+        if (! $run->isDraft()) {
+            throw ValidationException::withMessages([
+                'status' => Terms::get('لا يمكن حذف كشف تم اعتماده أو صرفه. استخدم التصحيح العكسي.'),
+            ]);
+        }
+
+        DB::transaction(function () use ($run): void {
+            $run->payslips()->delete();
+            $run->delete();
+        });
+    }
+
+    /** Reopen an approved/paid run for correction without deleting history. */
+    public function reopen(PayrollRun $run, User $actor): PayrollRun
+    {
+        if ($run->isDraft()) return $run;
+
+        return DB::transaction(function () use ($run, $actor) {
+            $run->load('payslips.cashMovement');
+            foreach ($run->payslips as $slip) {
+                if (! $slip->isPaid()) continue;
+                if (! $slip->cashMovement) {
+                    throw ValidationException::withMessages([
+                        'status' => Terms::get('تعذر عكس صرف راتب بلا حركة خزينة مرتبطة.'),
+                    ]);
+                }
+
+                CashMovement::create([
+                    'cash_box_id' => $slip->cashMovement->cash_box_id,
+                    'direction' => 'in',
+                    'amount' => $slip->cashMovement->amount,
+                    'transaction_date' => now()->toDateString(),
+                    'source' => 'payroll',
+                    'note' => "عكس صرف راتب {$run->code} — {$slip->employee?->name}",
+                    'user_id' => $actor->id,
+                ]);
+
+                $slip->forceFill([
+                    'paid_on' => null,
+                    'cash_box_id' => null,
+                    'cash_movement_id' => null,
+                ])->save();
+            }
+
+            app(LedgerPoster::class)->payrollRunVoided($run, $actor);
+            $run->forceFill(['status' => 'draft', 'approved_by' => null, 'approved_at' => null])->save();
+
+            return $run->fresh(['payslips', 'approver']);
+        });
+    }
+
     /**
      * Build one slip, computing every figure and freezing it.
      *
@@ -185,10 +239,22 @@ class PayrollService
         $gross = round($basic + $allowances, 2);
         $basisDays = max(1, (int) ($employee->salary_basis_days ?: 30));
 
+        // A mid-month hire earns only from the hiring date onward. The
+        // denominator remains the employee's agreed payroll basis (usually 30)
+        // so a salary of 15,000 for 15 eligible days becomes 7,500.
+        $periodStart = now()->create($run->year, $run->month, 1)->startOfDay();
+        $periodEnd = $periodStart->copy()->endOfMonth()->endOfDay();
+        $eligibleDays = $basisDays;
+        if ($employee->hired_on && $employee->hired_on->greaterThan($periodEnd)) {
+            $eligibleDays = 0;
+        } elseif ($employee->hired_on && $employee->hired_on->greaterThan($periodStart)) {
+            $eligibleDays = min($basisDays, $employee->hired_on->startOfDay()->diffInDays($periodEnd) + 1);
+        }
+
         // The employee's agreed salary period, not the calendar's length, is
         // the denominator. It can then be corrected on the draft slip.
-        $unpaidDays = min($basisDays, $leave->unpaidDaysIn($employee, $run->year, $run->month));
-        $workedDays = max(0, $basisDays - $unpaidDays);
+        $unpaidDays = min($basisDays, ($basisDays - $eligibleDays) + $leave->unpaidDaysIn($employee, $run->year, $run->month));
+        $workedDays = max(0, $eligibleDays - $leave->unpaidDaysIn($employee, $run->year, $run->month));
         $earnedGross = round($gross * $workedDays / $basisDays, 2);
         $unpaidDeduction = round($gross - $earnedGross, 2);
 

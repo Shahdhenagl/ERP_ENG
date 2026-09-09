@@ -322,8 +322,10 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
 
     Route::get('payroll', [PayrollController::class, 'index'])->middleware('can:payroll.manage,payroll.approve');
     Route::post('payroll', [PayrollController::class, 'open'])->middleware('can:payroll.manage');
+    Route::delete('payroll/{payrollRun}', [PayrollController::class, 'destroy'])->middleware('can:payroll.manage');
     Route::get('payroll/{payrollRun}', [PayrollController::class, 'show'])->middleware('can:payroll.manage,payroll.approve');
     Route::post('payroll/{payrollRun}/approve', [PayrollController::class, 'approve'])->middleware('can:payroll.approve');
+    Route::post('payroll/{payrollRun}/reopen', [PayrollController::class, 'reopen'])->middleware('can:payroll.manage');
     Route::post('payroll/{payrollRun}/pay', [PayrollController::class, 'pay'])->middleware('can:payroll.manage');
 
     Route::get('payslips/{payslip}', [PayrollController::class, 'slip'])->middleware('can:payroll.manage');

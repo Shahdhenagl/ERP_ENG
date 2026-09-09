@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { tr } from '@/lib/i18n'
-import { ArrowRight, BadgeCheck, Coins, Pencil, Plus, Printer, Wallet } from 'lucide-react'
+import { ArrowRight, BadgeCheck, Coins, Pencil, Plus, Printer, Trash2, Wallet } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Modal } from '@/components/Modal'
@@ -13,6 +13,7 @@ import { formatMoney } from '@/lib/domain'
 import { useArea } from '@/lib/nav'
 import {
     useCashBoxes,
+    useDeletePayroll,
     useOpenPayroll,
     usePayrollAction,
     usePayrollRun,
@@ -242,15 +243,18 @@ function RunDetail({ id, onBack }: { id: number; onBack: () => void }) {
     const { can } = useAuth()
     const { data: run, isLoading } = usePayrollRun(id)
     const act = usePayrollAction(id)
+    const remove = useDeletePayroll()
     const [payOpen, setPayOpen] = useState<'run' | Payslip | null>(null)
     const [editingSlip, setEditingSlip] = useState<Payslip | null>(null)
 
-    const runAction = async (action: 'approve') => {
+    const runAction = async (action: 'approve' | 'reopen') => {
         if (action === 'approve' && !window.confirm('اعتماد كشف الرواتب يُثبّت الخصومات ويسجّله في الدفاتر. متابعة؟'))
+            return
+        if (action === 'reopen' && !window.confirm('سيتم عكس حركة الخزينة والقيد المحاسبي ثم إعادة الكشف لمسودة قابلة للتعديل. متابعة؟'))
             return
         try {
             await act.mutateAsync({ action })
-            toast.success('تم اعتماد كشف الرواتب.')
+            toast.success(action === 'approve' ? 'تم اعتماد كشف الرواتب.' : 'تمت إعادة فتح الكشف للتصحيح.')
         } catch (caught) {
             toast.error(errorMessage(caught, 'تعذّر اعتماد كشف الرواتب.'))
         }
@@ -285,6 +289,26 @@ function RunDetail({ id, onBack }: { id: number; onBack: () => void }) {
                             </div>
 
                             <div className="flex gap-2">
+                                {run.status === 'draft' && (
+                                    <Button
+                                        variant="secondary"
+                                        icon={Trash2}
+                                        className="text-red-600"
+                                        loading={remove.isPending}
+                                        onClick={async () => {
+                                            if (!window.confirm('حذف كشف الرواتب وقسائمه؟ لا يمكن التراجع عن الحذف.')) return
+                                            try {
+                                                await remove.mutateAsync(run.id)
+                                                toast.success('تم حذف كشف الرواتب.')
+                                                onBack()
+                                            } catch (caught) {
+                                                toast.error(errorMessage(caught, 'تعذّر حذف الكشف.'))
+                                            }
+                                        }}
+                                    >
+                                        حذف المسودة
+                                    </Button>
+                                )}
                                 {run.status === 'draft' && can('payroll.approve') && (
                                     <Button
                                         icon={BadgeCheck}
@@ -292,6 +316,16 @@ function RunDetail({ id, onBack }: { id: number; onBack: () => void }) {
                                         onClick={() => runAction('approve')}
                                     >
                                         {tr('اعتماد')}
+                                    </Button>
+                                )}
+                                {run.status !== 'draft' && can('payroll.manage') && (
+                                    <Button
+                                        variant="secondary"
+                                        icon={Pencil}
+                                        loading={act.isPending}
+                                        onClick={() => runAction('reopen')}
+                                    >
+                                        إعادة فتح للتصحيح
                                     </Button>
                                 )}
                                 {run.status !== 'draft' && run.unpaid_net > 0 && (

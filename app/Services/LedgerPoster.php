@@ -191,8 +191,9 @@ class LedgerPoster
         }
 
         $this->ready();
+        $event = $this->ledger->entryFor($run, 'approved') ? 'reapproved' : 'approved';
 
-        return $this->ledger->postFor($run, 'approved', function () use ($run) {
+        return $this->ledger->postFor($run, $event, function () use ($run) {
             $slips = $run->payslips;
 
             // Earned pay plus any bonus is what the company spent on wages this
@@ -228,6 +229,24 @@ class LedgerPoster
             'source' => 'payroll',
             'memo' => "كشف رواتب {$run->monthLabel()}",
         ], $actor);
+    }
+
+    /** Reverse the posted payroll liability before a run is corrected. */
+    public function payrollRunVoided(PayrollRun $run, ?User $actor = null): ?JournalEntry
+    {
+        $posted = $this->ledger->entryFor($run, 'approved');
+        if (! $posted || $this->ledger->entryFor($run, 'voided')) return null;
+
+        return $this->ledger->reverse(
+            $posted,
+            "إعادة فتح كشف الرواتب {$run->monthLabel()}",
+            $actor,
+            attributes: [
+                'sourceable_type' => $run->getMorphClass(),
+                'sourceable_id' => $run->getKey(),
+                'event' => 'voided',
+            ],
+        );
     }
 
     /** A supplier bill torn up. Undone by its mirror, like a sales invoice. */
