@@ -7,12 +7,12 @@ import {
     ClipboardCheck,
     Eye,
     FileText,
+    MessageCircle,
     Pencil,
     Plus,
     Printer,
     Receipt,
     Search,
-    Send,
     ThumbsDown,
     ThumbsUp,
     Trash2,
@@ -362,6 +362,7 @@ function QuickLine({ quotation }: { quotation: Quotation }) {
         try {
             await save.mutateAsync({
                 customer_id: quotation.customer_id,
+                attention_to: quotation.attention_to,
                 branch_id: quotation.branch_id,
                 title: quotation.title,
                 valid_until: quotation.valid_until,
@@ -515,6 +516,40 @@ function QuotationDetail({
             if (act === 'accept') onClose()
         } catch (caught) {
             toast.error(errorMessage(caught, 'تعذّر تنفيذ العملية.'))
+        }
+    }
+
+    const sendToWhatsApp = async () => {
+        if (!quotation.customer_whatsapp_number) {
+            toast.error('لا يوجد رقم واتساب مسجل لهذا العميل.')
+            return
+        }
+
+        // Open the tab synchronously so mobile browsers do not treat the later
+        // navigation (after the API call) as an unsolicited popup.
+        const popup = window.open('about:blank', '_blank')
+        try {
+            await action.mutateAsync({ id: quotation.id, action: 'send' })
+            const printUrl = `${window.location.origin}${path(`/print/quotations/${quotation.id}`)}`
+            const message = [
+                `السادة / ${quotation.customer ?? ''}`,
+                '',
+                `نرفق لسيادتكم عرض السعر رقم ${quotation.code}.`,
+                quotation.title ? `الموضوع: ${quotation.title}` : '',
+                `الإجمالي: ${formatMoney(quotation.total)}`,
+                '',
+                'يمكن معاينة العرض وطباعته من الرابط التالي:',
+                printUrl,
+                '',
+                'وتفضلوا بقبول فائق الاحترام.',
+            ].filter(Boolean).join('\n')
+            const whatsappUrl = `https://wa.me/${quotation.customer_whatsapp_number}?text=${encodeURIComponent(message)}`
+            if (popup) popup.location.href = whatsappUrl
+            else window.open(whatsappUrl, '_blank')
+            toast.success('تم تحديث حالة العرض وفتح واتساب بالرسالة الجاهزة.')
+        } catch (caught) {
+            popup?.close()
+            toast.error(errorMessage(caught, 'تعذّر إرسال العرض.'))
         }
     }
 
@@ -684,12 +719,12 @@ function QuotationDetail({
                                 )}
                                 {!quotation.is_pending_approval && (
                                 <Button
-                                    icon={Send}
+                                    icon={MessageCircle}
                                     className="text-xs"
                                     loading={action.isPending}
-                                    onClick={() => run('send', 'تم إرسال العرض.')}
+                                    onClick={sendToWhatsApp}
                                 >
-                                    {tr('إرسال للعميل')}
+                                    إرسال للعميل عبر واتساب
                                 </Button>
                                 )}
                                 <Button

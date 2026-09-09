@@ -24,6 +24,8 @@ export function DocumentShell({
     className,
     exportFormats = false,
     bilingualFooter = false,
+    hideHeaderContact = false,
+    plainFooter = false,
 }: {
     title: string
     /**
@@ -39,6 +41,8 @@ export function DocumentShell({
     className?: string
     exportFormats?: boolean
     bilingualFooter?: boolean
+    hideHeaderContact?: boolean
+    plainFooter?: boolean
 }) {
     const navigate = useNavigate()
     const { data: settings, isLoading } = useSettings()
@@ -125,7 +129,7 @@ export function DocumentShell({
                         </div>
                     </div>
 
-                    <div className="text-left text-[11px] leading-relaxed text-navy-600">
+                    {!hideHeaderContact && <div className="text-left text-[11px] leading-relaxed text-navy-600">
                         {settings.company_address && <p>{settings.company_address}</p>}
                         {settings.company_phone && <p dir="ltr">{settings.company_phone}</p>}
                         {settings.company_email && <p dir="ltr">{settings.company_email}</p>}
@@ -134,7 +138,7 @@ export function DocumentShell({
                                 الرقم الضريبي: <span dir="ltr">{settings.company_tax_id}</span>
                             </p>
                         )}
-                    </div>
+                    </div>}
                 </header>
 
                 <div className="doc-keep mt-5 mb-5 text-center">
@@ -154,7 +158,7 @@ export function DocumentShell({
 
                 {children}
 
-                <footer className={`mt-8 border-t border-navy-200 pt-3 text-center text-[10px] text-navy-400 ${bilingualFooter ? 'doc-bilingual-footer' : ''}`}>
+                <footer className={`mt-8 text-center text-[10px] text-navy-400 ${plainFooter ? 'doc-plain-footer' : 'border-t border-navy-200 pt-3'} ${bilingualFooter ? 'doc-bilingual-footer' : ''}`}>
                         {bilingualFooter && (
                             <div className="mb-2 grid grid-cols-2 gap-5 text-[10px] leading-relaxed text-navy-500">
                                 <div className="text-right" dir="rtl">
@@ -169,10 +173,10 @@ export function DocumentShell({
                             </div>
                         )}
                     {footer}
-                    <p className="mt-1">
+                    {!plainFooter && <p className="mt-1">
                         {settings.company_name}
                         {settings.company_commercial_id && ` · س.ت ${settings.company_commercial_id}`}
-                    </p>
+                    </p>}
                 </footer>
             </article>
         </div>

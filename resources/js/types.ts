@@ -704,7 +704,9 @@ export interface Quotation {
     title: string | null
 
     customer_id: number
+    attention_to: string | null
     customer: string | null
+    customer_whatsapp_number: string | null
     customer_code: string | null
     /** The site being quoted — null when the deal is with the head office. */
     branch_id: number | null

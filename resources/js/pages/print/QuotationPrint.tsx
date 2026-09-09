@@ -43,12 +43,15 @@ export function QuotationPrint() {
             className="doc-sheet--quotation"
             exportFormats
             bilingualFooter
+            hideHeaderContact
+            plainFooter
         >
             <div className="grid grid-cols-2 gap-4">
                 <DocumentParty
                     heading="مقدَّم إلى"
                     rows={[
                         ['العميل', quotation.customer],
+                        ['عناية إلى', quotation.attention_to],
                         ['الفرع', quotation.branch],
                         ['الجهاز', quotation.asset],
                     ]}
@@ -207,4 +210,3 @@ export function QuotationPrint() {
         </DocumentShell>
     )
 }
-

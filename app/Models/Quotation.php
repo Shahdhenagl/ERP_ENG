@@ -16,7 +16,7 @@ class Quotation extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'code', 'customer_id', 'branch_id', 'asset_id', 'task_id', 'title',
+        'code', 'customer_id', 'attention_to', 'branch_id', 'asset_id', 'task_id', 'title',
         'issue_date', 'valid_until', 'status',
         'subtotal', 'discount',
         'discount_percent', 'tax_rate', 'tax_amount', 'total', 'currency',

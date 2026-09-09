@@ -453,6 +453,21 @@
 /* Match the quotation preview to the printable A4 area. */
 .doc-sheet--quotation {
     padding: 8mm;
+    position: relative;
+    isolation: isolate;
+}
+
+.doc-sheet--quotation::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    inset: 50% auto auto 50%;
+    width: 115mm;
+    height: 115mm;
+    transform: translate(-50%, -50%);
+    background: url('/brand/logo-mark.png') center / contain no-repeat;
+    opacity: 0.055;
+    pointer-events: none;
 }
 
 /* Quotations commonly include both sets of terms and signatures. Keep

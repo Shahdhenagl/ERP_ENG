@@ -42,6 +42,7 @@ export function QuotationForm({
     const items = itemPage?.data ?? []
 
     const [customerId, setCustomerId] = useState(String(quotation?.customer_id ?? ''))
+    const [attentionTo, setAttentionTo] = useState(quotation?.attention_to ?? '')
     const [branchId, setBranchId] = useState(String(quotation?.branch_id ?? ''))
     const [title, setTitle] = useState(quotation?.title ?? '')
     const [validUntil, setValidUntil] = useState(
@@ -114,6 +115,7 @@ export function QuotationForm({
         try {
             const saved = await save.mutateAsync({
                 customer_id: Number(customerId),
+                attention_to: attentionTo.trim() || null,
                 branch_id: branchId ? Number(branchId) : null,
                 title: title || null,
                 valid_until: validUntil || null,
@@ -177,6 +179,14 @@ export function QuotationForm({
                     customerError={errors.customer_id}
                     branchError={errors.branch_id}
                 />
+
+                <Field label="عناية إلى" error={errors.attention_to} hint="اسم الشخص أو القسم الموجّه إليه عرض السعر">
+                    <Input
+                        value={attentionTo}
+                        onChange={(e) => setAttentionTo(e.target.value)}
+                        placeholder="مثال: أ/ أحمد — قسم المشتريات"
+                    />
+                </Field>
 
                 <div className="grid gap-4 sm:grid-cols-2">
 

@@ -8,6 +8,7 @@ use App\Models\ActivityLog;
 use App\Models\Branch;
 use App\Models\Quotation;
 use App\Services\SalesService;
+use App\Services\WhatsAppLinkBuilder;
 use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -203,7 +204,9 @@ class QuotationController extends Controller
             'title' => $quotation->title,
 
             'customer_id' => $quotation->customer_id,
+            'attention_to' => $quotation->attention_to,
             'customer' => $quotation->customer?->name,
+            'customer_whatsapp_number' => app(WhatsAppLinkBuilder::class)->normalizeNumber($quotation->customer?->whatsappNumber()),
             'customer_code' => $quotation->customer?->code,
             'branch_id' => $quotation->branch_id,
             'branch' => $quotation->branch?->name,
@@ -274,6 +277,7 @@ class QuotationController extends Controller
     {
         return $request->validate([
             'customer_id' => ['required', 'exists:customers,id'],
+            'attention_to' => ['nullable', 'string', 'max:160'],
             // The site being quoted. Tied to the chosen customer below, because
             // "exists" alone would let a quote name someone else's branch.
             'branch_id' => ['nullable', 'exists:branches,id'],
