@@ -224,6 +224,7 @@ class PermissionRegistry
             'accounting.view',
             'reports.view',
             'drafts.manage',
+            'screen.admin.drafts',
             // Every sign-off a manager could already give: the split into
             // separate permissions must not move anyone's access on the day it
             // ships, only make each one revocable on its own afterwards.

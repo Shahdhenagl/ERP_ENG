@@ -198,6 +198,13 @@ class User extends Authenticatable
      */
     public function defaultPermissions(): array
     {
+        // Admins always receive the complete registry, including screens added
+        // after their optional job-position preset. Otherwise a new module can
+        // be registered correctly yet remain invisible to existing admins.
+        if ($this->role === UserRole::Admin) {
+            return PermissionRegistry::defaultsFor($this->role);
+        }
+
         if ($this->position && JobRole::exists($this->position)) {
             return JobRole::permissionsFor($this->position);
         }
