@@ -23,13 +23,13 @@ export function QuotationPrint() {
     if (isError) return <ErrorState message="تعذّر تحميل العرض." onRetry={() => void refetch()} />
     if (!quotation) return null
 
-    // English print must never leak Arabic labels or free-text values. Values
-    // that have no English counterpart are omitted rather than mixed into the
-    // English document.
+    // Keep the value visible even when the customer has no English translation.
+    // A blank Bill To or Attention field is less useful than showing the saved
+    // Arabic name until an English customer name is added to the master data.
     const en = (value: string | null | undefined): string | null => {
         if (!value) return null
         const clean = value.replace(/[\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff\ufb50-\ufdff\ufe70-\ufeff]/g, '').trim()
-        return clean || null
+        return clean || value.trim() || null
     }
     const money = (value: number) => english
         ? `${value.toLocaleString('en-EG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP`

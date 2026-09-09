@@ -201,7 +201,10 @@ class QuotationController extends Controller
         $attentionTo = trim((string) $quotation->attention_to);
         if ($attentionTo === '' || $attentionTo === ':') {
             $attentionTo = trim((string) ($quotation->branch?->contact_name
-                ?: $quotation->customer?->contacts()->where('is_primary', true)->value('name')));
+                ?: $quotation->customer?->contacts()
+                    ->where('is_active', true)
+                    ->orderByDesc('is_primary')
+                    ->value('name')));
         }
 
         $payload = [
