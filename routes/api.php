@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\SiteSurveyController;
 use App\Http\Controllers\Api\LeaveController;
 use App\Http\Controllers\Api\PayrollController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\DraftController;
 use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\JobRoleController;
 use App\Http\Controllers\Api\ItemCategoryController;
@@ -163,6 +164,17 @@ Route::middleware(['auth:sanctum', 'role'])->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
+    // User-defined document categories and rich-text drafts.
+    Route::get('draft-categories', [DraftController::class, 'categories'])->middleware('can:drafts.manage');
+    Route::post('draft-categories', [DraftController::class, 'storeCategory'])->middleware('can:drafts.manage');
+    Route::put('draft-categories/{draftCategory}', [DraftController::class, 'updateCategory'])->middleware('can:drafts.manage');
+    Route::delete('draft-categories/{draftCategory}', [DraftController::class, 'destroyCategory'])->middleware('can:drafts.manage');
+    Route::get('drafts', [DraftController::class, 'index'])->middleware('can:drafts.manage');
+    Route::post('drafts', [DraftController::class, 'store'])->middleware('can:drafts.manage');
+    Route::get('drafts/{draft}', [DraftController::class, 'show'])->middleware('can:drafts.manage');
+    Route::put('drafts/{draft}', [DraftController::class, 'update'])->middleware('can:drafts.manage');
+    Route::delete('drafts/{draft}', [DraftController::class, 'destroy'])->middleware('can:drafts.manage');
+
     // The operational alerts board — live conditions grouped, not the bell.
     Route::get('alerts', [\App\Http\Controllers\Api\AlertsController::class, 'index']);
     Route::post('tasks', [TaskController::class, 'store'])->middleware('can:tasks.dispatch');

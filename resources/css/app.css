@@ -1448,6 +1448,19 @@
     }
 }
 
+@layer components {
+    .toolbar { @apply rounded-lg border border-navy-200 bg-white px-2.5 py-1 text-xs font-bold text-navy-700 hover:bg-navy-100; }
+    .draft-print-content { line-height: 2; white-space: normal; overflow-wrap: anywhere; }
+    .draft-print-content p { margin: 0 0 0.8em; }
+    .draft-print-content h1, .draft-print-content h2, .draft-print-content h3 { margin: 1em 0 0.5em; font-weight: 800; }
+    .draft-print-content ul, .draft-print-content ol { margin: 0.75em 1.5em; }
+    .draft-print-content blockquote { margin: 1em 0; border-inline-start: 4px solid currentColor; padding-inline-start: 1em; }
+}
+@media print {
+    @page { size: A4; margin: 14mm; }
+    .draft-print-content { line-height: 1.9; }
+    .draft-print-content p, .draft-print-content h1, .draft-print-content h2, .draft-print-content h3, .draft-print-content blockquote { break-inside: avoid; }
+}
 /* ── Periodic maintenance report print layout ─────────────── */
 @media print {
     @page periodic-maintenance {

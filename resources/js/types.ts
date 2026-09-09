@@ -3159,3 +3159,30 @@ export interface Lead {
     /** Only present on the detail view. */
     follow_ups?: FollowUp[]
 }
+
+
+export interface DraftCategory {
+    id: number
+    name: string
+    name_en: string | null
+    is_active: boolean
+    sort_order: number
+    drafts_count?: number
+}
+
+export interface Draft {
+    id: number
+    draft_category_id: number
+    category: DraftCategory
+    title: string
+    title_en: string | null
+    content: string | null
+    content_en: string | null
+    font_size: number
+    font_family: string
+    text_color: string
+    accent_color: string
+    direction: 'rtl' | 'ltr'
+    created_at: string | null
+    updated_at: string | null
+}

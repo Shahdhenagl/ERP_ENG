@@ -127,6 +127,7 @@ class PermissionRegistry
         'screen.admin.roles' => ['الأدوار والصلاحيات', 'الإدارة والصلاحيات'],
         'screen.admin.audit' => ['سجل العمليات', 'الإدارة والصلاحيات'],
         'screen.admin.settings' => ['إعدادات النظام', 'الإدارة والصلاحيات'],
+        'screen.admin.drafts' => ['المسودات والنماذج', 'الإدارة والصلاحيات'],
 
         'screen.reports.sales' => ['تقارير المبيعات', 'التقارير'],
         'screen.reports.profit' => ['تقارير الأرباح', 'التقارير'],
@@ -190,6 +191,7 @@ class PermissionRegistry
         'reports.view' => ['التقارير', 'الإدارة'],
         'users.manage' => ['المستخدمون والصلاحيات', 'الإدارة'],
         'settings.manage' => ['إعدادات الشركة', 'الإدارة'],
+        'drafts.manage' => ['إدارة المسودات والنماذج', 'الإدارة'],
         'audit.view' => ['سجل العمليات', 'الإدارة'],
     ];
 
@@ -221,6 +223,7 @@ class PermissionRegistry
             // A manager could read the books but never write a manual entry.
             'accounting.view',
             'reports.view',
+            'drafts.manage',
             // Every sign-off a manager could already give: the split into
             // separate permissions must not move anyone's access on the day it
             // ships, only make each one revocable on its own afterwards.

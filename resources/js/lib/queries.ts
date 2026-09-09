@@ -109,6 +109,8 @@ import type {
     TaskStatus,
     TechnicianProfile,
     User,
+    Draft,
+    DraftCategory,
 } from '@/types'
 
 /* ── Query keys ──────────────────────────────────────────── */
@@ -4118,4 +4120,73 @@ function invalidateCrm(client: ReturnType<typeof useQueryClient>): void {
     for (const key of ['leads', 'lead', 'follow-ups', 'customers', 'dashboard']) {
         void client.invalidateQueries({ queryKey: [key] })
     }
+}
+
+
+/* ── Drafts ─────────────────────────────────────────────── */
+export function useDraftCategories() {
+    return useQuery({
+        queryKey: ['draft-categories'],
+        queryFn: async () => (await api.get<{ data: DraftCategory[] }>('/draft-categories')).data.data,
+    })
+}
+
+export function useDrafts(filters: Record<string, unknown> = {}) {
+    return useQuery({
+        queryKey: ['drafts', filters],
+        queryFn: async () => (await api.get<Paginated<Draft>>('/drafts', { params: filters })).data,
+        placeholderData: (previous) => previous,
+    })
+}
+
+export function useSaveDraft(id?: number) {
+    const client = useQueryClient()
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            id
+                ? (await api.put<{ data: Draft }>(`/drafts/${id}`, payload)).data.data
+                : (await api.post<{ data: Draft }>('/drafts', payload)).data.data,
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: ['drafts'] })
+            void client.invalidateQueries({ queryKey: ['draft'] })
+        },
+    })
+}
+
+export function useDeleteDraft() {
+    const client = useQueryClient()
+    return useMutation({
+        mutationFn: async (id: number) => (await api.delete(`/drafts/${id}`)).data,
+        onSuccess: () => void client.invalidateQueries({ queryKey: ['drafts'] }),
+    })
+}
+
+export function useSaveDraftCategory(id?: number) {
+    const client = useQueryClient()
+    return useMutation({
+        mutationFn: async (payload: Record<string, unknown>) =>
+            id
+                ? (await api.put<{ data: DraftCategory }>(`/draft-categories/${id}`, payload)).data.data
+                : (await api.post<{ data: DraftCategory }>('/draft-categories', payload)).data.data,
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: ['draft-categories'] })
+            void client.invalidateQueries({ queryKey: ['drafts'] })
+        },
+    })
+}
+
+export function useDeleteDraftCategory() {
+    const client = useQueryClient()
+    return useMutation({
+        mutationFn: async (id: number) => (await api.delete(`/draft-categories/${id}`)).data,
+        onSuccess: () => void client.invalidateQueries({ queryKey: ['draft-categories'] }),
+    })
+}
+
+export function useDraft(id: number | string | undefined) {
+    return useQuery({
+        queryKey: ['draft', Number(id)],
+        queryFn: async () => (await api.get<{ data: Draft }>(`/drafts/${id}`)).data.data,
+        enabled: Boolean(id),
+    })
 }

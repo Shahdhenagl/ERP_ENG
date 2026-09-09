@@ -307,6 +307,15 @@ export const NAV: NavItem[] = [
         ],
     },
 
+    {
+        to: '/drafts',
+        label: tr('المسودات والنماذج'),
+        icon: FileText,
+        roles: ['admin', 'manager'],
+        permission: 'drafts.manage',
+        screenPermission: 'screen.admin.drafts',
+        short: tr('مسودات'),
+    },
     /* 16 ── الإدارة والصلاحيات ─────────────────────────────── */
     {
         to: '/users',
@@ -435,6 +444,7 @@ const SCREEN_PERMISSION_BY_PATH: Record<string, string> = {
     '/roles': 'screen.admin.roles',
     '/audit': 'screen.admin.audit',
     '/settings': 'screen.admin.settings',
+    '/drafts': 'screen.admin.drafts',
     '/reports/sales': 'screen.reports.sales',
     '/reports/profit': 'screen.reports.profit',
     '/reports/stock': 'screen.reports.stock',

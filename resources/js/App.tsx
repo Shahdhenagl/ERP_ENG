@@ -72,6 +72,7 @@ import { CustomerLedgerPrint } from '@/pages/print/CustomerLedgerPrint'
 import { SiteSurveyPrint } from '@/pages/print/SiteSurveyPrint'
 import { ContractPrint } from '@/pages/print/ContractPrint'
 import { DeliveryNotePrint } from '@/pages/print/DeliveryNotePrint'
+import { DraftPrint } from '@/pages/print/DraftPrint'
 import { PaymentVoucherPrint } from '@/pages/print/PaymentVoucherPrint'
 import { CashVoucherPrint } from '@/pages/print/CashVoucherPrint'
 import { CustodyStatementPrint } from '@/pages/print/CustodyStatementPrint'
@@ -120,6 +121,7 @@ import { CollectionsPage } from '@/pages/CollectionsPage'
 import { CustomerStatementPage } from '@/pages/CustomerStatementPage'
 import { SupplierStatementPage } from '@/pages/SupplierStatementPage'
 import { Dashboard } from '@/pages/Dashboard'
+import { DraftsPage } from '@/pages/DraftsPage'
 import { Login } from '@/pages/Login'
 import { Profile } from '@/pages/Profile'
 import { TaskDetail } from '@/pages/TaskDetail'
@@ -190,6 +192,7 @@ export function App() {
                                     <Route path="movements" element={<MovementListPrint />} />
                                     <Route path="receipts/:id" element={<ReceiptPrint />} />
                                     <Route path="payslips/:id" element={<PayslipPrint />} />
+                                    <Route path="drafts/:id" element={<DraftPrint />} />
                                 </Route>
 
                                 {/* The service report is unprefixed: a technician
@@ -344,6 +347,7 @@ export function App() {
                                         </Route>
 
                                         <Route path="profile" element={<Profile />} />
+                                        <Route path="drafts" element={<DraftsPage />} />
 
                                         {/* Every sidebar screen not yet built lands here
                                             rather than bouncing to the dashboard — the
