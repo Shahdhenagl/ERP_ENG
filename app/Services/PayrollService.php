@@ -148,10 +148,29 @@ class PayrollService
             throw ValidationException::withMessages(['month' => Terms::get('شهر غير صحيح.')]);
         }
 
-        if (PayrollRun::where('year', $year)->where('month', $month)->exists()) {
-            throw ValidationException::withMessages([
-                'month' => Terms::get('يوجد كشف رواتب لهذا الشهر بالفعل.'),
-            ]);
+        $existingRun = PayrollRun::withTrashed()
+            ->where('year', $year)
+            ->where('month', $month)
+            ->first();
+
+        if ($existingRun?->trashed()) {
+            // PayrollRun uses SoftDeletes while the unique index covers deleted
+            // rows too. Restore a deleted draft instead of trying to insert the
+            // same year/month and hitting MySQL's unique constraint.
+            $existingRun->restore();
+            if (! $existingRun->payslips()->exists()) {
+                Employee::query()->active()->get()->each(
+                    fn (Employee $employee) => $this->generateSlip($existingRun, $employee),
+                );
+            }
+
+            return $existingRun->fresh('payslips');
+        }
+
+        if ($existingRun) {
+            // Idempotent open: if the run exists but is outside the current
+            // paginated list, return it so the UI can open it directly.
+            return $existingRun->fresh('payslips');
         }
 
         $daysInMonth = (int) now()->create($year, $month, 1)->daysInMonth;
