@@ -269,6 +269,14 @@
     }
 }
 
+/* All data tables use one consistent, centered alignment for headings and
+   values. Long text remains inside its own cell and wraps naturally. */
+table th,
+table td {
+    text-align: center;
+    vertical-align: middle;
+}
+
 /* ══════════════════════════════════════════════════════════════
    Utilities & motion
    ══════════════════════════════════════════════════════════════ */
@@ -368,7 +376,7 @@
     font-size: 12px;
     font-weight: 700;
     color: var(--color-navy-700);
-    text-align: right;
+    text-align: center;
     letter-spacing: 0.01em;
     border-block: 1px solid var(--color-navy-200);
 }
@@ -378,7 +386,7 @@
     font-size: 13px;
     line-height: 1.65;
     border-bottom: 1px solid var(--color-navy-100);
-    vertical-align: top;
+    vertical-align: middle;
 }
 
 /* Alternating rows: on paper the eye loses its place across six columns long
@@ -528,12 +536,12 @@
 }
 
 .doc-sheet--quotation .quotation-cell-description {
-    text-align: right;
+    text-align: center;
     overflow-wrap: anywhere;
 }
 
 .doc-sheet--quotation .quotation-cell-total {
-    text-align: left;
+    text-align: center;
     vertical-align: middle;
     white-space: nowrap;
 }
