@@ -685,6 +685,7 @@ function BranchStrip({
     const toast = useToast()
     const [open, setOpen] = useState(false)
     const [deleting, setDeleting] = useState<Branch | undefined>()
+    const [view, setView] = useViewMode('customer-branches')
 
     const { data: branches, isLoading } = useCustomerBranches(open ? customer.id : undefined)
     const remove = useDeleteBranch()
@@ -709,7 +710,32 @@ function BranchStrip({
                     {isLoading ? (
                         <p className="text-xs text-navy-400">جارٍ التحميل…</p>
                     ) : (
-                        branches?.map((branch) => (
+                        <>
+                            <div className="mb-2 flex justify-end">
+                                <ViewToggle view={view} onChange={setView} />
+                            </div>
+                            {view === 'table' ? (
+                                <DataTable
+                                    minWidth="48rem"
+                                    tableClassName="compact-table text-xs"
+                                    headers={['الموقع', 'المرجع', 'العنوان', 'المسؤول', 'الأجهزة', 'الإجراءات']}
+                                >
+                                    {branches?.map((branch) => (
+                                        <tr key={branch.id} className="border-t border-navy-100">
+                                            <td className="px-2 py-2 font-bold text-navy-800">{branch.name}</td>
+                                            <td className="tabular px-2 py-2 text-navy-500">{branch.customer_ref || '—'}</td>
+                                            <td className="max-w-48 truncate px-2 py-2 text-navy-500">{branch.address || '—'}</td>
+                                            <td className="px-2 py-2 text-navy-500">{branch.contact_name || '—'}</td>
+                                            <td className="tabular px-2 py-2 text-navy-500">{branch.assets_count ?? 0}</td>
+                                            <td className="px-2 py-2">
+                                                <BranchActions branch={branch} onEdit={onEdit} onDelete={setDeleting} />
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </DataTable>
+                            ) : (
+                                <div className="space-y-1.5">
+                                    {branches?.map((branch) => (
                             <div
                                 key={branch.id}
                                 className="flex items-start justify-between gap-2 rounded-xl bg-navy-50 p-2.5"
@@ -737,37 +763,12 @@ function BranchStrip({
                                     </p>
                                 </div>
 
-                                <div className="flex shrink-0 gap-0.5">
-                                    {branch.maps_url && (
-                                        <a
-                                            href={branch.maps_url}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="grid place-items-center rounded-lg p-1.5 text-navy-400 transition hover:bg-surface hover:text-navy-700"
-                                            aria-label="الخريطة"
-                                        >
-                                            <MapPin className="size-3.5" />
-                                        </a>
-                                    )}
-                                    <button
-                                        onClick={() => {
-                                            onEdit(branch)
-                                        }}
-                                        className="grid place-items-center rounded-lg p-1.5 text-navy-400 transition hover:bg-surface hover:text-navy-700"
-                                        aria-label="تعديل الفرع"
-                                    >
-                                        <Pencil className="size-3.5" />
-                                    </button>
-                                    <button
-                                        onClick={() => setDeleting(branch)}
-                                        className="grid place-items-center rounded-lg p-1.5 text-navy-400 transition hover:bg-red-50 hover:text-red-600"
-                                        aria-label="حذف الفرع"
-                                    >
-                                        <Trash2 className="size-3.5" />
-                                    </button>
-                                </div>
+                                <BranchActions branch={branch} onEdit={onEdit} onDelete={setDeleting} />
                             </div>
-                        ))
+                                    ))}
+                                </div>
+                            )}
+                        </>
                     )}
 
                     <Button
@@ -803,6 +804,39 @@ function BranchStrip({
                 danger
                 loading={remove.isPending}
             />
+        </div>
+    )
+}
+
+function BranchActions({
+    branch,
+    onEdit,
+    onDelete,
+}: {
+    branch: Branch
+    onEdit: (branch: Branch) => void
+    onDelete: (branch: Branch) => void
+}) {
+    return (
+        <div className="flex justify-center gap-0.5">
+            {branch.maps_url && (
+                <a
+                    href={branch.maps_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="grid place-items-center rounded-lg p-1.5 text-navy-400 transition hover:bg-surface hover:text-navy-700"
+                    aria-label="الخريطة"
+                    title="الخريطة"
+                >
+                    <MapPin className="size-3.5" />
+                </a>
+            )}
+            <button onClick={() => onEdit(branch)} className="grid place-items-center rounded-lg p-1.5 text-navy-400 transition hover:bg-surface hover:text-navy-700" aria-label="تعديل الفرع" title="تعديل">
+                <Pencil className="size-3.5" />
+            </button>
+            <button onClick={() => onDelete(branch)} className="grid place-items-center rounded-lg p-1.5 text-navy-400 transition hover:bg-red-50 hover:text-red-600" aria-label="حذف الفرع" title="حذف">
+                <Trash2 className="size-3.5" />
+            </button>
         </div>
     )
 }
