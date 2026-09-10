@@ -251,14 +251,35 @@ export function Dashboard() {
 
             {/* ── What needs attention now ───────────────────── */}
             <section className="mt-6">
-                <div className="mb-2 flex items-center justify-between">
-                    <h2 className="text-xs font-bold text-navy-700">
-                        {canDispatch ? tr('مهام اليوم') : tr('مهامك اليوم')}
-                    </h2>
-                    <Link to={path('/tasks')} className="text-xs font-bold text-brand-600 hover:underline">
-                        {tr('عرض الكل')}
-                    </Link>
-                </div>
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                        <h2 className="text-xs font-bold text-navy-700">
+                        {canDispatch
+                            ? period === 'day' ? tr('المهام المطلوبة اليوم') : tr('المهام المطلوبة هذا الشهر')
+                            : period === 'day' ? tr('مهامك اليوم') : tr('مهامك هذا الشهر')}
+                        </h2>
+                        <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1 rounded-lg bg-navy-100 p-1">
+                                {(['day', 'month'] as const).map((value) => (
+                                    <button
+                                        key={value}
+                                        type="button"
+                                        onClick={() => setPeriod(value)}
+                                        className={clsx(
+                                            'rounded-md px-2.5 py-1 text-[11px] font-bold transition',
+                                            period === value
+                                                ? 'bg-white text-brand-700 shadow-sm'
+                                                : 'text-navy-500 hover:text-navy-800',
+                                        )}
+                                    >
+                                        {value === 'day' ? tr('اليوم') : tr('الشهر')}
+                                    </button>
+                                ))}
+                            </div>
+                            <Link to={tasksPath({})} className="text-xs font-bold text-brand-600 hover:underline">
+                                {tr('عرض الكل')}
+                            </Link>
+                        </div>
+                    </div>
 
                 {isLoading ? (
                     <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">

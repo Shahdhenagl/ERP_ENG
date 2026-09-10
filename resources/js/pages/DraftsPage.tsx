@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import JSZip from 'jszip'
 import { Eye, FileText, FolderPlus, MessageCircle, Pencil, Plus, Printer, Save, Trash2, Upload } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useArea } from '@/lib/nav'
@@ -16,6 +17,28 @@ import {
 import type { Draft, DraftCategory } from '@/types'
 
 const FONTS = ['Cairo', 'Arial', 'Tahoma', 'Georgia']
+
+function escapeHtml(value: string): string {
+    return value.replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char] ?? char)
+}
+
+async function readWordFile(file: File): Promise<{ title: string; content: string }> {
+    const baseTitle = file.name.replace(/\.(docx?|txt)$/i, '').trim() || 'مسودة مستوردة'
+    if (/\.txt$/i.test(file.name)) {
+        const text = await file.text()
+        return { title: baseTitle, content: text.split(/\r?\n/).map((line) => `<p>${escapeHtml(line) || '<br>'}</p>`).join('') }
+    }
+
+    const zip = await JSZip.loadAsync(await file.arrayBuffer())
+    const documentXml = await zip.file('word/document.xml')?.async('text')
+    if (!documentXml) throw new Error('ملف Word غير صالح أو لا يحتوي على مستند.')
+    const xml = new DOMParser().parseFromString(documentXml, 'application/xml')
+    const paragraphs = Array.from(xml.getElementsByTagNameNS('*', 'p')).map((paragraph) => {
+        const text = Array.from(paragraph.getElementsByTagNameNS('*', 't')).map((node) => node.textContent ?? '').join('')
+        return `<p>${escapeHtml(text) || '<br>'}</p>`
+    })
+    return { title: baseTitle, content: paragraphs.join('') || '<p><br></p>' }
+}
 
 export function DraftsPage() {
     const { path } = useArea()
@@ -37,6 +60,25 @@ export function DraftsPage() {
 
     const importDrafts = async (file: File) => {
         try {
+            if (/\.(docx?|txt)$/i.test(file.name)) {
+                const word = await readWordFile(file)
+                const targetId = importTargetCategory ?? categoryId
+                if (!targetId) throw new Error('اختر تصنيفًا أولًا لاستيراد ملف Word داخله.')
+                await saveDraft.mutateAsync({
+                    draft_category_id: targetId,
+                    title: word.title,
+                    title_en: null,
+                    content: word.content,
+                    content_en: null,
+                    font_size: 14,
+                    font_family: 'Cairo',
+                    text_color: '#0b1b3a',
+                    accent_color: '#0f766e',
+                    direction: 'rtl',
+                })
+                toast.success('تم استيراد ملف Word كمسودة قابلة للتعديل.')
+                return
+            }
             const parsed = JSON.parse(await file.text()) as { drafts?: Record<string, unknown>[]; category?: { name?: string; name_en?: string } } | Record<string, unknown>[]
             const rows = Array.isArray(parsed) ? parsed : parsed.drafts ?? []
             if (!rows.length) throw new Error('ملف الاستيراد لا يحتوي على مسودات.')
@@ -102,7 +144,7 @@ export function DraftsPage() {
     }
 
     return <>
-        <PageHeader title="المسودات" subtitle="نماذج وخطابات قابلة للتعديل والطباعة على مقاس A4" actions={<div className="flex flex-wrap gap-2"><input ref={importRef} type="file" accept=".json,application/json" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) void importDrafts(file) }} /><Button variant="secondary" icon={Upload} onClick={() => openImport(categoryId)}>استيراد مسودات</Button><Button variant="secondary" icon={FolderPlus} onClick={() => setCategoryForm(true)}>تصنيف جديد</Button><Button icon={Plus} onClick={() => setCreating(true)}>مسودة جديدة</Button></div>} />
+        <PageHeader title="المسودات" subtitle="نماذج وخطابات قابلة للتعديل والطباعة على مقاس A4" actions={<div className="flex flex-wrap gap-2"><input ref={importRef} type="file" accept=".json,.doc,.docx,.txt,application/json,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) void importDrafts(file) }} /><Button variant="secondary" icon={Upload} onClick={() => openImport(categoryId)}>استيراد مسودات</Button><Button variant="secondary" icon={FolderPlus} onClick={() => setCategoryForm(true)}>تصنيف جديد</Button><Button icon={Plus} onClick={() => setCreating(true)}>مسودة جديدة</Button></div>} />
         <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
             <button className={`rounded-xl px-4 py-2 text-sm font-bold ${!categoryId ? 'bg-brand-600 text-white' : 'bg-navy-100 text-navy-600'}`} onClick={() => setCategoryId(undefined)}>كل التصنيفات</button>
             {categories?.map((c) => <div key={c.id} className="flex items-center gap-1 rounded-xl bg-navy-100 ps-4 text-sm font-bold text-navy-700"><button onClick={() => setCategoryId(c.id)} className="py-2">{c.name} <span className="text-xs text-navy-400">({c.drafts_count ?? 0})</span></button><button aria-label="استيراد إلى التصنيف" title="استيراد إلى هذا التصنيف" className="p-2 text-brand-600 hover:bg-brand-50" onClick={() => openImport(c.id)}><Upload className="size-3.5" /></button><button aria-label="حذف التصنيف" className="p-2 text-navy-400 hover:text-red-600" onClick={() => void removeCategory(c)}><Trash2 className="size-3.5" /></button></div>)}
