@@ -39,12 +39,43 @@ const STANDING_CHIP: Record<ContractStanding, string> = {
     none: 'bg-navy-50 text-navy-400 ring-1 ring-navy-200',
 }
 
+type CustomerPeriod = 'all' | 'day' | 'week' | 'month' | 'custom'
+
+function dateParam(date: Date): string {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+}
+
+function periodRange(period: CustomerPeriod): { from: string; to: string } {
+    const today = new Date()
+    const current = dateParam(today)
+    if (period === 'day') return { from: current, to: current }
+    if (period === 'month') return {
+        from: dateParam(new Date(today.getFullYear(), today.getMonth(), 1)),
+        to: dateParam(new Date(today.getFullYear(), today.getMonth() + 1, 0)),
+    }
+    if (period === 'week') {
+        const monday = new Date(today)
+        const day = monday.getDay() || 7
+        monday.setDate(monday.getDate() - day + 1)
+        const sunday = new Date(monday)
+        sunday.setDate(monday.getDate() + 6)
+        return { from: dateParam(monday), to: dateParam(sunday) }
+    }
+    return { from: '', to: '' }
+}
+
 export function CustomerList() {
     const toast = useToast()
     const [search, setSearch] = useState('')
     const [type, setType] = useState('')
     const [contract, setContract] = useState('')
     const [active, setActive] = useState('')
+    const [period, setPeriod] = useState<CustomerPeriod>('all')
+    const [dateFrom, setDateFrom] = useState('')
+    const [dateTo, setDateTo] = useState('')
     const [formOpen, setFormOpen] = useState(false)
     const [editing, setEditing] = useState<Customer | undefined>()
     const [deleting, setDeleting] = useState<Customer | undefined>()
@@ -66,6 +97,8 @@ export function CustomerList() {
         contract: contract || undefined,
         payment_terms: terms || undefined,
         active: active === '' ? undefined : active,
+        created_from: dateFrom || undefined,
+        created_to: dateTo || undefined,
     }
 
     const { data, isLoading, isError, refetch } = useCustomers({ ...filters, per_page: perPage })
@@ -119,6 +152,8 @@ export function CustomerList() {
                                         type: type || undefined,
                                         contract: contract || undefined,
                                         active: active === '' ? undefined : active,
+                                        created_from: dateFrom || undefined,
+                                        created_to: dateTo || undefined,
                                         per_page: 1000,
                                     },
                                 })
@@ -175,6 +210,31 @@ export function CustomerList() {
                     <option value="1">النشطون</option>
                     <option value="0">غير النشطين</option>
                 </Select>
+
+                <Select
+                    value={period}
+                    onChange={(e) => {
+                        const next = e.target.value as CustomerPeriod
+                        setPeriod(next)
+                        const range = periodRange(next)
+                        setDateFrom(range.from)
+                        setDateTo(range.to)
+                    }}
+                    aria-label="فترة إضافة العميل"
+                >
+                    <option value="all">كل التواريخ</option>
+                    <option value="day">اليوم</option>
+                    <option value="week">هذا الأسبوع</option>
+                    <option value="month">هذا الشهر</option>
+                    <option value="custom">من وإلى</option>
+                </Select>
+
+                {period !== 'all' && (
+                    <>
+                        <Input type="date" value={dateFrom} onChange={(e) => { setPeriod('custom'); setDateFrom(e.target.value) }} aria-label="من تاريخ" />
+                        <Input type="date" value={dateTo} onChange={(e) => { setPeriod('custom'); setDateTo(e.target.value) }} aria-label="إلى تاريخ" />
+                    </>
+                )}
 
                 <Select
                     value={terms}

@@ -33,6 +33,8 @@ class CustomerController extends Controller
                 $request->string('payment_terms')->toString(),
                 fn ($q, $terms) => $q->where('payment_terms', $terms),
             )
+            ->when($request->string('created_from')->toString(), fn ($q, $date) => $q->whereDate('created_at', '>=', $date))
+            ->when($request->string('created_to')->toString(), fn ($q, $date) => $q->whereDate('created_at', '<=', $date))
             ->contractStanding($request->string('contract')->toString() ?: null)
             ->withCount([
                 'tasks',
