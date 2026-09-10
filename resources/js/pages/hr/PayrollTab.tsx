@@ -140,15 +140,17 @@ export function PayrollTab() {
                 </div>
             )}
 
-            {opening && <OpenForm onClose={() => setOpening(false)} onOpened={setOpenId} />}
+            {opening && <OpenForm existingRuns={data?.data ?? []} onClose={() => setOpening(false)} onOpened={setOpenId} />}
         </>
     )
 }
 
 function OpenForm({
+    existingRuns,
     onClose,
     onOpened,
 }: {
+    existingRuns: Array<{ id: number; year: number; month: number }>
     onClose: () => void
     onOpened: (id: number) => void
 }) {
@@ -177,6 +179,15 @@ function OpenForm({
                         loading={open.isPending}
                         onClick={async () => {
                             setErrors({})
+                            const existing = existingRuns.find(
+                                (run) => run.year === Number(form.year) && run.month === Number(form.month),
+                            )
+                            if (existing) {
+                                toast.success('هذا الكشف موجود بالفعل، تم فتحه للمراجعة.')
+                                onClose()
+                                onOpened(existing.id)
+                                return
+                            }
                             try {
                                 const run = await open.mutateAsync({
                                     year: Number(form.year),
