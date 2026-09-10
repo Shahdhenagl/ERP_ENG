@@ -258,6 +258,8 @@ class PayrollController extends Controller
     {
         $runs = PayrollRun::query()
             ->withCount('payslips')
+            ->withSum('payslips', 'gross')
+            ->withSum('payslips', 'total_deductions')
             ->withSum('payslips', 'net')
             ->orderByDesc('year')
             ->orderByDesc('month')
@@ -273,6 +275,8 @@ class PayrollController extends Controller
                 'status' => $r->status,
                 'status_label' => $r->statusLabel(),
                 'payslips_count' => $r->payslips_count,
+                'gross_total' => round((float) $r->payslips_sum_gross, 2),
+                'deductions_total' => round((float) $r->payslips_sum_total_deductions, 2),
                 'net_total' => round((float) $r->payslips_sum_net, 2),
                 'unpaid_net' => $r->unpaidNet(),
                 'approved_at' => $r->approved_at?->toDateString(),
