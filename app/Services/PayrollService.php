@@ -10,6 +10,7 @@ use App\Models\Payslip;
 use App\Models\SalaryAdvance;
 use App\Models\User;
 use App\Support\Terms;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -155,20 +156,33 @@ class PayrollService
 
         $daysInMonth = (int) now()->create($year, $month, 1)->daysInMonth;
 
-        return DB::transaction(function () use ($year, $month, $daysInMonth, $actor) {
-            $run = PayrollRun::create([
-                'year' => $year,
-                'month' => $month,
-                'days_in_month' => $daysInMonth,
-                'created_by' => $actor->id,
-            ]);
+        try {
+            return DB::transaction(function () use ($year, $month, $daysInMonth, $actor) {
+                $run = PayrollRun::create([
+                    'year' => $year,
+                    'month' => $month,
+                    'days_in_month' => $daysInMonth,
+                    'created_by' => $actor->id,
+                ]);
 
-            Employee::query()->active()->get()->each(
-                fn (Employee $employee) => $this->generateSlip($run, $employee),
-            );
+                Employee::query()->active()->get()->each(
+                    fn (Employee $employee) => $this->generateSlip($run, $employee),
+                );
 
-            return $run->fresh('payslips');
-        });
+                return $run->fresh('payslips');
+            });
+        } catch (QueryException $exception) {
+            // The pre-check above handles the normal path. The unique index is
+            // still the final authority when two browser requests open the same
+            // month at the same time (or an older server skipped the pre-check).
+            if ($exception->getCode() === '23000' && str_contains($exception->getMessage(), 'payroll_runs_year_month_unique')) {
+                throw ValidationException::withMessages([
+                    'month' => Terms::get('يوجد كشف رواتب لهذا الشهر بالفعل. افتح الكشف الموجود من القائمة، أو استخدم إعادة الفتح للتصحيح.'),
+                ]);
+            }
+
+            throw $exception;
+        }
     }
 
     /** Delete a mistaken draft without touching the treasury or ledger. */
