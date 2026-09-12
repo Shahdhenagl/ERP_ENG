@@ -135,6 +135,7 @@ class TreasuryReport
             ->with([
                 'payment.customer',
                 'supplierPayment.supplier',
+                'task.customer',
                 'responsible',
                 'actor',
                 'account',
@@ -294,7 +295,9 @@ class TreasuryReport
         return $movement->payment?->customer?->name
             ?? $movement->supplierPayment?->supplier?->name
             ?? $movement->responsible?->name
+            ?? $movement->task?->customer?->name
             ?? $movement->counterpartBox?->name
+            ?? $movement->actor?->name
             ?? $movement->category;
     }
 }
