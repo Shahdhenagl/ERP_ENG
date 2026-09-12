@@ -853,8 +853,8 @@ export function useSaveCustomer(id?: number) {
     return useMutation({
         mutationFn: async (payload: Record<string, unknown>) =>
             id
-                ? (await api.put<{ data: Customer }>(`/customers/${id}`, payload)).data.data
-                : (await api.post<{ data: Customer }>('/customers', payload)).data.data,
+                ? (await api.put<Customer>(`/customers/${id}`, payload)).data
+                : (await api.post<Customer>('/customers', payload)).data,
         onSuccess: () => {
             void client.invalidateQueries({ queryKey: ['customers'] })
             void client.invalidateQueries({ queryKey: keys.dashboard })
