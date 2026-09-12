@@ -211,6 +211,8 @@ export function TaskList() {
         next.delete('to')
         next.delete('day')
         next.delete('month')
+        next.delete('completed_day')
+        next.delete('completed_month')
         next.delete('page')
         if (period === 'day') next.set('day', localDateParam())
         else next.set('month', localDateParam().slice(0, 7))
@@ -222,7 +224,7 @@ export function TaskList() {
     const searchTimer = useRef<number>(0)
     const debouncedSearch = (value: string) => {
         window.clearTimeout(searchTimer.current)
-        searchTimer.current = window.setTimeout(() => setParam('search', value), 350)
+        searchTimer.current = window.setTimeout(() => setParam('search', value.trim()), 350)
     }
 
     useEffect(() => () => window.clearTimeout(searchTimer.current), [])
@@ -277,7 +279,7 @@ export function TaskList() {
                     <Input
                         defaultValue={searchParams.get('search') ?? ''}
                         onChange={(event) => debouncedSearch(event.target.value)}
-                        placeholder={phone ? 'ابحث…' : 'ابحث برقم المهمة أو العنوان أو السيريال أو اسم العميل…'}
+                        placeholder={phone ? 'ابحث…' : 'ابحث برقم المهمة أو العنوان أو السيريال أو العميل أو الفرع…'}
                         className="pr-10"
                     />
                 </div>

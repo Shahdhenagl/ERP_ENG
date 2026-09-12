@@ -318,6 +318,7 @@ class Task extends Model
 
     public function scopeSearch(Builder $query, ?string $term): Builder
     {
+        $term = trim((string) $term);
         if (! $term) {
             return $query;
         }
@@ -334,6 +335,8 @@ class Task extends Model
                     ->orWhere('address', 'like', $like))
                 ->orWhereHas('branch', fn (Builder $b) => $b
                     ->where('name', 'like', $like)
+                    ->orWhere('code', 'like', $like)
+                    ->orWhere('customer_ref', 'like', $like)
                     ->orWhere('address', 'like', $like)
                     ->orWhere('governorate', 'like', $like)
                     ->orWhere('city', 'like', $like));
