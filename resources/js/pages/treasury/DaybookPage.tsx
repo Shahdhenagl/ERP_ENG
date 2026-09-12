@@ -60,7 +60,11 @@ export function DaybookPage() {
         const partyTerm = normalize(partyFilter)
 
         return (data?.rows ?? []).filter((row) => {
-            const rowDate = row.date ? String(row.date).slice(0, 10) : ''
+            const rowDate = row.transaction_date
+                ? String(row.transaction_date).slice(0, 10)
+                : row.date
+                    ? String(row.date).slice(0, 10)
+                    : ''
             const rowNumber = normalize(row.voucher_number)
             const rowDescription = normalize(row.description)
             const rowParty = normalize(row.party)
@@ -100,7 +104,7 @@ export function DaybookPage() {
                             disabled={!visibleRows.length}
                             rows={async () =>
                                 visibleRows.map((row) => [
-                                    row.date ? formatDate(row.date) : '',
+                                    row.transaction_date ? formatDate(row.transaction_date) : row.date ? formatDate(row.date) : '',
                                     row.voucher_type,
                                     row.voucher_number,
                                     row.journal_code ?? '',
@@ -242,7 +246,11 @@ export function DaybookPage() {
                                     {visibleRows.map((row) => (
                                         <tr key={row.id} className="border-b border-navy-100 bg-white transition-colors even:bg-navy-50/30 hover:bg-brand-50/60">
                                             <LedgerCell dataLabel="التاريخ" className="font-semibold text-navy-700">
-                                                {row.date ? formatDate(row.date) : '—'}
+                                                {row.transaction_date
+                                                    ? formatDate(row.transaction_date)
+                                                    : row.date
+                                                        ? formatDate(row.date)
+                                                        : '—'}
                                             </LedgerCell>
                                             <LedgerCell dataLabel="نوع الإيصال" className="font-bold text-navy-900">{row.voucher_type}</LedgerCell>
                                             <LedgerCell dataLabel="الرقم" className="font-bold text-brand-700">
