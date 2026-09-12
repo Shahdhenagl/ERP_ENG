@@ -161,6 +161,7 @@ class SupplierController extends Controller
             'code' => $supplier->code,
             'name' => $supplier->name,
             'company' => $supplier->company,
+            'specialization' => $supplier->specialization,
             'phone' => $supplier->phone,
             'whatsapp' => $supplier->whatsapp,
             'email' => $supplier->email,
@@ -188,6 +189,7 @@ class SupplierController extends Controller
         return $request->validate([
             'name' => ['required', 'string', 'max:160'],
             'company' => ['nullable', 'string', 'max:160'],
+            'specialization' => ['nullable', 'string', 'max:160'],
             'phone' => ['nullable', 'string', 'max:32'],
             'whatsapp' => ['nullable', 'string', 'max:32'],
             'email' => ['nullable', 'email', 'max:160'],

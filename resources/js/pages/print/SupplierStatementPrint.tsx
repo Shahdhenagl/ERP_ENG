@@ -37,7 +37,8 @@ export function SupplierStatementPrint() {
                 heading="المورّد"
                 rows={[
                     ['الاسم', data.supplier.name],
-                    ['الشركة', data.supplier.company],
+                    ['اسم الشخص المسؤول', data.supplier.company],
+                    ['التخصص', data.supplier.specialization],
                     ['الكود', data.supplier.code],
                     ['الهاتف', data.supplier.phone],
                     ['الرقم الضريبي', data.supplier.tax_id],

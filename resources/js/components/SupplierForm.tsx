@@ -26,6 +26,7 @@ export function SupplierForm({
     const [form, setForm] = useState({
         name: supplier?.name ?? '',
         company: supplier?.company ?? '',
+        specialization: supplier?.specialization ?? '',
         phone: supplier?.phone ?? '',
         whatsapp: supplier?.whatsapp ?? '',
         email: supplier?.email ?? '',
@@ -45,6 +46,7 @@ export function SupplierForm({
             const saved = await save.mutateAsync({
                 name: form.name,
                 company: form.company || null,
+                specialization: form.specialization || null,
                 phone: form.phone || null,
                 whatsapp: form.whatsapp || null,
                 email: form.email || null,
@@ -85,8 +87,16 @@ export function SupplierForm({
                 </Field>
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="الشركة" error={errors.company}>
+                    <Field label="اسم الشخص المسؤول" error={errors.company}>
                         <Input value={form.company} onChange={(e) => set('company')(e.target.value)} />
+                    </Field>
+
+                    <Field label="المورد متخصص في" error={errors.specialization}>
+                        <Input
+                            value={form.specialization}
+                            onChange={(e) => set('specialization')(e.target.value)}
+                            placeholder="مثال: قطع غيار، تكييف، كهرباء"
+                        />
                     </Field>
 
                     <Field label="الرقم الضريبي" error={errors.tax_id}>

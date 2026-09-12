@@ -816,6 +816,7 @@ export interface Supplier {
     code: string
     name: string
     company: string | null
+    specialization: string | null
     phone: string | null
     whatsapp: string | null
     email: string | null
@@ -1956,6 +1957,7 @@ export interface SupplierStatement {
         code: string
         name: string
         company: string | null
+        specialization: string | null
         phone: string | null
         tax_id: string | null
     }

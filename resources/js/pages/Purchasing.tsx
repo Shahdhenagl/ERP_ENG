@@ -508,7 +508,12 @@ function SuppliersTab() {
                                 </span>
                                 {supplier.company && (
                                     <span className="block truncate text-[11px] text-navy-400">
-                                        {supplier.company}
+                                        مسؤول: {supplier.company}
+                                    </span>
+                                )}
+                                {supplier.specialization && (
+                                    <span className="block truncate text-[11px] text-navy-400">
+                                        تخصص: {supplier.specialization}
                                     </span>
                                 )}
                             </td>
@@ -533,6 +538,16 @@ function SuppliersTab() {
                                     <p className="mt-1 truncate font-bold text-navy-900">
                                         {supplier.name}
                                     </p>
+                                    {supplier.company && (
+                                        <p className="mt-0.5 truncate text-xs text-navy-400">
+                                            مسؤول: {supplier.company}
+                                        </p>
+                                    )}
+                                    {supplier.specialization && (
+                                        <p className="truncate text-xs text-navy-400">
+                                            تخصص: {supplier.specialization}
+                                        </p>
+                                    )}
                                     {supplier.phone && (
                                         <p className="tabular mt-0.5 text-left text-xs text-navy-400" dir="ltr">
                                             {supplier.phone}

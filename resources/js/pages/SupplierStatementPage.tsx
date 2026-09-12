@@ -63,7 +63,7 @@ export function SupplierStatementPage() {
                         {suppliers?.map((supplier) => (
                             <option key={supplier.id} value={supplier.id}>
                                 {supplier.name}
-                                {supplier.company ? ` — ${supplier.company}` : ''}
+                                {supplier.company ? ` — مسؤول: ${supplier.company}` : ''}
                             </option>
                         ))}
                     </Select>
