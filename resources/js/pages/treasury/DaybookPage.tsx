@@ -231,10 +231,10 @@ export function DaybookPage() {
                             <table className="daybook-table w-full table-fixed border-collapse text-[11px]" dir="rtl">
                                 <thead className="bg-navy-50 text-navy-700">
                                     <tr>
-                                        <LedgerHead className="w-[8%]">التاريخ</LedgerHead>
+                                        <LedgerHead className="w-[11%] whitespace-nowrap">التاريخ</LedgerHead>
                                         <LedgerHead className="w-[10%]">نوع الإيصال</LedgerHead>
                                         <LedgerHead className="w-[10%]">الرقم No</LedgerHead>
-                                        <LedgerHead className="w-[21%]">البيان Description</LedgerHead>
+                                        <LedgerHead className="w-[18%]">البيان Description</LedgerHead>
                                         <LedgerHead className="w-[14%]">اسم مستلم / دافع المبلغ</LedgerHead>
                                         <LedgerHead className="w-[14%]">الحساب / الفروع</LedgerHead>
                                         <LedgerHead className="w-[7%]" align="numeric">مدين</LedgerHead>
@@ -245,7 +245,7 @@ export function DaybookPage() {
                                 <tbody>
                                     {visibleRows.map((row) => (
                                         <tr key={row.id} className="border-b border-navy-100 bg-white transition-colors even:bg-navy-50/30 hover:bg-brand-50/60">
-                                            <LedgerCell dataLabel="التاريخ" className="font-semibold text-navy-700">
+                                            <LedgerCell dataLabel="التاريخ" className="daybook-date whitespace-nowrap font-semibold text-navy-700">
                                                 {row.transaction_date
                                                     ? formatDate(row.transaction_date)
                                                     : row.date
