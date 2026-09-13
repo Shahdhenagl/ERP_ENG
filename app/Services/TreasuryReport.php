@@ -297,7 +297,6 @@ class TreasuryReport
             ?? $movement->responsible?->name
             ?? $movement->task?->customer?->name
             ?? $movement->counterpartBox?->name
-            ?? $movement->actor?->name
             ?? $movement->category;
     }
 }

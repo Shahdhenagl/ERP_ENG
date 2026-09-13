@@ -95,7 +95,7 @@ export function SupplierForm({
                         <Input
                             value={form.specialization}
                             onChange={(e) => set('specialization')(e.target.value)}
-                            placeholder="مثال: قطع غيار، تكييف، كهرباء"
+                            placeholder="مثال: قطع غيار، بطاريات، صيانة…"
                         />
                     </Field>
 
