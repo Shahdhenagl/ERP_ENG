@@ -37,6 +37,7 @@ import { ContractList } from '@/pages/ContractList'
 import { ContractRenewalsPage } from '@/pages/ContractRenewalsPage'
 import { ContractHistoryPage } from '@/pages/ContractHistoryPage'
 import { CustomerList } from '@/pages/CustomerList'
+import { BranchesPage } from '@/pages/BranchesPage'
 import { CustomerProfile } from '@/pages/CustomerProfile'
 import { ContactsPage } from '@/pages/ContactsPage'
 import { SiteSurveyPage } from '@/pages/SiteSurveyPage'
@@ -231,6 +232,7 @@ export function App() {
                                         <Route path="tasks/:id" element={<TaskDetail />} />
                                         <Route path="tasks/:id/edit" element={<TaskForm />} />
                                         <Route path="customers" element={<CustomerList />} />
+                                        <Route path="branches" element={<BranchesPage />} />
                                         <Route path="customers/:id" element={<CustomerProfile />} />
                                         <Route path="crm" element={<CrmPage />} />
                                         <Route path="customer-followups" element={<FollowUpsPage />} />

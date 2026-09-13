@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\Branch;
 use App\Models\Customer;
 use App\Support\Terms;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -16,12 +17,37 @@ class BranchController extends Controller
     /** Every branch, for a picker that spans customers. */
     public function index(Request $request): JsonResponse
     {
+        $month = $request->string('month')->toString() ?: now()->format('Y-m');
+        try {
+            $monthDate = Carbon::createFromFormat('!Y-m', $month)->startOfMonth();
+        } catch (\Throwable) {
+            $monthDate = now()->startOfMonth();
+        }
+        $monthStart = $monthDate->copy()->startOfMonth();
+        $monthEnd = $monthDate->copy()->endOfMonth();
+        $visitWindow = function ($query) use ($monthStart, $monthEnd) {
+            $query->where(function ($window) use ($monthStart, $monthEnd) {
+                $window->whereBetween('tasks.scheduled_at', [$monthStart, $monthEnd])
+                    ->orWhereBetween('tasks.completed_at', [$monthStart, $monthEnd])
+                    ->orWhere(function ($unscheduled) use ($monthStart, $monthEnd) {
+                        $unscheduled->whereNull('tasks.scheduled_at')
+                            ->whereBetween('tasks.created_at', [$monthStart, $monthEnd]);
+                    });
+            });
+        };
+
         $branches = Branch::query()
             ->search($request->string('search')->toString())
             ->when($request->integer('customer_id'), fn ($q, $id) => $q->where('customer_id', $id))
             ->when($request->boolean('active_only'), fn ($q) => $q->active())
-            ->with('customer')
+            ->when($request->string('visit_status')->toString() === 'visited', fn ($q) => $q->whereHas('tasks', $visitWindow))
+            ->when($request->string('visit_status')->toString() === 'not_visited', fn ($q) => $q->whereDoesntHave('tasks', $visitWindow))
+            ->with(['customer.contracts' => fn ($q) => $q
+                ->where('status', 'active')
+                ->whereDate('starts_on', '<=', $monthEnd)
+                ->whereDate('ends_on', '>=', $monthStart)])
             ->withCount(['assets', 'tasks'])
+            ->withCount(['tasks as month_visits_count' => $visitWindow])
             ->withMax([
                 'tasks as last_visit_completed_at' => fn ($q) => $q
                     ->where('status', \App\Enums\TaskStatus::Completed->value)
@@ -30,7 +56,20 @@ class BranchController extends Controller
             ->orderBy('customer_id')
             ->orderBy('name')
             ->get()
-            ->map(fn (Branch $branch) => $this->present($branch));
+            ->map(function (Branch $branch) use ($month) {
+                $contracts = $branch->customer?->contracts ?? collect();
+                $visitsPerYear = (int) ($contracts->first()?->visits_per_year ?? 0);
+
+                return [
+                    ...$this->present($branch),
+                    'month' => $month,
+                    'visited' => (int) $branch->month_visits_count > 0,
+                    'month_visits_count' => (int) ($branch->month_visits_count ?? 0),
+                    'maintenance_subscribed' => $contracts->isNotEmpty(),
+                    'visits_per_year' => $visitsPerYear ?: null,
+                    'visits_per_month' => $visitsPerYear ? round($visitsPerYear / 12, 1) : 0,
+                ];
+            });
 
         return response()->json(['data' => $branches]);
     }

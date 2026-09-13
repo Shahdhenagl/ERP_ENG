@@ -157,7 +157,7 @@ export function Dashboard() {
                         value={stats?.branches_without_tasks}
                         loading={isLoading}
                         tone="red"
-                        to={path('/notifications')}
+                        to={path(`/branches?month=${monthStr}&visit_status=not_visited`)}
                     />
                 )}
                 {user?.role === 'technician' ? (

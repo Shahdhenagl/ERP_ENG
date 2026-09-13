@@ -105,6 +105,7 @@ export const NAV: NavItem[] = [
         short: tr('عملاء'),
         children: [
             { to: '/customers', permission: 'customers.manage', label: tr('العملاء'), icon: Building2 },
+            { to: '/branches', permission: 'customers.manage', label: tr('الفروع والمواقع'), icon: MapPin },
             { to: '/contacts', permission: 'customers.manage', label: tr('جهات الاتصال'), icon: Contact },
             { to: '/crm', permission: 'crm.manage', label: tr('فرص البيع (Leads)'), icon: Target },
             { to: '/sales/quotations', permission: 'sales.manage', label: tr('عروض الأسعار (CRM)'), icon: FileText },
