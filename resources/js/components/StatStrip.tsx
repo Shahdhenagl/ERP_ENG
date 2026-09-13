@@ -23,11 +23,11 @@ export function StatStrip({ items }: { items: StatItem[] }) {
     if (items.length === 0) return null
 
     return (
-        <div className={clsx('mb-4 grid gap-3', GRID[items.length] ?? 'grid-cols-2 lg:grid-cols-4')}>
+        <div className={clsx('mb-3 grid gap-2', GRID[items.length] ?? 'grid-cols-2 lg:grid-cols-4')}>
             {items.map((item) => (
-                <div key={item.label} className="card px-4 py-3">
+                <div key={item.label} className="card px-3 py-2.5">
                     <p className="text-[11px] font-bold text-navy-400">{item.label}</p>
-                    <p className={clsx('tabular mt-0.5 text-xl font-extrabold', TONES[item.tone ?? 'slate'])}>
+                    <p className={clsx('tabular mt-0.5 text-lg font-extrabold', TONES[item.tone ?? 'slate'])}>
                         {item.value}
                     </p>
                 </div>
@@ -40,4 +40,5 @@ const GRID: Record<number, string> = {
     2: 'grid-cols-2',
     3: 'grid-cols-3',
     4: 'grid-cols-2 lg:grid-cols-4',
+    5: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5',
 }

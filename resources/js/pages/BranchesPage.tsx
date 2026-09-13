@@ -35,7 +35,7 @@ export function BranchesPage() {
                 subtitle="اعرف فروع كل عميل وموقف الصيانة والزيارات الشهرية"
             />
 
-            <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mb-3 grid gap-2 rounded-2xl border border-navy-100 bg-surface p-3 shadow-[var(--shadow-card)] sm:grid-cols-2 lg:grid-cols-4">
                 <label className="field-label">
                     <span>الشهر</span>
                     <Input type="month" value={month} onChange={(event) => setMonth(event.target.value)} />
