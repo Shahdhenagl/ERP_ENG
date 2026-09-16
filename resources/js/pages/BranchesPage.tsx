@@ -1,4 +1,4 @@
-import { Building2, CalendarDays, CheckCircle2, MapPin, Plus, RotateCcw, Search, XCircle } from 'lucide-react'
+import { Building2, CalendarDays, CheckCircle2, Filter, MapPin, Plus, RotateCcw, Search, XCircle } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
@@ -38,11 +38,16 @@ export function BranchesPage() {
                 subtitle="اعرف فروع كل عميل وموقف الصيانة والزيارات الشهرية"
             />
 
-            <div className="mb-3 rounded-2xl border border-navy-100 bg-surface p-3 shadow-[var(--shadow-card)]">
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                        <p className="text-xs font-extrabold text-navy-800">تصفية الفروع</p>
-                        <p className="mt-0.5 text-[11px] text-navy-400">حدد الشهر وحالة الزيارة للوصول للفروع المطلوبة بسرعة.</p>
+            <div className="mb-5 overflow-hidden rounded-3xl border border-navy-100 bg-surface shadow-[var(--shadow-card)]">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-navy-100 bg-navy-50/40 px-5 py-4">
+                    <div className="flex items-center gap-3">
+                        <span className="grid size-10 place-items-center rounded-xl bg-brand-50 text-brand-600">
+                            <Filter className="size-5" />
+                        </span>
+                        <div>
+                            <p className="text-sm font-extrabold text-navy-900">فلترة الفروع</p>
+                            <p className="mt-0.5 text-[11px] text-navy-500">حدد الشهر والحالة للوصول للفروع المطلوبة بسرعة.</p>
+                        </div>
                     </div>
                     {(month !== currentMonth() || visitStatus || activeOnly !== '1' || search) && (
                         <button
@@ -53,7 +58,7 @@ export function BranchesPage() {
                                 setActiveOnly('1')
                                 setSearch('')
                             }}
-                            className="tap inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-navy-500 transition hover:bg-navy-50 hover:text-navy-800"
+                            className="tap inline-flex items-center gap-2 rounded-xl border border-navy-200 bg-white px-3 py-2 text-xs font-bold text-navy-600 shadow-sm transition hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700"
                         >
                             <RotateCcw className="size-3.5" />
                             مسح الفلاتر
@@ -61,28 +66,28 @@ export function BranchesPage() {
                     )}
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    <label className="field-label">
-                        <span>الشهر</span>
+                <div className="grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <label className="field-label gap-1.5">
+                        <span className="text-[11px] font-extrabold text-navy-600">الشهر</span>
                         <Input type="month" value={month} onChange={(event) => setMonth(event.target.value)} />
                     </label>
-                    <label className="field-label">
-                        <span>حالة الزيارة</span>
+                    <label className="field-label gap-1.5">
+                        <span className="text-[11px] font-extrabold text-navy-600">حالة الزيارة</span>
                         <Select value={visitStatus} onChange={(event) => setVisitStatus(event.target.value as VisitFilter)} aria-label="حالة الزيارة">
                             <option value="">كل الفروع</option>
                             <option value="visited">تمت زيارتها</option>
                             <option value="not_visited">لم تتم زيارتها</option>
                         </Select>
                     </label>
-                    <label className="field-label">
-                        <span>حالة الفرع</span>
+                    <label className="field-label gap-1.5">
+                        <span className="text-[11px] font-extrabold text-navy-600">حالة الفرع</span>
                         <Select value={activeOnly} onChange={(event) => setActiveOnly(event.target.value)} aria-label="حالة الفرع">
                             <option value="1">الفروع النشطة</option>
                             <option value="0">كل الحالات</option>
                         </Select>
                     </label>
-                    <label className="field-label">
-                        <span>بحث</span>
+                    <label className="field-label gap-1.5">
+                        <span className="text-[11px] font-extrabold text-navy-600">بحث بالاسم أو الكود</span>
                         <div className="relative">
                             <Search className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-navy-300" />
                             <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="اسم الفرع أو العميل" className="pr-9" />
