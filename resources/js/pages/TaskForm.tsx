@@ -67,7 +67,9 @@ export function TaskForm() {
             description: existing.description ?? '',
             type: existing.type,
             priority: existing.priority,
-            scheduled_at: toDateTimeLocal(existing.scheduled_at),
+            // Scheduling is intentionally hourly: discard legacy minutes when
+            // loading an existing task so the edit form never shows them.
+            scheduled_at: toDateTimeLocal(existing.scheduled_at).replace(/:\d{2}$/, ':00'),
             site_address: existing.site_address ?? '',
             branch_id: String(existing.branch_id ?? ''),
             asset_id: String(existing.asset_id ?? ''),
@@ -404,16 +406,17 @@ export function TaskForm() {
                                         value={form.scheduled_at?.slice(0, 10) ?? ''}
                                         onChange={(e) => {
                                             const d = e.target.value
-                                            const t = form.scheduled_at?.slice(11, 16) || '09:00'
+                                            const t = `${form.scheduled_at?.slice(11, 13) || '09'}:00`
                                             set('scheduled_at')(d ? `${d}T${t}` : '')
                                         }}
                                         className="w-3/5"
                                     />
                                     <Input
                                         type="time"
-                                        value={form.scheduled_at?.slice(11, 16) ?? ''}
+                                        step={3600}
+                                        value={form.scheduled_at ? `${form.scheduled_at.slice(11, 13)}:00` : ''}
                                         onChange={(e) => {
-                                            const t = e.target.value
+                                            const t = `${e.target.value.slice(0, 2)}:00`
                                             const d = form.scheduled_at?.slice(0, 10) || new Date().toISOString().slice(0, 10)
                                             set('scheduled_at')(t ? `${d}T${t}` : '')
                                         }}
