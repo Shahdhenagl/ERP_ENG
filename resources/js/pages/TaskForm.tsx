@@ -2,7 +2,7 @@ import clsx from 'clsx'
 import { tr } from '@/lib/i18n'
 import { ArrowRight, MessageCircle, Plus, Save, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { AssetForm } from '@/components/AssetForm'
 import { CustomerForm } from '@/components/CustomerForm'
 import { useToast } from '@/components/Toast'
@@ -24,6 +24,7 @@ import type { Asset, Customer, Task, TaskPriority, TaskType } from '@/types'
 
 export function TaskForm() {
     const { id } = useParams<{ id: string }>()
+    const [searchParams] = useSearchParams()
     const isEdit = Boolean(id)
     const navigate = useNavigate()
     const toast = useToast()
@@ -43,7 +44,7 @@ export function TaskForm() {
     const [branchSearch, setBranchSearch] = useState('')
 
     const [form, setForm] = useState({
-        customer_id: '',
+        customer_id: isEdit ? '' : (searchParams.get('customer_id') ?? ''),
         assigned_to: [] as string[],
         title: '',
         description: '',
@@ -51,7 +52,7 @@ export function TaskForm() {
         priority: 'normal' as TaskPriority,
         scheduled_at: '',
         site_address: '',
-        branch_id: '',
+        branch_id: isEdit ? '' : (searchParams.get('branch_id') ?? ''),
         asset_id: '',
     })
 
@@ -99,6 +100,17 @@ export function TaskForm() {
             branch.governorate,
         ].some((value) => value?.toLocaleLowerCase().includes(branchTerm))
     })
+
+    // Deep links from the branches module should behave like a manual pick:
+    // select the customer and branch, then copy the branch address into the
+    // task so the technician receives a usable destination.
+    useEffect(() => {
+        if (isEdit || !form.branch_id || !branches.length || form.site_address) return
+        const selected = branches.find((branch) => String(branch.id) === form.branch_id)
+        if (selected?.address) {
+            setForm((current) => ({ ...current, site_address: selected.address ?? '' }))
+        }
+    }, [branches, form.branch_id, form.site_address, isEdit])
 
     const customerAssets = form.customer_id ? (assetPage?.data ?? []) : []
     const selectedAsset = customerAssets.find((asset) => String(asset.id) === form.asset_id)

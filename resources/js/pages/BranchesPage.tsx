@@ -1,9 +1,10 @@
-import { Building2, CalendarDays, CheckCircle2, MapPin, Search, XCircle } from 'lucide-react'
+import { Building2, CalendarDays, CheckCircle2, MapPin, Plus, Search, XCircle } from 'lucide-react'
 import { useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
-import { EmptyState, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
+import { Button, EmptyState, Input, PageHeader, Select, SkeletonCard } from '@/components/ui'
 import { formatDate } from '@/lib/format'
+import { useArea } from '@/lib/nav'
 import { useBranches } from '@/lib/queries'
 import type { Branch } from '@/types'
 
@@ -16,6 +17,8 @@ type VisitFilter = '' | 'visited' | 'not_visited'
 
 export function BranchesPage() {
     const [params] = useSearchParams()
+    const navigate = useNavigate()
+    const { path } = useArea()
     const [month, setMonth] = useState(params.get('month') || currentMonth())
     const [visitStatus, setVisitStatus] = useState<VisitFilter>((params.get('visit_status') as VisitFilter) || '')
     const [activeOnly, setActiveOnly] = useState('1')
@@ -80,42 +83,47 @@ export function BranchesPage() {
                         { label: 'الموقع', className: 'w-20' },
                     ]}
                 >
-                    {branches.map((branch) => <BranchRow key={branch.id} branch={branch} />)}
+                    {branches.map((branch) => <BranchRow key={branch.id} branch={branch} onOpenCustomer={() => navigate(path(`/customers/${branch.customer_id}`))} onAddTask={() => navigate(path(`/tasks/new?customer_id=${branch.customer_id}&branch_id=${branch.id}`))} />)}
                 </DataTable>
             ) : (
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {branches.map((branch) => <BranchCard key={branch.id} branch={branch} />)}
+                    {branches.map((branch) => <BranchCard key={branch.id} branch={branch} onOpenCustomer={() => navigate(path(`/customers/${branch.customer_id}`))} onAddTask={() => navigate(path(`/tasks/new?customer_id=${branch.customer_id}&branch_id=${branch.id}`))} />)}
                 </div>
             )}
         </>
     )
 }
 
-function BranchRow({ branch }: { branch: Branch }) {
+function BranchRow({ branch, onOpenCustomer, onAddTask }: { branch: Branch; onOpenCustomer: () => void; onAddTask: () => void }) {
     return (
-        <tr className="border-t border-navy-100">
+        <tr className="cursor-pointer border-t border-navy-100 transition hover:bg-brand-50/40" onClick={onOpenCustomer}>
             <td className="px-3 py-2.5 font-bold text-navy-900">
                 {branch.name}
                 <span className="mt-0.5 block tabular text-[10px] font-normal text-navy-400">{branch.code}</span>
             </td>
-            <td className="px-3 py-2.5 text-navy-700">{branch.customer ?? '—'}</td>
+            <td className="px-3 py-2.5 font-semibold text-navy-700">{branch.customer ?? '—'}</td>
             <td className="px-3 py-2.5"><StatusBadge active={branch.is_active} visited={branch.visited} /></td>
             <td className="px-3 py-2.5">{branch.maintenance_subscribed ? <span className="badge bg-emerald-50 text-emerald-700">مشترك</span> : <span className="badge bg-navy-50 text-navy-400">غير مشترك</span>}</td>
             <td className="tabular px-3 py-2.5 text-navy-700">{branch.visits_per_month || '—'}</td>
             <td className="tabular px-3 py-2.5 font-bold text-navy-800">{branch.month_visits_count ?? 0}</td>
             <td className="tabular px-3 py-2.5 text-navy-500">{branch.last_visit_completed_at ? formatDate(branch.last_visit_completed_at) : '—'}</td>
-            <td className="px-3 py-2.5">{branch.maps_url ? <a href={branch.maps_url} target="_blank" rel="noreferrer" className="text-brand-600 hover:underline"><MapPin className="mx-auto size-4" /></a> : '—'}</td>
+            <td className="px-3 py-2.5" onClick={(event) => event.stopPropagation()}>
+                <div className="flex items-center gap-2">
+                    {!branch.visited && <AddTaskButton onClick={onAddTask} />}
+                    {branch.maps_url ? <a href={branch.maps_url} target="_blank" rel="noreferrer" className="text-brand-600 hover:underline"><MapPin className="mx-auto size-4" /></a> : '—'}
+                </div>
+            </td>
         </tr>
     )
 }
 
-function BranchCard({ branch }: { branch: Branch }) {
+function BranchCard({ branch, onOpenCustomer, onAddTask }: { branch: Branch; onOpenCustomer: () => void; onAddTask: () => void }) {
     return (
-        <div className="card p-4">
+        <div className="card cursor-pointer p-4 transition hover:-translate-y-0.5 hover:shadow-md" onClick={onOpenCustomer} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onOpenCustomer() }}>
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                     <p className="truncate font-bold text-navy-900">{branch.name}</p>
-                    <p className="mt-0.5 truncate text-xs text-navy-500">{branch.customer ?? 'بدون عميل'}</p>
+                    <p className="mt-0.5 truncate text-xs font-semibold text-navy-500">{branch.customer ?? 'بدون عميل'}</p>
                     <p className="tabular mt-0.5 text-[11px] text-navy-400">{branch.code}</p>
                 </div>
                 <StatusBadge active={branch.is_active} visited={branch.visited} />
@@ -127,8 +135,16 @@ function BranchCard({ branch }: { branch: Branch }) {
                 <Info label="آخر زيارة" value={branch.last_visit_completed_at ? formatDate(branch.last_visit_completed_at) : 'لم يزر'} />
             </div>
             {branch.address && <p className="mt-3 flex items-center gap-1.5 truncate text-xs text-navy-500"><MapPin className="size-3.5 shrink-0" />{branch.address}</p>}
+            <div className="mt-3 flex items-center justify-between gap-2 border-t border-navy-100 pt-3" onClick={(event) => event.stopPropagation()}>
+                <span className="text-[11px] text-navy-400">اضغط لفتح ملف العميل وفروعه</span>
+                {!branch.visited && <AddTaskButton onClick={onAddTask} />}
+            </div>
         </div>
     )
+}
+
+function AddTaskButton({ onClick }: { onClick: () => void }) {
+    return <Button type="button" variant="secondary" icon={Plus} className="py-1.5 text-[11px]" onClick={onClick}>إضافة مهمة</Button>
 }
 
 function StatusBadge({ active, visited }: { active: boolean; visited?: boolean }) {
