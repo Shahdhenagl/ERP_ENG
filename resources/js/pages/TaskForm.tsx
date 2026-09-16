@@ -231,6 +231,11 @@ export function TaskForm() {
             <PageHeader
                 title={isEdit ? 'تعديل المهمة' : 'مهمة جديدة'}
                 subtitle={isEdit ? existing?.code : 'أنشئ أمر عمل وأسنده إلى فني'}
+                actions={
+                    <Button variant="primary" icon={ListTodo} onClick={() => navigate(path('/tasks'))}>
+                        القائمة الرئيسية
+                    </Button>
+                }
             />
 
             <div className="space-y-5">
@@ -411,17 +416,21 @@ export function TaskForm() {
                                         }}
                                         className="w-3/5"
                                     />
-                                    <Input
-                                        type="time"
-                                        step={3600}
-                                        value={form.scheduled_at ? `${form.scheduled_at.slice(11, 13)}:00` : ''}
+                                    <Select
+                                        value={form.scheduled_at ? form.scheduled_at.slice(11, 13) : ''}
                                         onChange={(e) => {
-                                            const t = `${e.target.value.slice(0, 2)}:00`
+                                            const t = e.target.value ? `${e.target.value}:00` : ''
                                             const d = form.scheduled_at?.slice(0, 10) || new Date().toISOString().slice(0, 10)
                                             set('scheduled_at')(t ? `${d}T${t}` : '')
                                         }}
                                         className="w-2/5"
-                                    />
+                                    >
+                                        <option value="">الساعة</option>
+                                        {Array.from({ length: 24 }, (_, hour) => {
+                                            const value = String(hour).padStart(2, '0')
+                                            return <option key={value} value={value}>{value}:00</option>
+                                        })}
+                                    </Select>
                                 </div>
                             </Field>
                         </div>

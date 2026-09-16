@@ -38,8 +38,8 @@ export function BranchesPage() {
                 subtitle="اعرف فروع كل عميل وموقف الصيانة والزيارات الشهرية"
             />
 
-            <div className="mb-5 overflow-hidden rounded-3xl border border-navy-100 bg-surface shadow-[var(--shadow-card)]">
-                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-navy-100 bg-navy-50/40 px-5 py-4">
+            <div className="mb-4 overflow-hidden rounded-2xl border border-navy-200 bg-navy-50/70 shadow-[var(--shadow-card)]">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-navy-200 bg-navy-100/70 px-4 py-3">
                     <div className="flex items-center gap-3">
                         <span className="grid size-10 place-items-center rounded-xl bg-brand-50 text-brand-600">
                             <Filter className="size-5" />
@@ -66,7 +66,7 @@ export function BranchesPage() {
                     )}
                 </div>
 
-                <div className="grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-3 p-3 sm:grid-cols-2 xl:grid-cols-4">
                     <label className="field-label gap-1.5">
                         <span className="text-[11px] font-extrabold text-navy-600">الشهر</span>
                         <Input type="month" value={month} onChange={(event) => setMonth(event.target.value)} />
@@ -166,14 +166,14 @@ function BranchCard({ branch, onOpenCustomer, onAddTask }: { branch: Branch; onO
                 </div>
                 <StatusBadge active={branch.is_active} visited={branch.visited} />
             </div>
-            <div className="mt-3 grid grid-cols-2 gap-2 text-center">
+            <div className="mt-2.5 grid grid-cols-2 gap-1.5 text-center">
                 <Info label="الصيانة" value={branch.maintenance_subscribed ? 'مشترك' : 'غير مشترك'} />
                 <Info label="المطلوب شهريًا" value={branch.visits_per_month ? `${branch.visits_per_month} زيارة` : '—'} />
                 <Info label="زيارات الشهر" value={String(branch.month_visits_count ?? 0)} />
                 <Info label="آخر زيارة" value={branch.last_visit_completed_at ? formatDate(branch.last_visit_completed_at) : 'لم يزر'} />
             </div>
-            {branch.address && <p className="mt-3 flex items-center gap-1.5 truncate text-xs text-navy-500"><MapPin className="size-3.5 shrink-0" />{branch.address}</p>}
-            <div className="mt-3 flex items-center justify-between gap-2 border-t border-navy-100 pt-3" onClick={(event) => event.stopPropagation()}>
+            {branch.address && <p className="mt-2 flex items-center gap-1.5 truncate text-xs text-navy-500"><MapPin className="size-3.5 shrink-0" />{branch.address}</p>}
+            <div className="mt-2 flex items-center justify-between gap-2 border-t border-navy-100 pt-2.5" onClick={(event) => event.stopPropagation()}>
                 <span className="text-[11px] text-navy-400">اضغط لفتح ملف العميل وفروعه</span>
                 {!branch.visited && <AddTaskButton onClick={onAddTask} />}
             </div>
@@ -193,5 +193,5 @@ function StatusBadge({ active, visited }: { active: boolean; visited?: boolean }
 }
 
 function Info({ label, value }: { label: string; value: string }) {
-    return <div className="rounded-xl bg-navy-50 px-2 py-2"><p className="text-[10px] font-bold text-navy-400">{label}</p><p className="mt-0.5 text-xs font-extrabold text-navy-800">{value}</p></div>
+    return <div className="rounded-lg border border-navy-100 bg-navy-50/80 px-2 py-1.5"><p className="text-[10px] font-bold text-navy-400">{label}</p><p className="mt-0.5 text-xs font-extrabold text-navy-800">{value}</p></div>
 }
