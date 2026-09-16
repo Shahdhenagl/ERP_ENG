@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import { tr } from '@/lib/i18n'
-import { ArrowRight, MessageCircle, Plus, Save, Search } from 'lucide-react'
+import { ArrowRight, ListTodo, MessageCircle, Plus, Save, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { AssetForm } from '@/components/AssetForm'
@@ -212,10 +212,19 @@ export function TaskForm() {
 
     return (
         <>
-            <button onClick={() => navigate(-1)} className="btn-ghost -mr-2 mb-3 text-sm">
-                <ArrowRight className="size-4" />
-                {tr('رجوع')}
-            </button>
+            <div className="mb-3 flex items-center justify-between gap-3">
+                <button onClick={() => navigate(-1)} className="btn-ghost -mr-2 text-sm">
+                    <ArrowRight className="size-4" />
+                    {tr('رجوع')}
+                </button>
+                <Button
+                    variant="secondary"
+                    icon={ListTodo}
+                    onClick={() => navigate(path('/tasks'))}
+                >
+                    القائمة الرئيسية
+                </Button>
+            </div>
 
             <PageHeader
                 title={isEdit ? 'تعديل المهمة' : 'مهمة جديدة'}
