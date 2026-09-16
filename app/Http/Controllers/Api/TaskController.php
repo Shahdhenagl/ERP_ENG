@@ -177,12 +177,37 @@ class TaskController extends Controller
             'asset_id' => ['nullable', 'exists:assets,id'],
             'branch_id' => ['nullable', 'exists:branches,id'],
             'scheduled_at' => ['nullable', 'date'],
+            'assigned_to' => ['nullable', 'array'],
+            'assigned_to.*' => ['exists:users,id'],
         ]);
 
         $this->assertBelongsToCustomer($data);
         $this->assertBranchVisitWindow($data, $task);
 
+        $assignees = array_values(array_unique(array_map('intval', $data['assigned_to'] ?? [])));
+        $previousAssignees = $task->technicians()->pluck('users.id')->map(fn ($id) => (int) $id);
+        foreach ($assignees as $assigneeId) {
+            $technician = User::find($assigneeId);
+            if (! $technician?->isTechnician()) {
+                throw ValidationException::withMessages([
+                    'assigned_to' => Terms::get('يجب اختيار مستخدمين بدور «فني».'),
+                ]);
+            }
+            if (! $technician->is_active) {
+                throw ValidationException::withMessages([
+                    'assigned_to' => Terms::get('أحد الفنيين موقوف ولا يمكن إسناد مهام إليه.'),
+                ]);
+            }
+        }
+        unset($data['assigned_to']);
         $task->update($data);
+        $task->technicians()->sync($assignees);
+
+        foreach (array_diff($assignees, $previousAssignees->all()) as $assigneeId) {
+            if ($technician = User::find($assigneeId)) {
+                $this->workflow->assign($task, $technician, $request->user());
+            }
+        }
 
         ActivityLog::record('task.updated', $task, "تم تعديل المهمة {$task->code}");
 
