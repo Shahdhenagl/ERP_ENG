@@ -2,7 +2,7 @@ import clsx from 'clsx'
 import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { tr } from '@/lib/i18n'
 import { CalendarClock, Pencil, Plus, Trash2, Wallet } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ConfirmDialog, Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
 import { Button, EmptyState, Field, Input, Select, SkeletonCard, Textarea } from '@/components/ui'
@@ -278,6 +278,17 @@ function RecurringExpenseDialog({
         is_active: expense?.is_active ?? true,
         notes: expense?.notes ?? '',
     })
+
+    // The API already returns the real company till. Do not add a second
+    // placeholder with the same meaning ("الرئيسية") to the select; it made
+    // the main till appear twice in the dropdown. When the form is new, point
+    // the empty value at that real record so the posted expense is explicit.
+    useEffect(() => {
+        if (form.cash_box_id || !boxes?.length) return
+        const main = boxes.find((box) => box.name === 'الخزينة الرئيسية')
+            ?? boxes.find((box) => box.type === 'cash')
+        if (main) setForm((current) => ({ ...current, cash_box_id: String(main.id) }))
+    }, [boxes, form.cash_box_id])
     const set = (k: keyof typeof form) => (v: string | boolean) =>
         setForm((c) => ({ ...c, [k]: v }))
     const toggleItem = (id: number) =>
@@ -391,7 +402,6 @@ function RecurringExpenseDialog({
                             value={form.cash_box_id}
                             onChange={(e) => set('cash_box_id')(e.target.value)}
                         >
-                            <option value="">الرئيسية</option>
                             {boxes?.map((box) => (
                                 <option key={box.id} value={box.id}>
                                     {box.name}
