@@ -1123,6 +1123,8 @@ export interface CashMovementRow {
     category: string | null
     note: string | null
     customer: string | null
+    supplier: string | null
+    payee: string | null
     /** Present only for a supplier-payment movement; used to print or reverse its voucher. */
     supplier_payment_id?: number | null
     /** True when the linked supplier payment was already cancelled by a reverse entry. */

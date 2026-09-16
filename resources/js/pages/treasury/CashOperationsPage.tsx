@@ -5,7 +5,7 @@ import { useToast } from '@/components/Toast'
 import { Button, Field, Input, PageHeader, Select, Textarea } from '@/components/ui'
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { formatMoney } from '@/lib/domain'
-import { useCashBoxes, useTreasuryOperation, useUsers } from '@/lib/queries'
+import { useCashBoxes, useSuppliers, useTreasuryOperation, useUsers } from '@/lib/queries'
 import {
     ExpenseAccountChecklist,
     isTransportCustodyExpenseAccount,
@@ -63,6 +63,8 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
         transaction_date: defaultTransactionDate(),
         payment_method: 'cash',
         account_id: '',
+        supplier_id: '',
+        payee_name: '',
         responsible_user_id: '',
         note: '',
         branch_ids: [] as number[],
@@ -75,6 +77,7 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
 
     // Who the money was spent for. Separate from whoever is at the screen.
     const { data: userPage } = useUsers({ active_only: 1, per_page: 200 })
+    const { data: suppliers } = useSuppliers({ active_only: 1, per_page: 200 })
 
     return (
         <div className="card overflow-hidden p-0">
@@ -180,6 +183,28 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
                     </Field>
                 </div>
 
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label="المورد المستلم" error={errors.supplier_id} hint="اختر موردًا أو اكتب اسم مستلم آخر.">
+                        <Select
+                            value={form.supplier_id}
+                            onChange={(e) => setForm((current) => ({ ...current, supplier_id: e.target.value, payee_name: '' }))}
+                        >
+                            <option value="">— ليس موردًا —</option>
+                            {suppliers?.map((supplier) => (
+                                <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
+                            ))}
+                        </Select>
+                    </Field>
+                    <Field label="اسم مستلم آخر" error={errors.payee_name} hint="لأي شخص أو جهة غير الموردين.">
+                        <Input
+                            value={form.payee_name}
+                            disabled={Boolean(form.supplier_id)}
+                            onChange={(e) => setForm((current) => ({ ...current, payee_name: e.target.value, supplier_id: '' }))}
+                            placeholder="مثال: أحمد محمد أو شركة خارجية"
+                        />
+                    </Field>
+                </div>
+
                 <Field label="البيان أو الملاحظة" error={errors.note}>
                     <Textarea
                         value={form.note}
@@ -198,6 +223,7 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
                         !form.cash_box_id
                         || !form.amount
                         || !form.account_id
+                        || (!form.supplier_id && !form.payee_name.trim())
                         || (isTransportCustody && form.branch_ids.length === 0)
                     }
                     onClick={async () => {
@@ -209,6 +235,8 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
                                 transaction_date: form.transaction_date,
                                 payment_method: form.payment_method,
                                 account_id: Number(form.account_id),
+                                supplier_id: form.supplier_id ? Number(form.supplier_id) : null,
+                                payee_name: form.payee_name.trim() || null,
                                 responsible_user_id: form.responsible_user_id
                                     ? Number(form.responsible_user_id)
                                     : null,
@@ -222,6 +250,8 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
                                 transaction_date: defaultTransactionDate(),
                                 payment_method: 'cash',
                                 account_id: '',
+                                supplier_id: '',
+                                payee_name: '',
                                 responsible_user_id: '',
                                 note: '',
                                 branch_ids: [],

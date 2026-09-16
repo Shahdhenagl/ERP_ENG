@@ -29,6 +29,8 @@ class CashMovement extends Model
         // Present since purchasing landed but never fillable, so every voucher
         // written before this was saved with a null link back to itself.
         'supplier_payment_id',
+        'supplier_id',
+        'payee_name',
         'counterpart_box_id',
         'category',
         // Which expense heading it belongs under, and which part of the
@@ -72,6 +74,11 @@ class CashMovement extends Model
     public function supplierPayment(): BelongsTo
     {
         return $this->belongsTo(SupplierPayment::class);
+    }
+
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
     }
 
     /** The box on the other end of a transfer, or of a float advanced. */

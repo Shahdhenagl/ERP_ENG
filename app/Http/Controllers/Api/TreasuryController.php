@@ -214,6 +214,8 @@ class TreasuryController extends Controller
                     ->where('is_active', true)),
             ],
             'category' => ['nullable', 'string', 'max:64'],
+            'supplier_id' => ['nullable', 'exists:suppliers,id'],
+            'payee_name' => ['nullable', 'string', 'max:160'],
             'responsible_user_id' => ['nullable', 'exists:users,id'],
             'note' => ['nullable', 'string', 'max:1000'],
             'transaction_date' => ['nullable', 'date'],
@@ -221,6 +223,15 @@ class TreasuryController extends Controller
             'branch_ids' => ['nullable', 'array'],
             'branch_ids.*' => ['integer', 'distinct', 'exists:branches,id'],
         ]);
+
+        if (empty($data['supplier_id']) && blank($data['payee_name'] ?? null)) {
+            throw ValidationException::withMessages([
+                'payee_name' => Terms::get('اختر المورد أو اكتب اسم مستلم المصروف.'),
+            ]);
+        }
+        if (! empty($data['supplier_id'])) {
+            $data['payee_name'] = null;
+        }
 
         // The account is the source of truth for posting. Keep category as a
         // snapshot for existing reports and vouchers, but never trust a free
@@ -384,7 +395,7 @@ class TreasuryController extends Controller
             404,
         );
 
-        $movement->load(['box', 'actor', 'responsible', 'branches.customer']);
+        $movement->load(['box', 'actor', 'responsible', 'supplier', 'branches.customer']);
         $isReceipt = $movement->direction === 'in';
 
         return response()->json([
@@ -393,7 +404,7 @@ class TreasuryController extends Controller
                 'code' => ($isReceipt ? 'RC-' : 'PV-').str_pad((string) $movement->id, 5, '0', STR_PAD_LEFT),
                 'kind' => $isReceipt ? 'receipt' : 'payment',
                 'title' => $isReceipt ? 'سند قبض' : 'سند صرف',
-                'party' => $movement->category,
+                'party' => $movement->supplier?->name ?? $movement->payee_name ?? $movement->category,
                 'amount' => (float) $movement->amount,
                 'cash_box' => $movement->box?->name,
                 'note' => $movement->note,
@@ -422,11 +433,15 @@ class TreasuryController extends Controller
 
         $data = $request->validate([
             'category' => ['nullable', 'string', 'max:160'],
+            'supplier_id' => ['nullable', 'exists:suppliers,id'],
+            'payee_name' => ['nullable', 'string', 'max:160'],
             'note' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $movement->update([
             'category' => $data['category'] ?? $movement->category,
+            'supplier_id' => array_key_exists('supplier_id', $data) ? $data['supplier_id'] : $movement->supplier_id,
+            'payee_name' => array_key_exists('payee_name', $data) ? $data['payee_name'] : $movement->payee_name,
             'note' => $data['note'] ?? null,
         ]);
 
@@ -490,12 +505,15 @@ class TreasuryController extends Controller
             ->when($request->string('search')->toString(), fn ($q, $term) => $q->where(
                 fn ($sub) => $sub->where('note', 'like', "%{$term}%")
                     ->orWhere('category', 'like', "%{$term}%")
+                    ->orWhere('payee_name', 'like', "%{$term}%")
                     ->orWhereHas('payment.customer', fn ($c) => $c->where('name', 'like', "%{$term}%"))
+                    ->orWhereHas('supplier', fn ($s) => $s->where('name', 'like', "%{$term}%"))
+                    ->orWhereHas('supplierPayment.supplier', fn ($s) => $s->where('name', 'like', "%{$term}%"))
                     ->orWhereHas('branches', fn ($b) => $b
                         ->where('name', 'like', "%{$term}%")
                         ->orWhere('code', 'like', "%{$term}%")),
             ))
-            ->with(['box', 'actor', 'payment.customer', 'supplierPayment', 'branches.customer'])
+            ->with(['box', 'actor', 'payment.customer', 'supplierPayment.supplier', 'supplier', 'branches.customer'])
             ->orderByTransactionDate('desc')
             ->paginate($request->integer('per_page', 30));
 
@@ -512,6 +530,8 @@ class TreasuryController extends Controller
                 'category' => $m->category,
                 'note' => $m->note,
                 'customer' => $m->payment?->customer?->name,
+                'supplier' => $m->supplier?->name ?? $m->supplierPayment?->supplier?->name,
+                'payee' => $m->supplier?->name ?? $m->supplierPayment?->supplier?->name ?? $m->payee_name,
                 // Supplier payments print and reverse through their own voucher id.
                 'supplier_payment_id' => $m->supplier_payment_id,
                 // A soft-deleted supplier voucher was cancelled by a reverse entry.

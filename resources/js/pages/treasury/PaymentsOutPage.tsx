@@ -68,7 +68,7 @@ export function PaymentsOutPage() {
                     {rows.map((movement) => {
                         const manualVoucher = ['expense', 'external_deposit'].includes(movement.source)
                         const supplierVoucher = movement.source === 'supplier_payment'
-                        const statement = movement.customer ?? movement.category ?? movement.note ?? '—'
+                        const statement = movement.payee ?? movement.customer ?? movement.category ?? movement.note ?? '—'
                         const branchSummary = movement.branches?.map((branch) => branch.label).join('، ')
 
                         return (
