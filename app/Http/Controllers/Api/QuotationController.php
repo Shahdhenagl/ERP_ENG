@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enums\QuotationStatus;
+use App\Enums\QuotationFollowUpStatus;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Branch;
@@ -24,6 +25,7 @@ class QuotationController extends Controller
             ->search($request->string('search')->toString())
             ->when($request->integer('customer_id'), fn ($q, $id) => $q->where('customer_id', $id))
             ->when($request->string('status')->toString(), fn ($q, $s) => $q->where('status', $s))
+            ->when($request->string('follow_up_status')->toString(), fn ($q, $s) => $q->where('follow_up_status', $s))
             ->when($request->boolean('awaiting'), fn ($q) => $q->awaitingDecision())
             ->when($request->boolean('pending_approval'), fn ($q) => $q->pendingApproval())
             ->with(['customer', 'branch', 'salesOrder', 'approver'])
@@ -123,6 +125,17 @@ class QuotationController extends Controller
         $cancelled = $this->sales->cancel($quotation, $data['reason']);
 
         return response()->json(['data' => $this->present($cancelled->load(['customer', 'branch', 'lines.item']), true)]);
+    }
+
+    public function followUpStatus(Request $request, Quotation $quotation): JsonResponse
+    {
+        $data = $request->validate([
+            'follow_up_status' => ['nullable', \Illuminate\Validation\Rule::enum(QuotationFollowUpStatus::class)],
+        ]);
+        $quotation->update(['follow_up_status' => $data['follow_up_status'] ?? null]);
+        ActivityLog::record('quotation.follow_up_updated', $quotation, "تم تحديث متابعة عرض السعر {$quotation->code}");
+
+        return response()->json(['data' => $this->present($quotation->fresh()->load(['customer', 'branch', 'salesOrder']))]);
     }
 
     /* ── Internal approval ───────────────────────────────── */
@@ -228,6 +241,8 @@ class QuotationController extends Controller
 
             'status' => $quotation->status->value,
             'status_label' => $quotation->status->label(),
+            'follow_up_status' => $quotation->follow_up_status?->value,
+            'follow_up_status_label' => $quotation->follow_up_status?->label(),
             // What to show: folds in the lapse the server works out on read.
             'effective_status' => $quotation->effectiveStatus(),
             'effective_status_label' => $quotation->effectiveStatusLabel(),

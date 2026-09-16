@@ -512,6 +512,7 @@ Route::middleware(['auth:sanctum', 'role:admin,manager'])->group(function () {
     Route::post('quotations/{quotation}/accept', [QuotationController::class, 'accept'])->middleware('can:sales.manage');
     Route::post('quotations/{quotation}/reject', [QuotationController::class, 'reject'])->middleware('can:sales.manage');
     Route::post('quotations/{quotation}/cancel', [QuotationController::class, 'cancel'])->middleware('can:sales.manage');
+    Route::patch('quotations/{quotation}/follow-up-status', [QuotationController::class, 'followUpStatus'])->middleware('can:sales.manage');
 
     // Tenders — bids to a deadline, won or lost.
     Route::get('tenders', [TenderController::class, 'index'])->middleware('can:sales.manage');

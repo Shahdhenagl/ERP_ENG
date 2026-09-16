@@ -1855,6 +1855,16 @@ export function useQuotationAction() {
     })
 }
 
+export function useUpdateQuotationFollowUpStatus() {
+    const client = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ id, follow_up_status }: { id: number; follow_up_status: string | null }) =>
+            (await api.patch(`/quotations/${id}/follow-up-status`, { follow_up_status })).data,
+        onSuccess: () => invalidateSales(client),
+    })
+}
+
 export function useDeleteQuotation() {
     const client = useQueryClient()
 

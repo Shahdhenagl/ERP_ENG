@@ -17,7 +17,7 @@ class Quotation extends Model
 
     protected $fillable = [
         'code', 'customer_id', 'attention_to', 'branch_id', 'asset_id', 'task_id', 'title',
-        'issue_date', 'valid_until', 'status',
+        'issue_date', 'valid_until', 'status', 'follow_up_status',
         'subtotal', 'discount',
         'discount_percent', 'tax_rate', 'tax_amount', 'total', 'currency',
         'terms', 'conditions', 'notes', 'reject_reason', 'sent_at', 'decided_at', 'created_by',
@@ -28,6 +28,7 @@ class Quotation extends Model
     {
         return [
             'status' => QuotationStatus::class,
+            'follow_up_status' => \App\Enums\QuotationFollowUpStatus::class,
             'issue_date' => 'date',
             'valid_until' => 'date',
             'sent_at' => 'datetime',

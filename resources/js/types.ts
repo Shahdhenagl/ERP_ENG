@@ -686,6 +686,10 @@ export interface CustomerTasksMeta {
 
 /** What an operator set. `effective_status` is what you show. */
 export type QuotationStatus = 'draft' | 'sent' | 'accepted' | 'rejected' | 'cancelled'
+export type QuotationFollowUpStatus =
+    | 'no_answer' | 'call_back' | 'interested' | 'not_interested' | 'wrong_number'
+    | 'already_has_service' | 'follow_up' | 'appointment_set' | 'rescheduled_appointment'
+    | 'cancelled_appointment' | 'disconnected_number' | 'decision_maker_unavailable'
 /** Includes the lapse the server derives from today's date. */
 export type QuotationEffectiveStatus = QuotationStatus | 'expired'
 
@@ -729,6 +733,8 @@ export interface Quotation {
     status_label: string
     effective_status: QuotationEffectiveStatus
     effective_status_label: string
+    follow_up_status: QuotationFollowUpStatus | null
+    follow_up_status_label: string | null
 
     subtotal: number
     discount: number

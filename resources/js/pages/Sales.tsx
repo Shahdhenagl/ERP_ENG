@@ -25,7 +25,7 @@ import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { SalesReturnsTab } from '@/pages/sales/SalesReturnsTab'
 import { QuotationForm } from '@/components/QuotationForm'
 import { useToast } from '@/components/Toast'
-import { Button, EmptyState, Field, Input, PageHeader, SkeletonCard, Textarea } from '@/components/ui'
+import { Button, EmptyState, Field, Input, PageHeader, Select, SkeletonCard, Textarea } from '@/components/ui'
 import { itemSpecRows } from '@/lib/specs'
 import { SpecRowList } from '@/components/SpecSheet'
 import { errorMessage } from '@/lib/api'
@@ -37,16 +37,32 @@ import {
     useQuotation,
     useQuotationAction,
     useQuotations,
+    useUpdateQuotationFollowUpStatus,
     useSaveQuotation,
     useSalesOrder,
     useSalesOrderAction,
     useSalesOrders,
 } from '@/lib/queries'
 import { useAuth } from '@/lib/auth'
-import type { Quotation } from '@/types'
+import type { Quotation, QuotationFollowUpStatus } from '@/types'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 
 type Tab = 'quotations' | 'orders' | 'returns'
+
+const FOLLOW_UP_OPTIONS: Array<{ value: QuotationFollowUpStatus; label: string }> = [
+    { value: 'no_answer', label: 'No Answer' },
+    { value: 'call_back', label: 'Call Back' },
+    { value: 'interested', label: 'Interested' },
+    { value: 'not_interested', label: 'Not Interested' },
+    { value: 'wrong_number', label: 'Wrong Number' },
+    { value: 'already_has_service', label: 'Already Has Service' },
+    { value: 'follow_up', label: 'Follow Up' },
+    { value: 'appointment_set', label: 'Appointment Set — appointment' },
+    { value: 'rescheduled_appointment', label: 'Rescheduled appointment' },
+    { value: 'cancelled_appointment', label: 'Canceled — appointment' },
+    { value: 'disconnected_number', label: 'Disconnected Number — gatekeeper' },
+    { value: 'decision_maker_unavailable', label: 'Decision Maker Unavailable —' },
+]
 
 const TABS: Array<{ key: Tab; label: string; to: string }> = [
     { key: 'quotations', label: tr('عروض الأسعار'), to: '/sales/quotations' },
@@ -79,6 +95,7 @@ export function Sales() {
 function QuotationsTab() {
     const [search, setSearch] = useState('')
     const [awaiting, setAwaiting] = useState(false)
+    const [followUpStatus, setFollowUpStatus] = useState('')
     const [formOpen, setFormOpen] = useState(false)
     const [editing, setEditing] = useState<Quotation | undefined>()
     const [detailId, setDetailId] = useState<number | null>(null)
@@ -87,6 +104,7 @@ function QuotationsTab() {
     const { data: quotations, isLoading } = useQuotations({
         search,
         awaiting: awaiting ? 1 : undefined,
+        follow_up_status: followUpStatus || undefined,
     })
 
     const timer = useRef<number>(0)
@@ -122,6 +140,10 @@ function QuotationsTab() {
                     >
                         {tr('بانتظار رد العميل')}
                     </button>
+                    <Select value={followUpStatus} onChange={(event) => setFollowUpStatus(event.target.value)} aria-label="حالة متابعة عرض السعر" className="min-w-44">
+                        <option value="">كل حالات المتابعة</option>
+                        {FOLLOW_UP_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                    </Select>
                 </div>
 
                 <div className="relative">
@@ -157,7 +179,8 @@ function QuotationsTab() {
                         { label: tr('التاريخ'), className: 'w-28' },
                         { label: tr('صالح حتى'), className: 'w-28' },
                         { label: tr('الإجمالي'), className: 'w-28' },
-                        { label: tr('الحالة'), className: 'w-28' },
+                        { label: tr('حالة العرض'), className: 'w-28' },
+                        { label: tr('المتابعة'), className: 'w-44' },
                         { label: tr('الإجراءات'), className: 'w-24 text-center' },
                     ]}
                 >
@@ -196,6 +219,9 @@ function QuotationsTab() {
                                 >
                                     {quotation.effective_status_label}
                                 </span>
+                            </td>
+                            <td className="px-3 py-2.5" onClick={(event) => event.stopPropagation()}>
+                                <FollowUpSelect quotation={quotation} />
                             </td>
                             <td className="px-3 py-2.5 text-center">
                                 {['draft', 'sent'].includes(quotation.status) && (
@@ -259,6 +285,10 @@ function QuotationsTab() {
                                         )}
                                     </div>
 
+                                    <div className="mt-2" onClick={(event) => event.stopPropagation()}>
+                                        <FollowUpSelect quotation={quotation} />
+                                    </div>
+
                                     <p className="mt-1.5 truncate font-bold text-navy-900">
                                         {quotation.customer}
                                         {quotation.branch && (
@@ -311,6 +341,35 @@ function QuotationsTab() {
                 />
             )}
         </>
+    )
+}
+
+function FollowUpSelect({ quotation }: { quotation: Quotation }) {
+    const update = useUpdateQuotationFollowUpStatus()
+    const toast = useToast()
+
+    return (
+        <Select
+            value={quotation.follow_up_status ?? ''}
+            disabled={update.isPending}
+            onChange={async (event) => {
+                try {
+                    await update.mutateAsync({
+                        id: quotation.id,
+                        follow_up_status: event.target.value || null,
+                    })
+                } catch (caught) {
+                    toast.error(errorMessage(caught, 'تعذّر تحديث حالة المتابعة.'))
+                }
+            }}
+            aria-label="حالة متابعة عرض السعر"
+            className="w-full max-w-64 py-1.5 text-[11px]"
+        >
+            <option value="">بدون متابعة</option>
+            {FOLLOW_UP_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+        </Select>
     )
 }
 
