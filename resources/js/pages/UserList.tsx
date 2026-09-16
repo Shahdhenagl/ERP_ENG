@@ -276,6 +276,9 @@ function UserFormDialog({
         name: user?.name ?? '',
         email: user?.email ?? '',
         password: '',
+        // Older technicians may have a role but no position. The API requires
+        // role whenever position is empty, so preserve it in edit requests.
+        role: user?.role ?? 'technician',
         position: user?.position ?? '',
         phone: user?.phone ?? '',
         whatsapp: user?.whatsapp ?? '',
