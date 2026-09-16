@@ -6,7 +6,6 @@ import { Button, Field, Input, PageHeader, Select, Textarea } from '@/components
 import { errorMessage, fieldErrors } from '@/lib/api'
 import { formatMoney } from '@/lib/domain'
 import { useCashBoxes, useTreasuryOperation, useUsers } from '@/lib/queries'
-import { RecurringExpensesSection } from '@/pages/treasury/RecurringExpensesSection'
 import {
     ExpenseAccountChecklist,
     isTransportCustodyExpenseAccount,
@@ -34,9 +33,6 @@ export function CashOperationsPage() {
                 <DepositCard boxes={boxes ?? []} />
             </div>
 
-            <div className="mt-4">
-                <RecurringExpensesSection />
-            </div>
         </>
     )
 }

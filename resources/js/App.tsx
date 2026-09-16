@@ -112,6 +112,7 @@ import { TreasuryPage } from '@/pages/treasury/TreasuryPage'
 import { DaybookPage } from '@/pages/treasury/DaybookPage'
 import { PaymentsOutPage } from '@/pages/treasury/PaymentsOutPage'
 import { CashOperationsPage } from '@/pages/treasury/CashOperationsPage'
+import { RecurringExpensesPage } from '@/pages/treasury/RecurringExpensesPage'
 import { MyStock } from '@/pages/MyStock'
 import { ComingSoon } from '@/pages/ComingSoon'
 import { TechnicianReportsPage } from '@/pages/TechnicianReportsPage'
@@ -302,6 +303,7 @@ export function App() {
                                         <Route path="treasury/daybook" element={<DaybookPage />} />
                                         <Route path="treasury/payments-out" element={<PaymentsOutPage />} />
                                         <Route path="treasury/operations" element={<CashOperationsPage />} />
+                                        <Route path="treasury/recurring-expenses" element={<RecurringExpensesPage />} />
                                         <Route path="collections" element={<CollectionsPage />} />
                                         <Route path="customer-statement" element={<CustomerStatementPage />} />
                                         <Route path="supplier-statement" element={<SupplierStatementPage />} />

@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import { DataTable, useViewMode, ViewToggle } from '@/components/ViewToggle'
 import { tr } from '@/lib/i18n'
-import { CalendarClock, Pencil, Plus, Trash2, Wallet } from 'lucide-react'
+import { CalendarClock, Pencil, Plus, Search, Trash2, Wallet } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { ConfirmDialog, Modal } from '@/components/Modal'
 import { useToast } from '@/components/Toast'
@@ -44,9 +44,14 @@ function dueChip(days: number): { text: string; className: string } {
  * lights up three days before each is due and stays until it is paid. Paying
  * rolls the schedule forward one cycle.
  */
-export function RecurringExpensesSection() {
+export function RecurringExpensesSection({ standalone = false }: { standalone?: boolean }) {
     const [view, setView] = useViewMode('recurring-expenses')
     const { data, isLoading } = useRecurringExpenses()
+    const { data: boxes } = useCashBoxes()
+    const [search, setSearch] = useState('')
+    const [status, setStatus] = useState<'all' | 'due' | 'active' | 'inactive'>('all')
+    const [boxFilter, setBoxFilter] = useState('')
+    const [cycleFilter, setCycleFilter] = useState('')
     const [editing, setEditing] = useState<RecurringExpense | null | undefined>(undefined)
     const [deleting, setDeleting] = useState<RecurringExpense | null>(null)
     const remove = useDeleteRecurringExpense()
@@ -54,9 +59,21 @@ export function RecurringExpensesSection() {
 
     const expenses = data?.data ?? []
     const dueSoon = data?.meta.due_soon ?? 0
+    const term = search.trim().toLocaleLowerCase()
+    const filteredExpenses = expenses.filter((expense) => {
+        const matchesSearch = !term || [expense.name, expense.category, expense.notes, expense.cash_box, ...expense.items.map((item) => item.label)]
+            .some((value) => value?.toLocaleLowerCase().includes(term))
+        const matchesStatus = status === 'all'
+            || (status === 'due' && expense.is_due_soon)
+            || (status === 'active' && expense.is_active)
+            || (status === 'inactive' && !expense.is_active)
+        const matchesBox = !boxFilter || String(expense.cash_box_id ?? '') === boxFilter
+        const matchesCycle = !cycleFilter || String(expense.cycle_days) === cycleFilter
+        return matchesSearch && matchesStatus && matchesBox && matchesCycle
+    })
 
     return (
-        <section className="card p-5">
+        <section className={standalone ? '' : 'card p-5'}>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                 <h2 className="flex items-center gap-2 font-bold text-navy-900">
                     <CalendarClock className="size-4.5 text-brand-600" />
@@ -76,9 +93,32 @@ export function RecurringExpensesSection() {
                 <ViewToggle view={view} onChange={setView} />
             </div>
 
+            <div className="mb-4 grid gap-2 rounded-2xl border border-navy-100 bg-surface p-3 shadow-[var(--shadow-card)] sm:grid-cols-2 lg:grid-cols-4">
+                <div className="relative">
+                    <Search className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-navy-300" />
+                    <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="ابحث باسم المصروف أو البند..." className="pr-9" />
+                </div>
+                <Select value={status} onChange={(event) => setStatus(event.target.value as typeof status)} aria-label="حالة المصروف">
+                    <option value="all">كل الحالات</option>
+                    <option value="due">مستحق قريبًا</option>
+                    <option value="active">نشط</option>
+                    <option value="inactive">موقوف</option>
+                </Select>
+                <Select value={boxFilter} onChange={(event) => setBoxFilter(event.target.value)} aria-label="الخزينة">
+                    <option value="">كل الخزائن</option>
+                    {boxes?.map((box) => <option key={box.id} value={box.id}>{box.name}</option>)}
+                </Select>
+                <Select value={cycleFilter} onChange={(event) => setCycleFilter(event.target.value)} aria-label="الدورة">
+                    <option value="">كل الدورات</option>
+                    {CYCLES.map((cycle) => <option key={cycle.days} value={cycle.days}>{cycle.label}</option>)}
+                </Select>
+            </div>
+
+            <p className="mb-2 text-xs font-semibold text-navy-400">عرض {filteredExpenses.length} من {expenses.length} مصروف دوري</p>
+
             {isLoading ? (
                 <SkeletonCard />
-            ) : expenses.length === 0 ? (
+            ) : !filteredExpenses.length ? (
                 <EmptyState
                     icon={CalendarClock}
                     title="لا مصروفات دورية"
@@ -97,7 +137,7 @@ export function RecurringExpensesSection() {
                         { label: 'المبلغ', className: 'w-[11%] text-end' },
                     ]}
                 >
-                    {expenses.map((expense) => (
+                    {filteredExpenses.map((expense) => (
                         <tr
                             key={expense.id}
                             className={clsx(
@@ -135,7 +175,7 @@ export function RecurringExpensesSection() {
                 </DataTable>
             ) : (
                 <div className="space-y-2">
-                    {expenses.map((expense) => {
+                    {filteredExpenses.map((expense) => {
                         const chip = dueChip(expense.days_until_due)
 
                         return (
@@ -167,6 +207,7 @@ export function RecurringExpensesSection() {
                                             {expense.items.length > 0 && ` · ${expense.items.map((item) => item.label).join('، ')}`}
                                             {expense.items.length === 0 && expense.category && ` · ${expense.category}`}
                                         </p>
+                                        {expense.notes && <p className="mt-1 truncate text-[11px] text-navy-500">ملاحظات: {expense.notes}</p>}
                                     </div>
                                     <span className="tabular shrink-0 font-extrabold text-navy-900">
                                         {formatMoney(expense.amount)}
