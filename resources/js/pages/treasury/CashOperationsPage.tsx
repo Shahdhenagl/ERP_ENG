@@ -184,7 +184,7 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="المورد المستلم" error={errors.supplier_id} hint="اختر موردًا أو اكتب اسم مستلم آخر.">
+                    <Field label="المورد المستلم" error={errors.supplier_id} hint="اختياري؛ اتركه فارغًا لو مصروف عام.">
                         <Select
                             value={form.supplier_id}
                             onChange={(e) => setForm((current) => ({ ...current, supplier_id: e.target.value, payee_name: '' }))}
@@ -195,7 +195,7 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
                             ))}
                         </Select>
                     </Field>
-                    <Field label="اسم مستلم آخر" error={errors.payee_name} hint="لأي شخص أو جهة غير الموردين.">
+                    <Field label="اسم مستلم آخر" error={errors.payee_name} hint="اختياري؛ لأي شخص أو جهة غير الموردين.">
                         <Input
                             value={form.payee_name}
                             disabled={Boolean(form.supplier_id)}
@@ -223,7 +223,6 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
                         !form.cash_box_id
                         || !form.amount
                         || !form.account_id
-                        || (!form.supplier_id && !form.payee_name.trim())
                         || (isTransportCustody && form.branch_ids.length === 0)
                     }
                     onClick={async () => {

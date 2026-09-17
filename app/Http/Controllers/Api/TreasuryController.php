@@ -224,11 +224,6 @@ class TreasuryController extends Controller
             'branch_ids.*' => ['integer', 'distinct', 'exists:branches,id'],
         ]);
 
-        if (empty($data['supplier_id']) && blank($data['payee_name'] ?? null)) {
-            throw ValidationException::withMessages([
-                'payee_name' => Terms::get('اختر المورد أو اكتب اسم مستلم المصروف.'),
-            ]);
-        }
         if (! empty($data['supplier_id'])) {
             $data['payee_name'] = null;
         }
