@@ -520,7 +520,7 @@ class TreasuryController extends Controller
                 'source' => $m->source,
                 // Custody advances and supplier payments also land here, so the
                 // labels come from the one map the report already uses.
-                'source_label' => TreasuryReport::LABELS[$m->source] ?? $m->source,
+                'source_label' => TreasuryReport::labelFor($m->source, $m->direction),
                 'box' => $m->box?->name,
                 'category' => $m->category,
                 'note' => $m->note,

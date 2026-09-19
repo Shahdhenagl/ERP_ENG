@@ -30,6 +30,15 @@ class TreasuryReport
         'transfer' => 'تحويل بين الخزائن',
     ];
 
+    public static function labelFor(string $source, ?string $direction = null): string
+    {
+        if ($source === 'payment' && $direction === 'out') {
+            return 'عكس تحصيل من العملاء';
+        }
+
+        return self::LABELS[$source] ?? $source;
+    }
+
     /**
      * @param  array{from?: string|null, to?: string|null, cash_box_id?: int|null}  $filters
      * @return array<string, mixed>
@@ -103,7 +112,7 @@ class TreasuryReport
             ->get()
             ->map(fn ($row) => [
                 'source' => $row->source,
-                'label' => self::LABELS[$row->source] ?? $row->source,
+                'label' => self::labelFor($row->source, $direction),
                 'total' => round((float) $row->total, 2),
                 'count' => (int) $row->movements,
             ])
@@ -165,7 +174,7 @@ class TreasuryReport
                 'date' => ($movement->transaction_date ?? $movement->created_at)?->toDateString(),
                 'direction' => $movement->direction,
                 'source' => $movement->source,
-                'label' => self::LABELS[$movement->source] ?? $movement->source,
+                'label' => self::labelFor($movement->source, $movement->direction),
                 'voucher_type' => $this->voucherType($movement),
                 'voucher_number' => $this->voucherNumber($movement),
                 'journal_code' => $entry?->code,
