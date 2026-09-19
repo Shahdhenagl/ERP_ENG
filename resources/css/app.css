@@ -1474,6 +1474,10 @@ table td {
 @layer components {
     .toolbar { @apply rounded-lg border border-navy-200 bg-white px-2.5 py-1 text-xs font-bold text-navy-700 hover:bg-navy-100; }
     .draft-print-content { line-height: 2; white-space: normal; overflow-wrap: anywhere; }
+    .draft-print-content table { width: 100%; max-width: 100%; margin: 0.75em 0; border-collapse: collapse; table-layout: fixed; }
+    .draft-print-content th, .draft-print-content td { border: 1px solid #cbd5e1; padding: 6px 8px; vertical-align: top; text-align: start; word-break: break-word; white-space: normal; }
+    .draft-print-content th { background: #f1f5f9; font-weight: 800; }
+    .draft-print-content tr { break-inside: avoid; }
     .draft-print-content p { margin: 0 0 0.8em; }
     .draft-print-content h1, .draft-print-content h2, .draft-print-content h3 { margin: 1em 0 0.5em; font-weight: 800; }
     .draft-print-content ul, .draft-print-content ol { margin: 0.75em 1.5em; }

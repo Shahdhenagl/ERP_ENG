@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, type ClipboardEvent } from 'react'
 import JSZip from 'jszip'
 import { Eye, FileText, FolderPlus, MessageCircle, Pencil, Plus, Printer, Save, Trash2, Upload } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -20,6 +20,39 @@ const FONTS = ['Cairo', 'Arial', 'Tahoma', 'Georgia']
 
 function escapeHtml(value: string): string {
     return value.replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char] ?? char)
+}
+
+function preparePastedHtml(html: string): string {
+    const document = new DOMParser().parseFromString(html, 'text/html')
+    document.querySelectorAll('script, style, meta, link').forEach((node) => node.remove())
+    document.querySelectorAll('table').forEach((table) => {
+        table.removeAttribute('width')
+        table.style.width = '100%'
+        table.style.borderCollapse = 'collapse'
+        table.style.tableLayout = 'fixed'
+        table.style.margin = '0.75em 0'
+        table.querySelectorAll('th, td').forEach((cell) => {
+            const element = cell as HTMLElement
+            element.style.border = '1px solid #cbd5e1'
+            element.style.padding = '6px 8px'
+            element.style.verticalAlign = 'top'
+            element.style.wordBreak = 'break-word'
+            element.style.whiteSpace = 'normal'
+        })
+    })
+    document.querySelectorAll<HTMLElement>('[style]').forEach((element) => {
+        element.style.removeProperty('mso-padding-alt')
+        element.style.removeProperty('mso-border-alt')
+        element.style.removeProperty('mso-line-height-alt')
+        element.removeAttribute('class')
+    })
+    return document.body.innerHTML
+}
+
+function plainTextTableHtml(text: string): string | null {
+    const rows = text.trim().split(/\r?\n/).filter(Boolean).map((row) => row.split(/\t|\s{2,}/).map((cell) => cell.trim()))
+    if (rows.length < 2 || !rows.some((row) => row.length > 1)) return null
+    return `<table><tbody>${rows.map((row) => `<tr>${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table><p><br></p>`
 }
 
 async function readWordFile(file: File): Promise<{ title: string; content: string }> {
@@ -159,7 +192,7 @@ export function DraftsPage() {
 function DraftPreview({ draft, onClose, onPrint, onWhatsApp }: { draft: Draft; onClose: () => void; onPrint: () => void; onWhatsApp: () => void }) {
     return <div className="fixed inset-0 z-50 overflow-y-auto bg-navy-950/50 p-4"><div className="mx-auto max-w-4xl rounded-2xl bg-surface p-5 shadow-2xl" dir={draft.direction}>
         <div className="mb-5 flex items-center justify-between gap-3"><div><p className="text-xs font-bold text-brand-600">{draft.category?.name}</p><h2 className="text-xl font-extrabold text-navy-900">{draft.title}</h2></div><button onClick={onClose} className="text-navy-400">✕</button></div>
-        <div className="min-h-[320px] rounded-xl border border-navy-100 bg-white p-6 leading-loose" style={{ fontFamily: draft.font_family, fontSize: `${draft.font_size}px`, color: draft.text_color }} dangerouslySetInnerHTML={{ __html: draft.content ?? '' }} />
+        <div className="draft-print-content min-h-[320px] rounded-xl border border-navy-100 bg-white p-6 leading-loose" style={{ fontFamily: draft.font_family, fontSize: `${draft.font_size}px`, color: draft.text_color }} dangerouslySetInnerHTML={{ __html: draft.content ?? '' }} />
         <div className="mt-5 flex flex-wrap justify-end gap-2"><Button variant="secondary" icon={Pencil} onClick={onClose}>إغلاق</Button><Button variant="secondary" icon={Printer} onClick={onPrint}>طباعة</Button><Button variant="whatsapp" icon={MessageCircle} onClick={onWhatsApp}>إرسال واتساب</Button></div>
     </div></div>
 }
@@ -169,8 +202,16 @@ function DraftEditor({ draft, categories, defaultCategoryId, onClose }: { draft?
     const [form, setForm] = useState({ draft_category_id: draft?.draft_category_id ?? defaultCategoryId ?? categories[0]?.id ?? '', title: draft?.title ?? '', title_en: draft?.title_en ?? '', content_en: draft?.content_en ?? '', font_size: draft?.font_size ?? 14, font_family: draft?.font_family ?? 'Cairo', text_color: draft?.text_color ?? '#0b1b3a', accent_color: draft?.accent_color ?? '#0f766e', direction: draft?.direction ?? 'rtl' as 'rtl' | 'ltr' })
     const set = (key: string, value: unknown) => setForm((f) => ({ ...f, [key]: value }))
     const command = (name: string, value?: string) => { document.execCommand(name, false, value); contentRef.current?.focus() }
+    const handlePaste = (event: ClipboardEvent<HTMLDivElement>) => {
+        const html = event.clipboardData.getData('text/html')
+        const text = event.clipboardData.getData('text/plain')
+        const content = html ? preparePastedHtml(html) : plainTextTableHtml(text)
+        if (!content) return
+        event.preventDefault()
+        document.execCommand('insertHTML', false, content)
+    }
     const submit = async () => { try { await save.mutateAsync({ ...form, draft_category_id: Number(form.draft_category_id), content: contentRef.current?.innerHTML ?? draft?.content ?? '' }); toast.success('تم حفظ المسودة.'); onClose() } catch (e) { toast.error(errorMessage(e, 'تعذر حفظ المسودة.')) } }
-    return <div className="fixed inset-0 z-50 overflow-y-auto bg-navy-950/40 p-4"><div className="mx-auto max-w-5xl rounded-2xl bg-surface p-5 shadow-2xl" dir="rtl"><div className="mb-5 flex items-center justify-between"><h2 className="text-lg font-extrabold">{draft ? 'تعديل المسودة' : 'مسودة جديدة'}</h2><button onClick={onClose} className="text-navy-400">✕</button></div><div className="grid gap-4 md:grid-cols-2"><Input placeholder="عنوان المسودة" value={form.title} onChange={(e) => set('title', e.target.value)} /><Input placeholder="العنوان بالإنجليزية اختياري" dir="ltr" value={form.title_en} onChange={(e) => set('title_en', e.target.value)} /><Select value={String(form.draft_category_id)} onChange={(e) => set('draft_category_id', e.target.value)}><option value="">اختر التصنيف</option>{categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</Select><Input type="number" min={8} max={48} step={1} value={form.font_size} onChange={(e) => set('font_size', Number(e.target.value))} /></div><div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-navy-50 p-2"><select className="rounded-lg border border-navy-200 bg-white px-2 py-1 text-sm" value={form.font_family} onChange={(e) => set('font_family', e.target.value)}>{FONTS.map((f) => <option key={f}>{f}</option>)}</select><button className="toolbar" onClick={() => command('bold')}><b>B</b></button><button className="toolbar" onClick={() => command('italic')}><i>I</i></button><button className="toolbar" onClick={() => command('underline')}><u>U</u></button><button className="toolbar" onClick={() => command('insertUnorderedList')}>• قائمة</button><label className="flex items-center gap-1 text-xs">لون النص <input type="color" value={form.text_color} onChange={(e) => { set('text_color', e.target.value); command('foreColor', e.target.value) }} /></label><label className="flex items-center gap-1 text-xs">لون مميز <input type="color" value={form.accent_color} onChange={(e) => set('accent_color', e.target.value)} /></label><button className="toolbar" onClick={() => set('direction', form.direction === 'rtl' ? 'ltr' : 'rtl')}>‏{form.direction === 'rtl' ? 'RTL' : 'LTR'}</button></div><div ref={contentRef} contentEditable suppressContentEditableWarning className="mt-3 min-h-[360px] rounded-xl border border-navy-200 bg-white p-5 leading-loose outline-none focus:border-brand-500" style={{ fontFamily: form.font_family, fontSize: `${form.font_size}px`, color: form.text_color, direction: form.direction }} dangerouslySetInnerHTML={{ __html: draft?.content ?? '<p>اكتب نص المسودة هنا…</p>' }} /><div className="mt-4"><Textarea placeholder="نسخة إنجليزية اختيارية للطباعة الإنجليزية" dir="ltr" rows={5} value={form.content_en} onChange={(e) => set('content_en', e.target.value)} /></div><div className="mt-5 flex justify-end gap-2"><Button variant="secondary" onClick={onClose}>إلغاء</Button><Button icon={Save} loading={save.isPending} onClick={() => void submit()}>حفظ المسودة</Button></div></div></div>
+    return <div className="fixed inset-0 z-50 overflow-y-auto bg-navy-950/40 p-4"><div className="mx-auto max-w-5xl rounded-2xl bg-surface p-5 shadow-2xl" dir="rtl"><div className="mb-5 flex items-center justify-between"><h2 className="text-lg font-extrabold">{draft ? 'تعديل المسودة' : 'مسودة جديدة'}</h2><button onClick={onClose} className="text-navy-400">✕</button></div><div className="grid gap-4 md:grid-cols-2"><Input placeholder="عنوان المسودة" value={form.title} onChange={(e) => set('title', e.target.value)} /><Input placeholder="العنوان بالإنجليزية اختياري" dir="ltr" value={form.title_en} onChange={(e) => set('title_en', e.target.value)} /><Select value={String(form.draft_category_id)} onChange={(e) => set('draft_category_id', e.target.value)}><option value="">اختر التصنيف</option>{categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</Select><Input type="number" min={8} max={48} step={1} value={form.font_size} onChange={(e) => set('font_size', Number(e.target.value))} /></div><div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-navy-50 p-2"><select className="rounded-lg border border-navy-200 bg-white px-2 py-1 text-sm" value={form.font_family} onChange={(e) => set('font_family', e.target.value)}>{FONTS.map((f) => <option key={f}>{f}</option>)}</select><button className="toolbar" onClick={() => command('bold')}><b>B</b></button><button className="toolbar" onClick={() => command('italic')}><i>I</i></button><button className="toolbar" onClick={() => command('underline')}><u>U</u></button><button className="toolbar" onClick={() => command('insertUnorderedList')}>• قائمة</button><label className="flex items-center gap-1 text-xs">لون النص <input type="color" value={form.text_color} onChange={(e) => { set('text_color', e.target.value); command('foreColor', e.target.value) }} /></label><label className="flex items-center gap-1 text-xs">لون مميز <input type="color" value={form.accent_color} onChange={(e) => set('accent_color', e.target.value)} /></label><button className="toolbar" onClick={() => set('direction', form.direction === 'rtl' ? 'ltr' : 'rtl')}>‏{form.direction === 'rtl' ? 'RTL' : 'LTR'}</button></div><div ref={contentRef} onPaste={handlePaste} contentEditable suppressContentEditableWarning className="draft-print-content mt-3 min-h-[360px] overflow-x-auto rounded-xl border border-navy-200 bg-white p-5 leading-loose outline-none focus:border-brand-500" style={{ fontFamily: form.font_family, fontSize: `${form.font_size}px`, color: form.text_color, direction: form.direction }} dangerouslySetInnerHTML={{ __html: draft?.content ?? '<p>اكتب نص المسودة هنا…</p>' }} /><div className="mt-4"><Textarea placeholder="نسخة إنجليزية اختيارية للطباعة الإنجليزية" dir="ltr" rows={5} value={form.content_en} onChange={(e) => set('content_en', e.target.value)} /></div><div className="mt-5 flex justify-end gap-2"><Button variant="secondary" onClick={onClose}>إلغاء</Button><Button icon={Save} loading={save.isPending} onClick={() => void submit()}>حفظ المسودة</Button></div></div></div>
 }
 
 function CategoryEditor({ onClose }: { onClose: () => void }) { const toast = useToast(); const save = useSaveDraftCategory(); const [name, setName] = useState(''); const [nameEn, setNameEn] = useState(''); return <div className="fixed inset-0 z-50 grid place-items-center bg-navy-950/40 p-4"><div className="w-full max-w-md rounded-2xl bg-surface p-5"><h2 className="mb-4 text-lg font-extrabold">تصنيف مسودات جديد</h2><div className="space-y-3"><Input placeholder="اسم التصنيف مثل: جوابات تفويض" value={name} onChange={(e) => setName(e.target.value)} /><Input placeholder="الاسم بالإنجليزية اختياري" dir="ltr" value={nameEn} onChange={(e) => setNameEn(e.target.value)} /></div><div className="mt-5 flex justify-end gap-2"><Button variant="secondary" onClick={onClose}>إلغاء</Button><Button loading={save.isPending} onClick={async () => { try { await save.mutateAsync({ name, name_en: nameEn || null }); toast.success('تم إنشاء التصنيف.'); onClose() } catch (e) { toast.error(errorMessage(e, 'تعذر إنشاء التصنيف.')) } }}>حفظ</Button></div></div></div> }
