@@ -201,54 +201,6 @@ export function Dashboard() {
                 </div>
             </section>
 
-            {/* ── Technician workload (dispatchers only) ─────── */}
-            {canDispatch && stats?.technician_load && stats.technician_load.length > 0 && (
-                <section className="mt-5">
-                    <div className="mb-2 flex items-center justify-between">
-                        <h2 className="text-sm font-bold text-navy-700">{tr('حِمل العمل على الفنيين')}</h2>
-                        <Link to={path('/users')} className="text-xs font-bold text-brand-600 hover:underline">
-                            {tr('كل المستخدمين')}
-                        </Link>
-                    </div>
-
-                    <div className="card divide-y divide-navy-100">
-                        {stats.technician_load.map((technician) => {
-                            const max = Math.max(...stats.technician_load!.map((t) => t.open_count), 1)
-                            const width = (technician.open_count / max) * 100
-
-                            return (
-                                <div key={technician.id} className="flex items-center gap-3 p-3">
-                                    <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-navy-50 text-xs font-bold text-navy-600">
-                                        {technician.name.charAt(0)}
-                                    </div>
-
-                                    <div className="min-w-0 flex-1">
-                                        <p className="truncate text-sm font-bold text-navy-900">
-                                            {technician.name}
-                                        </p>
-                                        {technician.job_title && (
-                                            <p className="truncate text-xs text-navy-400">
-                                                {technician.job_title}
-                                            </p>
-                                        )}
-                                        <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-navy-100">
-                                            <div
-                                                className="h-full rounded-full bg-brand-500 transition-all duration-300"
-                                                style={{ width: `${width}%` }}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="tabular text-left text-xs font-bold text-navy-700">
-                                        {technician.open_count} {tr('مفتوحة')}
-                                    </div>
-                                </div>
-                            )
-                        })}
-                    </div>
-                </section>
-            )}
-
             {/* ── What needs attention now ───────────────────── */}
             <section className="mt-6">
                     <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
