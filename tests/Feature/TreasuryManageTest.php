@@ -332,6 +332,37 @@ it('rejects inactive branches for a transport custody expense without creating a
     expect(CashMovement::where('source', 'expense')->count())->toBe($before);
 });
 
+it('turns a transport custody voucher into a technician float used by the phone', function () {
+    $box = CashBox::default();
+    actingAs($this->manager)->postJson('/api/treasury/deposit', [
+        'cash_box_id' => $box->id, 'amount' => 2000, 'party' => 'تمويل الاختبار',
+    ])->assertCreated();
+
+    $technician = User::factory()->technician()->create();
+    $customer = Customer::factory()->create();
+    $branch = $customer->branches()->create(['name' => 'فرع العهدة']);
+    $expenseAccount = Account::query()->where('code', '5204')->firstOrFail();
+
+    actingAs($this->manager)->postJson('/api/treasury/expense', [
+        'cash_box_id' => $box->id,
+        'amount' => 1000,
+        'account_id' => $expenseAccount->id,
+        'responsible_user_id' => $technician->id,
+        'branch_ids' => [$branch->id],
+        'note' => 'عهدة انتقالات للزيارة',
+    ])->assertCreated();
+
+    $custody = CashBox::where('user_id', $technician->id)->firstOrFail();
+    expect($custody->balance())->toBe(1000.0)
+        ->and(CashMovement::where('cash_box_id', $custody->id)->where('source', 'custody_advance')->count())->toBe(1)
+        ->and(CashMovement::where('cash_box_id', $custody->id)->where('source', 'expense')->count())->toBe(0);
+
+    actingAs($technician)->postJson('/api/custody/mine/spend', [
+        'amount' => 250,
+        'category' => 'مواصلات',
+    ])->assertCreated()->assertJsonPath('data.cash.balance', 750);
+});
+
 it('keeps ordinary expenses independent from branch links', function () {
     $box = CashBox::default();
     actingAs($this->manager)->postJson('/api/treasury/deposit', [

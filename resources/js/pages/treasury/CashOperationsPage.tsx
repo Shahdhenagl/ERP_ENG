@@ -163,14 +163,17 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
                     </Field>
                     <Field
                         label="الموظف المسؤول"
+                        required={isTransportCustody}
                         error={errors.responsible_user_id}
-                        hint="اختياري للمصروفات العامة."
+                        hint={isTransportCustody
+                            ? 'سيُصرف المبلغ كعهدة نقدية للفني ويظهر في هاتفه ويُخصم منه عند تسجيل المصروفات.'
+                            : 'اختياري للمصروفات العامة.'}
                     >
                         <Select
                             value={form.responsible_user_id}
                             onChange={(e) => set('responsible_user_id')(e.target.value)}
                         >
-                            <option value="">— مصروف عام —</option>
+                            <option value="">{isTransportCustody ? '— اختر الفني —' : '— مصروف عام —'}</option>
                             {userPage?.data.map((user) => (
                                 <option key={user.id} value={user.id}>
                                     {user.name}
@@ -224,6 +227,7 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
                         || !form.amount
                         || !form.account_id
                         || (isTransportCustody && form.branch_ids.length === 0)
+                        || (isTransportCustody && !form.responsible_user_id)
                     }
                     onClick={async () => {
                         setErrors({})
@@ -242,7 +246,9 @@ function ExpenseCard({ boxes }: { boxes: Box[] }) {
                                 note: form.note || null,
                                 branch_ids: isTransportCustody ? form.branch_ids : [],
                             })
-                            toast.success('تم تسجيل المصروف.')
+                            toast.success(isTransportCustody
+                                ? 'تم صرف العهدة وربطها بالفني. ستظهر في هاتفه.'
+                                : 'تم تسجيل المصروف.')
                             setForm({
                                 cash_box_id: '',
                                 amount: '',

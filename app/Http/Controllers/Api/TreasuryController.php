@@ -12,7 +12,9 @@ use App\Models\CashBox;
 use App\Models\CashMovement;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Models\User;
 use App\Services\BillingService;
+use App\Services\CustodyService;
 use App\Services\TreasuryReport;
 use App\Support\Terms;
 use Illuminate\Http\JsonResponse;
@@ -27,6 +29,7 @@ class TreasuryController extends Controller
 {
     public function __construct(
         protected BillingService $billing,
+        protected CustodyService $custody,
         protected TreasuryReport $report,
     ) {}
 
@@ -273,11 +276,33 @@ class TreasuryController extends Controller
             }
         }
 
+        if ($isTransportCustody && empty($data['responsible_user_id'])) {
+            throw ValidationException::withMessages([
+                'responsible_user_id' => Terms::get('اختر الفني المسؤول حتى تُسجّل المبالغ كعهدة وتظهر في هاتفه.'),
+            ]);
+        }
+
         $data['category'] = $expenseAccount->name;
         $data['transaction_date'] ??= now()->toDateString();
         $data['payment_method'] ??= 'cash';
 
-        $movement = DB::transaction(function () use ($data, $branchIds, $request) {
+        $movement = DB::transaction(function () use ($data, $branchIds, $request, $isTransportCustody, $expenseAccount) {
+            if ($isTransportCustody) {
+                $movement = $this->custody->advanceCash(
+                    User::findOrFail((int) $data['responsible_user_id']),
+                    (float) $data['amount'],
+                    CashBox::findOrFail($data['cash_box_id']),
+                    $request->user(),
+                    trim(($data['note'] ?? '') !== ''
+                        ? $data['note']
+                        : "عهدة {$expenseAccount->name}"),
+                );
+                if ($branchIds->isNotEmpty()) {
+                    $movement->branches()->sync($branchIds->all());
+                }
+                return $movement;
+            }
+
             $movement = $this->billing->recordExpense(
                 CashBox::findOrFail($data['cash_box_id']),
                 (float) $data['amount'],
