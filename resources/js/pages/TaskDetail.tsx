@@ -66,6 +66,8 @@ import {
     useDeleteAttachment,
     useDeleteTask,
     useInvoiceAction,
+    useCashBoxes,
+    useCustodyCash,
     useMyCustody,
     useRejectPostponement,
     useRequestPostponement,
@@ -395,7 +397,7 @@ export function TaskDetail() {
 
                 {expenseOpen && (
                     <Modal open onClose={() => setExpenseOpen(false)} title="مصروفات المهمة" size="sm">
-                        <TaskExpenses task={task} canAdd />
+                        <TaskExpenses task={task} canAdd canManage={false} />
                     </Modal>
                 )}
 
@@ -763,7 +765,7 @@ export function TaskDetail() {
                     </section>
 
                     {/* ── Trip expenses ──────────────────────── */}
-                    <TaskExpenses task={task} canAdd={canDrive} />
+                    <TaskExpenses task={task} canAdd={canDrive} canManage={canDispatch} />
 
                     {/* ── Photos ─────────────────────────────── */}
                     <AttachmentsSection task={task} canEdit={canDrive} />
@@ -1202,13 +1204,15 @@ function SiteCheckRow({ checks }: { checks: TaskReport['site_checks'] }) {
     )
 }
 
-/** What the technician spent on this job, and — for them — a way to add more. */
-function TaskExpenses({ task, canAdd }: { task: Task; canAdd: boolean }) {
+/** The job's float: what was handed over, what was spent, and what is left or owed. */
+function TaskExpenses({ task, canAdd, canManage }: { task: Task; canAdd: boolean; canManage: boolean }) {
     const { data: mine } = useMyCustody()
     const [adding, setAdding] = useState(false)
+    const [advanceOpen, setAdvanceOpen] = useState(false)
 
     const expenses = task.expenses ?? []
     const total = task.expenses_total ?? 0
+    const cash = task.task_cash ?? { advanced: 0, spent: total, returned: 0, remaining: 0, owed: 0 }
 
     return (
         <section className="card p-5">
@@ -1222,11 +1226,33 @@ function TaskExpenses({ task, canAdd }: { task: Task; canAdd: boolean }) {
                         </span>
                     )}
                 </h2>
-                {canAdd && (
-                    <Button variant="ghost" icon={Plus} className="text-xs" onClick={() => setAdding(true)}>
-                        {tr('أضف مصروف')}
-                    </Button>
-                )}
+                <div className="flex gap-1">
+                    {canManage && (
+                        <Button variant="ghost" icon={Plus} className="text-xs" onClick={() => setAdvanceOpen(true)}>
+                            صرف عهدة
+                        </Button>
+                    )}
+                    {canAdd && (
+                        <Button variant="ghost" icon={Plus} className="text-xs" onClick={() => setAdding(true)}>
+                            {tr('أضف مصروف')}
+                        </Button>
+                    )}
+                </div>
+            </div>
+
+            <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
+                {[
+                    ['المسلّم', cash.advanced, 'text-brand-700'],
+                    ['المصروف', cash.spent, 'text-navy-900'],
+                    ['المُعاد', cash.returned, 'text-emerald-700'],
+                    ['المتبقي معه', cash.remaining, 'text-amber-700'],
+                    ['المستحق له', cash.owed, 'text-red-700'],
+                ].map(([label, amount, tone]) => (
+                    <div key={String(label)} className="rounded-xl bg-navy-50 px-3 py-2">
+                        <p className="text-[10px] font-bold text-navy-400">{label}</p>
+                        <p className={`tabular text-sm font-extrabold ${tone}`}>{formatMoney(Number(amount))}</p>
+                    </div>
+                ))}
             </div>
 
             {expenses.length === 0 ? (
@@ -1272,7 +1298,87 @@ function TaskExpenses({ task, canAdd }: { task: Task; canAdd: boolean }) {
                     onClose={() => setAdding(false)}
                 />
             )}
+            {advanceOpen && (
+                <TaskCashModal task={task} onClose={() => setAdvanceOpen(false)} />
+            )}
         </section>
+    )
+}
+
+function TaskCashModal({ task, onClose }: { task: Task; onClose: () => void }) {
+    const toast = useToast()
+    const cash = useCustodyCash()
+    const { data: boxes } = useCashBoxes()
+    const [direction, setDirection] = useState<'advance' | 'return'>('advance')
+    const [userId, setUserId] = useState(String(task.technicians?.[0]?.id ?? ''))
+    const [boxId, setBoxId] = useState('')
+    const [amount, setAmount] = useState('')
+    const [note, setNote] = useState('')
+    const companyBoxes = boxes?.filter((box) => box.type !== 'custody') ?? []
+
+    return (
+        <Modal
+            open
+            onClose={onClose}
+            title={direction === 'advance' ? `صرف عهدة للمهمة ${task.code}` : `رد متبقي المهمة ${task.code}`}
+            size="sm"
+            footer={
+                <>
+                    <Button variant="secondary" onClick={onClose} disabled={cash.isPending}>إلغاء</Button>
+                    <Button
+                        loading={cash.isPending}
+                        disabled={!userId || !amount || (direction === 'advance' && !boxId && !companyBoxes[0]?.id)}
+                        onClick={async () => {
+                            try {
+                                await cash.mutateAsync({
+                                    user_id: Number(userId),
+                                    cash_box_id: Number(boxId || companyBoxes[0]?.id),
+                                    amount: Number(amount),
+                                    direction,
+                                    task_id: task.id,
+                                    note: note || null,
+                                })
+                                toast.success(direction === 'advance' ? 'تم تسليم عهدة المهمة.' : 'تم رد المتبقي.')
+                                onClose()
+                            } catch (caught) {
+                                toast.error(errorMessage(caught, 'تعذّر تسجيل حركة العهدة.'))
+                            }
+                        }}
+                    >
+                        {direction === 'advance' ? 'تسجيل التسليم' : 'تسجيل الرد'}
+                    </Button>
+                </>
+            }
+        >
+            <div className="space-y-4">
+                <Field label="نوع الحركة">
+                    <Select value={direction} onChange={(event) => setDirection(event.target.value as 'advance' | 'return')}>
+                        <option value="advance">تسليم عهدة للموظف</option>
+                        <option value="return">رد المتبقي من الموظف</option>
+                    </Select>
+                </Field>
+                <Field label="الموظف" required>
+                    <Select value={userId} onChange={(event) => setUserId(event.target.value)}>
+                        <option value="">— اختر الموظف —</option>
+                        {(task.technicians ?? []).map((technician) => (
+                            <option key={technician.id} value={technician.id}>{technician.name}</option>
+                        ))}
+                    </Select>
+                </Field>
+                <Field label={direction === 'advance' ? 'الخزينة' : 'الخزينة المستلمة'} required>
+                    <Select value={boxId} onChange={(event) => setBoxId(event.target.value)}>
+                        <option value="">— الخزينة الرئيسية —</option>
+                        {companyBoxes.map((box) => <option key={box.id} value={box.id}>{box.name} ({formatMoney(box.balance)})</option>)}
+                    </Select>
+                </Field>
+                <Field label="المبلغ" required>
+                    <Input type="number" min={0} step="0.01" value={amount} onChange={(event) => setAmount(event.target.value)} dir="ltr" className="text-left" autoFocus />
+                </Field>
+                <Field label="البيان">
+                    <Input value={note} onChange={(event) => setNote(event.target.value)} placeholder="مثال: عهدة انتقالات المهمة" />
+                </Field>
+            </div>
+        </Modal>
     )
 }
 

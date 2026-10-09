@@ -158,6 +158,7 @@ class TaskController extends Controller
             'reports.attachments',
             'attachments.uploader',
             'expenses.actor',
+            'cashMovements.actor',
             'postponements.requester',
         ]));
     }

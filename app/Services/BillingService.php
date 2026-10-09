@@ -381,7 +381,14 @@ class BillingService
     }
 
     /** Move money between boxes — cash banked, or drawn out. */
-    public function transferBetweenBoxes(CashBox $from, CashBox $to, float $amount, User $actor, ?string $note = null): CashMovement
+    public function transferBetweenBoxes(
+        CashBox $from,
+        CashBox $to,
+        float $amount,
+        User $actor,
+        ?string $note = null,
+        ?int $taskId = null,
+    ): CashMovement
     {
         $amount = round($amount, 2);
 
@@ -399,17 +406,17 @@ class BillingService
             ]);
         }
 
-        return DB::transaction(function () use ($from, $to, $amount, $actor, $note): CashMovement {
+        return DB::transaction(function () use ($from, $to, $amount, $actor, $note, $taskId): CashMovement {
             CashMovement::create([
                 'cash_box_id' => $from->id, 'direction' => 'out', 'amount' => $amount,
                 'source' => 'transfer', 'counterpart_box_id' => $to->id,
-                'note' => $note, 'user_id' => $actor->id,
+                'task_id' => $taskId, 'note' => $note, 'user_id' => $actor->id,
             ]);
 
             return CashMovement::create([
                 'cash_box_id' => $to->id, 'direction' => 'in', 'amount' => $amount,
                 'source' => 'transfer', 'counterpart_box_id' => $from->id,
-                'note' => $note, 'user_id' => $actor->id,
+                'task_id' => $taskId, 'note' => $note, 'user_id' => $actor->id,
             ]);
         });
     }

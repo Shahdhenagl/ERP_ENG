@@ -1408,6 +1408,13 @@ export interface Task {
     attachments?: TaskAttachment[]
     expenses?: CustodyExpense[] | null
     expenses_total?: number | null
+    task_cash?: {
+        advanced: number
+        spent: number
+        returned: number
+        remaining: number
+        owed: number
+    } | null
 
     created_at: string
     updated_at: string

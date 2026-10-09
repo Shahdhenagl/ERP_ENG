@@ -53,6 +53,7 @@ class CustodyService
         CashBox $from,
         User $actor,
         ?string $note = null,
+        ?int $taskId = null,
     ): CashMovement {
         $this->assertTechnician($technician);
 
@@ -60,7 +61,7 @@ class CustodyService
 
         // Guards on amount and available balance live in BillingService, so a
         // custody advance cannot overdraw a box that an expense could not.
-        $movement = $this->billing->transferBetweenBoxes($from, $to, $amount, $actor, $note);
+        $movement = $this->billing->transferBetweenBoxes($from, $to, $amount, $actor, $note, $taskId);
 
         $movement->update(['source' => 'custody_advance']);
 
@@ -74,10 +75,11 @@ class CustodyService
         CashBox $to,
         User $actor,
         ?string $note = null,
+        ?int $taskId = null,
     ): void {
         $from = $this->cashBoxFor($technician);
 
-        $this->billing->transferBetweenBoxes($from, $to, $amount, $actor, $note);
+        $this->billing->transferBetweenBoxes($from, $to, $amount, $actor, $note, $taskId);
 
         CashMovement::where('cash_box_id', $from->id)
             ->latest('id')

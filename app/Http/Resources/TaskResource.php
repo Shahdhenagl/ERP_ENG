@@ -181,6 +181,23 @@ class TaskResource extends JsonResource
             'expenses_total' => $this->relationLoaded('expenses')
                 ? round((float) $this->expenses->sum('amount'), 2)
                 : null,
+            'task_cash' => $this->relationLoaded('cashMovements')
+                ? (function () {
+                    $movements = $this->cashMovements;
+                    $advanced = (float) $movements->where('source', 'custody_advance')->where('direction', 'in')->sum('amount');
+                    $spent = (float) $movements->where('source', 'expense')->where('direction', 'out')->sum('amount');
+                    $returned = (float) $movements->where('source', 'custody_settle')->where('direction', 'out')->sum('amount');
+                    $balance = round($advanced - $spent - $returned, 2);
+
+                    return [
+                        'advanced' => round($advanced, 2),
+                        'spent' => round($spent, 2),
+                        'returned' => round($returned, 2),
+                        'remaining' => max(0, $balance),
+                        'owed' => max(0, -$balance),
+                    ];
+                })()
+                : null,
 
             'status_logs' => TaskStatusLogResource::collection($this->whenLoaded('statusLogs')),
             'reports' => TaskReportResource::collection($this->whenLoaded('reports')),

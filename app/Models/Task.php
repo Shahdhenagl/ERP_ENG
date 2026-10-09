@@ -158,6 +158,12 @@ class Task extends Model
         return $this->hasMany(CashMovement::class)->where('source', 'expense')->latest('id');
     }
 
+    /** Every cash movement explicitly assigned to this job: advance, spend, return. */
+    public function cashMovements(): HasMany
+    {
+        return $this->hasMany(CashMovement::class)->latest('id');
+    }
+
     public function attachments(): HasMany
     {
         return $this->hasMany(TaskAttachment::class);

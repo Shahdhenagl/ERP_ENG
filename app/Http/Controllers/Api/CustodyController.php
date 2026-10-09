@@ -104,16 +104,21 @@ class CustodyController extends Controller
             'amount' => ['required', 'numeric', 'gt:0'],
             'direction' => ['required', 'in:advance,return'],
             'note' => ['nullable', 'string', 'max:1000'],
+            'task_id' => ['nullable', 'exists:tasks,id'],
         ]);
 
         $technician = User::findOrFail($data['user_id']);
         $box = CashBox::findOrFail($data['cash_box_id']);
         $amount = (float) $data['amount'];
 
+        if (! empty($data['task_id'])) {
+            abort_unless($technician->assignedTasks()->whereKey($data['task_id'])->exists(), 422, 'المهمة غير مسندة إلى هذا الموظف.');
+        }
+
         if ($data['direction'] === 'advance') {
-            $this->custody->advanceCash($technician, $amount, $box, $request->user(), $data['note'] ?? null);
+            $this->custody->advanceCash($technician, $amount, $box, $request->user(), $data['note'] ?? null, $data['task_id'] ?? null);
         } else {
-            $this->custody->returnCash($technician, $amount, $box, $request->user(), $data['note'] ?? null);
+            $this->custody->returnCash($technician, $amount, $box, $request->user(), $data['note'] ?? null, $data['task_id'] ?? null);
         }
 
         ActivityLog::record(
