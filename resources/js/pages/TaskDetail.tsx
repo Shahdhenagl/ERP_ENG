@@ -1631,7 +1631,9 @@ function AttachmentsSection({
     const toast = useToast()
     const upload = useUploadAttachments(task.id)
     const remove = useDeleteAttachment(task.id)
-    const inputRef = useRef<HTMLInputElement>(null)
+    const cameraInputRef = useRef<HTMLInputElement>(null)
+    const galleryInputRef = useRef<HTMLInputElement>(null)
+    const documentInputRef = useRef<HTMLInputElement>(null)
     const [kind, setKind] = useState<AttachmentKind>(defaultKind)
 
     const attachments = task.attachments ?? []
@@ -1650,7 +1652,9 @@ function AttachmentsSection({
         } catch (caught) {
             toast.error(errorMessage(caught, 'تعذّر رفع الملفات.'))
         } finally {
-            if (inputRef.current) inputRef.current.value = ''
+            cameraInputRef.current && (cameraInputRef.current.value = '')
+            galleryInputRef.current && (galleryInputRef.current.value = '')
+            documentInputRef.current && (documentInputRef.current.value = '')
         }
     }
 
@@ -1674,22 +1678,60 @@ function AttachmentsSection({
                             <option value="document">مستند</option>
                         </Select>
 
-                        <Button
-                            variant="secondary"
-                            icon={Camera}
-                            loading={upload.isPending}
-                            onClick={() => inputRef.current?.click()}
-                            className="text-xs"
-                        >
-                            {tr('رفع')}
-                        </Button>
+                        {kind === 'document' ? (
+                            <Button
+                                variant="secondary"
+                                icon={FileText}
+                                loading={upload.isPending}
+                                onClick={() => documentInputRef.current?.click()}
+                                className="text-xs"
+                            >
+                                {tr('رفع مستند')}
+                            </Button>
+                        ) : (
+                            <>
+                                <Button
+                                    variant="secondary"
+                                    icon={Camera}
+                                    loading={upload.isPending}
+                                    onClick={() => cameraInputRef.current?.click()}
+                                    className="text-xs"
+                                >
+                                    {tr('تصوير')}
+                                </Button>
+                                <Button
+                                    variant="secondary"
+                                    icon={ImageIcon}
+                                    loading={upload.isPending}
+                                    onClick={() => galleryInputRef.current?.click()}
+                                    className="text-xs"
+                                >
+                                    {tr('من المعرض')}
+                                </Button>
+                            </>
+                        )}
 
                         <input
-                            ref={inputRef}
+                            ref={cameraInputRef}
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            className="hidden"
+                            onChange={(event) => handleFiles(event.target.files)}
+                        />
+                        <input
+                            ref={galleryInputRef}
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(event) => handleFiles(event.target.files)}
+                        />
+                        <input
+                            ref={documentInputRef}
                             type="file"
                             multiple
                             accept="image/*,application/pdf"
-                            capture="environment"
                             className="hidden"
                             onChange={(event) => handleFiles(event.target.files)}
                         />
