@@ -2,11 +2,13 @@ import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { DocumentShell } from '@/components/DocumentShell'
 import { ErrorState } from '@/components/ui'
-import { useDraft } from '@/lib/queries'
+import { useDraft, useSettings } from '@/lib/queries'
+import { DocumentSignatures } from '@/components/DocumentShell'
 
 export function DraftPrint() {
     const { id } = useParams<{ id: string }>()
     const { data: draft, isError, refetch } = useDraft(id)
+    const { data: settings } = useSettings()
     const [language, setLanguage] = useState<'ar' | 'en'>('ar')
     if (isError) return <ErrorState message="تعذر تحميل المسودة." onRetry={() => void refetch()} />
     if (!draft) return null
@@ -20,5 +22,6 @@ export function DraftPrint() {
             <button disabled={!draft.content_en} className={`rounded-lg px-4 py-2 text-xs font-bold ${language === 'en' ? 'bg-brand-600 text-white' : 'bg-navy-100 text-navy-600'} disabled:opacity-40`} onClick={() => setLanguage('en')}>English</button>
         </div>
         <section className="draft-print-content" dir={direction} style={{ fontFamily: draft.font_family, fontSize: `${draft.font_size}px`, color: draft.text_color }} dangerouslySetInnerHTML={{ __html: content || '' }} />
+        <DocumentSignatures labels={isEnglish ? ['For the Company', 'Customer'] : ['عن الشركة', 'العميل']} showLines={false} stamp={settings?.company_stamp_url ? <img src={settings.company_stamp_url} alt="ختم الشركة" className="mx-auto mt-2 h-28 w-auto object-contain mix-blend-multiply" /> : undefined} />
     </DocumentShell>
 }

@@ -268,10 +268,12 @@ function CustomerTasksSection({ customerId }: { customerId: number }) {
     const { path } = useArea()
     const [from, setFrom] = useState('')
     const [to, setTo] = useState('')
+    const [filter, setFilter] = useState('')
 
     const { data, isLoading } = useCustomerTasks(customerId, {
         from: from || undefined,
         to: to || undefined,
+        status: filter || undefined,
     })
 
     const printHref = path(
@@ -307,7 +309,15 @@ function CustomerTasksSection({ customerId }: { customerId: number }) {
                 </a>
             </div>
 
-            <div className="mb-3 grid gap-3 sm:grid-cols-2">
+            <div className="mb-3 grid gap-3 sm:grid-cols-3">
+                <Field label="عرض المهام">
+                    <select className="select" value={filter} onChange={(event) => setFilter(event.target.value)}>
+                        <option value="">إخفاء حركات المهام</option>
+                        <option value="all">كل المهام</option>
+                        <option value="completed">المهام المنتهية</option>
+                        <option value="open">المهام المفتوحة</option>
+                    </select>
+                </Field>
                 <Field label="من تاريخ">
                     <Input type="date" value={from} onChange={(event) => setFrom(event.target.value)} />
                 </Field>
@@ -316,7 +326,9 @@ function CustomerTasksSection({ customerId }: { customerId: number }) {
                 </Field>
             </div>
 
-            {isLoading ? (
+            {!filter ? (
+                <p className="rounded-xl bg-navy-50 px-4 py-5 text-center text-xs text-navy-500">اختر نوع العرض من الفلتر لإظهار حركات المهام.</p>
+            ) : isLoading ? (
                 <SkeletonCard />
             ) : !data?.data.length ? (
                 <EmptyState icon={ClipboardList} title="لا توجد مهام في هذه الفترة" />

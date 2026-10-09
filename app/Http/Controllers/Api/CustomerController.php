@@ -199,6 +199,7 @@ class CustomerController extends Controller
         $request->validate([
             'from' => ['nullable', 'date'],
             'to' => ['nullable', 'date', 'after_or_equal:from'],
+            'status' => ['nullable', 'in:all,completed,open'],
         ]);
 
         $effective = 'COALESCE(scheduled_at, created_at)';
@@ -213,6 +214,8 @@ class CustomerController extends Controller
                 $request->date('to'),
                 fn ($q, $to) => $q->whereRaw("{$effective} <= ?", [$to->endOfDay()]),
             )
+            ->when($request->input('status') === 'completed', fn ($q) => $q->where('status', \App\Enums\TaskStatus::Completed))
+            ->when($request->input('status') === 'open', fn ($q) => $q->whereNotIn('status', [\App\Enums\TaskStatus::Completed, \App\Enums\TaskStatus::Cancelled]))
             ->orderByRaw("{$effective} desc");
 
         $tasks = $query->get();

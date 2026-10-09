@@ -238,7 +238,7 @@ function QuotationsTab() {
                     ))}
                 </DataTable>
             ) : (
-                <div className="space-y-3">
+                <div className="grid gap-3 md:grid-cols-2">
                     {quotations.map((quotation) => (
                         <div
                             key={quotation.id}
@@ -363,7 +363,7 @@ function FollowUpSelect({ quotation }: { quotation: Quotation }) {
                 }
             }}
             aria-label="حالة متابعة عرض السعر"
-            className="w-full max-w-64 py-1.5 text-[11px]"
+            className="w-full max-w-64 rounded-xl border-brand-200 bg-brand-50/60 py-2 text-[11px] font-bold text-brand-800 shadow-sm focus:border-brand-500 focus:ring-brand-200"
         >
             <option value="">بدون متابعة</option>
             {FOLLOW_UP_OPTIONS.map((option) => (

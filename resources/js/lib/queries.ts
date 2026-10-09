@@ -832,7 +832,7 @@ export function useCustomerProfile(id: number | string | undefined) {
 /** A customer's job history over a date window — for the profile and the print. */
 export function useCustomerTasks(
     id: number | string | undefined,
-    range: { from?: string; to?: string } = {},
+    range: { from?: string; to?: string; status?: string } = {},
 ) {
     return useQuery({
         queryKey: ['customer-tasks', Number(id ?? 0), range],
