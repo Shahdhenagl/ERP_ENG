@@ -60,6 +60,15 @@ export function CustodyStatementPrint() {
                     heading="ملخص المسؤولية"
                     rows={[
                         ['نقدية في العهدة', formatMoney(data.cash.balance)],
+                        ...(data.cash_summary
+                            ? ([
+                                  ['إجمالي العهدة المسلّمة', formatMoney(data.cash_summary.advanced)],
+                                  ['إجمالي المصروفات', formatMoney(data.cash_summary.spent)],
+                                  ['إجمالي المرتجع', formatMoney(data.cash_summary.returned)],
+                                  ['المتبقي معه', formatMoney(data.cash_summary.remaining)],
+                                  ['المستحق له', formatMoney(data.cash_summary.owed)],
+                              ] as Array<[string, string]>)
+                            : []),
                         ['قيمة المخزون', formatMoney(data.stock.value)],
                         ['عدد الأجهزة', String(data.devices.length)],
                     ]}

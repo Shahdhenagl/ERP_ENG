@@ -305,6 +305,14 @@ export interface CustodyStatement {
     expenses?: CustodyExpense[]
     /** What the technician has overspent — the company owes it. Zero in credit. */
     shortfall?: number
+    /** Cash reconciliation for the selected statement period. */
+    cash_summary?: {
+        advanced: number
+        spent: number
+        returned: number
+        remaining: number
+        owed: number
+    }
     /** The float's movements — advances in, expenses out, settlements. */
     ledger?: CustodyLedgerEntry[]
 }

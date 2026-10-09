@@ -378,6 +378,48 @@ class CustodyService
     }
 
     /**
+     * Cash-only reconciliation for an employee statement. Unlike the current
+     * box balance, this explains where the balance came from: advances handed
+     * over, expenses recorded and unspent cash returned.
+     *
+     * @return array<string, float>
+     */
+    public function cashSummaryFor(User $technician, ?string $month = null): array
+    {
+        $box = CashBox::where('user_id', $technician->id)->first();
+
+        if (! $box) {
+            return [
+                'advanced' => 0.0,
+                'spent' => 0.0,
+                'returned' => 0.0,
+                'remaining' => 0.0,
+                'owed' => 0.0,
+            ];
+        }
+
+        $movements = CashMovement::query()
+            ->where('cash_box_id', $box->id)
+            ->when($month, fn ($q) => $q
+                ->whereYear('created_at', (int) substr($month, 0, 4))
+                ->whereMonth('created_at', (int) substr($month, 5, 2)))
+            ->get(['source', 'direction', 'amount']);
+
+        $advanced = (float) $movements->where('source', 'custody_advance')->where('direction', 'in')->sum('amount');
+        $spent = (float) $movements->where('source', 'expense')->where('direction', 'out')->sum('amount');
+        $returned = (float) $movements->where('source', 'custody_settle')->where('direction', 'out')->sum('amount');
+        $balance = round($advanced - $spent - $returned, 2);
+
+        return [
+            'advanced' => round($advanced, 2),
+            'spent' => round($spent, 2),
+            'returned' => round($returned, 2),
+            'remaining' => max(0, $balance),
+            'owed' => max(0, -$balance),
+        ];
+    }
+
+    /**
      * What a technician spent out of their float — the expenses behind the
      * balance, each with the receipt photographed against it.
      *

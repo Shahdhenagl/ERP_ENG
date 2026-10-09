@@ -35,6 +35,7 @@ class CustodyController extends Controller
                 ...$this->custody->statementFor($user),
                 'shortfall' => $this->custody->shortfallFor($user),
                 'stock_history' => $this->custody->stockHistoryFor($user),
+                'cash_summary' => $this->custody->cashSummaryFor($user, $month),
                 'expenses' => $this->custody->expensesFor($user, $month),
                 'month' => $month,
             ],

@@ -93,6 +93,31 @@ export function CustodyStatementPage() {
                         <ShortfallBanner userId={userId!} shortfall={data.shortfall!} />
                     )}
 
+                    {data.cash_summary && (
+                        <section className="card p-4">
+                            <div className="mb-3 flex items-center justify-between">
+                                <p className="text-sm font-extrabold text-navy-800">كشف حركة العهدة النقدية</p>
+                                <span className="text-[11px] text-navy-400">
+                                    {month ? `عن شهر ${month}` : 'كل الحركات المسجلة'}
+                                </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                                {[
+                                    ['المسلّم', data.cash_summary.advanced, 'text-brand-700'],
+                                    ['المصروف', data.cash_summary.spent, 'text-navy-900'],
+                                    ['المُعاد', data.cash_summary.returned, 'text-emerald-700'],
+                                    ['المتبقي معه', data.cash_summary.remaining, 'text-amber-700'],
+                                    ['المستحق له', data.cash_summary.owed, 'text-red-700'],
+                                ].map(([label, amount, tone]) => (
+                                    <div key={String(label)} className="rounded-xl bg-navy-50 px-3 py-2">
+                                        <p className="text-[10px] font-bold text-navy-400">{label}</p>
+                                        <p className={`tabular text-sm font-extrabold ${tone}`}>{formatMoney(Number(amount))}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
                     {Boolean(data.stock.lines.length) && (
                         <section>
                             <p className="mb-2 text-xs font-extrabold text-navy-400">المخزون في العهدة</p>
