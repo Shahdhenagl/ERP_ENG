@@ -1409,6 +1409,7 @@ export interface Task {
     expenses?: CustodyExpense[] | null
     expenses_total?: number | null
     task_cash?: {
+        expected: number
         advanced: number
         spent: number
         returned: number

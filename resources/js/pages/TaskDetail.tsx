@@ -1212,7 +1212,7 @@ function TaskExpenses({ task, canAdd, canManage }: { task: Task; canAdd: boolean
 
     const expenses = task.expenses ?? []
     const total = task.expenses_total ?? 0
-    const cash = task.task_cash ?? { advanced: 0, spent: total, returned: 0, remaining: 0, owed: 0 }
+    const cash = task.task_cash ?? { expected: task.branch?.route_total ?? 0, advanced: 0, spent: total, returned: 0, remaining: 0, owed: 0 }
 
     return (
         <section className="card p-5">
@@ -1240,8 +1240,9 @@ function TaskExpenses({ task, canAdd, canManage }: { task: Task; canAdd: boolean
                 </div>
             </div>
 
-            <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
+            <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {[
+                    ['المفروض', cash.expected, 'text-brand-700'],
                     ['المسلّم', cash.advanced, 'text-brand-700'],
                     ['المصروف', cash.spent, 'text-navy-900'],
                     ['المُعاد', cash.returned, 'text-emerald-700'],
@@ -1255,14 +1256,19 @@ function TaskExpenses({ task, canAdd, canManage }: { task: Task; canAdd: boolean
                 ))}
             </div>
 
-            {expenses.length === 0 ? (
+            <div className="overflow-hidden rounded-xl border border-navy-100">
+                <div className="grid grid-cols-[1fr_auto] border-b border-navy-100 bg-navy-50 px-3 py-2 text-[11px] font-extrabold text-navy-500">
+                    <span>بيان المصروف</span>
+                    <span>المبلغ</span>
+                </div>
+                {expenses.length === 0 ? (
                 <p className="rounded-xl bg-navy-50 px-4 py-4 text-center text-xs text-navy-400">
                     {tr('لا مصاريف مسجّلة على هذه المهمة.')}
                 </p>
-            ) : (
-                <div className="space-y-2">
+                ) : (
+                <div className="divide-y divide-navy-100">
                     {expenses.map((expense) => (
-                        <div key={expense.id} className="flex items-center justify-between gap-3">
+                        <div key={expense.id} className="grid grid-cols-[1fr_auto] items-center gap-3 px-3 py-2.5">
                             <div className="flex min-w-0 items-center gap-2">
                                 {expense.receipt_url ? (
                                     <a href={expense.receipt_url} target="_blank" rel="noreferrer" className="shrink-0">
@@ -1288,7 +1294,25 @@ function TaskExpenses({ task, canAdd, canManage }: { task: Task; canAdd: boolean
                         </div>
                     ))}
                 </div>
-            )}
+                )}
+            </div>
+
+            <div className="mt-3 overflow-hidden rounded-xl border border-navy-100 text-xs">
+                <div className="flex items-center justify-between border-b border-navy-100 px-3 py-2">
+                    <span className="font-bold text-navy-500">إجمالي المصروف</span>
+                    <span className="tabular font-extrabold text-navy-900">{formatMoney(cash.spent)}</span>
+                </div>
+                <div className="flex items-center justify-between border-b border-navy-100 px-3 py-2">
+                    <span className="font-bold text-navy-500">تسوية العهدة</span>
+                    <span className={`tabular font-extrabold ${cash.owed > 0 ? 'text-red-700' : 'text-emerald-700'}`}>
+                        {cash.owed > 0 ? `مستحق للموظف ${formatMoney(cash.owed)}` : `متبقي مع الموظف ${formatMoney(cash.remaining)}`}
+                    </span>
+                </div>
+                <div className="flex items-center justify-between bg-navy-50 px-3 py-2 font-extrabold">
+                    <span className="text-navy-700">المتبقي بعد الرد</span>
+                    <span className="tabular text-navy-900">{formatMoney(cash.remaining)}</span>
+                </div>
+            </div>
 
             {adding && (
                 <CustodyExpenseModal

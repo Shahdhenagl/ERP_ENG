@@ -190,6 +190,9 @@ class TaskResource extends JsonResource
                     $balance = round($advanced - $spent - $returned, 2);
 
                     return [
+                        'expected' => $this->relationLoaded('branch') && $this->branch
+                            ? round($this->branch->routeTotal(), 2)
+                            : 0.0,
                         'advanced' => round($advanced, 2),
                         'spent' => round($spent, 2),
                         'returned' => round($returned, 2),
