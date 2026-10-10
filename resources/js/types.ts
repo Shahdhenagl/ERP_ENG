@@ -345,6 +345,16 @@ export interface CustodyLedgerEntry {
     note: string | null
     task_id: number | null
     task_code: string | null
+    route?: BranchRoute | null
+    route_total?: number | null
+    task_cash?: {
+        expected: number
+        advanced: number
+        spent: number
+        returned: number
+        remaining: number
+        owed: number
+    } | null
     receipt_url: string | null
     by: string | null
     created_at: string

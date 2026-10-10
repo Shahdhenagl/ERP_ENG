@@ -30,6 +30,7 @@ export function CustodyStatementPage() {
     const [userId, setUserId] = useState<number | null>(null)
     const [month, setMonth] = useState('')
     const [ledgerOpen, setLedgerOpen] = useState(false)
+    const [routeEntry, setRouteEntry] = useState<CustodyLedgerEntry | null>(null)
 
     const { data, isLoading } = useCustodyStatement(userId ?? undefined, month || undefined)
 
@@ -242,8 +243,12 @@ export function CustodyStatementPage() {
                         <CustodyLedgerModal
                             entries={data.ledger ?? []}
                             employeeName={data.technician.name}
+                            onRouteDetails={setRouteEntry}
                             onClose={() => setLedgerOpen(false)}
                         />
+                    )}
+                    {routeEntry && (
+                        <RouteLedgerModal entry={routeEntry} onClose={() => setRouteEntry(null)} />
                     )}
                 </div>
             )}
@@ -254,10 +259,12 @@ export function CustodyStatementPage() {
 function CustodyLedgerModal({
     entries,
     employeeName,
+    onRouteDetails,
     onClose,
 }: {
     entries: CustodyLedgerEntry[]
     employeeName: string
+    onRouteDetails: (entry: CustodyLedgerEntry) => void
     onClose: () => void
 }) {
     return (
@@ -281,6 +288,7 @@ function CustodyLedgerModal({
                                 <th className="px-3 py-3">المهمة</th>
                                 <th className="px-3 py-3">بواسطة</th>
                                 <th className="px-3 py-3 text-left">المبلغ</th>
+                                <th className="px-3 py-3">التفاصيل</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -304,12 +312,92 @@ function CustodyLedgerModal({
                                     <td className={`tabular whitespace-nowrap px-3 py-3 text-left font-extrabold ${entry.direction === 'in' ? 'text-emerald-700' : 'text-red-700'}`}>
                                         {entry.direction === 'in' ? '+' : '-'} {formatMoney(entry.amount)}
                                     </td>
+                                    <td className="px-3 py-3 text-center">
+                                        {entry.category === 'خط السير' && entry.route ? (
+                                            <button
+                                                type="button"
+                                                className="btn-secondary inline-flex items-center gap-1 px-2 py-1 text-[11px]"
+                                                title="عرض تفاصيل خط السير والعهدة"
+                                                aria-label="عرض تفاصيل خط السير والعهدة"
+                                                onClick={() => onRouteDetails(entry)}
+                                            >
+                                                <Eye className="size-3.5" />
+                                                عرض
+                                            </button>
+                                        ) : '—'}
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
             )}
+        </Modal>
+    )
+}
+
+function RouteLedgerModal({
+    entry,
+    onClose,
+}: {
+    entry: CustodyLedgerEntry
+    onClose: () => void
+}) {
+    const cash = entry.task_cash
+
+    return (
+        <Modal
+            open
+            onClose={onClose}
+            title={`تفاصيل خط السير ${entry.task_code ?? ''}`}
+            description="تفاصيل المحطات وعهدة المهمة المرتبطة بالحركة"
+            size="md"
+        >
+            <div className="space-y-4">
+                <section className="rounded-xl border border-brand-100 bg-brand-50/50 p-3">
+                    <p className="mb-2 text-xs font-extrabold text-brand-800">محطات خط السير</p>
+                    <div className="space-y-1.5">
+                        {entry.route?.legs.map((leg, index) => (
+                            <div key={`${leg.label}-${index}`} className="flex items-center justify-between gap-3 text-xs">
+                                <span className="text-navy-600">{leg.label}</span>
+                                <span className="tabular shrink-0 font-extrabold text-navy-900">
+                                    {leg.cost != null ? formatMoney(leg.cost) : '—'}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                    {(entry.route?.allowance || entry.route?.lodging) && (
+                        <div className="mt-2 space-y-1 border-t border-brand-100 pt-2 text-xs">
+                            {entry.route.allowance ? <div className="flex justify-between"><span>بدل</span><b>{formatMoney(entry.route.allowance)}</b></div> : null}
+                            {entry.route.lodging ? <div className="flex justify-between"><span>مبيت</span><b>{formatMoney(entry.route.lodging)}</b></div> : null}
+                        </div>
+                    )}
+                    <div className="mt-3 flex items-center justify-between rounded-lg bg-brand-100/70 px-3 py-2 text-xs font-extrabold text-brand-800">
+                        <span>إجمالي خط السير</span>
+                        <span className="tabular">{formatMoney(entry.route_total ?? 0)}</span>
+                    </div>
+                </section>
+
+                {cash && (
+                    <section className="rounded-xl border border-navy-100 p-3">
+                        <p className="mb-2 text-xs font-extrabold text-navy-800">عهدة المهمة</p>
+                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                            {[
+                                ['المسلّم', cash.advanced, 'text-brand-700'],
+                                ['المصروف', cash.spent, 'text-navy-900'],
+                                ['المُعاد', cash.returned, 'text-emerald-700'],
+                                ['المتبقي', cash.remaining, 'text-amber-700'],
+                                ['المستحق للفني', cash.owed, 'text-red-700'],
+                            ].map(([label, amount, tone]) => (
+                                <div key={String(label)} className="rounded-lg bg-navy-50 px-2 py-2">
+                                    <p className="text-[10px] font-bold text-navy-400">{label}</p>
+                                    <p className={`tabular text-xs font-extrabold ${tone}`}>{formatMoney(Number(amount))}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                )}
+            </div>
         </Modal>
     )
 }

@@ -181,7 +181,7 @@ class CustodyService
 
         return CashMovement::query()
             ->where('cash_box_id', $box->id)
-            ->with(['actor', 'task'])
+            ->with(['actor', 'task.branch', 'task.cashMovements'])
             ->latest('id')
             ->limit($limit)
             ->get()
@@ -195,6 +195,24 @@ class CustodyService
                 'note' => $m->note,
                 'task_id' => $m->task_id,
                 'task_code' => $m->task?->code,
+                'route' => $m->task?->branch?->route,
+                'route_total' => $m->task?->branch?->routeTotal(),
+                'task_cash' => $m->task ? (function () use ($m) {
+                    $taskMovements = $m->task->cashMovements;
+                    $advanced = (float) $taskMovements->where('source', 'custody_advance')->where('direction', 'in')->sum('amount');
+                    $spent = (float) $taskMovements->where('source', 'expense')->where('direction', 'out')->sum('amount');
+                    $returned = (float) $taskMovements->where('source', 'custody_settle')->where('direction', 'out')->sum('amount');
+                    $balance = round($advanced - $spent - $returned, 2);
+
+                    return [
+                        'expected' => round((float) ($m->task->branch?->routeTotal() ?? 0), 2),
+                        'advanced' => round($advanced, 2),
+                        'spent' => round($spent, 2),
+                        'returned' => round($returned, 2),
+                        'remaining' => max(0, $balance),
+                        'owed' => max(0, -$balance),
+                    ];
+                })() : null,
                 'receipt_url' => $m->receiptUrl(),
                 'by' => $m->actor?->name,
                 'created_at' => $m->created_at?->toIso8601String(),
