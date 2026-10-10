@@ -9,6 +9,7 @@ import {
     CheckCircle,
     ClipboardCheck,
     Cpu,
+    Eye,
     FileText,
     ImageIcon,
     MapPin,
@@ -409,6 +410,7 @@ export function TaskDetail() {
                             taskCode={task.code}
                             canRecord={canDrive}
                             expenses={task.expenses}
+                            taskCash={task.task_cash}
                         />
                     </Modal>
                 )}
@@ -628,6 +630,7 @@ export function TaskDetail() {
                                         taskCode={task.code}
                                         canRecord={canDrive}
                                         expenses={task.expenses}
+                                        taskCash={task.task_cash}
                                     />
                                 )}
 
@@ -1413,6 +1416,7 @@ function RouteBlock({
     taskCode,
     canRecord,
     expenses = [],
+    taskCash,
 }: {
     branch: NonNullable<Task['branch']>
     taskId: number
@@ -1420,8 +1424,10 @@ function RouteBlock({
     canRecord: boolean
     /** The job's expenses, to see whether the route has already been booked. */
     expenses?: Task['expenses']
+    taskCash?: Task['task_cash']
 }) {
     const [confirming, setConfirming] = useState(false)
+    const [cashDetailsOpen, setCashDetailsOpen] = useState(false)
     const route = branch.route
     if (!route) return null
 
@@ -1443,9 +1449,21 @@ function RouteBlock({
 
     return (
         <div className="rounded-xl border border-brand-100 bg-brand-50/40 p-3">
-            <div className="mb-2 flex items-center gap-1.5">
+            <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
                 <Route className="size-4 text-brand-500" />
                 <p className="text-sm font-bold text-navy-800">خط السير</p>
+                </div>
+                <button
+                    type="button"
+                    className="btn-secondary inline-flex items-center gap-1 px-2 py-1 text-[11px]"
+                    aria-label="عرض عهدة المهمة"
+                    title="عرض عهدة المهمة"
+                    onClick={() => setCashDetailsOpen(true)}
+                >
+                    <Eye className="size-3.5" />
+                    العهدة
+                </button>
             </div>
 
             {legs.length > 0 && (
@@ -1513,7 +1531,52 @@ function RouteBlock({
                     onClose={() => setConfirming(false)}
                 />
             )}
+
+            {cashDetailsOpen && (
+                <TaskCashBreakdownModal
+                    taskCode={taskCode}
+                    taskCash={taskCash ?? {
+                        expected: branch.route_total,
+                        advanced: 0,
+                        spent: recordedTotal,
+                        returned: 0,
+                        remaining: 0,
+                        owed: 0,
+                    }}
+                    onClose={() => setCashDetailsOpen(false)}
+                />
+            )}
         </div>
+    )
+}
+
+function TaskCashBreakdownModal({
+    taskCode,
+    taskCash,
+    onClose,
+}: {
+    taskCode: string
+    taskCash: NonNullable<Task['task_cash']>
+    onClose: () => void
+}) {
+    return (
+        <Modal open onClose={onClose} title={`تفاصيل عهدة المهمة ${taskCode}`} size="sm">
+            <div className="space-y-2">
+                {[
+                    ['العهدة المتوقعة حسب خط السير', taskCash.expected, 'text-brand-700'],
+                    ['العهدة المسلّمة للفني', taskCash.advanced, 'text-brand-700'],
+                    ['المصروف من العهدة', taskCash.spent, 'text-navy-900'],
+                    ['المُعاد للخزينة', taskCash.returned, 'text-emerald-700'],
+                    ['المتبقي مع الفني', taskCash.remaining, 'text-amber-700'],
+                    ['المستحق للفني', taskCash.owed, 'text-red-700'],
+                ].map(([label, amount, tone]) => (
+                    <div key={String(label)} className="flex items-center justify-between rounded-xl bg-navy-50 px-3 py-2.5">
+                        <span className="text-xs font-bold text-navy-500">{label}</span>
+                        <span className={`tabular text-sm font-extrabold ${tone}`}>{formatMoney(Number(amount))}</span>
+                    </div>
+                ))}
+            </div>
+        </Modal>
     )
 }
 
