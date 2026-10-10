@@ -10,7 +10,7 @@ import { errorMessage } from '@/lib/api'
 import { formatMoney, formatQty } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
 import { useArea } from '@/lib/nav'
-import type { CustodyLedgerEntry } from '@/types'
+import type { CustodyExpense, CustodyLedgerEntry } from '@/types'
 import {
     useCashBoxes,
     useCustody,
@@ -31,6 +31,7 @@ export function CustodyStatementPage() {
     const [month, setMonth] = useState('')
     const [ledgerOpen, setLedgerOpen] = useState(false)
     const [routeEntry, setRouteEntry] = useState<CustodyLedgerEntry | null>(null)
+    const [expenseEntry, setExpenseEntry] = useState<CustodyExpense | null>(null)
 
     const { data, isLoading } = useCustodyStatement(userId ?? undefined, month || undefined)
 
@@ -190,10 +191,11 @@ export function CustodyStatementPage() {
                                     'العميل',
                                     'الفرع',
                                     'الإيصال',
+                                    'التفاصيل',
                                     { label: 'المبلغ', className: 'text-left' },
                                 ]}
                             >
-                                {data.expenses!.map((expense) => (
+                                    {data.expenses!.map((expense) => (
                                     <tr key={expense.id} className="border-t border-navy-100 text-navy-700">
                                         <td className="tabular whitespace-nowrap px-3 py-3 text-xs text-navy-500">
                                             {formatDate(expense.created_at)}
@@ -207,7 +209,16 @@ export function CustodyStatementPage() {
                                             )}
                                         </td>
                                         <td className="tabular whitespace-nowrap px-3 py-3 text-xs">
-                                            {expense.task_code ?? '—'}
+                                            {expense.task_id && expense.task_code ? (
+                                                <Link
+                                                    to={path(`/tasks/${expense.task_id}`)}
+                                                    className="font-bold text-primary hover:underline"
+                                                >
+                                                    {expense.task_code}
+                                                </Link>
+                                            ) : (
+                                                '—'
+                                            )}
                                         </td>
                                         <td className="max-w-44 truncate px-3 py-3 text-xs">
                                             {expense.customer ?? '—'}
@@ -230,6 +241,18 @@ export function CustodyStatementPage() {
                                                 '—'
                                             )}
                                         </td>
+                                        <td className="px-3 py-3 text-center">
+                                            <button
+                                                type="button"
+                                                className="btn-secondary inline-flex items-center gap-1 px-2 py-1 text-[11px]"
+                                                title="عرض تفاصيل المصروف"
+                                                aria-label="عرض تفاصيل المصروف"
+                                                onClick={() => setExpenseEntry(expense)}
+                                            >
+                                                <Eye className="size-3.5" />
+                                                عرض
+                                            </button>
+                                        </td>
                                         <td className="tabular whitespace-nowrap px-3 py-3 text-left font-extrabold text-navy-900">
                                             {formatMoney(expense.amount)}
                                         </td>
@@ -250,9 +273,55 @@ export function CustodyStatementPage() {
                     {routeEntry && (
                         <RouteLedgerModal entry={routeEntry} onClose={() => setRouteEntry(null)} />
                     )}
+                    {expenseEntry && (
+                        <ExpenseDetailsModal expense={expenseEntry} onClose={() => setExpenseEntry(null)} />
+                    )}
                 </div>
             )}
         </>
+    )
+}
+
+function ExpenseDetailsModal({ expense, onClose }: { expense: CustodyExpense; onClose: () => void }) {
+    const { path } = useArea()
+
+    return (
+        <Modal open onClose={onClose} title="تفاصيل مصروف العهدة" size="sm">
+            <div className="space-y-2">
+                {[
+                    ['التاريخ', formatDate(expense.created_at)],
+                    ['البند', expense.category ?? 'مصروف'],
+                    ['البيان', expense.note ?? '—'],
+                    ['العميل', expense.customer ?? '—'],
+                    ['الفرع', expense.branch ?? '—'],
+                    ['المبلغ', formatMoney(expense.amount)],
+                ].map(([label, value]) => (
+                    <div key={label} className="flex items-start justify-between gap-4 rounded-xl bg-navy-50 px-3 py-2.5 text-xs">
+                        <span className="font-bold text-navy-500">{label}</span>
+                        <span className="max-w-[65%] text-left font-extrabold text-navy-900">{value}</span>
+                    </div>
+                ))}
+                {expense.task_id && expense.task_code && (
+                    <Link
+                        to={path(`/tasks/${expense.task_id}`)}
+                        className="btn-secondary mt-2 inline-flex w-full items-center justify-center gap-1.5 text-xs"
+                    >
+                        فتح تفاصيل المهمة {expense.task_code}
+                    </Link>
+                )}
+                {expense.receipt_url && (
+                    <a
+                        href={expense.receipt_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn-secondary inline-flex w-full items-center justify-center gap-1.5 text-xs"
+                    >
+                        <Receipt className="size-3.5" />
+                        فتح صورة الإيصال
+                    </a>
+                )}
+            </div>
+        </Modal>
     )
 }
 
