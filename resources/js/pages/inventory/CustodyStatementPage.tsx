@@ -1,4 +1,4 @@
-import { HardDrive, Package, Printer, Receipt, Users, Wallet } from 'lucide-react'
+import { Eye, HardDrive, Package, Printer, Receipt, Users, Wallet } from 'lucide-react'
 import { tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -10,6 +10,7 @@ import { errorMessage } from '@/lib/api'
 import { formatMoney, formatQty } from '@/lib/domain'
 import { formatDate } from '@/lib/format'
 import { useArea } from '@/lib/nav'
+import type { CustodyLedgerEntry } from '@/types'
 import {
     useCashBoxes,
     useCustody,
@@ -28,6 +29,7 @@ export function CustodyStatementPage() {
     const { data: statements } = useCustody()
     const [userId, setUserId] = useState<number | null>(null)
     const [month, setMonth] = useState('')
+    const [ledgerOpen, setLedgerOpen] = useState(false)
 
     const { data, isLoading } = useCustodyStatement(userId ?? undefined, month || undefined)
 
@@ -95,11 +97,23 @@ export function CustodyStatementPage() {
 
                     {data.cash_summary && (
                         <section className="card p-4">
-                            <div className="mb-3 flex items-center justify-between">
-                                <p className="text-sm font-extrabold text-navy-800">كشف حركة العهدة النقدية</p>
-                                <span className="text-[11px] text-navy-400">
-                                    {month ? `عن شهر ${month}` : 'كل الحركات المسجلة'}
-                                </span>
+                            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                                <div>
+                                    <p className="text-sm font-extrabold text-navy-800">كشف حركة العهدة النقدية</p>
+                                    <span className="text-[11px] text-navy-400">
+                                        {month ? `عن شهر ${month}` : 'كل الحركات المسجلة'}
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    aria-label="عرض تفاصيل حركات العهدة"
+                                    title="عرض تفاصيل حركات العهدة"
+                                    className="btn-secondary inline-flex items-center gap-1.5 px-3 py-2 text-xs"
+                                    onClick={() => setLedgerOpen(true)}
+                                >
+                                    <Eye className="size-4" />
+                                    التفاصيل
+                                </button>
                             </div>
                             <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
                                 {[
@@ -223,9 +237,80 @@ export function CustodyStatementPage() {
                             </DataTable>
                         </section>
                     )}
+
+                    {ledgerOpen && (
+                        <CustodyLedgerModal
+                            entries={data.ledger ?? []}
+                            employeeName={data.technician.name}
+                            onClose={() => setLedgerOpen(false)}
+                        />
+                    )}
                 </div>
             )}
         </>
+    )
+}
+
+function CustodyLedgerModal({
+    entries,
+    employeeName,
+    onClose,
+}: {
+    entries: CustodyLedgerEntry[]
+    employeeName: string
+    onClose: () => void
+}) {
+    return (
+        <Modal
+            open
+            onClose={onClose}
+            title="تفاصيل حركات العهدة"
+            description={`سجل العهدة النقدية للموظف ${employeeName}`}
+            size="xl"
+        >
+            {!entries.length ? (
+                <EmptyState icon={Wallet} title="لا توجد حركات" description="لم يتم تسجيل حركات نقدية لهذا الموظف." />
+            ) : (
+                <div className="overflow-x-auto rounded-xl border border-navy-100">
+                    <table className="w-full min-w-[680px] text-sm">
+                        <thead className="bg-navy-50 text-xs font-bold text-navy-600">
+                            <tr>
+                                <th className="px-3 py-3">التاريخ</th>
+                                <th className="px-3 py-3">نوع الحركة</th>
+                                <th className="px-3 py-3">البيان</th>
+                                <th className="px-3 py-3">المهمة</th>
+                                <th className="px-3 py-3">بواسطة</th>
+                                <th className="px-3 py-3 text-left">المبلغ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {entries.map((entry) => (
+                                <tr key={entry.id} className="border-t border-navy-100 text-navy-700">
+                                    <td className="tabular whitespace-nowrap px-3 py-3 text-xs text-navy-500">
+                                        {formatDate(entry.created_at)}
+                                    </td>
+                                    <td className="px-3 py-3">
+                                        <span className={`rounded-full px-2 py-1 text-[11px] font-bold ${entry.direction === 'in' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
+                                            {entry.direction === 'in' ? 'إضافة للعهدة' : 'خصم من العهدة'}
+                                        </span>
+                                        <p className="mt-1 text-xs font-bold text-navy-900">{entry.label}</p>
+                                    </td>
+                                    <td className="max-w-56 px-3 py-3 text-xs">
+                                        {entry.category || entry.note || '—'}
+                                        {entry.category && entry.note && <span className="block text-navy-400">{entry.note}</span>}
+                                    </td>
+                                    <td className="tabular whitespace-nowrap px-3 py-3 text-xs">{entry.task_code ?? '—'}</td>
+                                    <td className="px-3 py-3 text-xs">{entry.by ?? '—'}</td>
+                                    <td className={`tabular whitespace-nowrap px-3 py-3 text-left font-extrabold ${entry.direction === 'in' ? 'text-emerald-700' : 'text-red-700'}`}>
+                                        {entry.direction === 'in' ? '+' : '-'} {formatMoney(entry.amount)}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </Modal>
     )
 }
 

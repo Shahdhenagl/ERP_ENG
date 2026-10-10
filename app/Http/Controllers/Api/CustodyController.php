@@ -36,6 +36,7 @@ class CustodyController extends Controller
                 'shortfall' => $this->custody->shortfallFor($user),
                 'stock_history' => $this->custody->stockHistoryFor($user),
                 'cash_summary' => $this->custody->cashSummaryFor($user, $month),
+                'ledger' => $this->custody->ledgerFor($user),
                 'expenses' => $this->custody->expensesFor($user, $month),
                 'month' => $month,
             ],
