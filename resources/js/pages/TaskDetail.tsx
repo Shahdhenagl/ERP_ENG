@@ -1320,6 +1320,7 @@ function TaskExpenses({ task, canAdd, canManage }: { task: Task; canAdd: boolean
             {adding && (
                 <CustodyExpenseModal
                     balance={mine?.cash.balance ?? 0}
+                    taskCash={cash}
                     taskId={task.id}
                     taskCode={task.code}
                     onClose={() => setAdding(false)}

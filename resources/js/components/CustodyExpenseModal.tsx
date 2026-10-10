@@ -15,11 +15,18 @@ import { useSpendMine } from '@/lib/queries'
  */
 export function CustodyExpenseModal({
     balance,
+    taskCash,
     taskId,
     taskCode,
     onClose,
 }: {
     balance: number
+    /** The custody assigned to this task, distinct from the technician's total float. */
+    taskCash?: {
+        advanced: number
+        spent: number
+        remaining: number
+    } | null
     /** When set, the expense is billed to this job. */
     taskId?: number
     taskCode?: string
@@ -77,6 +84,29 @@ export function CustodyExpenseModal({
             }
         >
             <div className="space-y-4">
+                {taskCash && (
+                    <div className="rounded-xl border border-brand-100 bg-brand-50/60 p-3">
+                        <p className="mb-2 text-xs font-extrabold text-brand-800">عهدة هذه المهمة</p>
+                        <div className="grid grid-cols-3 gap-2 text-center">
+                            {[
+                                ['المسلّم', taskCash.advanced, 'text-brand-700'],
+                                ['المصروف', taskCash.spent, 'text-navy-900'],
+                                ['المتبقي', taskCash.remaining, 'text-amber-700'],
+                            ].map(([label, value, tone]) => (
+                                <div key={String(label)} className="rounded-lg bg-white/80 px-2 py-2">
+                                    <p className="text-[10px] font-bold text-navy-400">{label}</p>
+                                    <p className={`tabular text-xs font-extrabold ${tone}`}>{formatMoney(Number(value))}</p>
+                                </div>
+                            ))}
+                        </div>
+                        <p className="mt-2 text-[11px] text-navy-500">
+                            {amount
+                                ? `المتبقي بعد هذا المصروف: ${formatMoney(taskCash.remaining - Number(amount))}`
+                                : 'بعد حفظ المصروف سيتم تحديث المتبقي تلقائيًا.'}
+                        </p>
+                    </div>
+                )}
+
                 <Field label="نوع المصروف" required error={errors.category}>
                     <Select value={category} onChange={(e) => setCategory(e.target.value)}>
                         {EXPENSE_CATEGORIES.map((option) => (
