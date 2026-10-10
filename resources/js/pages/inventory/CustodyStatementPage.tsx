@@ -301,6 +301,28 @@ function ExpenseDetailsModal({ expense, onClose }: { expense: CustodyExpense; on
                         <span className="max-w-[65%] text-left font-extrabold text-navy-900">{value}</span>
                     </div>
                 ))}
+                {expense.task_cash && (
+                    <section className="mt-3 rounded-xl border border-brand-100 bg-brand-50/60 p-3">
+                        <p className="mb-2 text-xs font-extrabold text-brand-800">عهدة المهمة</p>
+                        <div className="grid grid-cols-3 gap-2 text-center">
+                            {[
+                                ['أصل العهدة', expense.task_cash.advanced, 'text-brand-700'],
+                                ['المصروف', expense.task_cash.spent, 'text-navy-900'],
+                                ['المتبقي', expense.task_cash.remaining, 'text-amber-700'],
+                            ].map(([label, amount, tone]) => (
+                                <div key={String(label)} className="rounded-lg bg-white/80 px-2 py-2">
+                                    <p className="text-[10px] font-bold text-navy-400">{label}</p>
+                                    <p className={`tabular text-xs font-extrabold ${tone}`}>{formatMoney(Number(amount))}</p>
+                                </div>
+                            ))}
+                        </div>
+                        {expense.task_cash.returned > 0 && (
+                            <p className="mt-2 text-[11px] font-bold text-emerald-700">
+                                المُعاد للخزينة: {formatMoney(expense.task_cash.returned)}
+                            </p>
+                        )}
+                    </section>
+                )}
                 {expense.task_id && expense.task_code && (
                     <Link
                         to={path(`/tasks/${expense.task_id}`)}

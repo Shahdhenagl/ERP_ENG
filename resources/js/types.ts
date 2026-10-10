@@ -329,6 +329,13 @@ export interface CustodyExpense {
     customer?: string | null
     /** Derived from the expense task when it is linked to one. */
     branch?: string | null
+    task_cash?: {
+        advanced: number
+        spent: number
+        returned: number
+        remaining: number
+        owed: number
+    } | null
     receipt_url: string | null
     by: string | null
     created_at: string

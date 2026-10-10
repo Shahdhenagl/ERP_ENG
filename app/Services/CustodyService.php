@@ -459,7 +459,7 @@ class CustodyService
             ->when($month, fn ($q) => $q
                 ->whereYear('created_at', (int) substr($month, 0, 4))
                 ->whereMonth('created_at', (int) substr($month, 5, 2)))
-            ->with(['actor', 'task.customer', 'task.branch'])
+            ->with(['actor', 'task.customer', 'task.branch', 'task.cashMovements'])
             ->latest('id')
             ->limit($limit)
             ->get()
@@ -474,6 +474,21 @@ class CustodyService
                 // no duplicate business identity is stored on a cash movement.
                 'customer' => $movement->task?->customer?->name,
                 'branch' => $movement->task?->branch?->name,
+                'task_cash' => $movement->task ? (function () use ($movement) {
+                    $taskMovements = $movement->task->cashMovements;
+                    $advanced = (float) $taskMovements->where('source', 'custody_advance')->where('direction', 'in')->sum('amount');
+                    $spent = (float) $taskMovements->where('source', 'expense')->where('direction', 'out')->sum('amount');
+                    $returned = (float) $taskMovements->where('source', 'custody_settle')->where('direction', 'out')->sum('amount');
+                    $balance = round($advanced - $spent - $returned, 2);
+
+                    return [
+                        'advanced' => round($advanced, 2),
+                        'spent' => round($spent, 2),
+                        'returned' => round($returned, 2),
+                        'remaining' => max(0, $balance),
+                        'owed' => max(0, -$balance),
+                    ];
+                })() : null,
                 'receipt_url' => $movement->receiptUrl(),
                 'by' => $movement->actor?->name,
                 'created_at' => $movement->created_at?->toIso8601String(),
