@@ -119,6 +119,26 @@ class CashMovement extends Model
             $candidates->push($this->task->branch);
         }
 
+        // A custody advance is written as two movements. Older records often
+        // kept the branch links only on the technician's incoming leg, while
+        // the company-box statement shows the outgoing transfer leg.
+        if ($this->source === 'transfer' && $this->counterpart_box_id) {
+            $related = static::query()
+                ->where('id', '!=', $this->id)
+                ->where('cash_box_id', $this->counterpart_box_id)
+                ->where('counterpart_box_id', $this->cash_box_id)
+                ->where('direction', $this->direction === 'out' ? 'in' : 'out')
+                ->where('amount', $this->amount)
+                ->where('source', '!=', 'transfer')
+                ->with(['branches.customer'])
+                ->latest('id')
+                ->first();
+
+            if ($related) {
+                $candidates = $candidates->concat($related->branches);
+            }
+        }
+
         $invoice = $this->payment?->invoice;
         if ($invoice?->task?->branch) {
             $candidates->push($invoice->task->branch);
