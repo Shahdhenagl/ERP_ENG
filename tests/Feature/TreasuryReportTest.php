@@ -4,6 +4,7 @@ use App\Models\CashBox;
 use App\Models\CashMovement;
 use App\Models\Customer;
 use App\Models\Invoice;
+use App\Models\Task;
 use App\Models\User;
 use App\Services\BillingService;
 use App\Services\TreasuryReport;
@@ -192,6 +193,38 @@ it('enriches the cash book with voucher and accounting details', function () {
         ->and($payment['account_type'])->not->toBeNull()
         ->and($payment['debit'])->toBe(0.0)
         ->and($payment['credit'])->toBe(250.0);
+});
+
+it('shows the branch on a legacy receipt through its invoice task', function () {
+    $customer = Customer::factory()->create();
+    $branch = $customer->branches()->create(['name' => 'فرع المعاملة القديمة']);
+    $task = Task::factory()->create([
+        'customer_id' => $customer->id,
+        'branch_id' => $branch->id,
+    ]);
+    $invoice = Invoice::create([
+        'customer_id' => $customer->id,
+        'task_id' => $task->id,
+    ]);
+    $invoice->lines()->create([
+        'description' => 'خدمة قديمة',
+        'qty' => 1,
+        'unit_price' => 500,
+        'line_total' => 500,
+    ]);
+    $invoice = $this->billing->issue($this->billing->recalculate($invoice->fresh()));
+
+    $this->billing->receivePayment([
+        'invoice_id' => $invoice->id,
+        'cash_box_id' => $this->till->id,
+        'amount' => 500,
+    ], $this->manager);
+
+    $row = collect($this->report->statement($this->till)['rows'])
+        ->firstWhere('source', 'payment');
+
+    expect($row['branches'][0]['id'])->toBe($branch->id)
+        ->and($row['branches'][0]['label'])->toBe($branch->label());
 });
 
 it('starts a windowed statement from the balance before it', function () {

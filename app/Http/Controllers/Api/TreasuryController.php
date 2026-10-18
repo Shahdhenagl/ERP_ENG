@@ -415,7 +415,17 @@ class TreasuryController extends Controller
             404,
         );
 
-        $movement->load(['box', 'actor', 'responsible', 'supplier', 'branches.customer']);
+        $movement->load([
+            'box',
+            'actor',
+            'responsible',
+            'supplier',
+            'branches.customer',
+            'task.branch.customer',
+            'payment.customer.branches',
+            'payment.invoice.task.branch',
+            'payment.invoice.salesOrder.branch',
+        ]);
         $isReceipt = $movement->direction === 'in';
 
         return response()->json([
@@ -533,7 +543,17 @@ class TreasuryController extends Controller
                         ->where('name', 'like', "%{$term}%")
                         ->orWhere('code', 'like', "%{$term}%")),
             ))
-            ->with(['box', 'actor', 'payment.customer', 'supplierPayment.supplier', 'supplier', 'branches.customer'])
+            ->with([
+                'box',
+                'actor',
+                'payment.customer.branches',
+                'payment.invoice.task.branch',
+                'payment.invoice.salesOrder.branch',
+                'supplierPayment.supplier',
+                'supplier',
+                'task.branch.customer',
+                'branches.customer',
+            ])
             ->orderByTransactionDate('desc')
             ->paginate($request->integer('per_page', 30));
 
@@ -572,7 +592,7 @@ class TreasuryController extends Controller
     /** @return array<int, array{id: int, name: string, customer: string|null, label: string}> */
     protected function branchPayload(CashMovement $movement): array
     {
-        return $movement->branches->map(static fn (Branch $branch): array => [
+        return $movement->resolvedBranches()->map(static fn (Branch $branch): array => [
             'id' => $branch->id,
             'name' => $branch->name,
             'customer' => $branch->customer?->name,

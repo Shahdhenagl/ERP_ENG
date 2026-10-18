@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -98,6 +99,50 @@ class CashMovement extends Model
     {
         return $this->belongsToMany(Branch::class, 'cash_movement_branches')
             ->withTimestamps();
+    }
+
+    /**
+     * Branches explicitly linked to this movement, plus branches that can be
+     * identified from legacy relations. This is deliberately conservative:
+     * when a customer has several branches and the old record did not preserve
+     * which one was involved, no arbitrary branch is shown.
+     */
+    public function resolvedBranches(): Collection
+    {
+        $branches = $this->relationLoaded('branches')
+            ? $this->branches
+            : $this->branches()->with('customer')->get();
+
+        $candidates = collect();
+
+        if ($this->task?->branch) {
+            $candidates->push($this->task->branch);
+        }
+
+        $invoice = $this->payment?->invoice;
+        if ($invoice?->task?->branch) {
+            $candidates->push($invoice->task->branch);
+        }
+        if ($invoice?->salesOrder?->branch) {
+            $candidates->push($invoice->salesOrder->branch);
+        }
+
+        $customer = $this->payment?->customer;
+        if ($customer) {
+            $customerBranches = $customer->relationLoaded('branches')
+                ? $customer->branches->filter(fn (Branch $branch) => $branch->is_active)
+                : $customer->branches()->active()->get();
+
+            if ($customerBranches->count() === 1) {
+                $candidates->push($customerBranches->first());
+            }
+        }
+
+        return $branches
+            ->concat($candidates)
+            ->filter()
+            ->unique('id')
+            ->values();
     }
 
     public function costCenter(): BelongsTo

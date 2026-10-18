@@ -142,7 +142,9 @@ class TreasuryReport
         $movements = $box->movements()
             ->transactionDateBetween($from, $to)
             ->with([
-                'payment.customer',
+                'payment.customer.branches',
+                'payment.invoice.task.branch',
+                'payment.invoice.salesOrder.branch',
                 'supplierPayment.supplier',
                 'task.customer',
                 'task.branch.customer',
@@ -169,11 +171,7 @@ class TreasuryReport
             $balance = round($balance + $movement->signedAmount(), 2);
             $entry = $entries->get($movement->id);
             $accounting = $this->accountingDetails($movement, $entry, $box);
-            $branches = $movement->branches;
-            $taskBranch = $movement->task?->branch;
-            if ($taskBranch && ! $branches->contains('id', $taskBranch->id)) {
-                $branches = $branches->push($taskBranch);
-            }
+            $branches = $movement->resolvedBranches();
 
             return [
                 'id' => $movement->id,
