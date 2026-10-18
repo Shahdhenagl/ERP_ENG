@@ -145,6 +145,7 @@ class TreasuryReport
                 'payment.customer',
                 'supplierPayment.supplier',
                 'task.customer',
+                'task.branch.customer',
                 'responsible',
                 'actor',
                 'account',
@@ -168,6 +169,11 @@ class TreasuryReport
             $balance = round($balance + $movement->signedAmount(), 2);
             $entry = $entries->get($movement->id);
             $accounting = $this->accountingDetails($movement, $entry, $box);
+            $branches = $movement->branches;
+            $taskBranch = $movement->task?->branch;
+            if ($taskBranch && ! $branches->contains('id', $taskBranch->id)) {
+                $branches = $branches->push($taskBranch);
+            }
 
             return [
                 'id' => $movement->id,
@@ -187,7 +193,7 @@ class TreasuryReport
                 'transaction_date' => $movement->transaction_date?->toDateString(),
                 'payment_method' => $movement->payment_method,
                 'payment_method_label' => $movement->paymentMethodLabel(),
-                'branches' => $movement->branches->map(static fn (Branch $branch): array => [
+                'branches' => $branches->map(static fn (Branch $branch): array => [
                     'id' => $branch->id,
                     'name' => $branch->name,
                     'customer' => $branch->customer?->name,
